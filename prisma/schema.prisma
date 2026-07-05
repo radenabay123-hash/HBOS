@@ -345,25 +345,34 @@ model Payroll {
   month               Int
   year                Int
   baseSalary          Float
-  mealAllowance       Float
-  transportAllowance  Float
-  workingDays         Int      // total working days in month
-  presentDays         Int      // days present (HADIR + TERLAMBAT)
-  absentDays          Int      // days absent (ALPHA)
-  lateDays            Int      // days late (TERLAMBAT)
-  leaveDays           Int      // days on leave (IZIN + SAKIT + CUTI)
-  kpiScore            Float    // KPI score for the month
-  kpiBonus            Float    // bonus based on KPI
-  attendanceDeduction Float    // deduction for absences
-  bpjs                Float
-  tax                 Float
+  mealAllowance       Float    @default(0)
+  transportAllowance  Float    @default(0)
+  workingDays         Int      @default(0)
+  presentDays         Int      @default(0)
+  absentDays          Int      @default(0)
+  lateDays            Int      @default(0)
+  leaveDays           Int      @default(0)
+  kpiScore            Float    @default(0)
+  kpiBonus            Float    @default(0)
+  attendanceDeduction Float    @default(0)
+  bpjs                Float    @default(0)
+  tax                 Float    @default(0)
   otherDeduction      Float    @default(0)
-  grossSalary         Float    // base + allowances + bonus
-  totalDeduction      Float    // attendance deduction + bpjs + tax + other
-  netSalary           Float    // gross - deduction
+  grossSalary         Float
+  totalDeduction      Float    @default(0)
+  netSalary           Float
   status              String   @default("DRAFT") // DRAFT, APPROVED, PAID
   paidAt              DateTime?
   note                String?
+  // Manual input & slip gaji fields
+  isManual            Boolean  @default(false)
+  nik                 String?
+  jabatan             String?
+  bankName            String?
+  bankAccount         String?
+  accountName         String?
+  periodeLabel        String?
+  companyName         String?  @default("PT. HAFARA AIQBA NUSANTARA")
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

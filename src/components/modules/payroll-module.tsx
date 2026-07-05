@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,12 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import {
   Receipt, Wallet, TrendingUp, TrendingDown, Clock, Award, FileText,
-  RefreshCw, Download, CheckCircle2, DollarSign, Settings, Zap,
+  RefreshCw, Download, CheckCircle2, DollarSign, Settings, Zap, Printer,
+  Trash2, Eye, Plus, Building2,
 } from "lucide-react";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
-import { ROLES, ROLE_LABELS, formatCurrency, formatNumber, formatDate } from "@/lib/constants";
-import { exportToExcel, exportToPDF, exportReportPDF } from "@/lib/export-utils";
+import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
+import { exportToExcel } from "@/lib/export-utils";
+import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -53,19 +56,14 @@ interface Payroll {
   status: string;
   paidAt: string | null;
   note?: string;
-}
-
-interface SalaryConfig {
-  id: string;
-  userId: string;
-  baseSalary: number;
-  mealAllowance: number;
-  transportAllowance: number;
-  bonusTarget: number;
-  penaltyPerAbsent: number;
-  bpjs: number;
-  tax: number;
-  user: { id: string; name: string; role: string; position: string };
+  isManual?: boolean;
+  nik?: string;
+  jabatan?: string;
+  bankName?: string;
+  bankAccount?: string;
+  accountName?: string;
+  periodeLabel?: string;
+  companyName?: string;
 }
 
 const STATUS_LABELS: Record<string, string> = { DRAFT: "Draft", APPROVED: "Disetujui", PAID: "Dibayar" };
@@ -80,26 +78,44 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+  const [archive, setArchive] = useState<Payroll[]>([]);
   const [myPayroll, setMyPayroll] = useState<Payroll | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [configs, setConfigs] = useState<SalaryConfig[]>([]);
-  const [configDialog, setConfigDialog] = useState<{ open: boolean; config: SalaryConfig | null }>({ open: false, config: null });
   const [payslipDialog, setPayslipDialog] = useState<{ open: boolean; payroll: Payroll | null }>({ open: false, payroll: null });
-  const [configForm, setConfigForm] = useState({ baseSalary: 0, mealAllowance: 0, transportAllowance: 0, bonusTarget: 0, penaltyPerAbsent: 0, bpjs: 0, tax: 0 });
+  const [users, setUsers] = useState<{ id: string; name: string; role: string; position: string }[]>([]);
+
+  // Manual generator form state
+  const [genForm, setGenForm] = useState({
+    userId: "",
+    month: String(now.getMonth() + 1),
+    year: String(now.getFullYear()),
+    baseSalary: "0",
+    tunjangan: "0",
+    potongan: "0",
+    note: "",
+    bankName: "Bank Syariah Indonesia (BSI)",
+    bankAccount: "",
+    accountName: "",
+    nik: "",
+    jabatan: "",
+  });
+  const [generating, setGenerating] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api<any>(`/api/payroll?month=${month}&year=${year}`);
       if (isOwner) {
-        setPayrolls(data.payrolls || []);
-        setSaved(data.saved || false);
-        const cfg = await api<{ configs: SalaryConfig[] }>("/api/salary-config").catch(() => ({ configs: [] }));
-        setConfigs(cfg.configs || []);
+        const [archData, previewData] = await Promise.all([
+          api<{ payrolls: Payroll[] }>("/api/payroll/manual").catch(() => ({ payrolls: [] })),
+          api<any>(`/api/payroll?month=${month}&year=${year}`).catch(() => ({ payrolls: [], saved: false })),
+        ]);
+        setArchive(archData.payrolls || []);
+        setSaved(previewData.saved || false);
+        const u = await api<{ users: any[] }>("/api/users").catch(() => ({ users: [] }));
+        setUsers(u.users.filter((x: any) => x.role !== "OWNER"));
       } else {
+        const data = await api<any>(`/api/payroll?month=${month}&year=${year}`);
         setMyPayroll(data.payroll || null);
         setSaved(data.saved || false);
       }
@@ -112,14 +128,35 @@ export function PayrollModule({ user }: { user: SafeUser }) {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  async function handleGenerate() {
+  // ===== Generate manual slip gaji =====
+  async function handleGenerateManual() {
+    if (!genForm.userId) { toast.error("Pilih karyawan dulu"); return; }
     setGenerating(true);
     try {
-      await api("/api/payroll/generate", { method: "POST", body: JSON.stringify({ month, year }) });
-      toast.success(`Payroll ${monthNames[month - 1]} ${year} berhasil dibuat`);
+      await api("/api/payroll/manual", {
+        method: "POST",
+        body: JSON.stringify({
+          userId: genForm.userId,
+          month: Number(genForm.month),
+          year: Number(genForm.year),
+          baseSalary: Number(genForm.baseSalary) || 0,
+          tunjangan: Number(genForm.tunjangan) || 0,
+          potongan: Number(genForm.potongan) || 0,
+          note: genForm.note,
+          bankName: genForm.bankName,
+          bankAccount: genForm.bankAccount,
+          accountName: genForm.accountName,
+          nik: genForm.nik,
+          jabatan: genForm.jabatan,
+          status: "DRAFT",
+        }),
+      });
+      toast.success("Slip gaji berhasil dibuat!");
+      // Reset form
+      setGenForm({ ...genForm, baseSalary: "0", tunjangan: "0", potongan: "0", note: "", bankAccount: "", accountName: "", nik: "" });
       loadData();
     } catch (e: any) {
-      toast.error(e.message || "Gagal generate payroll");
+      toast.error(e.message || "Gagal generate");
     } finally {
       setGenerating(false);
     }
@@ -128,101 +165,64 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   async function handleUpdateStatus(payrollId: string, status: string) {
     try {
       await api(`/api/payroll/${payrollId}`, { method: "PUT", body: JSON.stringify({ status }) });
-      toast.success(status === "PAID" ? "Gaji ditandai sudah dibayar" : status === "APPROVED" ? "Payroll disetujui" : "Status diperbarui");
+      toast.success(status === "PAID" ? "Gaji ditandai LUNAS" : status === "APPROVED" ? "Payroll disetujui" : "Status diperbarui");
       loadData();
     } catch (e: any) {
       toast.error(e.message || "Gagal update status");
     }
   }
 
-  function openConfig(config: SalaryConfig) {
-    setConfigDialog({ open: true, config });
-    setConfigForm({
-      baseSalary: config.baseSalary, mealAllowance: config.mealAllowance,
-      transportAllowance: config.transportAllowance, bonusTarget: config.bonusTarget,
-      penaltyPerAbsent: config.penaltyPerAbsent, bpjs: config.bpjs, tax: config.tax,
-    });
-  }
-
-  async function handleSaveConfig() {
-    if (!configDialog.config) return;
+  async function handleDelete(payrollId: string) {
+    if (!confirm("Hapus slip gaji ini?")) return;
     try {
-      await api("/api/salary-config", {
-        method: "POST",
-        body: JSON.stringify({ userId: configDialog.config.userId, ...configForm }),
-      });
-      toast.success("Konfigurasi gaji disimpan");
-      setConfigDialog({ open: false, config: null });
+      await api(`/api/payroll/${payrollId}`, { method: "DELETE" });
+      toast.success("Slip gaji dihapus");
       loadData();
     } catch (e: any) {
-      toast.error(e.message || "Gagal menyimpan");
+      toast.error(e.message || "Gagal hapus");
     }
   }
 
-  function handleExportPayslipPDF(p: Payroll) {
+  // ===== Download slip gaji PDF (template baru) =====
+  function handleDownloadSlip(p: Payroll) {
     const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
-    exportReportPDF(
-      `Slip Gaji - ${u.name} - ${monthNames[p.month - 1]} ${p.year}`,
-      [
-        { heading: "Informasi Karyawan", columns: ["Field", "Nilai"], rows: [
-          ["Nama", u.name], ["Jabatan", ROLE_LABELS[u.role] || u.role], ["Posisi", u.position || "-"],
-          ["Periode", `${monthNames[p.month - 1]} ${p.year}`], ["Status", STATUS_LABELS[p.status] || p.status],
-        ]},
-        { heading: "Pendapatan", columns: ["Komponen", "Jumlah"], rows: [
-          ["Gaji Pokok", formatCurrency(p.baseSalary)],
-          ["Tunjangan Makan", formatCurrency(p.mealAllowance)],
-          ["Tunjangan Transport", formatCurrency(p.transportAllowance)],
-          ["Bonus KPI", formatCurrency(p.kpiBonus)],
-          ["Total Pendapatan (Gross)", formatCurrency(p.grossSalary)],
-        ]},
-        { heading: "Potongan", columns: ["Komponen", "Jumlah"], rows: [
-          ["Potongan Kehadiran", formatCurrency(p.attendanceDeduction)],
-          ["BPJS", formatCurrency(p.bpjs)],
-          ["Pajak (PPh)", formatCurrency(p.tax)],
-          ["Potongan Lainnya", formatCurrency(p.otherDeduction)],
-          ["Total Potongan", formatCurrency(p.totalDeduction)],
-        ]},
-        { heading: "Ringkasan Absensi & KPI", columns: ["Metrik", "Nilai"], rows: [
-          ["Hari Kerja", String(p.workingDays)], ["Hadir", String(p.presentDays)],
-          ["Terlambat", String(p.lateDays)], ["Tidak Hadir (Alpha)", String(p.absentDays)],
-          ["Izin/Sakit/Cuti", String(p.leaveDays)],
-          ["KPI Score", String(p.kpiScore)],
-        ]},
-        { heading: "Gaji Diterima", columns: ["", "Jumlah"], rows: [["GAJI BERSIH (NET)", formatCurrency(p.netSalary)]] },
-      ],
-      `Slip-Gaji-${u.name}-${monthNames[p.month - 1]}-${p.year}`
-    );
+    const slipData: SlipGajiData = {
+      companyName: p.companyName || "PT. HAFARA AIQBA NUSANTARA",
+      companyEmail: "Info@hafaragroup.com",
+      companyWebsite: "www.HafaraGroup.com",
+      companyPhone: "081324511570",
+      companyAddress: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur",
+      employeeName: u.name,
+      nik: p.nik || p.userId.slice(-4).toUpperCase(),
+      jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",
+      periode: p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`,
+      bankName: p.bankName || "Bank Syariah Indonesia (BSI)",
+      bankAccount: p.bankAccount || "-",
+      accountName: p.accountName || u.name,
+      gajiPokok: p.baseSalary,
+      tunjanganBonus: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+      potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction),
+      note: p.note || "",
+      status: p.status,
+      paidAt: p.paidAt ? formatDate(p.paidAt) : null,
+    };
+    downloadSlipGajiPDF(slipData);
     toast.success("Slip gaji PDF diunduh");
   }
 
   function handleExportExcel() {
-    const rows = payrolls.map((p) => ({
-      Nama: p.user?.name || p.userName, Jabatan: ROLE_LABELS[p.user?.role || p.role || ""] || "",
-      Periode: `${monthNames[p.month - 1]} ${p.year}`,
-      "Gaji Pokok": p.baseSalary, "Tunjangan Makan": p.mealAllowance,
-      "Tunjangan Transport": p.transportAllowance, "Bonus KPI": p.kpiBonus,
-      "Gross": p.grossSalary,
-      "Potongan Kehadiran": p.attendanceDeduction, BPJS: p.bpjs, Pajak: p.tax,
-      "Total Potongan": p.totalDeduction, "Gaji Bersih": p.netSalary,
-      "KPI Score": p.kpiScore, "Hadir": p.presentDays, "Alpha": p.absentDays,
+    const rows = archive.map((p, i) => ({
+      No: i + 1,
+      Nama: p.user?.name || p.userName,
+      "Bulan/Tahun": `${monthNames[p.month - 1]} ${p.year}`,
+      "Gaji Pokok": p.baseSalary,
+      Tunjangan: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+      Potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax),
+      "Gaji Bersih": p.netSalary,
       Status: STATUS_LABELS[p.status] || p.status,
     }));
-    exportToExcel(rows, `Payroll-${monthNames[month - 1]}-${year}`, "Payroll");
+    exportToExcel(rows, "Arsip-Slip-Gaji", "Slip Gaji");
     toast.success("Excel diunduh");
-  }
-
-  function handleExportSummaryPDF() {
-    exportToPDF(
-      `Ringkasan Payroll - ${monthNames[month - 1]} ${year}`,
-      ["Nama", "Jabatan", "Gross", "Potongan", "Gaji Bersih", "KPI", "Status"],
-      payrolls.map((p) => [
-        p.user?.name || p.userName || "", ROLE_LABELS[p.user?.role || p.role || ""] || "",
-        formatCurrency(p.grossSalary), formatCurrency(p.totalDeduction),
-        formatCurrency(p.netSalary), String(p.kpiScore), STATUS_LABELS[p.status] || p.status,
-      ]),
-      `Ringkasan-Payroll-${monthNames[month - 1]}-${year}`
-    );
-    toast.success("PDF diunduh");
   }
 
   if (loading) {
@@ -233,7 +233,7 @@ export function PayrollModule({ user }: { user: SafeUser }) {
     );
   }
 
-  // ===== TEAM VIEW (own payslip) =====
+  // ===== TEAM VIEW =====
   if (!isOwner) {
     const p = myPayroll;
     return (
@@ -254,28 +254,23 @@ export function PayrollModule({ user }: { user: SafeUser }) {
             </div>
           }
         />
-
         {!p ? (
           <Card><CardContent className="py-12 text-center text-slate-400">Belum ada slip gaji untuk periode {monthNames[month - 1]} {year}</CardContent></Card>
         ) : (
           <>
-            {/* Status banner */}
-            <Card className={cn("border-2", p.status === "PAID" ? "border-blue-300 bg-blue-50" : p.status === "APPROVED" ? "border-amber-300 bg-amber-50" : "border-slate-200")}>
+            <Card className={cn("border-2", p.status === "PAID" ? "border-blue-300 bg-blue-50" : "border-slate-200")}>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {p.status === "PAID" ? <CheckCircle2 className="w-6 h-6 text-blue-600" /> : <Clock className="w-6 h-6 text-amber-600" />}
                   <div>
                     <p className="font-semibold text-slate-900">Periode: {monthNames[p.month - 1]} {p.year}</p>
-                    <p className="text-sm text-slate-600">
-                      {p.status === "PAID" ? `Dibayar pada ${p.paidAt ? formatDate(p.paidAt) : "-"}` : p.status === "APPROVED" ? "Disetujui, menunggu pembayaran" : "Draft - belum disetujui"}
-                    </p>
+                    <p className="text-sm text-slate-600">{p.status === "PAID" ? `Dibayar pada ${p.paidAt ? formatDate(p.paidAt) : "-"}` : "Draft - belum disetujui"}</p>
                   </div>
                 </div>
                 <Badge className={cn("text-sm", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge>
               </CardContent>
             </Card>
 
-            {/* Net salary hero */}
             <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white border-0">
               <CardContent className="p-6">
                 <p className="text-blue-100 text-sm">Gaji Bersih Diterima</p>
@@ -283,51 +278,46 @@ export function PayrollModule({ user }: { user: SafeUser }) {
                 <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/20">
                   <div><p className="text-blue-100 text-xs">Gross</p><p className="font-semibold">{formatCurrency(p.grossSalary)}</p></div>
                   <div><p className="text-blue-100 text-xs">Potongan</p><p className="font-semibold">{formatCurrency(p.totalDeduction)}</p></div>
-                  <div><p className="text-blue-100 text-xs">KPI Score</p><p className="font-semibold">{p.kpiScore}</p></div>
+                  <div><p className="text-blue-100 text-xs">KPI Score</p><p className="font-semibold">{p.kpiScore || "-"}</p></div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Detail breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4 text-blue-600" /> Pendapatan</CardTitle></CardHeader>
                 <CardContent className="space-y-2 text-sm">
                   <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
-                  <Row label="Tunjangan Makan" value={formatCurrency(p.mealAllowance)} />
-                  <Row label="Tunjangan Transport" value={formatCurrency(p.transportAllowance)} />
-                  <Row label="Bonus KPI" value={formatCurrency(p.kpiBonus)} highlight />
+                  {p.isManual ? (
+                    <Row label="Tunjangan & Bonus" value={formatCurrency(p.transportAllowance)} />
+                  ) : (
+                    <>
+                      <Row label="Tunjangan Makan" value={formatCurrency(p.mealAllowance)} />
+                      <Row label="Tunjangan Transport" value={formatCurrency(p.transportAllowance)} />
+                      <Row label="Bonus KPI" value={formatCurrency(p.kpiBonus)} />
+                    </>
+                  )}
                   <div className="border-t pt-2 mt-2"><Row label="Total Gross" value={formatCurrency(p.grossSalary)} bold /></div>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><TrendingDown className="w-4 h-4 text-rose-600" /> Potongan</CardTitle></CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  <Row label="Potongan Kehadiran" value={formatCurrency(p.attendanceDeduction)} negative />
-                  <Row label="BPJS" value={formatCurrency(p.bpjs)} negative />
-                  <Row label="Pajak (PPh)" value={formatCurrency(p.tax)} negative />
-                  {p.otherDeduction > 0 && <Row label="Potongan Lainnya" value={formatCurrency(p.otherDeduction)} negative />}
+                  {p.isManual ? (
+                    <Row label="Potongan" value={formatCurrency(p.otherDeduction)} negative />
+                  ) : (
+                    <>
+                      <Row label="Potongan Kehadiran" value={formatCurrency(p.attendanceDeduction)} negative />
+                      <Row label="BPJS" value={formatCurrency(p.bpjs)} negative />
+                      <Row label="Pajak (PPh)" value={formatCurrency(p.tax)} negative />
+                    </>
+                  )}
                   <div className="border-t pt-2 mt-2"><Row label="Total Potongan" value={formatCurrency(p.totalDeduction)} bold negative /></div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Attendance & KPI summary */}
-            <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><Clock className="w-4 h-4 text-blue-600" /> Ringkasan Absensi & KPI</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-3 text-center">
-                  <Mini label="Hari Kerja" value={p.workingDays} />
-                  <Mini label="Hadir" value={p.presentDays} color="text-blue-600" />
-                  <Mini label="Terlambat" value={p.lateDays} color="text-amber-600" />
-                  <Mini label="Alpha" value={p.absentDays} color="text-rose-600" />
-                  <Mini label="Izin/Sakit" value={p.leaveDays} color="text-cyan-600" />
-                  <Mini label="KPI Score" value={p.kpiScore} color="text-violet-600" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Button onClick={() => handleExportPayslipPDF(p)} className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => handleDownloadSlip(p)} className="w-full bg-blue-600 hover:bg-blue-700">
               <Download className="w-4 h-4 mr-2" /> Download Slip Gaji (PDF)
             </Button>
           </>
@@ -337,213 +327,235 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   }
 
   // ===== OWNER VIEW =====
-  const totalGross = payrolls.reduce((s, p) => s + p.grossSalary, 0);
-  const totalNet = payrolls.reduce((s, p) => s + p.netSalary, 0);
-  const totalDeduction = payrolls.reduce((s, p) => s + p.totalDeduction, 0);
-  const totalBonus = payrolls.reduce((s, p) => s + p.kpiBonus, 0);
-  const paidCount = payrolls.filter((p) => p.status === "PAID").length;
+  const previewNet = (Number(genForm.baseSalary) || 0) + (Number(genForm.tunjangan) || 0) - (Number(genForm.potongan) || 0);
 
   return (
     <div className="space-y-6">
       <SectionHeader
         title="Payroll & Gaji"
-        description="Kelola gaji bulanan tim, hitung otomatis dari absensi & KPI"
+        description="Generator slip gaji manual & arsip penggajian"
         action={
-          <div className="flex flex-wrap gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-[130px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-[90px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>{[now.getFullYear(), now.getFullYear() - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
-            <Button variant="outline" size="sm" onClick={handleExportExcel}><FileText className="w-4 h-4 mr-1" /> Excel</Button>
-            <Button variant="outline" size="sm" onClick={handleExportSummaryPDF}><FileText className="w-4 h-4 mr-1" /> PDF</Button>
-            <Button size="sm" onClick={handleGenerate} disabled={generating} className="bg-blue-600 hover:bg-blue-700">
-              <Zap className="w-4 h-4 mr-1" /> {generating ? "Memproses..." : saved ? "Update" : "Generate"}
-            </Button>
-          </div>
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <FileText className="w-4 h-4 mr-1" /> Export Excel
+          </Button>
         }
       />
 
-      {/* Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Gaji Bruto" value={formatCurrency(totalGross)} icon={Wallet} indicator="neutral" accent="bg-blue-50 text-blue-600" />
-        <StatCard title="Total Potongan" value={formatCurrency(totalDeduction)} icon={TrendingDown} indicator="neutral" accent="bg-rose-50 text-rose-600" />
-        <StatCard title="Total Gaji Bersih" value={formatCurrency(totalNet)} icon={DollarSign} indicator="green" accent="bg-blue-50 text-blue-600" />
-        <StatCard title="Sudah Dibayar" value={`${paidCount}/${payrolls.length}`} icon={CheckCircle2} indicator={paidCount === payrolls.length ? "green" : "yellow"} accent="bg-amber-50 text-amber-600" />
-      </div>
+      {/* Two-column layout: Generator + Arsip */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* ===== GENERATOR GAJI BULANAN (Form) ===== */}
+        <Card className="border-blue-200">
+          <CardHeader className="pb-3 bg-blue-600 text-white rounded-t-lg">
+            <CardTitle className="text-base flex items-center gap-2 text-white">
+              <Zap className="w-4 h-4" /> GENERATOR GAJI BULANAN
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 space-y-3">
+            <div>
+              <Label className="text-xs font-semibold text-slate-600">PILIH KARYAWAN</Label>
+              <Select value={genForm.userId} onValueChange={(v) => {
+                const u = users.find((x) => x.id === v);
+                setGenForm({ ...genForm, userId: v, jabatan: u?.position || ROLE_LABELS[u?.role || ""] || "", accountName: u?.name || "" });
+              }}>
+                <SelectTrigger className="mt-1"><SelectValue placeholder="-- Pilih Karyawan --" /></SelectTrigger>
+                <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name} ({ROLE_LABELS[u.role]})</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
 
-      <Tabs defaultValue="payroll">
-        <TabsList>
-          <TabsTrigger value="payroll"><Receipt className="w-4 h-4 mr-1" /> Payroll</TabsTrigger>
-          <TabsTrigger value="config"><Settings className="w-4 h-4 mr-1" /> Konfigurasi Gaji</TabsTrigger>
-        </TabsList>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-600">BULAN</Label>
+                <Select value={genForm.month} onValueChange={(v) => setGenForm({ ...genForm, month: v })}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold text-slate-600">TAHUN</Label>
+                <Input value={genForm.year} onChange={(e) => setGenForm({ ...genForm, year: e.target.value })} className="mt-1" />
+              </div>
+            </div>
 
-        {/* Payroll table */}
-        <TabsContent value="payroll" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Daftar Payroll - {monthNames[month - 1]} {year}</CardTitle>
-              {!saved && <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">Preview - belum disimpan. Klik Generate untuk menyimpan.</Badge>}
-            </CardHeader>
-            <CardContent>
-              {payrolls.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-8">Belum ada data. Klik Generate untuk membuat payroll.</p>
+            <div>
+              <Label className="text-xs font-semibold text-slate-600">GAJI POKOK (IDR)</Label>
+              <Input type="number" value={genForm.baseSalary} onChange={(e) => setGenForm({ ...genForm, baseSalary: e.target.value })} className="mt-1" placeholder="0" />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-600">TOTAL TUNJANGAN (IDR)</Label>
+              <Input type="number" value={genForm.tunjangan} onChange={(e) => setGenForm({ ...genForm, tunjangan: e.target.value })} className="mt-1" placeholder="0" />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-600">TOTAL POTONGAN (IDR)</Label>
+              <Input type="number" value={genForm.potongan} onChange={(e) => setGenForm({ ...genForm, potongan: e.target.value })} className="mt-1" placeholder="0" />
+            </div>
+
+            {/* Transfer info */}
+            <div className="pt-2 border-t">
+              <p className="text-xs font-semibold text-slate-600 mb-2">INFO TRANSFER (opsional)</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Bank (BSI/BNI/Mandiri)" value={genForm.bankName} onChange={(e) => setGenForm({ ...genForm, bankName: e.target.value })} className="text-sm" />
+                <Input placeholder="No. Rekening" value={genForm.bankAccount} onChange={(e) => setGenForm({ ...genForm, bankAccount: e.target.value })} className="text-sm" />
+                <Input placeholder="NIK Karyawan" value={genForm.nik} onChange={(e) => setGenForm({ ...genForm, nik: e.target.value })} className="text-sm" />
+                <Input placeholder="Jabatan" value={genForm.jabatan} onChange={(e) => setGenForm({ ...genForm, jabatan: e.target.value })} className="text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold text-slate-600">KETERANGAN / NOTES</Label>
+              <Textarea value={genForm.note} onChange={(e) => setGenForm({ ...genForm, note: e.target.value })} placeholder="e.g. Gaji bulanan terstruktur" rows={2} className="mt-1 text-sm" />
+            </div>
+
+            {/* Preview net */}
+            <div className="bg-blue-50 rounded-lg p-3 flex items-center justify-between">
+              <span className="text-sm text-slate-600">Preview Gaji Bersih:</span>
+              <span className="text-lg font-bold text-blue-700">{formatCurrency(previewNet)}</span>
+            </div>
+
+            <Button onClick={handleGenerateManual} disabled={generating || !genForm.userId} className="w-full bg-blue-600 hover:bg-blue-700">
+              {generating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+              {generating ? "Memproses..." : "GENERATE SLIP GAJI"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* ===== ARSIP SLIP GAJI (Table) ===== */}
+        <Card className="border-slate-200">
+          <CardHeader className="pb-3 bg-slate-800 text-white rounded-t-lg">
+            <CardTitle className="text-base flex items-center gap-2 text-white">
+              <Receipt className="w-4 h-4" /> ARSIP SLIP GAJI
+            </CardTitle>
+            <p className="text-xs text-slate-300 mt-1">Daftar penggajian bulanan seluruh staf</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-[500px] overflow-y-auto">
+              {archive.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-8">Belum ada slip gaji. Generate di form sebelah.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-left text-xs text-slate-500">
-                        <th className="py-2 pr-2 font-medium">Nama</th>
-                        <th className="py-2 px-2 font-medium text-right">Gross</th>
-                        <th className="py-2 px-2 font-medium text-right">Potongan</th>
-                        <th className="py-2 px-2 font-medium text-right">Gaji Bersih</th>
-                        <th className="py-2 px-2 font-medium text-center">KPI</th>
-                        <th className="py-2 px-2 font-medium text-center">Hadir</th>
-                        <th className="py-2 px-2 font-medium text-center">Status</th>
-                        <th className="py-2 pl-2 font-medium">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payrolls.map((p) => (
-                        <tr key={p.id || p.userId} className="border-b border-slate-50 hover:bg-slate-50">
-                          <td className="py-2 pr-2">
-                            <p className="font-medium text-slate-900">{p.user?.name || p.userName}</p>
-                            <p className="text-[10px] text-slate-500">{ROLE_LABELS[p.user?.role || p.role || ""] || ""}</p>
-                          </td>
-                          <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(p.grossSalary)}</td>
-                          <td className="py-2 px-2 text-right text-rose-600">{formatCurrency(p.totalDeduction)}</td>
-                          <td className="py-2 px-2 text-right font-bold text-blue-700">{formatCurrency(p.netSalary)}</td>
-                          <td className="py-2 px-2 text-center">
-                            <span className={cn("font-semibold", p.kpiScore >= 90 ? "text-blue-600" : p.kpiScore >= 80 ? "text-cyan-600" : p.kpiScore >= 70 ? "text-amber-600" : "text-rose-600")}>{p.kpiScore}</span>
-                          </td>
-                          <td className="py-2 px-2 text-center text-slate-600">{p.presentDays}/{p.workingDays}{p.absentDays > 0 && <span className="text-rose-500"> ({p.absentDays}α)</span>}</td>
-                          <td className="py-2 px-2 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[p.status] || "bg-slate-100")}>{STATUS_LABELS[p.status] || p.status || "Draft"}</Badge></td>
-                          <td className="py-2 pl-2">
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setPayslipDialog({ open: true, payroll: p })}>Detail</Button>
-                              {saved && p.id && p.status === "DRAFT" && <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-amber-600" onClick={() => handleUpdateStatus(p.id!, "APPROVED")}>Approve</Button>}
-                              {saved && p.id && p.status === "APPROVED" && <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-blue-600" onClick={() => handleUpdateStatus(p.id!, "PAID")}>Bayar</Button>}
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-slate-50 z-10">
+                    <tr className="border-b text-left text-slate-500">
+                      <th className="py-2 px-2 font-medium">No.</th>
+                      <th className="py-2 px-2 font-medium">Nama</th>
+                      <th className="py-2 px-2 font-medium">Periode</th>
+                      <th className="py-2 px-2 font-medium text-right">Gaji Pokok</th>
+                      <th className="py-2 px-2 font-medium text-right">Tunjangan</th>
+                      <th className="py-2 px-2 font-medium text-right">Potongan</th>
+                      <th className="py-2 px-2 font-medium text-right">Gaji Bersih</th>
+                      <th className="py-2 px-2 font-medium text-center">Status</th>
+                      <th className="py-2 px-2 font-medium text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archive.map((p, i) => {
+                      const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+                      const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+                      return (
+                        <tr key={p.id || i} className="border-b border-slate-50 hover:bg-slate-50">
+                          <td className="py-2 px-2 text-slate-400">{i + 1}</td>
+                          <td className="py-2 px-2 font-medium text-slate-900">{p.user?.name || p.userName}</td>
+                          <td className="py-2 px-2 text-slate-600">{monthNames[p.month - 1]} {p.year}</td>
+                          <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(p.baseSalary)}</td>
+                          <td className="py-2 px-2 text-right text-blue-600">{formatCurrency(tunj)}</td>
+                          <td className="py-2 px-2 text-right text-rose-600">{formatCurrency(pot)}</td>
+                          <td className="py-2 px-2 text-right font-bold text-slate-900">{formatCurrency(p.netSalary)}</td>
+                          <td className="py-2 px-2 text-center"><Badge variant="outline" className={cn("text-[9px]", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge></td>
+                          <td className="py-2 px-2">
+                            <div className="flex gap-1 justify-center">
+                              <Button size="sm" variant="ghost" className="h-6 px-1.5 text-blue-600" title="Preview Slip" onClick={() => setPayslipDialog({ open: true, payroll: p })}><Eye className="w-3 h-3" /></Button>
+                              <Button size="sm" variant="ghost" className="h-6 px-1.5 text-blue-600" title="Download PDF" onClick={() => handleDownloadSlip(p)}><Download className="w-3 h-3" /></Button>
+                              {p.status === "DRAFT" && <Button size="sm" variant="ghost" className="h-6 px-1.5 text-amber-600" title="Approve" onClick={() => handleUpdateStatus(p.id!, "APPROVED")}><CheckCircle2 className="w-3 h-3" /></Button>}
+                              {p.status === "APPROVED" && <Button size="sm" variant="ghost" className="h-6 px-1.5 text-blue-600" title="Tandai Lunas" onClick={() => handleUpdateStatus(p.id!, "PAID")}><DollarSign className="w-3 h-3" /></Button>}
+                              <Button size="sm" variant="ghost" className="h-6 px-1.5 text-rose-600" title="Hapus" onClick={() => handleDelete(p.id!)}><Trash2 className="w-3 h-3" /></Button>
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2 border-slate-200 font-bold">
-                        <td className="py-2 pr-2">TOTAL</td>
-                        <td className="py-2 px-2 text-right">{formatCurrency(totalGross)}</td>
-                        <td className="py-2 px-2 text-right text-rose-600">{formatCurrency(totalDeduction)}</td>
-                        <td className="py-2 px-2 text-right text-blue-700">{formatCurrency(totalNet)}</td>
-                        <td colSpan={4}></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+            <div className="border-t px-3 py-2 flex items-center justify-between text-xs text-slate-500">
+              <span>Menampilkan {archive.length} data</span>
+              <span>Total: <span className="font-bold text-blue-700">{formatCurrency(archive.reduce((s, p) => s + p.netSalary, 0))}</span></span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Salary Config tab */}
-        <TabsContent value="config" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Konfigurasi Gaji Karyawan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {configs.map((c) => (
-                  <div key={c.id} className="border border-slate-200 rounded-lg p-4 flex items-center justify-between hover:shadow-sm">
-                    <div>
-                      <p className="font-medium text-slate-900">{c.user.name}</p>
-                      <p className="text-xs text-slate-500">{ROLE_LABELS[c.user.role]} · {c.user.position || "-"}</p>
-                    </div>
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-4 text-sm">
-                      <div><p className="text-[10px] text-slate-400">Gaji Pokok</p><p className="font-semibold">{formatCurrency(c.baseSalary)}</p></div>
-                      <div><p className="text-[10px] text-slate-400">Tunjangan</p><p className="font-semibold">{formatCurrency(c.mealAllowance + c.transportAllowance)}</p></div>
-                      <div><p className="text-[10px] text-slate-400">Bonus KPI</p><p className="font-semibold text-blue-600">{formatCurrency(c.bonusTarget)}</p></div>
-                      <div><p className="text-[10px] text-slate-400">Penalty/Alpha</p><p className="font-semibold text-rose-600">{formatCurrency(c.penaltyPerAbsent)}</p></div>
-                      <div className="flex items-end"><Button size="sm" variant="outline" className="h-7" onClick={() => openConfig(c)}><Settings className="w-3 h-3 mr-1" /> Edit</Button></div>
-                    </div>
-                  </div>
-                ))}
-                {configs.length === 0 && <p className="text-sm text-slate-400 text-center py-8">Belum ada konfigurasi gaji</p>}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Slip Gaji" value={archive.length} icon={Receipt} indicator="neutral" accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Sudah Dibayar" value={archive.filter((p) => p.status === "PAID").length} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Gaji Bruto" value={formatCurrency(archive.reduce((s, p) => s + p.grossSalary, 0))} icon={Wallet} indicator="neutral" accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Gaji Bersih" value={formatCurrency(archive.reduce((s, p) => s + p.netSalary, 0))} icon={DollarSign} indicator="green" accent="bg-blue-50 text-blue-600" />
+      </div>
 
-      {/* Config Dialog */}
-      <Dialog open={configDialog.open} onOpenChange={(o) => setConfigDialog({ open: o, config: configDialog.config })}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Konfigurasi Gaji - {configDialog.config?.user.name}</DialogTitle>
-            <DialogDescription>{ROLE_LABELS[configDialog.config?.user.role || ""]}</DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-2">
-            <Field label="Gaji Pokok" value={configForm.baseSalary} onChange={(v) => setConfigForm({ ...configForm, baseSalary: v })} />
-            <Field label="Tunjangan Makan" value={configForm.mealAllowance} onChange={(v) => setConfigForm({ ...configForm, mealAllowance: v })} />
-            <Field label="Tunjangan Transport" value={configForm.transportAllowance} onChange={(v) => setConfigForm({ ...configForm, transportAllowance: v })} />
-            <Field label="Bonus Target KPI" value={configForm.bonusTarget} onChange={(v) => setConfigForm({ ...configForm, bonusTarget: v })} />
-            <Field label="Penalty per Alpha" value={configForm.penaltyPerAbsent} onChange={(v) => setConfigForm({ ...configForm, penaltyPerAbsent: v })} />
-            <Field label="BPJS" value={configForm.bpjs} onChange={(v) => setConfigForm({ ...configForm, bpjs: v })} />
-            <Field label="Pajak (PPh)" value={configForm.tax} onChange={(v) => setConfigForm({ ...configForm, tax: v })} />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfigDialog({ open: false, config: null })}>Batal</Button>
-            <Button onClick={handleSaveConfig} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Payslip Detail Dialog */}
+      {/* ===== Payslip Detail Dialog ===== */}
       <Dialog open={payslipDialog.open} onOpenChange={(o) => setPayslipDialog({ open: o, payroll: payslipDialog.payroll })}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Detail Slip Gaji</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-blue-600" /> Detail Slip Gaji</DialogTitle>
             <DialogDescription>{payslipDialog.payroll?.user?.name} - {payslipDialog.payroll ? monthNames[payslipDialog.payroll.month - 1] : ""} {payslipDialog.payroll?.year}</DialogDescription>
           </DialogHeader>
-          {payslipDialog.payroll && (
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-              <div className="bg-blue-600 text-white rounded-lg p-4 text-center">
-                <p className="text-blue-100 text-sm">Gaji Bersih</p>
-                <p className="text-3xl font-bold">{formatCurrency(payslipDialog.payroll.netSalary)}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="border rounded-lg p-3">
-                  <p className="text-xs font-semibold text-slate-500 mb-2">PENDAPATAN</p>
-                  <Row label="Gaji Pokok" value={formatCurrency(payslipDialog.payroll.baseSalary)} />
-                  <Row label="T. Makan" value={formatCurrency(payslipDialog.payroll.mealAllowance)} />
-                  <Row label="T. Transport" value={formatCurrency(payslipDialog.payroll.transportAllowance)} />
-                  <Row label="Bonus KPI" value={formatCurrency(payslipDialog.payroll.kpiBonus)} />
-                  <div className="border-t mt-2 pt-2"><Row label="Gross" value={formatCurrency(payslipDialog.payroll.grossSalary)} bold /></div>
+          {payslipDialog.payroll && (() => {
+            const p = payslipDialog.payroll;
+            const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+            const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+            return (
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {/* Company header */}
+                <div className="bg-blue-900 text-white rounded-lg p-4">
+                  <p className="font-bold text-lg">PT. HAFARA AIQBA NUSANTARA</p>
+                  <p className="text-xs text-blue-100 mt-1">Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur</p>
+                  <p className="text-xs text-blue-100">Info@hafaragroup.com | www.HafaraGroup.com | 081324511570</p>
                 </div>
-                <div className="border rounded-lg p-3">
-                  <p className="text-xs font-semibold text-slate-500 mb-2">POTONGAN</p>
-                  <Row label="Kehadiran" value={formatCurrency(payslipDialog.payroll.attendanceDeduction)} negative />
-                  <Row label="BPJS" value={formatCurrency(payslipDialog.payroll.bpjs)} negative />
-                  <Row label="Pajak" value={formatCurrency(payslipDialog.payroll.tax)} negative />
-                  <div className="border-t mt-2 pt-2"><Row label="Total" value={formatCurrency(payslipDialog.payroll.totalDeduction)} bold negative /></div>
+                {/* Employee & periode */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="border rounded-lg p-3">
+                    <p className="text-xs font-semibold text-blue-700 mb-2">KARYAWAN</p>
+                    <p className="text-sm"><span className="text-slate-500">Nama:</span> <span className="font-medium">{p.user?.name}</span></p>
+                    <p className="text-sm"><span className="text-slate-500">NIK:</span> {p.nik || p.userId.slice(-4).toUpperCase()}</p>
+                    <p className="text-sm"><span className="text-slate-500">Jabatan:</span> {p.jabatan || p.user?.position || "-"}</p>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-xs font-semibold text-blue-700 mb-2">PERIODE & TRANSFER</p>
+                    <p className="text-sm"><span className="text-slate-500">Periode:</span> {p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`}</p>
+                    <p className="text-sm"><span className="text-slate-500">Bank:</span> {p.bankName || "-"}</p>
+                    <p className="text-sm"><span className="text-slate-500">No. Rek:</span> {p.bankAccount || "-"}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="border rounded-lg p-3">
-                <p className="text-xs font-semibold text-slate-500 mb-2">ABSENSI & KPI</p>
-                <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                  <Mini label="Hadir" value={`${payslipDialog.payroll.presentDays}/${payslipDialog.payroll.workingDays}`} />
-                  <Mini label="Terlambat" value={payslipDialog.payroll.lateDays} />
-                  <Mini label="Alpha" value={payslipDialog.payroll.absentDays} />
-                  <Mini label="KPI" value={payslipDialog.payroll.kpiScore} />
+                {/* Earnings & Deductions */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="border rounded-lg p-3">
+                    <p className="text-xs font-semibold text-green-700 mb-2 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> PENDAPATAN</p>
+                    <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
+                    <Row label="Tunjangan & Bonus" value={formatCurrency(tunj)} />
+                    <div className="border-t pt-1 mt-1"><Row label="Total Pendapatan" value={formatCurrency(p.grossSalary)} bold /></div>
+                  </div>
+                  <div className="border rounded-lg p-3">
+                    <p className="text-xs font-semibold text-rose-700 mb-2 flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> POTONGAN</p>
+                    <Row label="Potongan" value={formatCurrency(pot)} negative />
+                    <div className="border-t pt-1 mt-1"><Row label="Total Potongan" value={formatCurrency(pot)} bold negative /></div>
+                  </div>
                 </div>
+                {/* Net + Status */}
+                <div className="bg-blue-900 text-white rounded-lg p-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">TAKE HOME PAY (GAJI BERSIH)</p>
+                    <p className="text-2xl font-bold">{formatCurrency(p.netSalary)}</p>
+                  </div>
+                  <Badge className={cn("text-sm", STATUS_COLORS[p.status])}>{p.status === "PAID" ? "LUNAS / PAID" : STATUS_LABELS[p.status]}</Badge>
+                </div>
+                {p.note && <p className="text-xs text-slate-500 italic">Catatan: {p.note}</p>}
+                <Button onClick={() => handleDownloadSlip(p)} className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Download className="w-4 h-4 mr-2" /> Download Slip Gaji PDF
+                </Button>
               </div>
-              <Button onClick={() => handleExportPayslipPDF(payslipDialog.payroll)} className="w-full bg-blue-600 hover:bg-blue-700">
-                <Download className="w-4 h-4 mr-2" /> Download Slip Gaji PDF
-              </Button>
-            </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
@@ -552,27 +564,9 @@ export function PayrollModule({ user }: { user: SafeUser }) {
 
 function Row({ label, value, bold, negative }: { label: string; value: string; bold?: boolean; negative?: boolean }) {
   return (
-    <div className="flex items-center justify-between py-1">
+    <div className="flex items-center justify-between py-0.5">
       <span className={cn("text-slate-600", bold && "font-semibold text-slate-900")}>{label}</span>
       <span className={cn(bold ? "font-bold" : "font-medium", negative ? "text-rose-600" : "text-slate-800")}>{value}</span>
-    </div>
-  );
-}
-
-function Mini({ label, value, color }: { label: string; value: any; color?: string }) {
-  return (
-    <div className="bg-slate-50 rounded-lg p-2">
-      <p className={cn("text-lg font-bold", color || "text-slate-800")}>{value}</p>
-      <p className="text-[10px] text-slate-500">{label}</p>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input type="number" value={value} onChange={(e) => onChange(Number(e.target.value) || 0)} className="h-9" />
     </div>
   );
 }

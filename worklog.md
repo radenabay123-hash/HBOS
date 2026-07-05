@@ -305,3 +305,38 @@ Stage Summary:
 - Payroll & Gaji feature: auto-calculated from attendance + KPI score, 3 statuses (Draft/Approved/Paid), salary config per user, payslip PDF export
 - Payroll formula: Gross = Base + Meal Allowance (pro-rated) + Transport Allowance (pro-rated) + KPI Bonus; Net = Gross - (Attendance Deduction + BPJS + Tax + Other)
 - All verified working end-to-end
+
+---
+Task ID: MANUAL-PAYROLL-SLIP
+Agent: Main (Z.ai Code)
+Task: Manual payroll input + slip gaji PDF template sesuai gambar
+
+Work Log:
+- Analyzed 2 uploaded images with VLM: image 1 = slip gaji PDF template (PT. HAFARA AIQBA NUSANTARA header, employee info, pendapatan/potongan, take home pay, status, tanda tangan), image 2 = manual generator form (Pilih Karyawan, Bulan, Tahun, Gaji Pokok, Total Tunjangan, Total Potongan, Keterangan, Generate button, Arsip table)
+- Updated Prisma Payroll model: added fields isManual, nik, jabatan, bankName, bankAccount, accountName, periodeLabel, companyName
+- Created /api/payroll/manual (POST manual create/update, GET archive list) - owner only
+- Created src/lib/slip-gaji-pdf.ts: professional slip gaji PDF generator matching image 1 template:
+  - Company header bar (blue dark) with PT. HAFARA AIQBA NUSANTARA, email, website, phone, address
+  - SLIP GAJI title
+  - Employee info section (Nama, NIK, Jabatan)
+  - Periode & Transfer section (Periode Gaji, Metode Transfer bank, Atas Nama)
+  - Pendapatan (Earnings) column with green dot, Gaji Pokok, Tunjangan & Bonus, Total
+  - Potongan (Deductions) column with red dot, Potongan Keterlambatan/BPJS/Absensi, Total
+  - Catatan Internal section
+  - Take Home Pay bar (blue dark) with large net salary
+  - Status Pembayaran bar (green LUNAS/PAID or yellow)
+  - 3 tanda tangan boxes (Penerima Gaji, Owner PT. HAN, HRD/Finance)
+  - Footer with thank you message
+- Rewrote payroll-module.tsx with new owner view:
+  - Left: "GENERATOR GAJI BULANAN" form (Pilih Karyawan, Bulan, Tahun, Gaji Pokok IDR, Total Tunjangan IDR, Total Potongan IDR, Info Transfer: bank/no.rek/NIK/jabatan, Keterangan/Notes, Preview Gaji Bersih, GENERATE SLIP GAJI button)
+  - Right: "ARSIP SLIP GAJI" table (No, Nama, Periode, Gaji Pokok, Tunjangan, Potongan, Gaji Bersih, Status, Aksi: Preview/Download PDF/Approve/Pay/Delete)
+  - Summary stat cards (Total Slip, Sudah Dibayar, Total Bruto, Total Bersih)
+  - Payslip detail dialog matching slip gaji layout
+- Updated team view to use new slip gaji PDF download
+- Verified: manual API creates payroll with all fields (tested via curl: baseSalary 5M, tunjangan 1M, potongan 500K, net 5.5M, bank BCA, NIK 003), archive shows 6 payrolls, PDF download triggers without errors, lint clean, no runtime errors
+
+Stage Summary:
+- Manual payroll input: owner can select employee + input gaji pokok, tunjangan, potongan manually + bank info + NIK + keterangan
+- Slip gaji PDF matches template: company header, employee info, periode/transfer, pendapatan/potongan tables, take home pay, status LUNAS/PAID, 3 tanda tangan, footer
+- Arsip slip gaji table with all payrolls, download/approve/pay/delete actions
+- All verified working
