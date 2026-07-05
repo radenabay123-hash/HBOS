@@ -17,6 +17,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/constants";
 import { downloadSuratPDF } from "@/lib/surat-pdf";
+import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -332,10 +333,15 @@ export function SuratModule({ user }: { user: SafeUser }) {
               <Input value={form.recipientAddress} onChange={(e) => setForm({ ...form, recipientAddress: e.target.value })} className="bg-white" placeholder="e.g. Jl. Jenderal Sudirman No. 45, Jakarta" />
             </div>
 
-            {/* Isi Surat */}
+            {/* Isi Surat - Rich Text Editor */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-slate-600">Isi Surat / Pesan Utama</Label>
-              <Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} className="bg-white resize-none" rows={5} placeholder="Tulis isi surat resmi di sini..." />
+              <RichTextEditor
+                value={form.body}
+                onChange={(html) => setForm({ ...form, body: html })}
+                placeholder="Tulis isi surat resmi di sini..."
+                minHeight={180}
+              />
             </div>
 
             {/* Checkboxes */}
@@ -425,69 +431,82 @@ export function SuratModule({ user }: { user: SafeUser }) {
           </CardHeader>
           <CardContent className="p-4">
             {/* A4 Preview container */}
-            <div className="bg-white border-2 border-slate-200 rounded-lg p-5 mx-auto" style={{ maxWidth: "210px", minHeight: "297px", transform: "scale(1.4)", transformOrigin: "top center", marginBottom: "100px" }}>
-              {/* Header */}
-              <div className="flex items-start justify-between mb-1 pb-2 border-b-2 border-blue-900">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-white text-[8px] font-bold relative">
-                    H
-                    <div className="absolute inset-0 rounded-full bg-blue-900 opacity-30" style={{ clipPath: "circle(50% at 65% 65%)" }} />
+            <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden" style={{ maxWidth: "210px", minHeight: "297px" }}>
+              {/* ===== BLUE HEADER BACKGROUND ===== */}
+              <div style={{ backgroundColor: "#003366" }} className="px-3 py-2 flex items-start justify-between">
+                {/* Logo + company name (LEFT) */}
+                <div className="flex flex-col items-start">
+                  <div className="flex items-center gap-1">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[7px] font-bold relative" style={{ backgroundColor: "#ff8000" }}>
+                      H
+                      <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "#003366", opacity: 0.3, clipPath: "circle(50% at 65% 65%)" }} />
+                    </div>
+                    <div>
+                      <p className="text-white font-bold text-[7px] leading-none">hafaragroup</p>
+                      <p className="text-[5px] leading-none mt-0.5" style={{ color: "#b4c8e6" }}>consulting</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-blue-900 font-bold text-[8px] leading-none">hafaragroup</p>
-                    <p className="text-slate-400 text-[6px] leading-none mt-0.5">consulting</p>
+                </div>
+                {/* Contact + address (RIGHT) */}
+                <div className="text-right max-w-[60%]">
+                  <p className="text-white text-[5px] leading-tight">{form.headerContact}</p>
+                  <p className="text-white text-[5px] leading-tight mt-0.5">{form.headerAddress1}</p>
+                  <p className="text-white text-[5px] leading-tight">{form.headerAddress2}</p>
+                </div>
+              </div>
+
+              {/* Thick blue line */}
+              <div style={{ height: "2px", backgroundColor: "#003366" }}></div>
+
+              {/* ===== BODY CONTENT ===== */}
+              <div className="px-3 py-2">
+                {/* Nomor / Lampiran / Perihal */}
+                <div className="space-y-0.5 mb-2">
+                  <p className="text-slate-700 text-[6px]">Nomor&nbsp;&nbsp;&nbsp;: {form.suratNumber || "—"}</p>
+                  {form.lampiran && <p className="text-slate-700 text-[6px]">Lampiran : {form.lampiran}</p>}
+                  <p className="text-slate-700 text-[6px]">Perihal&nbsp;&nbsp;: {form.perihal || "—"}</p>
+                </div>
+
+                {/* Kepada Yth */}
+                <div className="space-y-0.5 mb-2">
+                  <p className="text-slate-700 text-[6px]">Kepada Yth,</p>
+                  {form.recipientName && <p className="text-slate-700 text-[6px] font-bold">{form.recipientName}</p>}
+                  {form.recipientInstansi && <p className="text-slate-700 text-[6px]">{form.recipientInstansi}</p>}
+                  {form.recipientAddress && <p className="text-slate-700 text-[6px]">{form.recipientAddress}</p>}
+                </div>
+
+                {/* City + Date (RIGHT) */}
+                <p className="text-slate-700 text-[6px] mb-1 text-right">{form.city}, {formatDate(form.issueDate)}</p>
+
+                {/* Isi Surat - render HTML */}
+                <div
+                  className="text-slate-700 text-[6px] leading-relaxed mb-2"
+                  dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#999">Silakan tulis isi surat resmi Anda di form sebelah kiri...</p>' }}
+                />
+
+                {/* Detail Kegiatan */}
+                {form.includeActivity && (
+                  <div className="mt-1 space-y-0.5 mb-2">
+                    {form.activityDate && <p className="text-slate-700 text-[6px]">Tanggal&nbsp;&nbsp;&nbsp;: {form.activityDate}</p>}
+                    {form.activityLocation && <p className="text-slate-700 text-[6px]">Lokasi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityLocation}</p>}
+                    {form.activityTime && <p className="text-slate-700 text-[6px]">Waktu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityTime}</p>}
                   </div>
+                )}
+
+                {/* Tanda Tangan (RIGHT) */}
+                <div className="mt-4 text-right">
+                  <p className="text-slate-700 text-[6px]">Hormat kami,</p>
+                  <div className="h-8"></div>
+                  <p className="text-[6px] font-bold" style={{ color: "#003366" }}>{form.signatoryName}</p>
+                  <p className="text-slate-700 text-[6px]">{form.signatoryTitle}</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-slate-600 text-[5px] leading-tight">{form.headerContact}</p>
-                  <p className="text-slate-600 text-[5px] leading-tight">{form.headerAddress1}</p>
-                  <p className="text-slate-600 text-[5px] leading-tight">{form.headerAddress2}</p>
-                </div>
-              </div>
-
-              {/* Nomor / Lampiran / Perihal */}
-              <div className="space-y-0.5 mt-2">
-                <p className="text-slate-700 text-[6px]">Nomor : {form.suratNumber || "—"}</p>
-                {form.lampiran && <p className="text-slate-700 text-[6px]">Lampiran : {form.lampiran}</p>}
-                <p className="text-slate-700 text-[6px]">Perihal : {form.perihal || "—"}</p>
-              </div>
-
-              {/* Kepada Yth */}
-              <div className="mt-2 space-y-0.5">
-                <p className="text-slate-700 text-[6px]">Kepada Yth,</p>
-                {form.recipientName && <p className="text-slate-700 text-[6px] font-bold">{form.recipientName}</p>}
-                {form.recipientInstansi && <p className="text-slate-700 text-[6px]">{form.recipientInstansi}</p>}
-                {form.recipientAddress && <p className="text-slate-700 text-[6px]">{form.recipientAddress}</p>}
-              </div>
-
-              {/* Isi Surat */}
-              <div className="mt-2">
-                <p className="text-slate-700 text-[6px] mb-1">{form.city}, {formatDate(form.issueDate)}</p>
-                <p className="text-slate-700 text-[6px] leading-relaxed whitespace-pre-wrap">
-                  {form.body || "Silakan tulis isi surat resmi Anda di form sebelah kiri..."}
-                </p>
-              </div>
-
-              {/* Detail Kegiatan */}
-              {form.includeActivity && (
-                <div className="mt-2 space-y-0.5">
-                  {form.activityDate && <p className="text-slate-700 text-[6px]">Tanggal : {form.activityDate}</p>}
-                  {form.activityLocation && <p className="text-slate-700 text-[6px]">Lokasi : {form.activityLocation}</p>}
-                  {form.activityTime && <p className="text-slate-700 text-[6px]">Waktu : {form.activityTime}</p>}
-                </div>
-              )}
-
-              {/* Tanda Tangan */}
-              <div className="mt-4 text-right">
-                <p className="text-slate-700 text-[6px]">Hormat kami,</p>
-                <div className="h-6"></div>
-                <p className="text-blue-900 text-[6px] font-bold">{form.signatoryName}</p>
-                <p className="text-slate-700 text-[6px]">{form.signatoryTitle}</p>
               </div>
 
               {/* Footer line */}
-              <div className="mt-4 border-t-2 border-blue-900 pt-1">
-                <p className="text-slate-400 text-[5px] text-center">{companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA"}</p>
+              <div style={{ height: "2px", backgroundColor: "#003366", marginTop: "8px" }}></div>
+              <div className="px-3 py-1 flex justify-between">
+                <p className="text-slate-400 text-[5px]">{companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA"}</p>
+                <p className="text-slate-400 text-[5px]">{form.headerContact}</p>
               </div>
             </div>
           </CardContent>
