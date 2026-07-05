@@ -340,3 +340,29 @@ Stage Summary:
 - Slip gaji PDF matches template: company header, employee info, periode/transfer, pendapatan/potongan tables, take home pay, status LUNAS/PAID, 3 tanda tangan, footer
 - Arsip slip gaji table with all payrolls, download/approve/pay/delete actions
 - All verified working
+
+---
+Task ID: PAYROLL-REDESIGN + ABSENSI-FIX
+Agent: Main (Z.ai Code)
+Task: Redesign Payroll layout to be elegant + fix absensi check-in/check-out
+
+Work Log:
+- Redesigned payroll-module.tsx owner view with elegant layout:
+  - 5-column grid (2 for generator, 3 for arsip) instead of 2-column equal split
+  - Generator card: gradient blue header with icon, sticky positioning, clean form sections with labels + icons, preview box with gradient background, separator dividers
+  - Arsip table: cleaner columns (Karyawan with role subtitle, Periode, Gaji Bersih with breakdown detail, Status badge, icon-only action buttons), hover highlight, footer with total
+  - Summary cards: compact 4-card row with icon badges (blue/green/violet)
+  - Payslip dialog: gradient company header, rounded info cards, earnings/deductions side-by-side with colored dots, net salary footer bar
+  - Team view: status banner, gradient net salary hero card with sparkle icon, breakdown cards with icon badges
+- Redesigned absensi check-in/out card:
+  - Full-width gradient header (blue when ready/done, amber when checked-in waiting checkout)
+  - Large white check-in/check-out buttons with colored text
+  - 4-column stats grid below (Check In, Check Out, Jam Kerja, Status) with clean dividers
+  - "Selesai Hari Ini" badge when both done
+- Verified check-in/check-out works: tested as Content Creative - check-in at 03:55, check-out at 03:59, jam kerja 0.1j calculated, status Hadir, badge shows "Selesai Hari Ini"
+- All APIs return 200, lint clean, no runtime errors
+
+Stage Summary:
+- Payroll layout now elegant: 2/3 grid split, gradient headers, icon labels, clean table, sticky generator
+- Absensi check-in/check-out fully functional: team can check in (before 09:00=Hadir, after=Terlambat), check out (auto-calculates work hours), status updates live
+- Both verified working in browser

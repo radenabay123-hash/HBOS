@@ -206,57 +206,60 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
 
       {/* Check-in/out card for team members */}
       {!isOwner && (
-        <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-sky-50">
-          <CardContent className="p-6">
+        <Card className={cn("border-2 overflow-hidden shadow-sm",
+          isDone ? "border-blue-300" : isCheckedIn ? "border-amber-300" : "border-blue-200")}>
+          <div className={cn("px-6 py-5",
+            isDone ? "bg-gradient-to-r from-blue-600 to-blue-700" :
+            isCheckedIn ? "bg-gradient-to-r from-amber-500 to-orange-500" :
+            "bg-gradient-to-r from-blue-600 to-blue-700")}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center",
-                  isDone ? "bg-blue-600 text-white" : isCheckedIn ? "bg-amber-500 text-white" : "bg-white text-blue-600 border-2 border-blue-200")}>
-                  {isDone ? <CheckCircle2 className="w-8 h-8" /> : <Clock className="w-8 h-8" />}
+                <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
+                  {isDone ? <CheckCircle2 className="w-8 h-8 text-white" /> : <Clock className="w-8 h-8 text-white" />}
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500">Absensi Hari Ini</p>
-                  <p className="text-xl font-bold text-slate-900">{formatDate(new Date().toISOString())}</p>
-                  <p className="text-sm text-slate-600">Jam sekarang: <span className="font-semibold">{nowTime} WIB</span></p>
+                <div className="text-white">
+                  <p className="text-white/80 text-sm">Absensi Hari Ini</p>
+                  <p className="text-xl font-bold">{formatDate(new Date().toISOString())}</p>
+                  <p className="text-white/90 text-sm">Jam: <span className="font-semibold">{nowTime} WIB</span></p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full sm:w-auto">
                 {!todayRecord?.checkIn ? (
-                  <Button onClick={handleCheckIn} disabled={actionLoading} className="bg-blue-600 hover:bg-blue-700">
-                    <LogIn className="w-4 h-4 mr-2" /> {actionLoading ? "Memproses..." : "Check In"}
+                  <Button onClick={handleCheckIn} disabled={actionLoading} size="lg" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold flex-1 sm:flex-none">
+                    <LogIn className="w-5 h-5 mr-2" /> {actionLoading ? "Memproses..." : "Check In"}
                   </Button>
                 ) : !todayRecord?.checkOut ? (
-                  <Button onClick={handleCheckOut} disabled={actionLoading} className="bg-rose-600 hover:bg-rose-700">
-                    <LogOut className="w-4 h-4 mr-2" /> {actionLoading ? "Memproses..." : "Check Out"}
+                  <Button onClick={handleCheckOut} disabled={actionLoading} size="lg" className="bg-white text-rose-600 hover:bg-rose-50 font-semibold flex-1 sm:flex-none">
+                    <LogOut className="w-5 h-5 mr-2" /> {actionLoading ? "Memproses..." : "Check Out"}
                   </Button>
                 ) : (
-                  <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-sm px-4 py-2">
-                    <CheckCircle2 className="w-4 h-4 mr-1" /> Selesai
+                  <Badge className="bg-white/20 text-white border-white/30 text-sm px-4 py-2">
+                    <CheckCircle2 className="w-4 h-4 mr-1" /> Selesai Hari Ini
                   </Badge>
                 )}
               </div>
             </div>
-            {todayRecord && (
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-blue-100">
-                <div className="bg-white rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-slate-500">Check In</p>
-                  <p className="font-bold text-blue-700">{todayRecord.checkIn ? new Date(todayRecord.checkIn).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-slate-500">Check Out</p>
-                  <p className="font-bold text-rose-700">{todayRecord.checkOut ? new Date(todayRecord.checkOut).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-slate-500">Jam Kerja</p>
-                  <p className="font-bold text-slate-700">{todayRecord.workHours || 0} jam</p>
-                </div>
-                <div className="bg-white rounded-lg p-2 text-center">
-                  <p className="text-[10px] text-slate-500">Status</p>
-                  <Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[todayRecord.status])}>{STATUS_LABELS[todayRecord.status] || todayRecord.status}</Badge>
-                </div>
+          </div>
+          {todayRecord && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-slate-100">
+              <div className="bg-white p-3 text-center">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Check In</p>
+                <p className="font-bold text-blue-700 text-lg">{todayRecord.checkIn ? new Date(todayRecord.checkIn).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</p>
               </div>
-            )}
-          </CardContent>
+              <div className="bg-white p-3 text-center">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Check Out</p>
+                <p className="font-bold text-rose-600 text-lg">{todayRecord.checkOut ? new Date(todayRecord.checkOut).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</p>
+              </div>
+              <div className="bg-white p-3 text-center">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Jam Kerja</p>
+                <p className="font-bold text-slate-700 text-lg">{todayRecord.workHours ? `${todayRecord.workHours}j` : "-"}</p>
+              </div>
+              <div className="bg-white p-3 text-center">
+                <p className="text-[10px] text-slate-400 uppercase tracking-wide">Status</p>
+                <Badge variant="outline" className={cn("text-[10px] mt-1", STATUS_COLORS[todayRecord.status])}>{STATUS_LABELS[todayRecord.status] || todayRecord.status}</Badge>
+              </div>
+            </div>
+          )}
         </Card>
       )}
 
