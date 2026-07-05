@@ -226,20 +226,23 @@ export function DocumentLayoutModule() {
                       <Separator className="my-2" />
                       <p className="text-xs font-semibold text-slate-500">ISI HEADER (urutan: Nama → Alamat → Kontak)</p>
                       <div className="space-y-1"><Label className="text-xs">Teks Nama Perusahaan</Label><Input value={s.companyNameText} onChange={(e) => updateSetting(dt.key, "companyNameText", e.target.value)} className="bg-white h-8" /></div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <ColorField label="Warna Nama" value={s.companyNameColor} onChange={(v) => updateSetting(dt.key, "companyNameColor", v)} />
-                        <div className="space-y-1"><Label className="text-xs">Ukuran Font Nama</Label><Input type="number" step="0.5" value={s.companyNameFontSize} onChange={(e) => updateSetting(dt.key, "companyNameFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyNameFontSize} onChange={(e) => updateSetting(dt.key, "companyNameFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <SelectField label="Rata Teks" value={s.companyNameAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyNameAlign", v)} />
                       </div>
                       <div className="flex items-center gap-2"><Switch checked={s.companyNameBold} onCheckedChange={(v) => updateSetting(dt.key, "companyNameBold", v)} /><Label className="text-xs">Nama Perusahaan Bold</Label></div>
                       <div className="space-y-1"><Label className="text-xs">Teks Alamat</Label><Input value={s.companyAddressText} onChange={(e) => updateSetting(dt.key, "companyAddressText", e.target.value)} className="bg-white h-8" /></div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <ColorField label="Warna Alamat" value={s.companyAddressColor} onChange={(v) => updateSetting(dt.key, "companyAddressColor", v)} />
-                        <div className="space-y-1"><Label className="text-xs">Ukuran Font Alamat</Label><Input type="number" step="0.5" value={s.companyAddressFontSize} onChange={(e) => updateSetting(dt.key, "companyAddressFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyAddressFontSize} onChange={(e) => updateSetting(dt.key, "companyAddressFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <SelectField label="Rata Teks" value={s.companyAddressAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyAddressAlign", v)} />
                       </div>
                       <div className="space-y-1"><Label className="text-xs">Teks Kontak (Email | Web | Telp)</Label><Input value={s.companyContactText} onChange={(e) => updateSetting(dt.key, "companyContactText", e.target.value)} className="bg-white h-8" /></div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <ColorField label="Warna Kontak" value={s.companyContactColor} onChange={(v) => updateSetting(dt.key, "companyContactColor", v)} />
-                        <div className="space-y-1"><Label className="text-xs">Ukuran Font Kontak</Label><Input type="number" step="0.5" value={s.companyContactFontSize} onChange={(e) => updateSetting(dt.key, "companyContactFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyContactFontSize} onChange={(e) => updateSetting(dt.key, "companyContactFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+                        <SelectField label="Rata Teks" value={s.companyContactAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyContactAlign", v)} />
                       </div>
                       <Separator className="my-2" />
                       <div className="grid grid-cols-3 gap-2">
@@ -327,41 +330,60 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
   const sigUrl = appSettings.companySignature;
   const directorName = appSettings.directorName || "M. Aqil Baihaqi";
   const directorTitle = appSettings.directorTitle || "Direktur Utama";
-  const logoSizePx = (s.logoSize || 14) * 2.5;
+  const logoSizePx = (s.logoSize || 12) * 2.5;
 
-  const headerBg = s.headerGradient ? `linear-gradient(135deg, ${s.headerBgColor} 0%, ${shadeColor(s.headerBgColor, 15)} 50%, ${s.headerBgColor} 100%)` : s.headerBgColor;
+  const alignMap: Record<string, string> = { left: "left", center: "center", right: "right" };
+  const nameAlign = alignMap[s.companyNameAlign] || "right";
+  const addrAlign = alignMap[s.companyAddressAlign] || "right";
+  const contactAlign = alignMap[s.companyContactAlign] || "right";
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px" }}>
-      {/* HEADER: Logo (left) + Company Name → Address → Contact (right) */}
-      <div style={{ background: headerBg, color: s.headerTextColor, padding: "10px 14px" }}>
-        <div className="flex items-start gap-3" style={{ minHeight: `${s.headerHeight || 38}px` }}>
-          {/* Logo */}
+      {/* ===== CLEAN HEADER (no background box) ===== */}
+      {/* Logo (left) + Company info (right-aligned) — no background */}
+      <div style={{ padding: "8px 14px 6px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
+        {/* Logo LEFT */}
+        {s.logoPosition !== "right" && (
           <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             {logoUrl ? (
               <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
             ) : (
-              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>{s.logoText}</div>
+              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
             )}
-            {s.logoSubText && <p style={{ color: s.logoSubTextColor, fontSize: "7px", marginTop: "2px", textAlign: "center" }}>{s.logoSubText}</p>}
+            {s.logoSubText && <p style={{ color: s.logoSubTextColor, fontSize: "7px", marginTop: "2px", textAlign: "center", fontWeight: "bold" }}>{s.logoSubText}</p>}
           </div>
-          {/* Company info: Name → Address → Contact (stacked) */}
-          <div className="flex-1 min-w-0" style={{ textAlign: s.logoPosition === "right" ? "left" : s.logoPosition === "center" ? "center" : "left" }}>
-            <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
-            <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "2px" }}>{s.companyAddressText}</p>
-            <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px" }}>{s.companyContactText}</p>
-          </div>
+        )}
+
+        {/* Company info: Name → Address → Contact (right-aligned) */}
+        <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
+          <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
+          <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
+          <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
         </div>
+
+        {/* Logo RIGHT */}
+        {s.logoPosition === "right" && (
+          <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+            ) : (
+              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Accent Line */}
-      <div style={{ height: `${s.accentLineHeight}px`, backgroundColor: s.accentLineColor }}></div>
+      {/* ===== SEPARATOR LINE (modern double line) ===== */}
+      <div style={{ padding: "0 14px" }}>
+        <div style={{ height: `${s.accentLineHeight || 2}px`, backgroundColor: s.accentLineColor, marginBottom: "1px" }}></div>
+        <div style={{ height: "1px", backgroundColor: s.accentLineColor, opacity: 0.4 }}></div>
+      </div>
 
-      {/* BODY */}
-      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "12px 14px" }}>
+      {/* ===== BODY ===== */}
+      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px" }}>
         {/* Document Title */}
         {s.docTitleShow && (
-          <p style={{ textAlign: s.docTitlePosition, fontSize: `${s.docTitleFontSize}pt`, color: s.docTitleColor, fontWeight: "bold", marginBottom: "8px" }}>
+          <p style={{ textAlign: s.docTitlePosition, fontSize: `${s.docTitleFontSize}pt`, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
             {docType === "SURAT" ? (
               <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "2px 10px", borderRadius: "10px", fontSize: "9px" }}>{s.docTitleText}</span>
             ) : s.docTitleText}
@@ -373,8 +395,8 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
         {docType === "SLIP_GAJI" && <SlipGajiPreview s={s} />}
       </div>
 
-      {/* FOOTER (empty - just colored bar) */}
-      <div style={{ backgroundColor: s.footerBgColor, height: `${s.footerHeight}px`, marginTop: "auto" }}></div>
+      {/* ===== FOOTER (empty thin bar) ===== */}
+      <div style={{ backgroundColor: s.footerBgColor, height: `${s.footerHeight || 6}px`, marginTop: "auto" }}></div>
     </div>
   );
 }

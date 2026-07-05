@@ -900,3 +900,37 @@ Stage Summary:
 - Paper size: A4, Letter, Legal, F4, A5
 - Logo & tanda tangan: connected from Pengaturan Aplikasi, upload available in Layout Dokumen
 - Live preview: real-time update with correct header order, empty footer, doc title
+
+---
+Task ID: DOC-LAYOUT-CLEAN-HEADER
+Agent: Main (Z.ai Code)
+Task: Redesign header - remove background box, clean modern layout with separator line, add text alignment
+
+Work Log:
+- Updated default settings for all 3 doc types:
+  - headerStyle: 'clean' (no background box)
+  - headerHeight: 28mm (smaller, saves paper space)
+  - Added companyNameAlign, companyAddressAlign, companyContactAlign (default: 'right')
+  - accentLineStyle: 'double' (modern double separator line)
+  - footerHeight: 6mm (very thin, minimal)
+  - companyNameColor: dark navy (#0f234b) instead of white (since no dark background)
+  - companyAddressColor: slate (#64748b)
+  - companyContactColor: light slate (#94a3b8)
+- Updated LivePreview with clean header layout:
+  - NO background box/color on header
+  - Logo (left) + Company info (right-aligned) in clean white area
+  - Company Name → Address → Contact stacked, each with independent text alignment
+  - Modern double separator line below header (thick + thin)
+  - Footer: thin colored bar (6mm, no text)
+- Added "Rata Teks" (Align) dropdown for each header text field:
+  - Nama Perusahaan: Kiri/Tengah/Kanan
+  - Alamat: Kiri/Tengah/Kanan
+  - Kontak: Kiri/Tengah/Kanan
+- Verified: preview shows clean header (no box), text right-aligned, double separator line, thin footer, all APIs 200, lint clean, no errors
+
+Stage Summary:
+- Header: NO background box, clean white area with logo left + company info right-aligned
+- Separator: modern double line (thick + thin)
+- Header text alignment: independently adjustable per field (Kiri/Tengah/Kanan)
+- Footer: thin colored bar only (6mm, no text)
+- More space for document content (header only 28mm vs previous 38-42mm)
