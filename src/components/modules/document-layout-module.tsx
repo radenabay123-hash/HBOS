@@ -474,27 +474,80 @@ function SuratPreview({ s, directorName, directorTitle, sigUrl }: any) {
 function InvoicePreview({ s, directorName, directorTitle, sigUrl }: any) {
   return (
     <div>
-      <div style={{ fontSize: "10px", marginBottom: "6px", textAlign: "right" }}>
-        <p>Nomor: 001/INV/HAN/VII/2026</p>
-        <p>Tanggal: 05 Juli 2026</p>
+      {/* Invoice info + client info — 2 column layout */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+        {/* Left: Ditagihkan kepada */}
+        <div style={{ fontSize: "9px" }}>
+          <p style={{ fontWeight: "bold", color: s.totalLabelColor, fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Ditagihkan Kepada</p>
+          <p style={{ fontWeight: "bold", fontSize: "10px" }}>PT Maju Jaya</p>
+          <p style={{ color: "#64748b" }}>Jl. Sudirman No. 45</p>
+          <p style={{ color: "#64748b" }}>Jakarta Selatan</p>
+        </div>
+        {/* Right: Invoice details */}
+        <div style={{ fontSize: "9px", textAlign: "right" }}>
+          <div style={{ marginBottom: "4px" }}>
+            <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "4px", fontSize: "7px", fontWeight: "bold", color: "#fff", backgroundColor: s.statusBadgePending }}>PENDING</span>
+          </div>
+          <p><span style={{ color: "#94a3b8" }}>No. Invoice:</span> <strong>001/INV/HAN/VII/2026</strong></p>
+          <p><span style={{ color: "#94a3b8" }}>Tanggal:</span> 05 Juli 2026</p>
+          <p><span style={{ color: "#94a3b8" }}>Jatuh Tempo:</span> 15 Juli 2026</p>
+        </div>
       </div>
-      <div style={{ fontSize: "10px", marginBottom: "6px" }}><p>DITAGIHKAN KEPADA:</p><p style={{ fontWeight: "bold" }}>PT Maju Jaya</p></div>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "6px", fontSize: "9px" }}>
-        <thead><tr style={{ backgroundColor: s.tableHeaderBgColor, color: s.tableHeaderTextColor }}>
-          <th style={{ padding: "4px", textAlign: "left" }}>DESKRIPSI</th><th style={{ padding: "4px", textAlign: "center" }}>JUMLAH</th><th style={{ padding: "4px", textAlign: "right" }}>TOTAL</th>
-        </tr></thead>
-        <tbody><tr style={{ backgroundColor: s.tableRowAltColor }}>
-          <td style={{ padding: "4px" }}>Leadership Training</td><td style={{ padding: "4px", textAlign: "center" }}>1</td><td style={{ padding: "4px", textAlign: "right" }}>Rp 25.000.000</td>
-        </tr></tbody>
-      </table>
-      <div style={{ textAlign: "right", fontSize: "10px", marginBottom: "6px" }}>
-        <p>Subtotal: Rp 25.000.000</p>
-        <p style={{ fontWeight: "bold", color: s.totalLabelColor }}>TOTAL: Rp 25.000.000</p>
-        <span style={{ backgroundColor: s.statusBadgePending, color: "#fff", padding: "2px 8px", borderRadius: "4px", fontSize: "8px" }}>PENDING</span>
+
+      {/* Items table — modern with rounded corners */}
+      <div style={{ borderRadius: "6px", overflow: "hidden", border: "1px solid #e2e8f0", marginBottom: "8px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
+          <thead>
+            <tr style={{ backgroundColor: s.tableHeaderBgColor, color: s.tableHeaderTextColor }}>
+              <th style={{ padding: "6px 8px", textAlign: "left", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px" }}>Deskripsi</th>
+              <th style={{ padding: "6px 8px", textAlign: "center", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "40px" }}>Qty</th>
+              <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "70px" }}>Harga</th>
+              <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "70px" }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ backgroundColor: s.tableRowAltColor, borderBottom: "1px solid #e2e8f0" }}>
+              <td style={{ padding: "6px 8px", fontWeight: "500" }}>Leadership Training Batch 1</td>
+              <td style={{ padding: "6px 8px", textAlign: "center", color: "#64748b" }}>1</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", color: "#64748b" }}>Rp 25.000.000</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold" }}>Rp 25.000.000</td>
+            </tr>
+            <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+              <td style={{ padding: "6px 8px", fontWeight: "500" }}>Coaching Session</td>
+              <td style={{ padding: "6px 8px", textAlign: "center", color: "#64748b" }}>1</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", color: "#64748b" }}>Rp 5.000.000</td>
+              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold" }}>Rp 5.000.000</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div style={{ textAlign: s.sigPosition, marginTop: "12px" }}>
+
+      {/* Summary — right aligned with modern styling */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+        <div style={{ width: "160px", fontSize: "9px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", color: "#64748b" }}>
+            <span>Subtotal</span><span>Rp 30.000.000</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", color: "#64748b" }}>
+            <span>Diskon</span><span>- Rp 0</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 8px", marginTop: "2px", borderRadius: "4px", backgroundColor: s.totalLabelColor, color: "#fff" }}>
+            <span style={{ fontWeight: "bold" }}>TOTAL</span><span style={{ fontWeight: "bold", fontSize: `${s.totalFontSize}px` }}>Rp 30.000.000</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment info — modern card */}
+      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 8px", marginBottom: "8px", fontSize: "8px", backgroundColor: "#f8fafc" }}>
+        <p style={{ fontWeight: "bold", color: s.totalLabelColor, marginBottom: "2px" }}>Pembayaran via Transfer:</p>
+        <p>Bank Mandiri — 1234567890 — PT Hafara Aqiba Nusantara</p>
+      </div>
+
+      {/* Signature */}
+      <div style={{ textAlign: s.sigPosition, marginTop: "8px" }}>
         <p style={{ fontSize: "9px" }}>Hormat kami,</p>
         <div style={{ height: "30px" }}>{sigUrl && <img src={sigUrl} alt="TTD" style={{ height: "25px" }} />}</div>
+        {s.sigLineStyle !== "none" && <div style={{ width: "40%", marginLeft: s.sigPosition === "right" ? "auto" : "0", borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid", borderColor: s.sigLineColor, marginBottom: "2px" }} />}
         <p style={{ fontWeight: "bold", color: s.sigNameColor, fontSize: "9px" }}>{directorName}</p>
         <p style={{ fontSize: "8px", color: "#888" }}>{directorTitle}</p>
       </div>
@@ -505,27 +558,74 @@ function InvoicePreview({ s, directorName, directorTitle, sigUrl }: any) {
 function SlipGajiPreview({ s }: any) {
   return (
     <div>
-      <div style={{ backgroundColor: s.sectionHeaderBgColor, color: s.sectionHeaderTextColor, padding: "4px 8px", fontSize: "9px", fontWeight: "bold", marginBottom: "4px", borderRadius: "3px" }}>KARYAWAN</div>
-      <div style={{ fontSize: "9px", marginBottom: "6px" }}>
-        <p>Nama: <strong>Ahmad Fauzi</strong></p>
-        <p>Jabatan: Assistant Trainer</p>
-        <p>Periode: Juli 2026</p>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "6px" }}>
-        <div style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}>
-          <p style={{ fontSize: "8px", fontWeight: "bold", color: s.earningsColor, marginBottom: "2px" }}>PENDAPATAN</p>
-          <p style={{ fontSize: "8px" }}>Gaji Pokok: Rp 5.500.000</p>
-          <p style={{ fontSize: "8px", fontWeight: "bold" }}>Total: Rp 6.000.000</p>
-        </div>
-        <div style={{ border: "1px solid #ddd", borderRadius: "4px", padding: "5px" }}>
-          <p style={{ fontSize: "8px", fontWeight: "bold", color: s.deductionsColor, marginBottom: "2px" }}>POTONGAN</p>
-          <p style={{ fontSize: "8px" }}>BPJS: Rp 300.000</p>
-          <p style={{ fontSize: "8px", fontWeight: "bold" }}>Total: Rp 650.000</p>
+      {/* Employee info — modern card */}
+      <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: "8px" }}>
+        <div style={{ backgroundColor: s.sectionHeaderBgColor, color: s.sectionHeaderTextColor, padding: "5px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5px" }}>Informasi Karyawan</div>
+        <div style={{ padding: "6px 8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: "9px" }}>
+          <div><span style={{ color: "#94a3b8" }}>Nama:</span> <strong>Ahmad Fauzi</strong></div>
+          <div><span style={{ color: "#94a3b8" }}>Periode:</span> <strong>Juli 2026</strong></div>
+          <div><span style={{ color: "#94a3b8" }}>Jabatan:</span> Assistant Trainer</div>
+          <div><span style={{ color: "#94a3b8" }}>Status:</span> Tetap</div>
         </div>
       </div>
-      <div style={{ backgroundColor: s.netSalaryBgColor, color: s.netSalaryTextColor, padding: "8px", borderRadius: "4px", display: "flex", justifyContent: "space-between" }}>
-        <span style={{ fontSize: "10px" }}>GAJI BERSIH</span>
-        <span style={{ fontSize: `${s.netSalaryFontSize}px`, fontWeight: "bold" }}>Rp 5.350.000</span>
+
+      {/* Earnings & Deductions — modern side-by-side cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "8px" }}>
+        {/* Earnings card */}
+        <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <div style={{ backgroundColor: s.earningsColor, color: "#fff", padding: "4px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.3px" }}>Pendapatan</div>
+          <div style={{ padding: "5px 8px", fontSize: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>Gaji Pokok</span><span style={{ fontWeight: "500" }}>Rp 5.500.000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>Tunjangan Makan</span><span style={{ fontWeight: "500" }}>Rp 300.000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>Tunjangan Transport</span><span style={{ fontWeight: "500" }}>Rp 200.000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0 1px", marginTop: "2px" }}>
+              <span style={{ fontWeight: "bold", color: s.earningsColor }}>Total</span><span style={{ fontWeight: "bold", color: s.earningsColor }}>Rp 6.000.000</span>
+            </div>
+          </div>
+        </div>
+        {/* Deductions card */}
+        <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+          <div style={{ backgroundColor: s.deductionsColor, color: "#fff", padding: "4px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.3px" }}>Potongan</div>
+          <div style={{ padding: "5px 8px", fontSize: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>BPJS</span><span style={{ fontWeight: "500" }}>Rp 300.000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>Pajak (PPh)</span><span style={{ fontWeight: "500" }}>Rp 350.000</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <span style={{ color: "#64748b" }}>Potongan Absensi</span><span style={{ fontWeight: "500" }}>Rp 0</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0 1px", marginTop: "2px" }}>
+              <span style={{ fontWeight: "bold", color: s.deductionsColor }}>Total</span><span style={{ fontWeight: "bold", color: s.deductionsColor }}>Rp 650.000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Net salary — modern highlight box */}
+      <div style={{ borderRadius: "6px", overflow: "hidden", marginBottom: "6px" }}>
+        <div style={{ backgroundColor: s.netSalaryBgColor, color: s.netSalaryTextColor, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <p style={{ fontSize: "8px", opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.5px" }}>Gaji Bersih Diterima</p>
+            <p style={{ fontSize: `${s.netSalaryFontSize}px`, fontWeight: "bold" }}>Rp 5.350.000</p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "7px", opacity: 0.6 }}>Lima Juta Tiga Ratus Lima Puluh Ribu Rupiah</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment info — small card */}
+      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 8px", fontSize: "8px", backgroundColor: "#f8fafc" }}>
+        <p style={{ fontWeight: "bold", color: s.sectionHeaderTextColor, marginBottom: "1px" }}>Transfer ke:</p>
+        <p style={{ color: "#64748b" }}>Bank Mandiri — 1234567890 — PT Hafara Aqiba Nusantara</p>
       </div>
     </div>
   );

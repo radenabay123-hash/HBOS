@@ -999,3 +999,31 @@ Stage Summary:
 - "hafaragroup consulting" text removed from all layouts
 - Live preview updates in real-time when position changes
 - Default position: "above" (info on white paper above navy decorative bar)
+
+---
+Task ID: INVOICE-SLIP-REDESIGN
+Agent: Main (Z.ai Code)
+Task: Redesign Invoice and Slip Gaji columns to be more professional and elegant
+
+Work Log:
+- Redesigned InvoicePreview with modern professional layout:
+  - 2-column header: "Ditagihkan Kepada" (left) + invoice details with status badge (right)
+  - Status badge: modern pill shape with color from settings
+  - Items table: rounded corners (6px), border, uppercase headers with letter spacing, alternating row colors, 4 columns (Deskripsi/Qty/Harga/Total), 2 sample rows
+  - Summary section: right-aligned card with Subtotal/Diskon/TOTAL (TOTAL in colored box with white text)
+  - Payment info: modern card with light gray background, rounded corners
+  - Signature: with dashed line, uses settings colors
+- Redesigned SlipGajiPreview with modern professional layout:
+  - Employee info card: rounded border, colored section header "Informasi Karyawan", 2-column grid (Nama/Periode/Jabatan/Status)
+  - Earnings & Deductions: side-by-side modern cards with colored headers (green for earnings, red for deductions)
+    - Each card has: colored header bar, item rows with flex justify-between, bottom border separators, total row with matching color
+    - 3 items per card (Gaji Pokok/Tunjangan Makan/Tunjangan Transport for earnings; BPJS/Pajak/Potongan Absensi for deductions)
+  - Net salary box: full-width colored box with "Gaji Bersih Diterima" label + amount + terbilang text
+  - Payment info: small card with bank transfer details
+- All colors use settings (tableHeaderBgColor, earningsColor, deductionsColor, netSalaryBgColor, etc.)
+- Verified: no errors, lint clean, APIs return correct settings
+
+Stage Summary:
+- Invoice: modern 2-column layout, rounded table, colored summary box, payment card
+- Slip Gaji: modern employee card, side-by-side earnings/deductions cards with colored headers, elegant net salary box with terbilang
+- Both use customizable colors from layout settings
