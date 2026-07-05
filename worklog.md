@@ -934,3 +934,43 @@ Stage Summary:
 - Header text alignment: independently adjustable per field (Kiri/Tengah/Kanan)
 - Footer: thin colored bar only (6mm, no text)
 - More space for document content (header only 28mm vs previous 38-42mm)
+
+---
+Task ID: DOC-LAYOUT-BOXED-HEADER-FOOTER
+Agent: Main (Z.ai Code)
+Task: Match layout to pay.jpg — boxed navy header + navy footer with text
+
+Work Log:
+- Analyzed pay.jpg with VLM: header has navy background box with logo + company info INSIDE, footer has navy background with "Terima Kasih!" text
+- Updated default settings for all 3 doc types:
+  - headerStyle: 'boxed' (navy background box)
+  - headerGradient: true (135deg gradient)
+  - headerHeight: 32mm (compact, saves paper)
+  - Company info colors: white/light blue text on navy background
+  - footerShowText: true
+  - footerText: "Terima Kasih!"
+  - footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group."
+  - footerTextColor: #ffffff
+  - footerBgColor: same navy as header
+  - footerHeight: 14mm
+- Updated LivePreview with boxed header layout:
+  - Navy gradient background box containing logo (left) + company info (right-aligned)
+  - Thin accent line (orange) below header
+  - Body content on white
+  - Navy footer with "Terima Kasih!" (bold) + sub-text, centered
+  - If footerShowText is off: thin colored bar only
+- Added footer settings to UI:
+  - Toggle "Tampilkan Teks di Footer"
+  - Teks Footer (judul): "Terima Kasih!"
+  - Sub-teks Footer: "Atas dedikasi & kontribusi Anda..."
+  - Warna Teks Footer
+  - Warna BG Footer
+  - Tinggi Footer
+- Verified: header has navy gradient background with company info inside, footer has navy background with "Terima Kasih!" text, matches pay.jpg layout, all APIs 200, lint clean
+
+Stage Summary:
+- Header: navy background box (gradient) with logo + Nama → Alamat → Kontak inside (white text on navy)
+- Footer: navy background with "Terima Kasih!" + sub-text (matches pay.jpg)
+- Layout now matches the reference image exactly
+- All 3 doc types (Surat, Invoice, Slip Gaji) use same header/footer style
+- Footer text can be toggled on/off, customized

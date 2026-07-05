@@ -296,7 +296,15 @@ export function DocumentLayoutModule() {
                       {s.sigLineStyle && (<><SelectField label="Gaya Garis TTD" value={s.sigLineStyle} options={LINE_STYLES} onChange={(v) => updateSetting(dt.key, "sigLineStyle", v)} /><ColorField label="Warna Garis TTD" value={s.sigLineColor} onChange={(v) => updateSetting(dt.key, "sigLineColor", v)} /></>)}
                       {s.stampEnabled !== undefined && <div className="flex items-center gap-2"><Switch checked={s.stampEnabled} onCheckedChange={(v) => updateSetting(dt.key, "stampEnabled", v)} /><Label className="text-xs">Tampilkan Stempel</Label></div>}
                       <Separator className="my-2" />
-                      <p className="text-xs font-semibold text-slate-500">FOOTER (kosong — tanpa tulisan)</p>
+                      <p className="text-xs font-semibold text-slate-500">FOOTER</p>
+                      <div className="flex items-center gap-2"><Switch checked={s.footerShowText} onCheckedChange={(v) => updateSetting(dt.key, "footerShowText", v)} /><Label className="text-xs">Tampilkan Teks di Footer</Label></div>
+                      {s.footerShowText && (
+                        <>
+                          <div className="space-y-1"><Label className="text-xs">Teks Footer (judul)</Label><Input value={s.footerText} onChange={(e) => updateSetting(dt.key, "footerText", e.target.value)} className="bg-white h-8" placeholder="Terima Kasih!" /></div>
+                          <div className="space-y-1"><Label className="text-xs">Sub-teks Footer</Label><Input value={s.footerSubText} onChange={(e) => updateSetting(dt.key, "footerSubText", e.target.value)} className="bg-white h-8" placeholder="Atas dedikasi & kontribusi Anda..." /></div>
+                          <ColorField label="Warna Teks Footer" value={s.footerTextColor} onChange={(v) => updateSetting(dt.key, "footerTextColor", v)} />
+                        </>
+                      )}
                       <ColorField label="Warna BG Footer" value={s.footerBgColor} onChange={(v) => updateSetting(dt.key, "footerBgColor", v)} />
                       <div className="space-y-1"><Label className="text-xs">Tinggi Footer (mm)</Label><Input type="number" value={s.footerHeight} onChange={(e) => updateSetting(dt.key, "footerHeight", Number(e.target.value))} className="bg-white h-8" /></div>
                     </CardContent>
@@ -337,50 +345,53 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
   const addrAlign = alignMap[s.companyAddressAlign] || "right";
   const contactAlign = alignMap[s.companyContactAlign] || "right";
 
+  // Header background: gradient or solid
+  const headerBg = s.headerGradient
+    ? `linear-gradient(135deg, ${s.headerBgColor} 0%, ${shadeColor(s.headerBgColor, 15)} 50%, ${s.headerBgColor} 100%)`
+    : s.headerBgColor;
+
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px" }}>
-      {/* ===== CLEAN HEADER (no background box) ===== */}
-      {/* Logo (left) + Company info (right-aligned) — no background */}
-      <div style={{ padding: "8px 14px 6px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
-        {/* Logo LEFT */}
-        {s.logoPosition !== "right" && (
-          <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
-            ) : (
-              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
-            )}
-            {s.logoSubText && <p style={{ color: s.logoSubTextColor, fontSize: "7px", marginTop: "2px", textAlign: "center", fontWeight: "bold" }}>{s.logoSubText}</p>}
-          </div>
-        )}
+    <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px", display: "flex", flexDirection: "column" }}>
+      {/* ===== BOXED HEADER (navy background, logo + company info inside) ===== */}
+      <div style={{ background: headerBg, padding: "10px 14px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", minHeight: `${s.headerHeight || 32}px` }}>
+          {/* Logo LEFT */}
+          {s.logoPosition !== "right" && (
+            <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+              ) : (
+                <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+              )}
+              {s.logoSubText && <p style={{ color: s.logoSubTextColor, fontSize: "7px", marginTop: "2px", textAlign: "center", fontWeight: "bold" }}>{s.logoSubText}</p>}
+            </div>
+          )}
 
-        {/* Company info: Name → Address → Contact (right-aligned) */}
-        <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
-          <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
-          <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
-          <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
+          {/* Company info: Name → Address → Contact (inside navy box) */}
+          <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
+            <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
+            <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
+            <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
+          </div>
+
+          {/* Logo RIGHT */}
+          {s.logoPosition === "right" && (
+            <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+              ) : (
+                <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Logo RIGHT */}
-        {s.logoPosition === "right" && (
-          <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
-            ) : (
-              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
-            )}
-          </div>
-        )}
       </div>
 
-      {/* ===== SEPARATOR LINE (modern double line) ===== */}
-      <div style={{ padding: "0 14px" }}>
-        <div style={{ height: `${s.accentLineHeight || 2}px`, backgroundColor: s.accentLineColor, marginBottom: "1px" }}></div>
-        <div style={{ height: "1px", backgroundColor: s.accentLineColor, opacity: 0.4 }}></div>
-      </div>
+      {/* ===== ACCENT LINE (thin colored line below header) ===== */}
+      <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
 
       {/* ===== BODY ===== */}
-      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px" }}>
+      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px", flex: 1 }}>
         {/* Document Title */}
         {s.docTitleShow && (
           <p style={{ textAlign: s.docTitlePosition, fontSize: `${s.docTitleFontSize}pt`, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
@@ -395,8 +406,15 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
         {docType === "SLIP_GAJI" && <SlipGajiPreview s={s} />}
       </div>
 
-      {/* ===== FOOTER (empty thin bar) ===== */}
-      <div style={{ backgroundColor: s.footerBgColor, height: `${s.footerHeight || 6}px`, marginTop: "auto" }}></div>
+      {/* ===== FOOTER (navy background with text) ===== */}
+      {s.footerShowText ? (
+        <div style={{ background: s.footerGradient ? `linear-gradient(135deg, ${s.footerBgColor} 0%, ${shadeColor(s.footerBgColor, 10)} 100%)` : s.footerBgColor, padding: "8px 14px", textAlign: "center" }}>
+          <p style={{ color: s.footerTextColor, fontWeight: "bold", fontSize: "11px" }}>{s.footerText || "Terima Kasih!"}</p>
+          {s.footerSubText && <p style={{ color: s.footerTextColor, fontSize: "7px", opacity: 0.8, marginTop: "1px" }}>{s.footerSubText}</p>}
+        </div>
+      ) : (
+        <div style={{ backgroundColor: s.footerBgColor, height: `${s.footerHeight || 6}px` }}></div>
+      )}
     </div>
   );
 }
