@@ -32,13 +32,18 @@ export function TeamDashboard() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [data, setData] = useState<any>(null);
+  const [kpiScore, setKpiScore] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
     try {
-      const d = await api(`/api/dashboard/team?year=${year}&month=${month}`);
+      const [d, kpi] = await Promise.all([
+        api(`/api/dashboard/team?year=${year}&month=${month}`),
+        api<{ score: any }>("/api/kpi/score").catch(() => ({ score: null })),
+      ]);
       setData(d);
+      setKpiScore(kpi.score);
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat dashboard");
     } finally {
@@ -79,6 +84,17 @@ export function TeamDashboard() {
             <p className="text-slate-300 text-sm">Selamat datang kembali,</p>
             <h1 className="text-2xl font-bold">{u.name}</h1>
             <p className="text-slate-300 text-sm mt-1">{u.roleLabel} · {u.position || ""}</p>
+            {kpiScore && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-xs text-slate-300">KPI Score Anda:</span>
+                <span className={`text-2xl font-bold ${kpiScore.weightedScore >= 90 ? "text-emerald-400" : kpiScore.weightedScore >= 80 ? "text-cyan-400" : kpiScore.weightedScore >= 70 ? "text-amber-400" : "text-rose-400"}`}>
+                  {kpiScore.weightedScore}
+                </span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${kpiScore.weightedScore >= 90 ? "bg-emerald-500/20 text-emerald-300" : kpiScore.weightedScore >= 80 ? "bg-cyan-500/20 text-cyan-300" : kpiScore.weightedScore >= 70 ? "bg-amber-500/20 text-amber-300" : "bg-rose-500/20 text-rose-300"}`}>
+                  {kpiScore.category}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="bg-white/10 text-white text-sm rounded-lg px-3 py-2 border border-white/20">

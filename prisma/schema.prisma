@@ -36,6 +36,7 @@ model User {
   scoredTarget     ScoreLog[]         @relation("ScoreLogTarget")
   sessions         Session[]
   notifications    Notification[]
+  kpiLogs          KpiLog[]
 }
 
 model Session {
@@ -272,4 +273,24 @@ model Notification {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ===================== KPI LOGS (Daily/Weekly/Monthly Achievement Tracking) =====================
+
+model KpiLog {
+  id              String   @id @default(cuid())
+  userId          String
+  metricKey       String   // e.g. pm_artikel_kota, at_ide_konten
+  value           Float    // actual achievement value
+  date            DateTime @default(now())
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, metricKey, date])
+  @@index([userId])
+  @@index([metricKey])
+  @@index([date])
 }

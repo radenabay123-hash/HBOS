@@ -5,10 +5,12 @@ import { Loader2 } from "lucide-react";
 import { LoginScreen } from "@/components/auth/login-screen";
 import { AppShell, type ViewKey } from "@/components/shell/app-shell";
 import { OwnerDashboard } from "@/components/owner/owner-dashboard";
+import { OwnerKpiDashboard } from "@/components/owner/owner-kpi-dashboard";
 import { TeamDashboard } from "@/components/team/team-dashboard";
 import { CrmModule } from "@/components/modules/crm-module";
 import { EventsModule } from "@/components/modules/events-module";
 import { TasksModule } from "@/components/modules/tasks-module";
+import { KpiModule } from "@/components/modules/kpi-module";
 import { ContentModule } from "@/components/modules/content-module";
 import { ArticlesModule } from "@/components/modules/articles-module";
 import { FinanceModule } from "@/components/modules/finance-module";
@@ -95,6 +97,8 @@ export default function Home() {
     switch (view) {
       case "dashboard":
         return isOwner ? <OwnerDashboard /> : <TeamDashboard />;
+      case "kpi":
+        return isOwner ? <OwnerKpiDashboard /> : <KpiModule user={user} />;
       case "crm":
         return <CrmModule user={user} />;
       case "events":

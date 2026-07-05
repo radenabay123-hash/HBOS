@@ -245,3 +245,38 @@ Stage Summary:
 - PDF + Excel export on all major data views
 - Mobile responsive with hamburger menu
 - Lint passes with 0 errors, dev server runs clean with no runtime errors
+
+---
+Task ID: KPI-1 to KPI-8
+Agent: Main (Z.ai Code)
+Task: Build comprehensive KPI system with Daily/Weekly/Monthly targets per role + weighted KPI Score for Dashboard & Productivity Score
+
+Work Log:
+- Created src/lib/kpi-targets.ts with full target config for all 5 team roles:
+  - PROJECT_MANAGER: 6 daily, 8 weekly, 7 monthly targets (Artikel Kota, Prospek, Penawaran, Follow Up, etc.) + Instagram Magang KPI
+  - ASSISTANT_TRAINER: 5 daily, 6 weekly, 6 monthly (Ide Konten, Thumbnail, Caption, Shooting, Kolaborasi) + Instagram Aqil Baihaqi KPI
+  - CONTENT_CREATIVE: 4 daily, 5 weekly, 5 monthly (Ide Viral, Konten, Batch Production) + TikTok KPI
+  - DIGITAL_MARKETING_IT: 5 daily, 6 weekly, 6 monthly (Riset SDM, Konten Hafara, Reels Viral, Testimoni) + Hafara Group KPI
+  - FINANCE: 4 daily, 3 weekly, 4 monthly targets
+- Created src/lib/kpi-score.ts with weighted KPI score calculation engine (30% daily + 25% weekly + 25% monthly + 10% deadline + 10% quality)
+- Added KpiLog model to Prisma schema, pushed to DB, generated client
+- Created seed script (prisma/seed-kpi.ts) and seeded 392 KPI log entries (14 days daily + weekly + monthly for all team members)
+- Built 5 KPI API routes: /api/kpi/logs (GET/POST), /api/kpi/logs/[id] (DELETE), /api/kpi/score (GET), /api/kpi/targets (GET), /api/kpi/team-scores (GET owner)
+- Created src/components/modules/kpi-module.tsx (Team KPI Dashboard): hero score card, period tabs (Harian/Mingguan/Bulanan), target progress bars, update dialog, social KPI card, export PDF/Excel
+- Created src/components/owner/owner-kpi-dashboard.tsx (Owner KPI Dashboard): formula explanation, team summary cards, Top 3 podium, ranking table with all score components, detail per member
+- Added "Dashboard KPI" menu item to sidebar (visible to all roles)
+- Integrated KPI Score summary card into Owner Dashboard (shows all 5 team members with score + H/M/B breakdown + category)
+- Integrated KPI Score badge into Team Dashboard welcome header
+- Updated Scoreboard API to include KPI Score, category, and H/M/B breakdown; sort by KPI Score
+- Updated Scoreboard module UI: summary card shows avg KPI, podium shows KPI Score + category, table has KPI Score + Kategori columns
+- Fixed bug: KPI_TARGETS imported from wrong module (constants vs kpi-targets)
+- Verified all with Agent Browser: Owner Dashboard KPI summary, Owner KPI Dashboard, Team KPI Module (PM), Scoreboard with KPI scores
+
+Stage Summary:
+- Complete KPI system with Daily → Weekly → Monthly targets per role
+- Weighted KPI Score (100%) = 30% Harian + 25% Mingguan + 25% Bulanan + 10% Deadline + 10% Kualitas(ACC)
+- 4 categories: Excellent (90-100), Good (80-89), Need Coaching (70-79), Warning (<70)
+- Team can input/update their KPI achievements via Dashboard KPI module
+- Owner sees KPI scores for all team members on Dashboard Owner + dedicated Dashboard KPI
+- Scoreboard now ranks by KPI Score (transparent to all divisions)
+- All APIs return 200, lint passes clean, no runtime errors

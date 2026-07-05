@@ -38,6 +38,11 @@ interface RankingItem {
   contentProduced: number;
   articlesPublished: number;
   productivityScore: number;
+  kpiScore?: number | null;
+  kpiCategory?: string | null;
+  kpiDaily?: number | null;
+  kpiWeekly?: number | null;
+  kpiMonthly?: number | null;
 }
 
 type Period = "month" | "year" | "all";
@@ -106,7 +111,10 @@ export function ScoreboardModule(_props?: Record<string, never>) {
       ? Math.round(sorted.reduce((s, r) => s + r.disciplineRate, 0) / sorted.length)
       : 0;
     const totalContent = sorted.reduce((s, r) => s + r.contentProduced + r.articlesPublished, 0);
-    return { totalScore, totalTasks, avgDiscipline, totalContent, totalMembers: sorted.length };
+    const avgKpi = sorted.length > 0 && sorted.some((r) => r.kpiScore != null)
+      ? Math.round(sorted.filter((r) => r.kpiScore != null).reduce((s, r) => s + (r.kpiScore || 0), 0) / sorted.filter((r) => r.kpiScore != null).length)
+      : 0;
+    return { totalScore, totalTasks, avgDiscipline, totalContent, totalMembers: sorted.length, avgKpi };
   }, [sorted]);
 
   function handleExportExcel() {
@@ -119,13 +127,13 @@ export function ScoreboardModule(_props?: Record<string, never>) {
       Nama: r.name,
       Jabatan: r.roleLabel,
       Posisi: r.position || "-",
-      Skor: r.score,
+      "KPI Score": r.kpiScore ?? "-",
+      Kategori: r.kpiCategory ?? "-",
       TugasSelesai: r.doneTasks,
       TotalTugas: r.totalTasks,
       Disiplin: `${r.disciplineRate}%`,
       KontenDiproduksi: r.contentProduced,
       ArtikelDipublish: r.articlesPublished,
-      Produktivitas: r.productivityScore,
     }));
     exportToExcel(rows, `Scoreboard_${PERIOD_LABELS[period]}`, "Scoreboard");
     toast.success("Excel diekspor");
@@ -138,17 +146,17 @@ export function ScoreboardModule(_props?: Record<string, never>) {
     }
     exportToPDF(
       `Scoreboard Karyawan - ${PERIOD_LABELS[period]}`,
-      ["#", "Nama", "Jabatan", "Skor", "Tugas", "Disiplin", "Konten", "Artikel", "Produktivitas"],
+      ["#", "Nama", "Jabatan", "KPI Score", "Kategori", "Tugas", "Disiplin", "Konten", "Artikel"],
       sorted.map((r, i) => [
         i + 1,
         r.name,
         r.roleLabel,
-        r.score,
+        r.kpiScore ?? "-",
+        r.kpiCategory ?? "-",
         `${r.doneTasks}/${r.totalTasks}`,
         `${r.disciplineRate}%`,
         r.contentProduced,
         r.articlesPublished,
-        r.productivityScore,
       ]),
       `Scoreboard_${period}`,
       `${sorted.length} karyawan • Dibuat ${formatDate(new Date())}`
@@ -163,7 +171,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
     <div className="space-y-6">
       <SectionHeader
         title="Scoreboard Karyawan"
-        description="Ranking produktivitas tim berdasarkan skor otomatis. Transparan untuk seluruh divisi."
+        description="Ranking produktivitas tim berdasarkan KPI Score (Harian → Mingguan → Bulanan). Transparan untuk seluruh divisi."
         action={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={handleExportPDF}>
@@ -201,10 +209,15 @@ export function ScoreboardModule(_props?: Record<string, never>) {
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Skor Tim"
-          value={formatNumber(summary.totalScore)}
-          icon={Star}
-          subtitle={`${summary.totalMembers} anggota`}
+          title="Rata-rata KPI Score"
+          value={summary.avgKpi}
+          icon={Award}
+          indicator={
+            summary.avgKpi >= 90 ? "green" :
+            summary.avgKpi >= 80 ? "green" :
+            summary.avgKpi >= 70 ? "yellow" : "red"
+          }
+          subtitle={`${summary.totalMembers} anggota tim`}
           accent="bg-emerald-50 text-emerald-600"
         />
         <StatCard
@@ -310,12 +323,27 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                           </div>
                           <div className="w-full mt-1">
                             <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                              <span>Produktivitas</span>
-                              <span className="font-bold text-slate-800">
-                                {formatNumber(r.productivityScore)}
+                              <span>KPI Score</span>
+                              <span className={cn("font-bold text-lg",
+                                r.kpiScore != null && r.kpiScore >= 90 ? "text-emerald-600" :
+                                r.kpiScore != null && r.kpiScore >= 80 ? "text-cyan-600" :
+                                r.kpiScore != null && r.kpiScore >= 70 ? "text-amber-600" :
+                                "text-rose-600"
+                              )}>
+                                {r.kpiScore ?? "-"}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
+                            {r.kpiCategory && (
+                              <Badge variant="outline" className={cn("text-[9px] mb-2",
+                                r.kpiScore != null && r.kpiScore >= 90 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                r.kpiScore != null && r.kpiScore >= 80 ? "bg-cyan-50 text-cyan-700 border-cyan-200" :
+                                r.kpiScore != null && r.kpiScore >= 70 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                "bg-rose-50 text-rose-700 border-rose-200"
+                              )}>
+                                {r.kpiCategory}
+                              </Badge>
+                            )}
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1 mt-1">
                               <span>Disiplin</span>
                               <span className="font-semibold text-slate-700">
                                 {r.disciplineRate}%
@@ -357,12 +385,12 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                       <TableHead className="w-14 text-center">#</TableHead>
                       <TableHead className="min-w-[180px]">Nama</TableHead>
                       <TableHead className="w-40">Role</TableHead>
-                      <TableHead className="text-right">Skor</TableHead>
+                      <TableHead className="text-center">KPI Score</TableHead>
+                      <TableHead className="text-center">Kategori</TableHead>
                       <TableHead className="text-center w-32">Tugas</TableHead>
                       <TableHead className="w-40">Disiplin</TableHead>
                       <TableHead className="text-right">Konten</TableHead>
                       <TableHead className="text-right">Artikel</TableHead>
-                      <TableHead className="text-right">Produktivitas</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -402,8 +430,33 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                             {r.roleLabel}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-slate-800">
-                          {formatNumber(r.score)}
+                        <TableCell className="text-center">
+                          {r.kpiScore != null ? (
+                            <span className={cn("inline-flex items-center justify-center w-12 h-9 rounded-lg text-lg font-bold",
+                              r.kpiScore >= 90 ? "bg-emerald-100 text-emerald-700" :
+                              r.kpiScore >= 80 ? "bg-cyan-100 text-cyan-700" :
+                              r.kpiScore >= 70 ? "bg-amber-100 text-amber-700" :
+                              "bg-rose-100 text-rose-700"
+                            )}>
+                              {r.kpiScore}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {r.kpiCategory ? (
+                            <Badge variant="outline" className={cn("text-[10px]",
+                              r.kpiScore != null && r.kpiScore >= 90 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                              r.kpiScore != null && r.kpiScore >= 80 ? "bg-cyan-50 text-cyan-700 border-cyan-200" :
+                              r.kpiScore != null && r.kpiScore >= 70 ? "bg-amber-50 text-amber-700 border-amber-200" :
+                              "bg-rose-50 text-rose-700 border-rose-200"
+                            )}>
+                              {r.kpiCategory}
+                            </Badge>
+                          ) : (
+                            <span className="text-slate-400 text-sm">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-center text-sm text-slate-600">
                           <span className="font-semibold text-slate-800">{r.doneTasks}</span>
@@ -427,12 +480,6 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                         </TableCell>
                         <TableCell className="text-right text-sm text-slate-700">
                           {formatNumber(r.articlesPublished)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
-                            <TrendingUp className="w-3.5 h-3.5" />
-                            {formatNumber(r.productivityScore)}
-                          </span>
                         </TableCell>
                       </TableRow>
                     ))}

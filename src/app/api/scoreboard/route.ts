@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ok, err, handleApi } from "@/lib/api";
 import { ROLES, TEAM_ROLES, ROLE_LABELS } from "@/lib/constants";
+import { computeKpiScore } from "@/lib/kpi-score";
 
 export const runtime = "nodejs";
 
@@ -72,6 +73,12 @@ export async function GET(req: Request) {
     });
     const articleMap = new Map(articles.map((a) => [a.userId, a._count._all]));
 
+    // Compute KPI scores for each team member (always for current month)
+    const kpiScores = await Promise.all(
+      teamUsers.map((u) => computeKpiScore(u.id, u.role, u.name, now).catch(() => null))
+    );
+    const kpiMap = new Map(kpiScores.filter(Boolean).map((s: any) => [s.userId, s]));
+
     const ranking = teamUsers.map((u) => {
       const score = scoreMap.get(u.id) || 0;
       const totalTasks = taskMap.get(u.id) || 0;
@@ -79,8 +86,9 @@ export async function GET(req: Request) {
       const disciplineRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
       const contentProduced = contentMap.get(u.id) || 0;
       const articlesPublished = articleMap.get(u.id) || 0;
-      // Composite productivity score
-      const productivityScore = score + doneTasks * 3 + contentProduced * 5 + articlesPublished * 4;
+      const kpi = kpiMap.get(u.id);
+      // Composite productivity score: weighted KPI score is primary
+      const productivityScore = kpi ? kpi.weightedScore : (score + doneTasks * 3 + contentProduced * 5 + articlesPublished * 4);
       return {
         ...u,
         roleLabel: ROLE_LABELS[u.role] || u.role,
@@ -91,10 +99,16 @@ export async function GET(req: Request) {
         contentProduced,
         articlesPublished,
         productivityScore,
+        kpiScore: kpi ? kpi.weightedScore : null,
+        kpiCategory: kpi ? kpi.category : null,
+        kpiDaily: kpi ? kpi.daily.achievementRate : null,
+        kpiWeekly: kpi ? kpi.weekly.achievementRate : null,
+        kpiMonthly: kpi ? kpi.monthly.achievementRate : null,
       };
     });
 
-    ranking.sort((a, b) => b.productivityScore - a.productivityScore);
+    // Sort by KPI score (primary), then productivity score
+    ranking.sort((a, b) => (b.kpiScore || 0) - (a.kpiScore || 0) || b.productivityScore - a.productivityScore);
 
     return ok({ ranking, period });
   });

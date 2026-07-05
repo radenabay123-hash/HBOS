@@ -27,13 +27,18 @@ export function OwnerDashboard() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [data, setData] = useState<any>(null);
+  const [kpiScores, setKpiScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
     try {
-      const d = await api(`/api/dashboard/owner?year=${year}&month=${month}`);
+      const [d, kpi] = await Promise.all([
+        api(`/api/dashboard/owner?year=${year}&month=${month}`),
+        api<{ scores: any[] }>("/api/kpi/team-scores").catch(() => ({ scores: [] })),
+      ]);
       setData(d);
+      setKpiScores(kpi.scores || []);
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat dashboard");
     } finally {
@@ -111,6 +116,51 @@ export function OwnerDashboard() {
           </div>
         }
       />
+
+      {/* KPI Score Summary - Team Productivity */}
+      {kpiScores.length > 0 && (
+        <Card className="border-emerald-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-emerald-600" />
+              KPI Score Tim - Productivity Score
+              <Badge variant="outline" className="ml-auto text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                Rata-rata: {Math.round(kpiScores.reduce((s: number, x: any) => s + x.weightedScore, 0) / kpiScores.length)}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {kpiScores.map((s: any) => {
+                const cat = s.weightedScore >= 90 ? { bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", label: "Excellent" }
+                  : s.weightedScore >= 80 ? { bg: "bg-cyan-500", text: "text-cyan-700", light: "bg-cyan-50", label: "Good" }
+                  : s.weightedScore >= 70 ? { bg: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", label: "Need Coaching" }
+                  : { bg: "bg-rose-500", text: "text-rose-700", light: "bg-rose-50", label: "Warning" };
+                return (
+                  <div key={s.userId} className={`rounded-lg p-3 border ${cat.light} border-slate-200`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs font-medium text-slate-700 truncate">{s.userName}</p>
+                      <span className={`text-lg font-bold ${cat.text}`}>{s.weightedScore}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mb-2">{s.roleLabel}</p>
+                    <div className="flex items-center gap-1 mb-1">
+                      <div className="flex-1 h-1.5 bg-white rounded-full overflow-hidden">
+                        <div className={`h-full ${cat.bg} rounded-full`} style={{ width: `${s.weightedScore}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-[9px] text-slate-500">
+                      <span>H: {s.daily.achievementRate}%</span>
+                      <span>M: {s.weekly.achievementRate}%</span>
+                      <span>B: {s.monthly.achievementRate}%</span>
+                    </div>
+                    <Badge variant="outline" className={`text-[9px] mt-1 ${cat.light} ${cat.text} border-slate-200`}>{cat.label}</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* CRM & Sales KPIs */}
       <div>
