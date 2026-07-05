@@ -30,3 +30,42 @@ export function shadeColor(hex: string, percent: number): string {
   const b = Math.min(255, (num & 0xff) + Math.round(2.55 * percent));
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
+
+// Logo image data interface
+export interface LogoImageData {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+// Load an image from URL and convert to data URL with dimensions (for jsPDF addImage)
+// Returns null if URL is empty or image fails to load
+export async function loadImageAsDataURL(url: string): Promise<LogoImageData | null> {
+  if (!url) return null;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (!w || !h) { resolve(null); return; }
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(null); return; }
+      ctx.drawImage(img, 0, 0);
+      try {
+        // Detect format from URL
+        const isJpeg = /\.(jpe?g)$/i.test(url) || url.startsWith("data:image/jpeg");
+        const dataUrl = canvas.toDataURL(isJpeg ? "image/jpeg" : "image/png", 0.92);
+        resolve({ dataUrl, width: w, height: h });
+      } catch {
+        // Canvas might be tainted due to CORS - try without conversion
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}

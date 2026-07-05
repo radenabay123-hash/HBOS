@@ -22,7 +22,7 @@ import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
 import { exportToExcel } from "@/lib/export-utils";
 import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
-import { fetchLayoutSettings } from "@/lib/layout-helper";
+import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -186,10 +186,14 @@ export function PayrollModule({ user }: { user: SafeUser }) {
     const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
     // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
+    let logoUrl = "";
     try {
       const ld = await fetchLayoutSettings("SLIP_GAJI");
       layoutSettings = ld.layout;
+      logoUrl = ld.appSettings?.companyLogo || "";
     } catch {}
+    // Load logo image as data URL for jsPDF
+    const logoImageData = await loadImageAsDataURL(logoUrl);
     // CLEAN: only pass content data, all design comes from layout settings
     const slipData: SlipGajiData = {
       employeeName: u.name,
@@ -205,6 +209,7 @@ export function PayrollModule({ user }: { user: SafeUser }) {
       note: p.note || "",
       status: p.status,
       paidAt: p.paidAt ? formatDate(p.paidAt) : null,
+      logoImageData,
       layout: layoutSettings,
     };
     downloadSlipGajiPDF(slipData);

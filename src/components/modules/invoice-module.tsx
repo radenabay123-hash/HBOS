@@ -18,7 +18,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
-import { fetchLayoutSettings } from "@/lib/layout-helper";
+import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -164,10 +164,14 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
     const items = JSON.parse(inv.items || "[]");
     // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
+    let logoUrl = "";
     try {
       const ld = await fetchLayoutSettings("INVOICE");
       layoutSettings = ld.layout;
+      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
     } catch {}
+    // Load logo image as data URL for jsPDF
+    const logoImageData = await loadImageAsDataURL(logoUrl);
     // CLEAN: only pass content data, all design comes from layout settings
     downloadInvoicePDF({
       invoiceNumber: inv.invoiceNumber,
@@ -189,6 +193,7 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       accountName: inv.accountName || "",
       directorName: companySettings.director_name,
       directorTitle: companySettings.director_title,
+      logoImageData,
       layout: layoutSettings,
     });
     toast.success("Invoice PDF diunduh");

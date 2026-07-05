@@ -17,7 +17,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/constants";
 import { downloadSuratPDF } from "@/lib/surat-pdf";
-import { fetchLayoutSettings } from "@/lib/layout-helper";
+import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -178,10 +178,14 @@ export function SuratModule({ user }: { user: SafeUser }) {
 
   async function handleDownloadPDF(s: any) {
     let lSettings: any = null;
+    let logoUrl = "";
     try {
       const ld = await fetchLayoutSettings("SURAT");
       lSettings = ld.layout;
+      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
     } catch {}
+    // Load logo image as data URL for jsPDF
+    const logoImageData = await loadImageAsDataURL(logoUrl);
     // CLEAN: only pass content data, all design comes from layout settings
     downloadSuratPDF({
       suratType: s.suratType,
@@ -208,6 +212,7 @@ export function SuratModule({ user }: { user: SafeUser }) {
       accountName: s.accountName,
       signatoryName: s.signatoryName,
       signatoryTitle: s.signatoryTitle,
+      logoImageData,
       layout: lSettings,
     });
     toast.success("Surat PDF diunduh");
@@ -462,13 +467,14 @@ export function SuratModule({ user }: { user: SafeUser }) {
 // ===== Layout-driven Preview Component (matches PDF output) =====
 function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layout: any; companySettings: any }) {
   const s = layout || {};
-  const infoPos = s.companyInfoPosition || "above";
+  const infoPos = s.companyInfoPosition || "inside";
   const headerBg = s.headerBgColor || "#0f234b";
   const accentLine = s.accentLineColor || "#ff8000";
   const footerBg = s.footerBgColor || "#0f234b";
   const docTitleColor = s.docTitleColor || "#0f234b";
   const footerTextColor = s.footerTextColor || "#ffffff";
   const logoColor = s.logoColor || "#ff8000";
+  const logoUrl = companySettings.company_logo || "";
 
   const companyNameText = s.companyNameText || companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
   const companyAddressText = s.companyAddressText || "";
@@ -484,12 +490,16 @@ function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layo
     const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
     return (
       <div className="flex items-center gap-1.5 px-2 py-1">
-        {/* Logo */}
+        {/* Logo - use uploaded image if available, otherwise circle fallback */}
         <div className="shrink-0">
-          <div className="rounded-full flex items-center justify-center text-white font-bold relative" style={{ width: "16px", height: "16px", backgroundColor: logoColor, fontSize: "8px" }}>
-            {s.logoText || "H"}
-            <div className="absolute inset-0 rounded-full" style={{ backgroundColor: headerBg, opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" style={{ maxHeight: "16px", maxWidth: "40px", objectFit: "contain" }} />
+          ) : (
+            <div className="rounded-full flex items-center justify-center text-white font-bold relative" style={{ width: "16px", height: "16px", backgroundColor: logoColor, fontSize: "8px" }}>
+              {s.logoText || "H"}
+              <div className="absolute inset-0 rounded-full" style={{ backgroundColor: headerBg, opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
+            </div>
+          )}
         </div>
         {/* Info */}
         <div className="flex-1 min-w-0">

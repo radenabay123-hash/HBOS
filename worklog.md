@@ -1239,3 +1239,53 @@ Stage Summary:
 - VLM ratings: Surat 9/10, Invoice 9/10, Slip Gaji 8/10
 - Layout Dokumen LivePreview matches PDF output exactly
 - DB records updated to new professional defaults
+
+---
+Task ID: PDF-LOGO-UPLOAD-FIX
+Agent: Main (Z.ai Code)
+Task: Fix uploaded logo from Layout Dokumen not appearing in PDFs (always showing orange/blue circle fallback)
+
+Work Log:
+- Root cause identified: PDF generators (surat-pdf, invoice-pdf, slip-gaji-pdf) always drew the orange/blue circle logo and never used the uploaded logo image from Layout Dokumen
+- The uploaded logo is stored in DB as AppSetting key="company_logo" value="/uploads/company_logo_XXX.png"
+- The fetchLayoutSettings API returns appSettings.companyLogo with the logo URL, but modules only used ld.layout, ignoring ld.appSettings
+- Created loadImageAsDataURL() helper in src/lib/layout-helper.ts:
+  * Loads image from URL via HTML Image element
+  * Converts to canvas, then to base64 data URL (PNG or JPEG based on source)
+  * Returns { dataUrl, width, height } for jsPDF addImage()
+  * Handles CORS, tainting, and error cases gracefully (returns null on failure)
+  * Exported LogoImageData interface for type safety
+- Updated src/lib/surat-pdf.ts:
+  * Added logoImageData?: LogoImageData | null to SuratData interface
+  * Created reusable drawLogo(lx, ly) function that checks if logoImageData exists
+  * If uploaded logo available: uses doc.addImage() with aspect-ratio-preserving dimensions (maxH=logoSize, maxW=45mm, centered vertically)
+  * If no logo: falls back to drawCircleLogo() (orange circle + navy inner + letter)
+  * Replaced all 3 hardcoded circle-drawing blocks (inside/above/below) with drawLogo() calls
+- Updated src/lib/invoice-pdf.ts: same pattern (drawLogo + drawCircleLogo, 3 positions)
+- Updated src/lib/slip-gaji-pdf.ts: same pattern (drawLogo + drawCircleLogo, 3 positions)
+- Updated src/components/modules/surat-module.tsx:
+  * Imported loadImageAsDataURL from layout-helper
+  * handleDownloadPDF now: fetches logo URL from ld.appSettings.companyLogo, loads image via loadImageAsDataURL, passes logoImageData to downloadSuratPDF
+  * SuratLayoutPreview: uses <img> tag with companySettings.company_logo URL when available, falls back to circle div
+  * Fixed infoPos default from "above" to "inside" to match new defaults
+- Updated src/components/modules/invoice-module.tsx:
+  * handleDownloadPDF now loads logo from ld.appSettings.companyLogo and passes logoImageData to downloadInvoicePDF
+- Updated src/components/modules/payroll-module.tsx:
+  * handleDownloadSlip now loads logo from ld.appSettings.companyLogo and passes logoImageData to downloadSlipGajiPDF
+- Verified with test PDF generation (scripts-test-logo-pdf.ts):
+  * Read actual uploaded logo (company_logo_1783261812435.png, 1350x1000px)
+  * Generated surat PDF with logoImageData
+  * VLM confirmed: "logo yang terlihat adalah GAMBAR LOGO PERUSAHAAN yang diupload (bukan lingkaran oranye/biru), logo terlihat jelas dan tidak terhalang, aspek ratio logo terjaga"
+- Verified via Agent Browser:
+  * All 3 PDF downloads trigger /api/doc-layout calls (200) with no errors
+  * Logo <img> element visible in surat form preview DOM (src=/uploads/company_logo_..., 16px height, proper aspect ratio)
+  * No console errors
+- Lint clean
+
+Stage Summary:
+- Uploaded logo from Layout Dokumen now appears in ALL 3 PDFs (Surat, Invoice, Slip Gaji)
+- Logo image loaded via canvas → base64 data URL → jsPDF addImage()
+- Aspect ratio preserved (max height = logoSize mm, max width = 45mm, vertically centered)
+- Fallback to orange/blue circle if no logo uploaded or image load fails
+- Surat form preview also shows uploaded logo (not just circle)
+- All 3 module callers (surat, invoice, payroll) now pass logoImageData to PDF generators

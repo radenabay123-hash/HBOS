@@ -1,7 +1,7 @@
 // Slip Gaji PDF Generator - PROFESSIONAL CLEAN design
 // All design comes from DocumentLayout settings. No overlapping elements.
 import { jsPDF } from "jspdf";
-import { hexToRgb } from "./layout-helper";
+import { hexToRgb, type LogoImageData } from "./layout-helper";
 
 export interface SlipGajiData {
   employeeName: string;
@@ -17,6 +17,7 @@ export interface SlipGajiData {
   note: string;
   status: string;
   paidAt: string | null;
+  logoImageData?: LogoImageData | null;
   layout?: any;
 }
 
@@ -62,6 +63,38 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
 
   let y = 12;
 
+  // ===== Reusable: Draw logo (uploaded image OR circle fallback) =====
+  const drawLogo = (lx: number, ly: number) => {
+    const maxH = logoSize;
+    const maxW = 45;
+    if (data.logoImageData && data.logoImageData.dataUrl) {
+      const ar = data.logoImageData.width / data.logoImageData.height;
+      let imgH = maxH;
+      let imgW = maxH * ar;
+      if (imgW > maxW) { imgW = maxW; imgH = maxW / ar; }
+      const offsetY = (maxH - imgH) / 2;
+      const imgFormat = data.logoImageData.dataUrl.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
+      try {
+        doc.addImage(data.logoImageData.dataUrl, imgFormat, lx, ly + offsetY, imgW, imgH, undefined, "FAST");
+      } catch {
+        drawCircleLogo(lx, ly);
+      }
+    } else {
+      drawCircleLogo(lx, ly);
+    }
+  };
+
+  const drawCircleLogo = (lx: number, ly: number) => {
+    doc.setFillColor(...logoColor);
+    doc.circle(lx + logoSize / 2, ly + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(lx + logoSize * 0.68, ly + logoSize * 0.68, logoSize * 0.35, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.logoText || "HF", lx + logoSize / 2 - 0.5, ly + logoSize / 2 + 1.5, { align: "center" });
+  };
+
   // ===== HEADER SECTION =====
   if (infoPos === "inside") {
     // INFO INSIDE NAVY HEADER (most professional)
@@ -70,14 +103,7 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
 
     // Logo (left, vertically centered)
     const logoY = (headerHeight - logoSize) / 2;
-    doc.setFillColor(...logoColor);
-    doc.circle(margin + logoSize / 2, logoY + logoSize / 2, logoSize / 2, "F");
-    doc.setFillColor(...headerBg);
-    doc.circle(margin + logoSize * 0.68, logoY + logoSize * 0.68, logoSize * 0.35, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, logoY + logoSize / 2 + 1.5, { align: "center" });
+    drawLogo(margin, logoY);
 
     // Company info (right, white text)
     const infoX = pageWidth - margin;
@@ -98,14 +124,7 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
     y = headerHeight + 2;
   } else if (infoPos === "above") {
     // INFO ABOVE + thin navy bar
-    doc.setFillColor(...logoColor);
-    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
-    doc.setFillColor(...headerBg);
-    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
+    drawLogo(margin, y);
 
     const infoX = pageWidth - margin;
     doc.setTextColor(...hexToRgb(s.companyNameColor || "#1e3a8a"));
@@ -138,14 +157,7 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
     doc.rect(0, 3, pageWidth, accentLineHeight, "F");
     y = 3 + accentLineHeight + 8;
 
-    doc.setFillColor(...logoColor);
-    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
-    doc.setFillColor(...headerBg);
-    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
+    drawLogo(margin, y);
 
     const infoX = pageWidth - margin;
     doc.setTextColor(...hexToRgb(s.companyNameColor || "#1e3a8a"));
