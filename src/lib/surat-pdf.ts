@@ -1,7 +1,7 @@
-// Surat Resmi PDF generator - CLEAN implementation using ONLY DocumentLayout settings
-// Old design elements have been cleared. All design comes from Layout Dokumen settings.
+// Surat Resmi PDF generator - PROFESSIONAL CLEAN design
+// All design comes from DocumentLayout settings. No overlapping elements.
 import { jsPDF } from "jspdf";
-import { hexToRgb, shadeColor } from "./layout-helper";
+import { hexToRgb } from "./layout-helper";
 
 export interface SuratData {
   suratType: string;
@@ -28,7 +28,6 @@ export interface SuratData {
   accountName: string;
   signatoryName: string;
   signatoryTitle: string;
-  // Layout settings (from DocumentLayout) - ALL design comes from here
   layout?: any;
 }
 
@@ -44,153 +43,189 @@ export function generateSuratPDF(data: SuratData): jsPDF {
   const pageHeight = 297;
   const contentWidth = pageWidth - margin * 2;
 
-  // ===== ALL colors from layout settings (no hardcoded fallbacks that conflict) =====
-  const headerBgColor: [number, number, number] = hexToRgb(s.headerBgColor || "#0f234b");
-  const accentLineColor: [number, number, number] = hexToRgb(s.accentLineColor || "#ff8000");
-  const footerBgColor: [number, number, number] = hexToRgb(s.footerBgColor || "#0f234b");
-  const bodyTextColor: [number, number, number] = hexToRgb(s.bodyTextColor || "#2d3748");
-  const companyNameColor: [number, number, number] = hexToRgb(s.companyNameColor || "#0f234b");
-  const companyAddrColor: [number, number, number] = hexToRgb(s.companyAddressColor || "#64748b");
-  const companyContactColor: [number, number, number] = hexToRgb(s.companyContactColor || "#94a3b8");
+  // ===== Colors from layout settings =====
+  const headerBg: [number, number, number] = hexToRgb(s.headerBgColor || "#0f234b");
+  const accentLine: [number, number, number] = hexToRgb(s.accentLineColor || "#ff8000");
+  const footerBg: [number, number, number] = hexToRgb(s.footerBgColor || "#0f234b");
+  const bodyText: [number, number, number] = hexToRgb(s.bodyTextColor || "#2d3748");
   const docTitleColor: [number, number, number] = hexToRgb(s.docTitleColor || "#0f234b");
   const sigNameColor: [number, number, number] = hexToRgb(s.sigNameColor || "#0f234b");
   const sigLineColor: [number, number, number] = hexToRgb(s.sigLineColor || "#d1d5db");
   const logoColor: [number, number, number] = hexToRgb(s.logoColor || "#ff8000");
   const footerTextColor: [number, number, number] = hexToRgb(s.footerTextColor || "#ffffff");
 
-  const headerHeight = s.headerHeight || 32;
-  const infoPos = s.companyInfoPosition || "above";
-  const logoSize = s.logoSize || 12;
-  const headerGradient = s.headerGradient !== false;
+  // Company info text
+  const companyName = s.companyNameText || "PT. HAFARA AQIBA NUSANTARA";
+  const companyAddress = s.companyAddressText || "";
+  const companyContact = s.companyContactText || "";
+
+  const infoPos = s.companyInfoPosition || "inside";
+  const logoSize = s.logoSize || 14;
+  const headerHeight = s.headerHeight || 28;
   const accentLineHeight = s.accentLineHeight || 1.5;
+  const footerHeight = s.footerHeight || 14;
 
-  // Company info text - ALWAYS from layout settings (cleared old form data usage)
-  const companyNameText = s.companyNameText || "PT. HAFARA AQIBA NUSANTARA";
-  const companyAddressText = s.companyAddressText || "";
-  const companyContactText = s.companyContactText || "";
+  let y = 12;
 
-  let y = 10;
+  // ===== HEADER SECTION =====
+  if (infoPos === "inside") {
+    // INFO INSIDE NAVY HEADER (most professional)
+    // Draw navy header box (SOLID color, no gradient to avoid two-bar effect)
+    doc.setFillColor(...headerBg);
+    doc.rect(0, 0, pageWidth, headerHeight, "F");
 
-  // ===== Reusable: Draw company logo (circle with letter) =====
-  const drawLogo = (lx: number, ly: number) => {
-    const ls = logoSize;
+    // Logo (left side, vertically centered)
+    const logoY = (headerHeight - logoSize) / 2;
     doc.setFillColor(...logoColor);
-    doc.circle(lx + ls / 2, ly + ls / 2, ls / 2, "F");
-    doc.setFillColor(...headerBgColor);
-    doc.circle(lx + ls * 0.68, ly + ls * 0.68, ls * 0.35, "F");
+    doc.circle(margin + logoSize / 2, logoY + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(margin + logoSize * 0.68, logoY + logoSize * 0.68, logoSize * 0.35, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text(s.logoText || "H", lx + ls / 2 - 0.5, ly + ls / 2 + 1.5, { align: "center" });
-  };
+    doc.text(s.logoText || "H", margin + logoSize / 2 - 0.5, logoY + logoSize / 2 + 1.5, { align: "center" });
 
-  // ===== Reusable: Draw company info block (name → address → contact) =====
-  const drawCompanyInfo = (onDark: boolean) => {
-    const nameC: [number, number, number] = onDark ? [255, 255, 255] : companyNameColor;
-    const addrC: [number, number, number] = onDark ? [220, 230, 245] : companyAddrColor;
-    const contactC: [number, number, number] = onDark ? [180, 200, 230] : companyContactColor;
-
-    const nameAlign = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
-    const addrAlign = s.companyAddressAlign === "left" ? "left" : s.companyAddressAlign === "center" ? "center" : "right";
-    const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
-
-    const nameX = nameAlign === "right" ? pageWidth - margin : nameAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-    const addrX = addrAlign === "right" ? pageWidth - margin : addrAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-    const contactX = contactAlign === "right" ? pageWidth - margin : contactAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-
-    // Company Name
+    // Company info (right side, white text on navy)
+    const infoX = pageWidth - margin;
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(s.companyNameFontSize || 12);
     doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
-    doc.setTextColor(...nameC);
-    doc.text(companyNameText, nameX, y + 3, nameAlign === "right" ? { align: "right" } : nameAlign === "center" ? { align: "center" } : {});
+    doc.text(companyName, infoX, 8, { align: "right" });
 
-    // Address
     doc.setFontSize(s.companyAddressFontSize || 7.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...addrC);
-    doc.text(companyAddressText, addrX, y + 7, addrAlign === "right" ? { align: "right" } : addrAlign === "center" ? { align: "center" } : {});
+    doc.setTextColor(220, 230, 245);
+    doc.text(companyAddress, infoX, 14, { align: "right" });
 
-    // Contact
     doc.setFontSize(s.companyContactFontSize || 7);
-    doc.setTextColor(...contactC);
-    doc.text(companyContactText, contactX, y + 11, contactAlign === "right" ? { align: "right" } : contactAlign === "center" ? { align: "center" } : {});
-  };
+    doc.setTextColor(180, 200, 230);
+    doc.text(companyContact, infoX, 19, { align: "right" });
 
-  // ===== 1. INFO ABOVE (on white paper, above navy box) =====
-  if (infoPos === "above") {
-    drawLogo(margin, y);
-    drawCompanyInfo(false);
-    y += 16;
-  }
-
-  // ===== 2. NAVY HEADER BOX (decorative, with optional info inside) =====
-  if (headerGradient) {
-    doc.setFillColor(...headerBgColor);
-    doc.rect(0, y, pageWidth, headerHeight, "F");
-    const lighter = hexToRgb(shadeColor(s.headerBgColor || "#0f234b", 15));
-    doc.setFillColor(...lighter);
-    doc.rect(0, y, pageWidth, headerHeight / 2, "F");
-  } else {
-    doc.setFillColor(...headerBgColor);
-    doc.rect(0, y, pageWidth, headerHeight, "F");
-  }
-
-  if (infoPos === "inside") {
-    drawLogo(margin, y + 5);
-    drawCompanyInfo(true);
-  }
-  y += headerHeight;
-
-  // ===== 3. ACCENT LINE =====
-  doc.setFillColor(...accentLineColor);
-  doc.rect(0, y, pageWidth, accentLineHeight, "F");
-  y += accentLineHeight + 5;
-
-  // ===== 4. INFO BELOW (on white paper, below navy box + accent line) =====
-  if (infoPos === "below") {
-    drawLogo(margin, y);
-    drawCompanyInfo(false);
-    y += 16;
-  }
-
-  // ===== 5. DOCUMENT TITLE (in body, not header - matches LivePreview) =====
-  if (s.docTitleShow !== false) {
-    doc.setFontSize(s.docTitleFontSize || 9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...docTitleColor);
-    const titleAlign = s.docTitlePosition || "left";
-    const titleX = titleAlign === "right" ? pageWidth - margin : titleAlign === "center" ? pageWidth / 2 : margin;
-    // Draw as pill/badge (matches LivePreview for SURAT)
-    const titleText = s.docTitleText || data.suratType || "Surat Penawaran";
-    const textWidth = doc.getTextWidth(titleText) + 6;
-    const pillX = titleAlign === "right" ? titleX - textWidth : titleAlign === "center" ? titleX - textWidth / 2 : titleX;
-    doc.setFillColor(...docTitleColor);
-    doc.roundedRect(pillX, y - 2, textWidth, 6, 1, 1, "F");
+    y = headerHeight + 2;
+  } else if (infoPos === "above") {
+    // INFO ABOVE (on white paper) + thin navy accent bar below
+    // Logo (left)
+    doc.setFillColor(...logoColor);
+    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
     doc.setTextColor(255, 255, 255);
-    doc.text(titleText, pillX + 3, y + 2);
-    y += 8;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.logoText || "H", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
+
+    // Company info (right)
+    const infoX = pageWidth - margin;
+    doc.setTextColor(...hexToRgb(s.companyNameColor || "#0f234b"));
+    doc.setFontSize(s.companyNameFontSize || 12);
+    doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
+    doc.text(companyName, infoX, y + 4, { align: "right" });
+
+    doc.setFontSize(s.companyAddressFontSize || 7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...hexToRgb(s.companyAddressColor || "#64748b"));
+    doc.text(companyAddress, infoX, y + 9, { align: "right" });
+
+    doc.setFontSize(s.companyContactFontSize || 7);
+    doc.setTextColor(...hexToRgb(s.companyContactColor || "#94a3b8"));
+    doc.text(companyContact, infoX, y + 13, { align: "right" });
+
+    y += 18;
+
+    // Thin navy accent bar (not big empty box)
+    doc.setFillColor(...headerBg);
+    doc.rect(0, y, pageWidth, 3, "F");
+    // Orange accent line
+    doc.setFillColor(...accentLine);
+    doc.rect(0, y + 3, pageWidth, accentLineHeight, "F");
+    y += 3 + accentLineHeight + 6;
+  } else {
+    // INFO BELOW: thin navy bar first, then info below
+    doc.setFillColor(...headerBg);
+    doc.rect(0, 0, pageWidth, 3, "F");
+    doc.setFillColor(...accentLine);
+    doc.rect(0, 3, pageWidth, accentLineHeight, "F");
+    y = 3 + accentLineHeight + 6;
+
+    // Logo
+    doc.setFillColor(...logoColor);
+    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.logoText || "H", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
+
+    // Company info
+    const infoX = pageWidth - margin;
+    doc.setTextColor(...hexToRgb(s.companyNameColor || "#0f234b"));
+    doc.setFontSize(s.companyNameFontSize || 12);
+    doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
+    doc.text(companyName, infoX, y + 4, { align: "right" });
+
+    doc.setFontSize(s.companyAddressFontSize || 7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...hexToRgb(s.companyAddressColor || "#64748b"));
+    doc.text(companyAddress, infoX, y + 9, { align: "right" });
+
+    doc.setFontSize(s.companyContactFontSize || 7);
+    doc.setTextColor(...hexToRgb(s.companyContactColor || "#94a3b8"));
+    doc.text(companyContact, infoX, y + 13, { align: "right" });
+
+    y += 18;
   }
 
-  // ===== 6. NOMOR / LAMPIRAN / PERIHAL =====
+  // ===== DOCUMENT TITLE (in body, as pill badge) =====
+  if (s.docTitleShow !== false) {
+    doc.setFontSize(s.docTitleFontSize || 10);
+    doc.setFont("helvetica", "bold");
+    const titleText = s.docTitleText || data.suratType || "Surat Penawaran";
+    const textWidth = doc.getTextWidth(titleText) + 8;
+    const titleAlign = s.docTitlePosition || "left";
+    const pillX = titleAlign === "right" ? pageWidth - margin - textWidth : titleAlign === "center" ? (pageWidth - textWidth) / 2 : margin;
+    doc.setFillColor(...docTitleColor);
+    doc.roundedRect(pillX, y, textWidth, 6, 1, 1, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.text(titleText, pillX + 4, y + 4);
+    y += 10;
+  }
+
+  // ===== NOMOR / LAMPIRAN / PERIHAL =====
   doc.setFontSize(s.bodyFontSize || 10.5);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...bodyTextColor);
+  doc.setTextColor(...bodyText);
   doc.text(`Nomor   : ${data.suratNumber}`, margin, y);
   doc.text(`${data.city}, ${data.issueDate}`, pageWidth - margin, y, { align: "right" });
-  y += 5;
-  if (data.lampiran) { doc.text(`Lampiran : ${data.lampiran}`, margin, y); y += 5; }
+  y += 6;
+  if (data.lampiran) {
+    doc.text(`Lampiran : ${data.lampiran}`, margin, y);
+    y += 6;
+  }
   doc.text(`Perihal  : ${data.perihal || "-"}`, margin, y);
+  y += 10;
+
+  // ===== KEPADA YTH =====
+  doc.text("Kepada Yth,", margin, y);
+  y += 6;
+  if (data.recipientName) {
+    doc.setFont("helvetica", "bold");
+    doc.text(data.recipientName, margin, y);
+    y += 6;
+  }
+  doc.setFont("helvetica", "normal");
+  if (data.recipientInstansi) {
+    doc.text(data.recipientInstansi, margin, y);
+    y += 6;
+  }
+  if (data.recipientAddress) {
+    const addrLines = doc.splitTextToSize(data.recipientAddress, contentWidth - 10);
+    doc.text(addrLines, margin, y);
+    y += addrLines.length * 5;
+  }
   y += 8;
 
-  // ===== 7. KEPADA YTH =====
-  doc.text("Kepada Yth,", margin, y); y += 5;
-  if (data.recipientName) { doc.setFont("helvetica", "bold"); doc.text(data.recipientName, margin, y); y += 5; }
-  doc.setFont("helvetica", "normal");
-  if (data.recipientInstansi) { doc.text(data.recipientInstansi, margin, y); y += 5; }
-  if (data.recipientAddress) { const a = doc.splitTextToSize(data.recipientAddress, contentWidth - 10); doc.text(a, margin, y); y += a.length * 4; }
-  y += 5;
-
-  // ===== 8. ISI SURAT (parse HTML body) =====
+  // ===== ISI SURAT (parse HTML body) =====
   doc.setFontSize(s.bodyFontSize || 10.5);
   const bodyHTML = data.body || "";
   const paragraphs = bodyHTML.split(/<(?:p|div|br)[^>]*>/i).filter((p) => p.trim());
@@ -206,22 +241,23 @@ export function generateSuratPDF(data: SuratData): jsPDF {
       if (isCenter) doc.text(line, pageWidth / 2, y, { align: "center" });
       else if (isRight) doc.text(line, pageWidth - margin, y, { align: "right" });
       else doc.text(line, margin, y);
-      y += 5;
+      y += 6;
     }
-    y += 2;
+    y += 3;
   }
-  y += 3;
+  y += 4;
 
-  // ===== 9. DETAIL KEGIATAN =====
+  // ===== DETAIL KEGIATAN =====
   if (data.includeActivity) {
-    y += 2; doc.setFont("helvetica", "normal");
-    if (data.activityDate) { doc.text(`Tanggal   : ${data.activityDate}`, margin, y); y += 5; }
-    if (data.activityLocation) { doc.text(`Lokasi    : ${data.activityLocation}`, margin, y); y += 5; }
-    if (data.activityTime) { doc.text(`Waktu     : ${data.activityTime}`, margin, y); y += 5; }
-    y += 4;
+    y += 2;
+    doc.setFont("helvetica", "normal");
+    if (data.activityDate) { doc.text(`Tanggal   : ${data.activityDate}`, margin, y); y += 6; }
+    if (data.activityLocation) { doc.text(`Lokasi    : ${data.activityLocation}`, margin, y); y += 6; }
+    if (data.activityTime) { doc.text(`Waktu     : ${data.activityTime}`, margin, y); y += 6; }
+    y += 6;
   }
 
-  // ===== 10. INFORMASI PEMBAYARAN =====
+  // ===== INFORMASI PEMBAYARAN =====
   if (data.includePayment) {
     y += 2;
     let pt = "";
@@ -239,45 +275,43 @@ export function generateSuratPDF(data: SuratData): jsPDF {
     }
     const pl = doc.splitTextToSize(pt, contentWidth);
     doc.text(pl, margin, y);
-    y += pl.length * 5 + 5;
+    y += pl.length * 6 + 6;
   }
-  y += 8;
+  y += 10;
 
-  // ===== 11. TANDA TANGAN (position from layout settings) =====
-  const sigX = (s.sigPosition || "right") === "right" ? pageWidth - margin - 50 : (s.sigPosition || "right") === "center" ? pageWidth / 2 - 25 : margin;
+  // ===== TANDA TANGAN =====
+  const sigX = (s.sigPosition || "right") === "right" ? pageWidth - margin - 55 : (s.sigPosition || "right") === "center" ? pageWidth / 2 - 27.5 : margin;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(s.bodyFontSize || 10.5);
-  doc.setTextColor(...bodyTextColor);
+  doc.setTextColor(...bodyText);
   doc.text("Hormat kami,", sigX, y);
-  y += 4;
-  y += 18;
+  y += 6;
+  y += 22; // Space for signature
   if (s.sigLineStyle !== "none") {
     doc.setDrawColor(...sigLineColor);
     doc.setLineWidth(0.3);
     if (s.sigLineStyle === "dashed") doc.setLineDashPattern([1, 0.5], 0);
-    doc.line(sigX, y, sigX + 50, y);
+    doc.line(sigX, y, sigX + 55, y);
     doc.setLineDashPattern([], 0);
   }
-  y += 3;
+  y += 4;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...sigNameColor);
   doc.text(data.signatoryName, sigX, y);
-  y += 4;
+  y += 5;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139);
   doc.setFontSize(9);
   doc.text(data.signatoryTitle, sigX, y);
 
-  // ===== 12. FOOTER (from layout settings) =====
-  const footerHeight = s.footerHeight || 14;
+  // ===== FOOTER =====
   if (s.footerShowText) {
     const fy = pageHeight - footerHeight;
-    doc.setFillColor(...footerBgColor);
+    doc.setFillColor(...footerBg);
     doc.rect(0, fy, pageWidth, footerHeight, "F");
     // Accent line above footer
-    doc.setFillColor(...accentLineColor);
+    doc.setFillColor(...accentLine);
     doc.rect(0, fy, pageWidth, 1, "F");
-    // Footer text (centered)
     doc.setTextColor(...footerTextColor);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -288,7 +322,7 @@ export function generateSuratPDF(data: SuratData): jsPDF {
       doc.text(s.footerSubText, pageWidth / 2, fy + 10, { align: "center" });
     }
   } else {
-    doc.setFillColor(...footerBgColor);
+    doc.setFillColor(...footerBg);
     doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, "F");
   }
 

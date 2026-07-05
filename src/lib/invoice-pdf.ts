@@ -1,7 +1,7 @@
-// Invoice PDF generator - CLEAN implementation using ONLY DocumentLayout settings
-// Old design elements have been cleared. All design comes from Layout Dokumen settings.
+// Invoice PDF generator - PROFESSIONAL CLEAN design
+// All design comes from DocumentLayout settings. No overlapping elements.
 import { jsPDF } from "jspdf";
-import { hexToRgb, shadeColor } from "./layout-helper";
+import { hexToRgb } from "./layout-helper";
 
 export interface InvoiceData {
   invoiceNumber: string;
@@ -23,7 +23,6 @@ export interface InvoiceData {
   accountName?: string;
   directorName?: string;
   directorTitle?: string;
-  // Layout settings (from DocumentLayout) - ALL design comes from here
   layout?: any;
 }
 
@@ -39,7 +38,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   const pageHeight = 297;
   const contentWidth = pageWidth - margin * 2;
 
-  // ===== ALL colors from layout settings =====
+  // ===== Colors from layout settings =====
   const headerBg: [number, number, number] = hexToRgb(s.headerBgColor || "#1e3a8a");
   const accentLine: [number, number, number] = hexToRgb(s.accentLineColor || "#1e3a8a");
   const footerBg: [number, number, number] = hexToRgb(s.footerBgColor || "#1e3a8a");
@@ -53,251 +52,298 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   const statusCancelled: [number, number, number] = hexToRgb(s.statusBadgeCancelled || "#ef4444");
   const logoColor: [number, number, number] = hexToRgb(s.logoColor || "#f97316");
   const footerTextColor: [number, number, number] = hexToRgb(s.footerTextColor || "#ffffff");
-  const companyNameColor: [number, number, number] = hexToRgb(s.companyNameColor || "#1e3a8a");
-  const companyAddrColor: [number, number, number] = hexToRgb(s.companyAddressColor || "#64748b");
-  const companyContactColor: [number, number, number] = hexToRgb(s.companyContactColor || "#94a3b8");
 
-  const headerHeight = s.headerHeight || 32;
-  const infoPos = s.companyInfoPosition || "above";
-  const headerGradient = s.headerGradient !== false;
-  const logoSize = s.logoSize || 16;
-  const accentLineHeight = s.accentLineHeight || 1.5;
-
-  // Company info text - ALWAYS from layout settings
+  // Company info text
   const companyName = s.companyNameText || "PT. HAFARA AQIBA NUSANTARA";
   const companyAddress = s.companyAddressText || "";
   const companyContact = s.companyContactText || "";
 
-  let y = 8;
+  const infoPos = s.companyInfoPosition || "inside";
+  const logoSize = s.logoSize || 16;
+  const headerHeight = s.headerHeight || 28;
+  const accentLineHeight = s.accentLineHeight || 1.5;
+  const footerHeight = s.footerHeight || 14;
 
-  // ===== Reusable: Draw logo =====
-  const drawLogo = (lx: number, ly: number) => {
-    doc.setFillColor(...logoColor);
-    doc.circle(lx + logoSize / 2, ly + logoSize / 2, logoSize / 2, "F");
+  let y = 12;
+
+  // ===== HEADER SECTION =====
+  if (infoPos === "inside") {
+    // INFO INSIDE NAVY HEADER (most professional)
     doc.setFillColor(...headerBg);
-    doc.circle(lx + logoSize * 0.68, ly + logoSize * 0.68, logoSize * 0.35, "F");
+    doc.rect(0, 0, pageWidth, headerHeight, "F");
+
+    // Logo (left, vertically centered)
+    const logoY = (headerHeight - logoSize) / 2;
+    doc.setFillColor(...logoColor);
+    doc.circle(margin + logoSize / 2, logoY + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(margin + logoSize * 0.68, logoY + logoSize * 0.68, logoSize * 0.35, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text(s.logoText || "HF", lx + logoSize / 2 - 0.5, ly + logoSize / 2 + 1.5, { align: "center" });
-  };
+    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, logoY + logoSize / 2 + 1.5, { align: "center" });
 
-  // ===== Reusable: Draw company info (name → address → contact) =====
-  const drawCompanyInfo = (onDark: boolean) => {
-    const nameC: [number, number, number] = onDark ? [255, 255, 255] : companyNameColor;
-    const addrC: [number, number, number] = onDark ? [220, 230, 245] : companyAddrColor;
-    const contactC: [number, number, number] = onDark ? [180, 200, 230] : companyContactColor;
-
-    const nameAlign = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
-    const addrAlign = s.companyAddressAlign === "left" ? "left" : s.companyAddressAlign === "center" ? "center" : "right";
-    const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
-
-    const nameX = nameAlign === "right" ? pageWidth - margin : nameAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-    const addrX = addrAlign === "right" ? pageWidth - margin : addrAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-    const contactX = contactAlign === "right" ? pageWidth - margin : contactAlign === "center" ? pageWidth / 2 : margin + logoSize + 5;
-
+    // Company info (right, white text)
+    const infoX = pageWidth - margin;
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(s.companyNameFontSize || 12);
     doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
-    doc.setTextColor(...nameC);
-    doc.text(companyName, nameX, y + 3, nameAlign === "right" ? { align: "right" } : nameAlign === "center" ? { align: "center" } : {});
+    doc.text(companyName, infoX, 8, { align: "right" });
 
     doc.setFontSize(s.companyAddressFontSize || 7.5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...addrC);
-    doc.text(companyAddress, addrX, y + 7, addrAlign === "right" ? { align: "right" } : addrAlign === "center" ? { align: "center" } : {});
+    doc.setTextColor(220, 230, 245);
+    doc.text(companyAddress, infoX, 14, { align: "right" });
 
     doc.setFontSize(s.companyContactFontSize || 7);
-    doc.setTextColor(...contactC);
-    doc.text(companyContact, contactX, y + 11, contactAlign === "right" ? { align: "right" } : contactAlign === "center" ? { align: "center" } : {});
-  };
+    doc.setTextColor(180, 200, 230);
+    doc.text(companyContact, infoX, 19, { align: "right" });
 
-  // ===== 1. INFO ABOVE =====
-  if (infoPos === "above") {
-    drawLogo(margin, y);
-    drawCompanyInfo(false);
-    y += 16;
-  }
-
-  // ===== 2. NAVY HEADER BOX =====
-  if (headerGradient) {
+    y = headerHeight + 2;
+  } else if (infoPos === "above") {
+    // INFO ABOVE + thin navy bar
+    doc.setFillColor(...logoColor);
+    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
     doc.setFillColor(...headerBg);
-    doc.rect(0, y, pageWidth, headerHeight, "F");
-    const lighter = hexToRgb(shadeColor(s.headerBgColor || "#1e3a8a", 15));
-    doc.setFillColor(...lighter);
-    doc.rect(0, y, pageWidth, headerHeight / 2, "F");
+    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
+
+    const infoX = pageWidth - margin;
+    doc.setTextColor(...hexToRgb(s.companyNameColor || "#1e3a8a"));
+    doc.setFontSize(s.companyNameFontSize || 12);
+    doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
+    doc.text(companyName, infoX, y + 4, { align: "right" });
+
+    doc.setFontSize(s.companyAddressFontSize || 7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...hexToRgb(s.companyAddressColor || "#64748b"));
+    doc.text(companyAddress, infoX, y + 9, { align: "right" });
+
+    doc.setFontSize(s.companyContactFontSize || 7);
+    doc.setTextColor(...hexToRgb(s.companyContactColor || "#94a3b8"));
+    doc.text(companyContact, infoX, y + 13, { align: "right" });
+
+    y += 18;
+
+    // Thin navy bar
+    doc.setFillColor(...headerBg);
+    doc.rect(0, y, pageWidth, 3, "F");
+    doc.setFillColor(...accentLine);
+    doc.rect(0, y + 3, pageWidth, accentLineHeight, "F");
+    y += 3 + accentLineHeight + 8;
   } else {
+    // INFO BELOW
     doc.setFillColor(...headerBg);
-    doc.rect(0, y, pageWidth, headerHeight, "F");
-  }
-  if (infoPos === "inside") {
-    drawLogo(margin, y + 5);
-    drawCompanyInfo(true);
-  }
-  y += headerHeight;
+    doc.rect(0, 0, pageWidth, 3, "F");
+    doc.setFillColor(...accentLine);
+    doc.rect(0, 3, pageWidth, accentLineHeight, "F");
+    y = 3 + accentLineHeight + 8;
 
-  // ===== 3. ACCENT LINE =====
-  doc.setFillColor(...accentLine);
-  doc.rect(0, y, pageWidth, accentLineHeight, "F");
-  y += accentLineHeight + 5;
+    doc.setFillColor(...logoColor);
+    doc.circle(margin + logoSize / 2, y + logoSize / 2, logoSize / 2, "F");
+    doc.setFillColor(...headerBg);
+    doc.circle(margin + logoSize * 0.68, y + logoSize * 0.68, logoSize * 0.35, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.logoText || "HF", margin + logoSize / 2 - 0.5, y + logoSize / 2 + 1.5, { align: "center" });
 
-  // ===== 4. INFO BELOW =====
-  if (infoPos === "below") {
-    drawLogo(margin, y);
-    drawCompanyInfo(false);
-    y += 16;
+    const infoX = pageWidth - margin;
+    doc.setTextColor(...hexToRgb(s.companyNameColor || "#1e3a8a"));
+    doc.setFontSize(s.companyNameFontSize || 12);
+    doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
+    doc.text(companyName, infoX, y + 4, { align: "right" });
+
+    doc.setFontSize(s.companyAddressFontSize || 7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...hexToRgb(s.companyAddressColor || "#64748b"));
+    doc.text(companyAddress, infoX, y + 9, { align: "right" });
+
+    doc.setFontSize(s.companyContactFontSize || 7);
+    doc.setTextColor(...hexToRgb(s.companyContactColor || "#94a3b8"));
+    doc.text(companyContact, infoX, y + 13, { align: "right" });
+
+    y += 18;
   }
 
-  // ===== 5. DOCUMENT TITLE (in body, matches LivePreview) =====
+  // ===== DOCUMENT TITLE + INVOICE INFO (2 columns, clean layout) =====
+  // Left: INVOICE title (large, bold)
   if (s.docTitleShow !== false) {
-    doc.setFontSize(s.docTitleFontSize || 16);
+    doc.setFontSize(s.docTitleFontSize || 18);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...docTitleColor);
-    const ta = s.docTitlePosition || "center";
-    const tx = ta === "right" ? pageWidth - margin : ta === "center" ? pageWidth / 2 : margin;
-    doc.text(s.docTitleText || "INVOICE", tx, y, ta === "right" ? { align: "right" } : ta === "center" ? { align: "center" } : {});
-    y += 8;
+    doc.text(s.docTitleText || "INVOICE", margin, y + 4);
   }
 
-  // ===== 6. CLIENT INFO + INVOICE INFO (2 columns) =====
-  // Left: Ditagihkan Kepada
+  // Right: Invoice number + date + status
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 116, 139);
+  doc.text("No. Invoice:", pageWidth - margin - 55, y);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(51, 65, 85);
+  doc.text(data.invoiceNumber, pageWidth - margin, y, { align: "right" });
+  y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 116, 139);
+  doc.text("Tanggal:", pageWidth - margin - 55, y);
+  doc.setTextColor(51, 65, 85);
+  doc.text(data.issueDate, pageWidth - margin, y, { align: "right" });
+  y += 5;
+  // Status badge
+  const statusColor = data.status === "PAID" ? statusPaid : data.status === "CANCELLED" ? statusCancelled : statusPending;
+  doc.setFillColor(...statusColor);
+  doc.roundedRect(pageWidth - margin - 30, y - 3, 30, 5.5, 1, 1, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
+  doc.text(data.status, pageWidth - margin - 15, y + 0.5, { align: "center" });
+  y += 10;
+
+  // ===== CLIENT INFO (Ditagihkan Kepada) =====
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(margin, y, contentWidth, 18, 1.5, 1.5, "S");
+  // Label
   doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...totalLabelColor);
-  doc.text("DITAGIHKAN KEPADA", margin, y);
-  y += 4;
-  doc.setFont("helvetica", "bold");
+  doc.text("DITAGIHKAN KEPADA", margin + 4, y + 5);
+  // Client name
   doc.setFontSize(10);
-  doc.setTextColor(51, 65, 85);
-  doc.text(data.clientName, margin, y);
-  // Right: Invoice details
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 116, 139);
-  doc.text(`No. Invoice: ${data.invoiceNumber}`, pageWidth - margin, y, { align: "right" });
-  y += 4;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139);
-  if (data.clientAddress) doc.text(data.clientAddress, margin, y);
-  doc.text(`Tanggal: ${data.issueDate}`, pageWidth - margin, y, { align: "right" });
-  y += 4;
-  // Status badge (right aligned)
-  const statusColor = data.status === "PAID" ? statusPaid : data.status === "CANCELLED" ? statusCancelled : statusPending;
-  doc.setFillColor(...statusColor);
-  doc.roundedRect(pageWidth - margin - 30, y - 3, 30, 5, 1, 1, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
-  doc.text(data.status, pageWidth - margin - 15, y, { align: "center" });
+  doc.setTextColor(51, 65, 85);
+  doc.text(data.clientName, margin + 4, y + 10);
+  // Client address
+  if (data.clientAddress) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const addrLines = doc.splitTextToSize(data.clientAddress, contentWidth - 8);
+    doc.text(addrLines.slice(0, 2), margin + 4, y + 14);
+  }
+  y += 22;
+
+  // ===== ITEMS TABLE =====
+  // Table header
+  doc.setFillColor(...tableHeaderBg);
+  doc.roundedRect(margin, y, contentWidth, 8, 1.5, 1.5, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.text("DESKRIPSI", margin + 4, y + 5.5);
+  doc.text("QTY", margin + contentWidth * 0.6, y + 5.5, { align: "center" });
+  doc.text("HARGA", margin + contentWidth * 0.78, y + 5.5, { align: "center" });
+  doc.text("TOTAL", pageWidth - margin - 4, y + 5.5, { align: "right" });
   y += 8;
 
-  // ===== 7. ITEMS TABLE (modern with rounded corners) =====
-  const tableWidth = contentWidth;
-  // Header
-  doc.setFillColor(...tableHeaderBg);
-  doc.roundedRect(margin, y, tableWidth, 7, 1.5, 1.5, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(7.5);
-  doc.setFont("helvetica", "bold");
-  doc.text("DESKRIPSI", margin + 3, y + 5);
-  doc.text("QTY", margin + tableWidth * 0.55, y + 5, { align: "center" });
-  doc.text("HARGA", margin + tableWidth * 0.72, y + 5, { align: "center" });
-  doc.text("TOTAL", pageWidth - margin - 3, y + 5, { align: "right" });
-  y += 7;
-
-  // Rows
-  doc.setTextColor(51, 65, 85);
+  // Table rows
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(8.5);
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i];
+    const rowHeight = 8;
     if (i % 2 === 0) {
       doc.setFillColor(...tableRowAlt);
-      doc.rect(margin, y, tableWidth, 7, "F");
+      doc.rect(margin, y, contentWidth, rowHeight, "F");
     }
-    doc.text(item.description, margin + 3, y + 5);
-    doc.text(String(item.qty), margin + tableWidth * 0.55, y + 5, { align: "center" });
-    doc.text(formatRupiah(item.price), margin + tableWidth * 0.72, y + 5, { align: "center" });
-    doc.text(formatRupiah(item.total), pageWidth - margin - 3, y + 5, { align: "right" });
-    y += 7;
+    doc.setTextColor(51, 65, 85);
+    doc.text(item.description, margin + 4, y + 5.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(String(item.qty), margin + contentWidth * 0.6, y + 5.5, { align: "center" });
+    doc.text(formatRupiah(item.price), margin + contentWidth * 0.78, y + 5.5, { align: "center" });
+    doc.setTextColor(51, 65, 85);
+    doc.setFont("helvetica", "bold");
+    doc.text(formatRupiah(item.total), pageWidth - margin - 4, y + 5.5, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    y += rowHeight;
   }
-  // Bottom border of table
+  // Table bottom border
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
-  y += 5;
+  y += 8;
 
-  // ===== 8. SUMMARY (right aligned) =====
-  const summaryX = pageWidth - margin - 65;
-  const summaryW = 65;
+  // ===== SUMMARY (right aligned, clean) =====
+  const summaryW = 70;
+  const summaryX = pageWidth - margin - summaryW;
   doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
   doc.setFont("helvetica", "normal");
-  doc.text("Subtotal:", summaryX, y);
+  doc.setTextColor(100, 116, 139);
+  doc.text("Subtotal", summaryX, y);
+  doc.setTextColor(51, 65, 85);
   doc.text(formatRupiah(data.subtotal), pageWidth - margin, y, { align: "right" });
-  y += 5;
+  y += 6;
   if (data.discount > 0) {
-    doc.text("Diskon:", summaryX, y);
+    doc.setTextColor(100, 116, 139);
+    doc.text("Diskon", summaryX, y);
+    doc.setTextColor(51, 65, 85);
     doc.text("- " + formatRupiah(data.discount), pageWidth - margin, y, { align: "right" });
-    y += 5;
+    y += 6;
   }
   if (data.tax > 0) {
-    doc.text("Pajak:", summaryX, y);
+    doc.setTextColor(100, 116, 139);
+    doc.text("Pajak", summaryX, y);
+    doc.setTextColor(51, 65, 85);
     doc.text(formatRupiah(data.tax), pageWidth - margin, y, { align: "right" });
-    y += 5;
+    y += 6;
   }
-  // Total box
+  // Total box (navy)
   doc.setFillColor(...totalLabelColor);
-  doc.roundedRect(summaryX, y, summaryW, 8, 1.5, 1.5, "F");
+  doc.roundedRect(summaryX, y, summaryW, 9, 1.5, 1.5, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(s.totalFontSize || 9);
-  doc.text("TOTAL", summaryX + 3, y + 5.5);
-  doc.text(formatRupiah(data.totalAmount), pageWidth - margin - 3, y + 5.5, { align: "right" });
-  y += 13;
+  doc.setFontSize(9);
+  doc.text("TOTAL", summaryX + 4, y + 6);
+  doc.setFontSize(s.totalFontSize || 10);
+  doc.text(formatRupiah(data.totalAmount), pageWidth - margin - 4, y + 6, { align: "right" });
+  y += 15;
 
-  // ===== 9. PAYMENT INFO (modern card) =====
+  // ===== PAYMENT INFO (clean card) =====
   if (data.bankName) {
-    doc.setDrawColor(226, 232, 240);
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(margin, y, contentWidth, 10, 1.5, 1.5, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, contentWidth, 12, 1.5, 1.5, "FD");
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...totalLabelColor);
-    doc.text("Pembayaran via Transfer:", margin + 3, y + 4);
+    doc.text("PEMBAYARAN VIA TRANSFER", margin + 4, y + 5);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
-    doc.text(`${data.bankName} — ${data.bankAccount} — ${data.accountName}`, margin + 3, y + 8);
-    y += 14;
+    doc.setFontSize(8);
+    doc.setTextColor(51, 65, 85);
+    doc.text(`${data.bankName}  —  ${data.bankAccount}  —  ${data.accountName}`, margin + 4, y + 9);
+    y += 17;
   }
 
-  // ===== 10. SIGNATURE (position from layout settings) =====
-  const sigX = (s.sigPosition || "right") === "right" ? pageWidth - margin - 50 : (s.sigPosition || "right") === "center" ? pageWidth / 2 - 25 : margin;
+  // ===== SIGNATURE =====
+  const sigX = (s.sigPosition || "right") === "right" ? pageWidth - margin - 55 : (s.sigPosition || "right") === "center" ? pageWidth / 2 - 27.5 : margin;
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(51, 65, 85);
   doc.text("Hormat kami,", sigX, y);
-  y += 4;
-  y += 18;
+  y += 6;
+  y += 22;
   if (s.sigLineStyle !== "none") {
     doc.setDrawColor(...hexToRgb(s.sigLineColor || "#d1d5db"));
     doc.setLineWidth(0.3);
     if (s.sigLineStyle === "dashed") doc.setLineDashPattern([1, 0.5], 0);
-    doc.line(sigX, y, sigX + 50, y);
+    doc.line(sigX, y, sigX + 55, y);
     doc.setLineDashPattern([], 0);
   }
-  y += 3;
+  y += 4;
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...sigNameColor);
   doc.text(data.directorName || "M. Aqil Baihaqi", sigX, y);
-  y += 4;
+  y += 5;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 116, 139);
   doc.setFontSize(8);
   doc.text(data.directorTitle || "Direktur Utama", sigX, y);
 
-  // ===== 11. FOOTER (from layout settings) =====
-  const footerHeight = s.footerHeight || 14;
+  // ===== FOOTER =====
   if (s.footerShowText) {
     const fy = pageHeight - footerHeight;
     doc.setFillColor(...footerBg);

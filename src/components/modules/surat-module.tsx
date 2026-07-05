@@ -503,23 +503,33 @@ function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layo
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden shadow-md flex flex-col" style={{ maxWidth: "210px", minHeight: "297px" }}>
-      {/* 1. INFO ABOVE */}
-      {infoPos === "above" && renderCompanyInfo(false)}
+      {/* 1. INFO INSIDE NAVY HEADER (default - professional) */}
+      {infoPos === "inside" && (
+        <>
+          <div style={{ background: headerBg, minHeight: "24px", padding: "0 6px", display: "flex", alignItems: "center" }}>
+            {renderCompanyInfo(true)}
+          </div>
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+        </>
+      )}
 
-      {/* 2. NAVY HEADER BOX */}
-      <div style={{
-        background: s.headerGradient !== false ? `linear-gradient(180deg, ${headerBg} 0%, ${shadeColorInline(headerBg, 15)} 50%, ${headerBg} 100%)` : headerBg,
-        minHeight: "24px",
-        padding: infoPos === "inside" ? "4px 6px" : "0",
-      }}>
-        {infoPos === "inside" && renderCompanyInfo(true)}
-      </div>
+      {/* 2. INFO ABOVE + thin navy bar */}
+      {infoPos === "above" && (
+        <>
+          {renderCompanyInfo(false)}
+          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+        </>
+      )}
 
-      {/* 3. ACCENT LINE */}
-      <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
-
-      {/* 4. INFO BELOW */}
-      {infoPos === "below" && renderCompanyInfo(false)}
+      {/* 3. INFO BELOW: thin navy bar first, then info */}
+      {infoPos === "below" && (
+        <>
+          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+          {renderCompanyInfo(false)}
+        </>
+      )}
 
       {/* 5. BODY */}
       <div className="px-2.5 py-2 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6 }}>
@@ -596,11 +606,3 @@ function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layo
   );
 }
 
-// Inline shade color helper for preview
-function shadeColorInline(hex: string, percent: number): string {
-  const num = parseInt(hex.replace("#", ""), 16);
-  const r = Math.min(255, (num >> 16) + Math.round(2.55 * percent));
-  const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(2.55 * percent));
-  const b = Math.min(255, (num & 0xff) + Math.round(2.55 * percent));
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
-}

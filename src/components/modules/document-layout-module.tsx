@@ -52,41 +52,41 @@ const INFO_POSITIONS = [
 const DEFAULT_SETTINGS: Record<string, any> = {
   SURAT: {
     paperSize: "A4",
-    headerBgColor: "#0f234b", headerGradient: true, headerTextColor: "#ffffff", headerHeight: 42,
+    headerBgColor: "#0f234b", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 28,
     companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 14, logoColor: "#ff8000", logoText: "H", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    logoPosition: "left", logoSize: 14, logoColor: "#ff8000", logoText: "H", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "inside",
     accentLineColor: "#ff8000", accentLineHeight: 1.5,
-    docTitleText: "Surat Penawaran", docTitlePosition: "left", docTitleFontSize: 9, docTitleColor: "#0f234b", docTitleShow: true,
+    docTitleText: "Surat Penawaran", docTitlePosition: "left", docTitleFontSize: 10, docTitleColor: "#0f234b", docTitleShow: true,
     bodyFontSize: 10.5, bodyFontFamily: "Arial", bodyTextColor: "#2d3748", bodyLineHeight: 1.6,
     sigPosition: "right", sigNameColor: "#0f234b", sigNameFontSize: 10, sigLineStyle: "dashed", sigLineColor: "#d1d5db",
     stampEnabled: true, stampColor: "#0f234b",
-    footerBgColor: "#0f234b", footerHeight: 8, footerShowCompany: false, footerShowContact: false,
+    footerBgColor: "#0f234b", footerHeight: 14, footerShowText: true, footerText: "Terima Kasih!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
   },
   INVOICE: {
     paperSize: "A4",
-    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 38,
+    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 28,
     companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 16, logoColor: "#f97316", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    logoPosition: "left", logoSize: 16, logoColor: "#f97316", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "inside",
     accentLineColor: "#1e3a8a", accentLineHeight: 1.5,
-    docTitleText: "INVOICE", docTitlePosition: "center", docTitleFontSize: 16, docTitleColor: "#1e3a8a", docTitleShow: true,
+    docTitleText: "INVOICE", docTitlePosition: "left", docTitleFontSize: 18, docTitleColor: "#1e3a8a", docTitleShow: true,
     tableHeaderBgColor: "#1e3a8a", tableHeaderTextColor: "#ffffff", tableRowAltColor: "#eff6ff",
     bodyFontSize: 8, bodyFontFamily: "Arial", bodyTextColor: "#334155",
-    totalLabelColor: "#1e3a8a", totalFontSize: 9,
+    totalLabelColor: "#1e3a8a", totalFontSize: 10,
     statusBadgePending: "#fbbf24", statusBadgePaid: "#22c55e", statusBadgeCancelled: "#ef4444",
     sigPosition: "right", sigNameColor: "#1e3a8a",
     footerBgColor: "#1e3a8a", footerHeight: 14, footerShowText: true, footerText: "Thank You!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
   },
   SLIP_GAJI: {
     paperSize: "A4",
-    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 38,
-    companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 15, companyNameBold: true,
+    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 28,
+    companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 16, logoColor: "#1e3a8a", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    logoPosition: "left", logoSize: 16, logoColor: "#1e3a8a", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "inside",
     accentLineColor: "#2563eb", accentLineHeight: 1.5,
     docTitleText: "SLIP GAJI", docTitlePosition: "center", docTitleFontSize: 14, docTitleColor: "#1e3a8a", docTitleShow: true,
     sectionHeaderBgColor: "#eff6ff", sectionHeaderTextColor: "#1e3a8a",
@@ -351,11 +351,9 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
   const addrAlign = alignMap[s.companyAddressAlign] || "right";
   const contactAlign = alignMap[s.companyContactAlign] || "right";
 
-  const headerBg = s.headerGradient
-    ? `linear-gradient(135deg, ${s.headerBgColor} 0%, ${shadeColor(s.headerBgColor, 15)} 50%, ${s.headerBgColor} 100%)`
-    : s.headerBgColor;
+  const headerBg = s.headerBgColor; // SOLID color, no gradient (avoids two-bar effect)
 
-  const infoPos = s.companyInfoPosition || "above"; // inside, above, below
+  const infoPos = s.companyInfoPosition || "inside"; // inside, above, below
   const showAbove = infoPos === "above";
   const showBelow = infoPos === "below";
   const showInside = infoPos === "inside";
@@ -366,7 +364,7 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
     const addrColor = onDark ? "#dce6f5" : s.companyAddressColor;
     const contactColor = onDark ? "#b4c8e6" : s.companyContactColor;
     return (
-      <div style={{ padding: onDark ? "0" : "8px 14px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", width: "100%" }}>
+      <div style={{ padding: onDark ? "0 14px" : "8px 14px 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", width: "100%" }}>
         {/* Logo */}
         {s.logoPosition !== "right" && (
           <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -399,26 +397,41 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px", display: "flex", flexDirection: "column" }}>
-      {/* ===== INFO ABOVE (on white paper, above navy box) ===== */}
-      {showAbove && companyInfoBlock(false)}
+      {/* ===== INFO INSIDE NAVY HEADER (default - most professional) ===== */}
+      {showInside && (
+        <>
+          <div style={{ background: headerBg, minHeight: `${s.headerHeight || 28}px`, padding: "0 14px", display: "flex", alignItems: "center" }}>
+            {companyInfoBlock(true)}
+          </div>
+          {/* Accent line below header */}
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
+        </>
+      )}
 
-      {/* ===== NAVY HEADER BOX ===== */}
-      <div style={{ background: headerBg, minHeight: `${s.headerHeight || 32}px`, padding: showInside ? "10px 14px" : "0 14px", display: "flex", alignItems: "center" }}>
-        {showInside ? companyInfoBlock(true) : null}
-      </div>
+      {/* ===== INFO ABOVE + thin navy accent bar ===== */}
+      {showAbove && (
+        <>
+          {companyInfoBlock(false)}
+          <div style={{ height: "3px", backgroundColor: headerBg }}></div>
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
+        </>
+      )}
 
-      {/* ===== ACCENT LINE ===== */}
-      <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
-
-      {/* ===== INFO BELOW (on white paper, below navy box + accent line) ===== */}
-      {showBelow && <div style={{ padding: "6px 14px 2px" }}>{companyInfoBlock(false)}</div>}
+      {/* ===== INFO BELOW: thin navy bar first, then info below ===== */}
+      {showBelow && (
+        <>
+          <div style={{ height: "3px", backgroundColor: headerBg }}></div>
+          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
+          {companyInfoBlock(false)}
+        </>
+      )}
 
       {/* ===== BODY ===== */}
-      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px", flex: 1 }}>
+      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "12px 14px", flex: 1 }}>
         {s.docTitleShow && (
-          <p style={{ textAlign: s.docTitlePosition, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
+          <p style={{ textAlign: s.docTitlePosition, color: s.docTitleColor, fontWeight: "bold", marginBottom: "8px" }}>
             {docType === "SURAT" ? (
-              <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "2px 10px", borderRadius: "10px", fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
+              <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "3px 12px", borderRadius: "10px", fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
             ) : (
               <span style={{ fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
             )}
@@ -429,9 +442,9 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
         {docType === "SLIP_GAJI" && <SlipGajiPreview s={s} />}
       </div>
 
-      {/* ===== FOOTER ===== */}
+      {/* ===== FOOTER (uses footerBgColor, not headerBg) ===== */}
       {s.footerShowText ? (
-        <div style={{ background: headerBg, padding: "8px 14px", textAlign: "center" }}>
+        <div style={{ background: s.footerBgColor || headerBg, padding: "8px 14px", textAlign: "center" }}>
           <p style={{ color: s.footerTextColor, fontWeight: "bold", fontSize: "11px" }}>{s.footerText || "Terima Kasih!"}</p>
           {s.footerSubText && <p style={{ color: s.footerTextColor, fontSize: "7px", opacity: 0.8, marginTop: "1px" }}>{s.footerSubText}</p>}
         </div>
