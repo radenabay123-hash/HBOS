@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +18,13 @@ import {
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import {
   Plus, Download, Trash2, Edit3, GripVertical, CheckCircle2, Clock,
-  AlertCircle, Loader2, KanbanSquare, Calendar, Flag, Save,
+  AlertCircle, Loader2, KanbanSquare, Calendar, Flag, Save, Users, User as UserIcon,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
-import { formatDate } from "@/lib/constants";
+import { ROLES, ROLE_LABELS, formatDate } from "@/lib/constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { SafeUser } from "@/lib/auth";
 
 const COLUMNS = [
   { id: "TODO", label: "To Do", color: "bg-slate-100 border-slate-300", headerColor: "bg-slate-500", icon: Clock },
@@ -51,15 +52,21 @@ interface KanbanCard {
   position: number;
   completedAt: string | null;
   createdAt: string;
+  assigneeId: string | null;
+  assignee?: { id: string; name: string; role: string; position: string | null } | null;
+  completedBy?: { id: string; name: string } | null;
 }
 
-export function KanbanModule() {
+export function KanbanModule({ user }: { user: SafeUser }) {
+  const isOwner = user.role === ROLES.OWNER;
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState<{ open: boolean; card: KanbanCard | null }>({ open: false, card: null });
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [teamUsers, setTeamUsers] = useState<any[]>([]);
+  const [filterUserId, setFilterUserId] = useState<string>("all");
   const [form, setForm] = useState({
-    title: "", description: "", status: "TODO", priority: "MEDIUM", category: "", dueDate: "",
+    title: "", description: "", status: "TODO", priority: "MEDIUM", category: "", dueDate: "", assigneeId: "",
   });
 
   const sensors = useSensors(
@@ -69,11 +76,15 @@ export function KanbanModule() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await api<{ cards: KanbanCard[] }>("/api/kanban");
+      const url = isOwner && filterUserId !== "all"
+        ? `/api/kanban?userId=${filterUserId}`
+        : "/api/kanban";
+      const d = await api<{ cards: KanbanCard[]; teamUsers?: any[] }>(url);
       setCards(d.cards || []);
+      if (d.teamUsers) setTeamUsers(d.teamUsers);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
-  }, []);
+  }, [isOwner, filterUserId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -152,7 +163,10 @@ export function KanbanModule() {
   }
 
   function openCreate(status?: string) {
-    setForm({ title: "", description: "", status: status || "TODO", priority: "MEDIUM", category: "", dueDate: "" });
+    setForm({
+      title: "", description: "", status: status || "TODO", priority: "MEDIUM", category: "", dueDate: "",
+      assigneeId: isOwner ? "" : user.id,
+    });
     setDialog({ open: true, card: null });
   }
 
@@ -161,6 +175,7 @@ export function KanbanModule() {
       title: card.title, description: card.description || "",
       status: card.status, priority: card.priority,
       category: card.category || "", dueDate: card.dueDate ? card.dueDate.slice(0, 10) : "",
+      assigneeId: card.assigneeId || "",
     });
     setDialog({ open: true, card });
   }
@@ -184,7 +199,9 @@ export function KanbanModule() {
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <KanbanSquare className="w-6 h-6 text-blue-600" /> Kanban Board
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Kelola pekerjaan tim dengan drag & drop. Pekerjaan selesai otomatis tersimpan.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {isOwner ? "Pantau pekerjaan semua tim. Pekerjaan selesai otomatis tersimpan." : "Kelola pekerjaan Anda dengan drag & drop. Pekerjaan selesai otomatis tersimpan."}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => handleDownloadReport("all")} className="bg-white">
@@ -195,6 +212,89 @@ export function KanbanModule() {
           </Button>
         </div>
       </div>
+
+      {/* Owner: User filter + Team summary */}
+      {isOwner && teamUsers.length > 0 && (
+        <>
+          {/* User filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-slate-600 flex items-center gap-1">
+              <Users className="w-4 h-4 text-blue-600" /> Lihat Pekerjaan:
+            </span>
+            <Select value={filterUserId} onValueChange={setFilterUserId}>
+              <SelectTrigger className="w-[200px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">📋 Semua Tim</SelectItem>
+                {teamUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.name} ({ROLE_LABELS[u.role]})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {filterUserId !== "all" && (
+              <Button variant="ghost" size="sm" className="text-xs h-9" onClick={() => setFilterUserId("all")}>
+                Reset Filter
+              </Button>
+            )}
+          </div>
+
+          {/* Team summary cards (only when viewing all) */}
+          {filterUserId === "all" && (
+            <Card className="shadow-sm border-blue-200">
+              <CardHeader className="pb-2 bg-blue-50/50">
+                <p className="text-sm font-semibold text-blue-900 flex items-center gap-1.5">
+                  <Users className="w-4 h-4" /> Ringkasan Pekerjaan Per Anggota Tim
+                </p>
+              </CardHeader>
+              <CardContent className="p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {teamUsers.map((u) => {
+                    const userCards = cards.filter((c) => c.assigneeId === u.id);
+                    const inProgress = userCards.filter((c) => c.status === "IN_PROGRESS").length;
+                    const todo = userCards.filter((c) => c.status === "TODO").length;
+                    const review = userCards.filter((c) => c.status === "REVIEW").length;
+                    const done = userCards.filter((c) => c.status === "DONE").length;
+                    return (
+                      <button
+                        key={u.id}
+                        onClick={() => setFilterUserId(u.id)}
+                        className="text-left p-3 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                            {u.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{u.name}</p>
+                            <p className="text-[10px] text-slate-500">{ROLE_LABELS[u.role]}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1 text-center">
+                          <div className="bg-slate-50 rounded p-1">
+                            <p className="text-[9px] text-slate-400">Todo</p>
+                            <p className="text-sm font-bold text-slate-600">{todo}</p>
+                          </div>
+                          <div className="bg-amber-50 rounded p-1">
+                            <p className="text-[9px] text-amber-500">Progress</p>
+                            <p className="text-sm font-bold text-amber-600">{inProgress}</p>
+                          </div>
+                          <div className="bg-violet-50 rounded p-1">
+                            <p className="text-[9px] text-violet-500">Review</p>
+                            <p className="text-sm font-bold text-violet-600">{review}</p>
+                          </div>
+                          <div className="bg-green-50 rounded p-1">
+                            <p className="text-[9px] text-green-500">Done</p>
+                            <p className="text-sm font-bold text-green-600">{done}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-3">
@@ -294,6 +394,20 @@ export function KanbanModule() {
                 <Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="bg-white" />
               </div>
             </div>
+            {/* Assignee (Owner only) */}
+            {isOwner && teamUsers.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Ditugaskan Kepada</Label>
+                <Select value={form.assigneeId} onValueChange={(v) => setForm({ ...form, assigneeId: v })}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Pilih anggota tim" /></SelectTrigger>
+                  <SelectContent>
+                    {teamUsers.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.name} ({ROLE_LABELS[u.role]})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog({ open: false, card: null })}>Batal</Button>
@@ -411,6 +525,16 @@ function KanbanCardItem({ card, onEdit, onDelete, isOverlay }: {
           </span>
         )}
       </div>
+
+      {/* Assignee */}
+      {card.assignee && (
+        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-slate-100">
+          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-[8px] font-bold text-blue-700">
+            {card.assignee.name.split(" ").map((n) => n[0]).slice(0, 2).join("")}
+          </div>
+          <span className="text-[10px] text-slate-500">{card.assignee.name}</span>
+        </div>
+      )}
 
       {/* Actions (hover) */}
       {!isOverlay && onEdit && onDelete && (

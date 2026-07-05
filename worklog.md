@@ -717,3 +717,37 @@ Stage Summary:
 - Auto-save: when card moved to "Selesai" column, completedAt is automatically recorded
 - PDF report: download laporan pekerjaan selesai with company header, summary, and detail table
 - Menu visible to all roles (Owner, PM, Assistant Trainer, Content Creative, Digital Marketing & IT, Finance)
+
+---
+Task ID: KANBAN-OWNER-VIEW
+Agent: Main (Z.ai Code)
+Task: Add Owner view to Kanban Board - see all team members' work with filter
+
+Work Log:
+- Added User relations to KanbanCard model: assignee (KanbanAssignee) and completedBy (KanbanCompletedBy)
+- Added reverse relations to User model: kanbanAssigned and kanbanCompleted
+- Updated /api/kanban GET:
+  - Includes assignee and completedBy user info in response
+  - Returns teamUsers list for Owner (for filter dropdown)
+  - Supports userId filter parameter (Owner can filter by specific user)
+  - Team members only see their own cards (assigneeId = their id)
+- Updated /api/kanban POST: Owner can assign card to any team member, team members auto-assigned to themselves
+- Updated /api/kanban/[id] PUT: includes assignee/completedBy in response
+- Updated KanbanModule:
+  - Owner view: "Pantau pekerjaan semua tim" header
+  - User filter dropdown: "📋 Semua Tim" + list of all team members
+  - Team summary cards: per-user card showing avatar (initials), name, role, and 4 counters (Todo/Progress/Review/Done) - clickable to filter
+  - When filtered by user: shows only that user's cards, with "Reset Filter" button
+  - Cards show assignee name + initials avatar at bottom
+  - Form dialog: Owner can select "Ditugaskan Kepada" (assignee dropdown with team members)
+  - Team view: "Kelola pekerjaan Anda" header, no filter, no team summary, only own cards
+- Assigned test cards to team members: Siti Rahma (Review), Dewi Lestari (In Progress + Done), Ahmad Fauzi (Done), Nur Hidayah (Done)
+- Verified: Owner sees all 5 team members with per-user stats, can filter by user, team members see only their own cards, all APIs 200, lint clean
+
+Stage Summary:
+- Owner can now see what each team member is working on
+- Filter by specific user or view all
+- Team summary cards show per-user work distribution (Todo/Progress/Review/Done counts)
+- Cards display assignee name
+- Owner can assign work to team members when creating cards
+- Team members only see their own cards

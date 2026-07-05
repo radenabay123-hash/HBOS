@@ -136,7 +136,7 @@ export default function Home() {
       case "surat":
         return <SuratModule user={user} />;
       case "kanban":
-        return <KanbanModule />;
+        return <KanbanModule user={user} />;
       default:
         return null;
     }

@@ -38,7 +38,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       data.completedById = null;
     }
 
-    const card = await db.kanbanCard.update({ where: { id }, data });
+    const card = await db.kanbanCard.update({
+      where: { id },
+      data,
+      include: {
+        assignee: { select: { id: true, name: true, role: true, position: true } },
+        completedBy: { select: { id: true, name: true } },
+      },
+    });
     return ok({ card });
   });
 }
