@@ -17,6 +17,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/constants";
 import { downloadSuratPDF } from "@/lib/surat-pdf";
+import { fetchLayoutSettings } from "@/lib/layout-helper";
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -181,13 +182,19 @@ export function SuratModule({ user }: { user: SafeUser }) {
     catch (e: any) { toast.error(e.message); }
   }
 
-  function handleDownloadPDF(s: any) {
+  async function handleDownloadPDF(s: any) {
+    let layoutSettings: any = null;
+    try {
+      const ld = await fetchLayoutSettings("SURAT");
+      layoutSettings = ld.layout;
+    } catch {}
     downloadSuratPDF({
       ...s,
       issueDate: formatDate(s.issueDate),
       companyName: companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA",
       companyLogo: companySettings.company_logo || "",
       companySignature: companySettings.company_signature || "",
+      layout: layoutSettings,
     });
     toast.success("Surat PDF diunduh");
   }

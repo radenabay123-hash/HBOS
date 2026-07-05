@@ -1067,3 +1067,39 @@ Stage Summary:
 - NPWP & PTKP auto-connected to: Payroll (PPh 21 calculation), Kalkulator Pajak, Slip Gaji
 - Progress tracking (0-100% completion)
 - Integration status shown when NPWP+PTKP filled
+
+---
+Task ID: LAYOUT-PDF-INTEGRATION
+Agent: Main (Z.ai Code)
+Task: Integrate DocumentLayout settings with surat, invoice, and slip gaji PDF generators
+
+Work Log:
+- Created src/lib/layout-helper.ts: fetchLayoutSettings() + hexToRgb() + shadeColor() utilities
+- Updated src/lib/surat-pdf.ts: 
+  - Added `layout?: any` to SuratData interface
+  - All colors read from layout settings (headerBgColor, accentLineColor, footerBgColor, bodyTextColor, etc.)
+  - Header: gradient/solid from settings, company info position (above/inside/below)
+  - Logo: color/size/text from settings
+  - Document title: text/position/fontSize/color from settings
+  - Body: fontSize/fontFamily/textColor from settings
+  - Signature: position/nameColor/lineStyle/lineColor from settings
+  - Footer: bgColor/height/showText/text/subText from settings
+- Updated src/lib/invoice-pdf.ts:
+  - Added `layout?: any` to InvoiceData interface
+  - All table colors, header colors, status badge colors, total label color from settings
+  - Company info position, gradient, header height from settings
+  - Document title, accent line, footer from settings
+- Updated src/lib/slip-gaji-pdf.ts:
+  - Added `layout?: any` to SlipGajiData interface
+  - All colors from settings (headerBg, accent, earnings, deductions, netSalary, section header, footer)
+  - Header gradient/height, company info position, logo, document title from settings
+  - Footer with text from settings
+- Updated surat-module.tsx: handleDownloadPDF now async, fetches SURAT layout settings, passes to downloadSuratPDF
+- Updated invoice-module.tsx: handleDownloadPDF now async, fetches INVOICE layout settings, passes to downloadInvoicePDF
+- Updated payroll-module.tsx: handleDownloadSlip now async, fetches SLIP_GAJI layout settings, passes to downloadSlipGajiPDF
+- Verified: all 3 PDF downloads trigger /api/doc-layout?docType=XXX API call (200), no errors, lint clean
+
+Stage Summary:
+- Layout Dokumen sekarang TERINTEGRASI dengan semua PDF generators
+- Saat download Surat/Invoice/Slip Gaji, PDF menggunakan desain dari Layout Dokumen settings
+- Perubahan warna, font, posisi, header, footer di Layout Dokumen langsung berlaku di PDF output

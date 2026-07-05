@@ -1,5 +1,6 @@
-// Slip Gaji PDF Generator - sesuai template PT. HAFARA AIQBA NUSANTARA
+// Slip Gaji PDF Generator - uses DocumentLayout settings
 import { jsPDF } from "jspdf";
+import { hexToRgb, shadeColor } from "./layout-helper";
 
 export interface SlipGajiData {
   // Company
@@ -24,8 +25,10 @@ export interface SlipGajiData {
   potongan: number;
   // Notes & status
   note: string;
-  status: string; // LUNAS / PAID / DRAFT
+  status: string;
   paidAt: string | null;
+  // Layout settings
+  layout?: any;
 }
 
 function formatRupiah(n: number): string {
@@ -33,6 +36,7 @@ function formatRupiah(n: number): string {
 }
 
 export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
+  const s = data.layout || {};
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = 210;
   const pageHeight = 297;
@@ -40,45 +44,104 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
   const contentWidth = pageWidth - margin * 2;
   let y = 0;
 
-  // Colors
-  const BLUE_DARK: [number, number, number] = [30, 64, 110]; // blue-900-ish
-  const BLUE: [number, number, number] = [37, 99, 235]; // blue-600
-  const GREEN: [number, number, number] = [22, 163, 74];
-  const RED: [number, number, number] = [220, 38, 38];
-  const LIGHT_BG: [number, number, number] = [239, 246, 255]; // blue-50
-  const BORDER: [number, number, number] = [203, 213, 225]; // slate-300
-  const TEXT_DARK: [number, number, number] = [30, 41, 59];
+  // Colors from layout settings
+  const BLUE_DARK: [number, number, number] = hexToRgb(s.headerBgColor || "#1e3a8a");
+  const BLUE: [number, number, number] = hexToRgb(s.accentLineColor || "#2563eb");
+  const GREEN: [number, number, number] = hexToRgb(s.earningsColor || "#16a34a");
+  const RED: [number, number, number] = hexToRgb(s.deductionsColor || "#ef4444");
+  const LIGHT_BG: [number, number, number] = hexToRgb(s.sectionHeaderBgColor || "#eff6ff");
+  const BORDER: [number, number, number] = [203, 213, 225];
+  const TEXT_DARK: [number, number, number] = hexToRgb(s.bodyTextColor || "#334155");
   const TEXT_MUTED: [number, number, number] = [100, 116, 139];
+  const NET_BG: [number, number, number] = hexToRgb(s.netSalaryBgColor || "#1e3a8a");
+  const NET_TEXT: [number, number, number] = hexToRgb(s.netSalaryTextColor || "#ffffff");
+  const DOC_TITLE_COLOR: [number, number, number] = hexToRgb(s.docTitleColor || "#1e3a8a");
+  const FOOTER_BG: [number, number, number] = hexToRgb(s.footerBgColor || "#1e3a8a");
+  const LOGO_COLOR: [number, number, number] = hexToRgb(s.logoColor || "#1e3a8a");
 
-  // ===== HEADER (Company info bar) =====
+  const headerHeight = s.headerHeight || 32;
+  const infoPos = s.companyInfoPosition || "inside";
+  const headerGradient = s.headerGradient !== false;
+  const companyNameText = s.companyNameText || data.companyName;
+
+  // Company info (above/inside/below)
+  const drawCompanyInfo = (onDark: boolean) => {
+    const nameC: [number, number, number] = onDark ? [255, 255, 255] : hexToRgb(s.companyNameColor || "#1e3a8a");
+    const addrC: [number, number, number] = onDark ? [220, 230, 245] : hexToRgb(s.companyAddressColor || "#64748b");
+    const contactC: [number, number, number] = onDark ? [180, 200, 230] : hexToRgb(s.companyContactColor || "#94a3b8");
+    const align = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
+    const tx = align === "right" ? pageWidth - margin : align === "center" ? pageWidth / 2 : margin + 20;
+
+    doc.setFontSize(s.companyNameFontSize || 13);
+    doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
+    doc.setTextColor(...nameC);
+    doc.text(companyNameText, tx, y + 4, align === "right" ? { align: "right" } : align === "center" ? { align: "center" } : {});
+
+    doc.setFontSize(s.companyAddressFontSize || 7.5);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...addrC);
+    doc.text(data.companyAddress, tx, y + 8, align === "right" ? { align: "right" } : {});
+
+    doc.setFontSize(s.companyContactFontSize || 7);
+    doc.setTextColor(...contactC);
+    doc.text(`${data.companyEmail} | ${data.companyWebsite} | ${data.companyPhone}`, tx, y + 12, align === "right" ? { align: "right" } : {});
+  };
+
+  // Info ABOVE
+  if (infoPos === "above") {
+    drawCompanyInfo(false);
+    y += 16;
+  }
+
+  // ===== HEADER (navy background) =====
+  if (headerGradient) {
+    doc.setFillColor(...BLUE_DARK);
+    doc.rect(0, y, pageWidth, headerHeight, "F");
+    const lighter = hexToRgb(shadeColor(s.headerBgColor || "#1e3a8a", 15));
+    doc.setFillColor(...lighter);
+    doc.rect(0, y, pageWidth, headerHeight / 2, "F");
+  } else {
+    doc.setFillColor(...BLUE_DARK);
+    doc.rect(0, y, pageWidth, headerHeight, "F");
+  }
+
+  // Logo (left, inside header)
+  const ls = s.logoSize || 16;
+  doc.setFillColor(...LOGO_COLOR);
+  doc.circle(margin + ls / 2, y + headerHeight / 2, ls / 2, "F");
   doc.setFillColor(...BLUE_DARK);
-  doc.rect(0, 0, pageWidth, 32, "F");
-
-  // Logo circle (left)
-  doc.setFillColor(255, 255, 255);
-  doc.circle(margin + 10, 16, 8, "F");
-  doc.setTextColor(...BLUE_DARK);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("HF", margin + 10, 18, { align: "center" });
-
-  // Company name (left)
+  doc.circle(margin + ls * 0.68, y + headerHeight / 2 + ls * 0.18, ls * 0.35, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text(data.companyName, margin + 22, 12);
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.companyAddress, margin + 22, 17);
-  doc.text(`Email: ${data.companyEmail}  |  Web: ${data.companyWebsite}`, margin + 22, 21);
-  doc.text(`Telp: ${data.companyPhone}`, margin + 22, 25);
+  doc.text(s.logoText || "HF", margin + ls / 2 - 0.5, y + headerHeight / 2 + 1.5, { align: "center" });
 
-  // SLIP GAJI title (right side of header)
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("SLIP GAJI", pageWidth - margin, 20, { align: "right" });
+  // Company info inside header (if inside mode)
+  if (infoPos === "inside") {
+    drawCompanyInfo(true);
+  }
 
-  y = 40;
+  // Document title (SLIP GAJI)
+  if (s.docTitleShow !== false) {
+    doc.setFontSize(s.docTitleFontSize || 14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    const ta = s.docTitlePosition || "center";
+    doc.text(s.docTitleText || "SLIP GAJI", ta === "right" ? pageWidth - margin : ta === "center" ? pageWidth / 2 : margin, y + headerHeight / 2 + 2, ta === "right" ? { align: "right" } : ta === "center" ? { align: "center" } : {});
+  }
+
+  y += headerHeight;
+
+  // Accent line
+  doc.setFillColor(...BLUE);
+  doc.rect(0, y, pageWidth, s.accentLineHeight || 1.5, "F");
+  y += (s.accentLineHeight || 1.5) + 5;
+
+  // Info BELOW
+  if (infoPos === "below") {
+    drawCompanyInfo(false);
+    y += 16;
+  }
 
   // ===== EMPLOYEE INFO SECTION =====
   doc.setDrawColor(...BORDER);
@@ -316,19 +379,31 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
 
   y += 32;
 
-  // ===== FOOTER =====
-  doc.setFillColor(...BLUE_DARK);
-  doc.rect(0, pageHeight - 12, pageWidth, 12, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "italic");
-  doc.text("Terima kasih atas dedikasi dan kerja keras Anda untuk PT. HAFARA AIQBA NUSANTARA", pageWidth / 2, pageHeight - 6, { align: "center" });
+  // ===== FOOTER (from layout settings) =====
+  const footerHeight = s.footerHeight || 14;
+  doc.setFillColor(...FOOTER_BG);
+  doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, "F");
+  // Accent line above footer
+  doc.setFillColor(...BLUE);
+  doc.rect(0, pageHeight - footerHeight, pageWidth, 1, "F");
 
-  // Page number
+  if (s.footerShowText) {
+    doc.setTextColor(...NET_TEXT);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(s.footerText || "Terima Kasih!", pageWidth / 2, pageHeight - footerHeight + 5, { align: "center" });
+    if (s.footerSubText) {
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(s.footerSubText, pageWidth / 2, pageHeight - footerHeight + 9, { align: "center" });
+    }
+  }
+
+  // Date stamp
   doc.setFontSize(6);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...TEXT_MUTED);
-  doc.text(`Dibuat: ${new Date().toLocaleString("id-ID")}`, margin, pageHeight - 14);
+  doc.text(`Dibuat: ${new Date().toLocaleString("id-ID")}`, margin, pageHeight - footerHeight - 2);
 
   return doc;
 }

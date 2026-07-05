@@ -18,6 +18,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+import { fetchLayoutSettings } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -159,8 +160,14 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
     catch (e: any) { toast.error(e.message); }
   }
 
-  function handleDownloadPDF(inv: Invoice) {
+  async function handleDownloadPDF(inv: Invoice) {
     const items = JSON.parse(inv.items || "[]");
+    // Fetch layout settings
+    let layoutSettings: any = null;
+    try {
+      const ld = await fetchLayoutSettings("INVOICE");
+      layoutSettings = ld.layout;
+    } catch {}
     downloadInvoicePDF({
       invoiceNumber: inv.invoiceNumber,
       issueDate: formatDate(inv.issueDate),
@@ -179,7 +186,6 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       bankName: inv.bankName || "",
       bankAccount: inv.bankAccount || "",
       accountName: inv.accountName || "",
-      // Company settings from form (if available)
       companyName: companySettings.company_name,
       companyAddress: companySettings.company_address,
       companyPhone: companySettings.company_phone,
@@ -190,6 +196,7 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       companySignature: companySettings.company_signature,
       directorName: companySettings.director_name,
       directorTitle: companySettings.director_title,
+      layout: layoutSettings,
     });
     toast.success("Invoice PDF diunduh");
   }

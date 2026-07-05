@@ -22,6 +22,7 @@ import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
 import { exportToExcel } from "@/lib/export-utils";
 import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
+import { fetchLayoutSettings } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -181,14 +182,20 @@ export function PayrollModule({ user }: { user: SafeUser }) {
     }
   }
 
-  function handleDownloadSlip(p: Payroll) {
+  async function handleDownloadSlip(p: Payroll) {
     const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
+    // Fetch layout settings
+    let layoutSettings: any = null;
+    try {
+      const ld = await fetchLayoutSettings("SLIP_GAJI");
+      layoutSettings = ld.layout;
+    } catch {}
     const slipData: SlipGajiData = {
-      companyName: p.companyName || "PT. HAFARA AIQBA NUSANTARA",
+      companyName: layoutSettings?.companyNameText || p.companyName || "PT. HAFARA AQIBA NUSANTARA",
       companyEmail: "Info@hafaragroup.com",
       companyWebsite: "www.HafaraGroup.com",
       companyPhone: "081324511570",
-      companyAddress: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur",
+      companyAddress: layoutSettings?.companyAddressText || "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur",
       employeeName: u.name,
       nik: p.nik || p.userId.slice(-4).toUpperCase(),
       jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",
@@ -202,6 +209,7 @@ export function PayrollModule({ user }: { user: SafeUser }) {
       note: p.note || "",
       status: p.status,
       paidAt: p.paidAt ? formatDate(p.paidAt) : null,
+      layout: layoutSettings,
     };
     downloadSlipGajiPDF(slipData);
     toast.success("Slip gaji PDF diunduh");
