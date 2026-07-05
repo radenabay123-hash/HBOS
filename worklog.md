@@ -829,3 +829,35 @@ Stage Summary:
   - Signature: position, name color/font size, line style/color, stamp toggle/color
   - Footer: bg color, text color, height, footer text, show company/contact toggles
 - All settings stored in database, can be updated without code changes
+
+---
+Task ID: DOC-LAYOUT-LIVE-PREVIEW
+Agent: Main (Z.ai Code)
+Task: Add live preview + connect logo/signature from app settings to document layout
+
+Work Log:
+- Updated /api/doc-layout GET to auto-fetch app settings (company_logo, company_signature, director_name, director_title, company_name, address, phone, email, website) and include in response
+- Updated /api/doc-layout POST to support uploading logo/signature images (saves to /public/uploads/ and stores URL in app settings - shared across all documents)
+- Rewrote DocumentLayoutModule with:
+  1. Logo & Tanda Tangan section (top, shared across all docs):
+     - Upload logo perusahaan (shows current logo from app settings)
+     - Upload tanda tangan digital (shows current signature)
+     - "Terhubung ke semua dokumen" badge when uploaded
+     - Note: "Otomatis digunakan di semua dokumen. Terhubung dengan Pengaturan Aplikasi."
+  2. Per document type tabs (Surat Resmi, Invoice, Slip Gaji):
+     - LEFT: All settings (header, logo, body, accent, signature, footer)
+     - RIGHT: Live Preview that updates in REAL-TIME as settings change
+  3. Live Preview component renders different layout per doc type:
+     - SURAT: navy header with logo+company name, contact right, accent line, surat badge pill, nomor/tanggal, kepada yth, isi surat, signature with dashed line + uploaded signature image, footer
+     - INVOICE: header, INVOICE title, nomor/tanggal, ditagihkan kepada, table with colored header (bg/text/alt row), subtotal/total, status badge, signature, footer
+     - SLIP_GAJI: header, SLIP GAJI title, section header (colored), employee info, earnings/deductions cards (colored), net salary box (bg/text color), footer
+  4. Live preview uses actual uploaded logo image (if available) or fallback circle with logo text
+  5. Live preview uses actual uploaded signature image in signature area
+  6. All colors/sizes/fonts in preview update instantly when settings change
+- Verified: API returns appSettings with logo URL, UI shows logo in both upload field and live preview, upload works, all APIs 200, lint clean, no errors
+
+Stage Summary:
+- Logo & tanda tangan otomatis terhubung dari Pengaturan Aplikasi ke Layout Dokumen
+- Upload logo/tanda tangan juga bisa langsung di Layout Dokumen (shared ke app settings)
+- Live preview real-time untuk Surat, Invoice, Slip Gaji — update saat edit warna/font/ukuran/posisi
+- Preview menampilkan logo asli dan tanda tangan yang diupload
