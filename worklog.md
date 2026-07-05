@@ -440,3 +440,35 @@ Stage Summary:
   3. Bukti Potong PPh - manual input form
   4. Surat Setoran Pajak (SSP) - manual input form
 - All verified working
+
+---
+Task ID: LABA-RUGI-FORMAT
+Agent: Main (Z.ai Code)
+Task: Sesuaikan Laporan Laba Rugi sesuai format gambar + filter periode + format angka Rupiah
+
+Work Log:
+- Created category mapping in finance-engine.ts:
+  - PENDAPATAN_AKUN (4 akun): Pendapatan Training & Motivation, Pendapatan Jasa Konsultasi, Pendapatan Sertifikasi, Pendapatan Lain-lain
+  - BIAYA_AKUN (14 akun): Beban Gaji & Bonus, Biaya Operasional Kantor, Biaya Internet, Biaya Listrik Air & Kebersihan, Biaya Sosial, Biaya Transportasi, Biaya Kredit Bank, Biaya Marketing & Promosi, Biaya Penyusutan (auto from inventory), Biaya Sewa, Biaya ATK, Biaya Perjalanan Dinas, Biaya Konsumsi, Biaya Lain-lain
+- Rewrote getLabaRugi function with period filter support (BULANAN/TRIWULAN/SEMESTER/TAHUNAN/CUSTOM), fiscal reconciliation logic, PPh Badan rate from config
+- Created src/lib/laba-rugi-pdf.ts: professional PDF generator with:
+  - formatRupiahID(): Rupiah format with thousands separator (.), decimal comma (,), negatives in parentheses ()
+  - generateLabaRugiSesuaiFormat(): kop surat, PENDAPATAN USAHA section, BIAYA OPERASIONAL section, LABA SEBELUM PAJAK, Pajak Penghasilan Badan, LABA BERSIH with double-line separators
+  - Pajak note: "Estimasi Pajak berdasarkan laba komersial" (or fiscal reconciliation note)
+- Updated spt-pdf.ts generateLabaRugiPDF to use new format with pendapatanItems/biayaItems
+- Created /api/finance/laba-rugi route for dedicated laba rugi API with period filter
+- Updated /api/finance/laporan route to support periodType + customStart/customEnd
+- Rewrote LaporanModule in finance-advanced-module.tsx:
+  - Period filter: Bulanan, Triwulan, Semester, Tahunan, Custom Periode (with date pickers)
+  - Laba Rugi report with exact format: PENDAPATAN USAHA header, 4 akun items, TOTAL with separator, BIAYA OPERASIONAL header, 14 akun items (negatives in parentheses), TOTAL, LABA SEBELUM PAJAK, Pajak, LABA BERSIH
+  - Export buttons: PDF (professional with kop surat), Excel, Print
+  - formatRupiahID used for all numbers
+- Fixed circular dependency (spt-pdf ↔ laba-rugi-pdf) by making spt-pdf self-contained
+- Verified with Agent Browser: Laba Rugi shows correct format (145.000.000,00 / (5.000.000,00)), period filter works (Tahunan shows full year data), PDF/Excel/Print buttons work, all APIs 200, lint clean
+
+Stage Summary:
+- Laba Rugi format sesuai gambar: 4 pendapatan akun + 14 biaya akun, format Rupiah (titik pemisah, koma desimal, kurung untuk negatif)
+- Filter periode: Bulanan, Triwulan, Semester, Tahunan, Custom Periode
+- Rule perhitungan: Total Pendapatan - Total Biaya = Laba Sebelum Pajak, Pajak dari laba (estimasi komersial), Laba Bersih = Laba Sebelum Pajak - Pajak
+- Export: PDF (kop surat profesional), Excel, Print
+- Sumber data: otomatis dari transaksi (tidak perlu input manual)

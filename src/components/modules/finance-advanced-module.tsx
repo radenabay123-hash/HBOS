@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { generateNeracaPDF, generateLabaRugiPDF, generateBuktiPotongPDF, generateSSPPDF, COMPANY_INFO } from "@/lib/spt-pdf";
+import { generateLabaRugiSesuaiFormat, formatRupiahID } from "@/lib/laba-rugi-pdf";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -18,7 +19,7 @@ import {
   Download, CheckCircle2, DollarSign, Settings, Zap, Bot, Send, Receipt,
   Banknote, PiggyBank, Landmark, Smartphone, Tag, Plus, Edit3, Trash2,
   Building2, Package, Calendar, Calculator, Sparkles, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight,
+  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight, Printer,
 } from "lucide-react";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard } from "@/components/shared/charts";
 import { api } from "@/lib/api-client";
@@ -887,117 +888,198 @@ function PajakModule({ year, month }: { year: number; month: number }) {
 function LaporanModule({ year, month }: { year: number; month: number }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [periodType, setPeriodType] = useState("BULANAN");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   useEffect(() => {
     let active = true;
-     
     Promise.resolve().then(() => setLoading(true));
-    api(`/api/finance/laporan?year=${year}&month=${month}`)
+    const params = new URLSearchParams({ year: String(year), month: String(month), periodType });
+    if (periodType === "CUSTOM" && customStart && customEnd) {
+      params.set("customStart", customStart);
+      params.set("customEnd", customEnd);
+    }
+    api(`/api/finance/laporan?${params}`)
       .then((d) => { if (active) setData(d); })
       .catch((e) => { if (active) toast.error(e.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [year, month]);
+  }, [year, month, periodType, customStart, customEnd]);
 
   if (loading || !data) return <Loading />;
 
-  function handleExportLabaRugi() {
-    const lr = data.labaRugi;
-    exportReportPDF(`Laporan Laba Rugi - ${monthNames[month - 1]} ${year}`, [
-      { heading: "Pendapatan", columns: ["Kategori", "Jumlah"], rows: Object.entries(lr.pendapatanByCat).map(([k, v]: any) => [k, formatCurrency(v)]) },
-      { heading: "Biaya", columns: ["Kategori", "Jumlah"], rows: Object.entries(lr.biayaByCat).map(([k, v]: any) => [k, formatCurrency(v)]) },
-      { heading: "Ringkasan", columns: ["Item", "Jumlah"], rows: [
-        ["Total Pendapatan", formatCurrency(lr.totalPendapatan)],
-        ["Total Biaya", formatCurrency(lr.totalPengeluaran)],
-        ["Laba Operasi", formatCurrency(lr.labaOperasi)],
-        ["Estimasi Pajak (22%)", formatCurrency(lr.pajakEstimasi)],
-        ["Laba Bersih", formatCurrency(lr.labaBersih)],
-      ]},
-    ], `Laba-Rugi-${month}-${year}`);
-    toast.success("PDF diunduh");
+  const lr = data.labaRugi;
+
+  function handleExportLabaRugiPDF() {
+    const doc = generateLabaRugiSesuaiFormat({
+      periodeLabel: lr.periodeLabel,
+      pendapatanItems: lr.pendapatanItems,
+      totalPendapatan: lr.totalPendapatan,
+      biayaItems: lr.biayaItems,
+      totalBiaya: lr.totalBiaya,
+      labaSebelumPajak: lr.labaSebelumPajak,
+      pajakPenghasilan: lr.pajakPenghasilan,
+      pphBadanRate: lr.pphBadanRate,
+      pajakNote: lr.pajakNote,
+      labaBersih: lr.labaBersih,
+    });
+    doc.save(`Laporan-Laba-Rugi-${lr.periodeLabel.replace(/\s/g, "-")}.pdf`);
+    toast.success("Laporan Laba Rugi PDF diunduh");
+  }
+
+  function handleExportLabaRugiExcel() {
+    const rows = [
+      ...lr.pendapatanItems.map((p: any) => ({ Kategori: "Pendapatan", "Akun": p.akun, "Jumlah": p.jumlah })),
+      { Kategori: "Total Pendapatan", Akun: "", Jumlah: lr.totalPendapatan },
+      ...lr.biayaItems.map((b: any) => ({ Kategori: "Biaya", "Akun": b.akun, "Jumlah": -b.jumlah })),
+      { Kategori: "Total Biaya", Akun: "", Jumlah: -lr.totalBiaya },
+      { Kategori: "Laba Sebelum Pajak", Akun: "", Jumlah: lr.labaSebelumPajak },
+      { Kategori: `Pajak PPh Badan (${lr.pphBadanRate}%)`, Akun: "", Jumlah: -lr.pajakPenghasilan },
+      { Kategori: "LABA BERSIH", Akun: "", Jumlah: lr.labaBersih },
+    ];
+    exportToExcel(rows, `Laba-Rugi-${lr.periodeLabel.replace(/\s/g, "-")}`, "Laba Rugi");
+    toast.success("Excel diunduh");
   }
 
   function handleExportNeraca() {
     const n = data.neraca;
     exportReportPDF(`Neraca - ${monthNames[month - 1]} ${year}`, [
-      { heading: "Aset Lancar", columns: ["Item", "Jumlah"], rows: [["Kas", formatCurrency(n.aset.kas)], ["Bank", formatCurrency(n.aset.bank)], ["Dompet Digital", formatCurrency(n.aset.ewallet)], ["Piutang", formatCurrency(n.aset.piutang)], ["Total Aset Lancar", formatCurrency(n.aset.totalAsetLancar)]] },
-      { heading: "Aset Tetap", columns: ["Item", "Jumlah"], rows: [["Inventaris", formatCurrency(n.aset.inventaris)], ["Akum. Penyusutan", formatCurrency(-n.aset.akumulasiPenyusutan)], ["Total Aset Tetap", formatCurrency(n.aset.totalAsetTetap)], ["TOTAL ASET", formatCurrency(n.aset.totalAset)]] },
-      { heading: "Kewajiban & Modal", columns: ["Item", "Jumlah"], rows: [["Hutang", formatCurrency(n.kewajiban.hutang)], ["Pajak Terutang", formatCurrency(n.kewajiban.pajakTerutang)], ["Total Kewajiban", formatCurrency(n.kewajiban.totalKewajiban)], ["Laba Ditahan", formatCurrency(n.modal.labaDitahan)], ["Total Modal", formatCurrency(n.modal.totalModal)]] },
+      { heading: "Aset Lancar", columns: ["Item", "Jumlah"], rows: [["Kas", formatRupiahID(n.aset.kas)], ["Bank", formatRupiahID(n.aset.bank)], ["Dompet Digital", formatRupiahID(n.aset.ewallet)], ["Piutang", formatRupiahID(n.aset.piutang)], ["Total Aset Lancar", formatRupiahID(n.aset.totalAsetLancar)]] },
+      { heading: "Aset Tetap", columns: ["Item", "Jumlah"], rows: [["Inventaris", formatRupiahID(n.aset.inventaris)], ["Akum. Penyusutan", formatRupiahID(-n.aset.akumulasiPenyusutan)], ["Total Aset Tetap", formatRupiahID(n.aset.totalAsetTetap)], ["TOTAL ASET", formatRupiahID(n.aset.totalAset)]] },
+      { heading: "Kewajiban & Modal", columns: ["Item", "Jumlah"], rows: [["Hutang", formatRupiahID(n.kewajiban.hutang)], ["Pajak Terutang", formatRupiahID(n.kewajiban.pajakTerutang)], ["Total Kewajiban", formatRupiahID(n.kewajiban.totalKewajiban)], ["Laba Ditahan", formatRupiahID(n.modal.labaDitahan)], ["Total Modal", formatRupiahID(n.modal.totalModal)]] },
     ], `Neraca-${month}-${year}`);
     toast.success("PDF diunduh");
   }
 
-  const reports = [
-    { label: "Laporan Laba Rugi", icon: TrendingUp, color: "green", action: handleExportLabaRugi },
-    { label: "Neraca", icon: BarChart3, color: "blue", action: handleExportNeraca },
-    { label: "Laporan Arus Kas", icon: Banknote, color: "cyan", action: () => toast.info("Buka tab Arus Kas untuk export") },
-    { label: "Laporan Pajak", icon: Receipt, color: "amber", action: () => toast.info("Buka tab Pajak untuk export") },
-    { label: "Laporan Inventaris", icon: Package, color: "violet", action: () => toast.info("Export dari tab Inventaris") },
-    { label: "Laporan Piutang", icon: TrendingUp, color: "cyan", action: handleExportLabaRugi },
-  ];
-
   return (
     <div className="space-y-4">
-      <Card className="border-blue-200 bg-blue-50/50">
-        <CardContent className="p-4 flex items-center gap-3">
-          <FileText className="w-5 h-5 text-blue-600" />
-          <div>
-            <p className="text-sm font-medium text-slate-900">Laporan Keuangan Otomatis</p>
-            <p className="text-xs text-slate-500">Semua laporan dibuat otomatis dari transaksi. Export ke PDF profesional.</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {reports.map((r) => (
-          <Card key={r.label} className="shadow-sm hover:shadow-md transition-shadow cursor-pointer" >
-            <CardContent className="p-4 flex flex-col items-center text-center" onClick={r.action}>
-              <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center mb-2", `bg-${r.color}-50`)}>
-                <r.icon className={cn("w-6 h-6", `text-${r.color}-600`)} />
-              </div>
-              <p className="text-sm font-medium text-slate-900">{r.label}</p>
-              <p className="text-xs text-slate-400 mt-0.5">Klik untuk export PDF</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Laba Rugi preview */}
+      {/* Period Filter */}
       <Card className="shadow-sm">
-        <CardHeader className="pb-2 flex flex-row items-center justify-between">
-          <CardTitle className="text-sm">Preview Laba Rugi - {monthNames[month - 1]} {year}</CardTitle>
-          <Button size="sm" variant="outline" onClick={handleExportLabaRugi} className="bg-white"><Download className="w-3 h-3 mr-1" /> PDF</Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs font-semibold text-green-700 mb-2">PENDAPATAN</p>
-              <div className="space-y-1">
-                {Object.entries(data.labaRugi.pendapatanByCat).map(([k, v]: any) => (
-                  <div key={k} className="flex justify-between text-sm"><span className="text-slate-600">{k}</span><span className="font-medium">{formatCurrency(v)}</span></div>
-                ))}
-                <Separator className="my-1" />
-                <div className="flex justify-between text-sm font-bold"><span>Total Pendapatan</span><span className="text-green-600">{formatCurrency(data.labaRugi.totalPendapatan)}</span></div>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-rose-700 mb-2">BIAYA</p>
-              <div className="space-y-1">
-                {Object.entries(data.labaRugi.biayaByCat).map(([k, v]: any) => (
-                  <div key={k} className="flex justify-between text-sm"><span className="text-slate-600">{k}</span><span className="font-medium">{formatCurrency(v)}</span></div>
-                ))}
-                <Separator className="my-1" />
-                <div className="flex justify-between text-sm font-bold"><span>Total Biaya</span><span className="text-rose-600">{formatCurrency(data.labaRugi.totalPengeluaran)}</span></div>
-              </div>
-            </div>
-          </div>
-          <Separator className="my-3" />
-          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-            <span className="font-bold text-slate-900">LABA BERSIH (setelah estimasi pajak 22%)</span>
-            <span className="text-xl font-bold text-blue-700">{formatCurrency(data.labaRugi.labaBersih)}</span>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-slate-600 mr-1">Periode:</span>
+            <Select value={periodType} onValueChange={setPeriodType}>
+              <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="BULANAN">Bulanan</SelectItem>
+                <SelectItem value="TRIWULAN">Triwulan</SelectItem>
+                <SelectItem value="SEMESTER">Semester</SelectItem>
+                <SelectItem value="TAHUNAN">Tahunan</SelectItem>
+                <SelectItem value="CUSTOM">Custom Periode</SelectItem>
+              </SelectContent>
+            </Select>
+            {periodType === "CUSTOM" && (
+              <>
+                <Input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-[150px] h-9 bg-white" />
+                <span className="text-slate-400 text-sm">s/d</span>
+                <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-[150px] h-9 bg-white" />
+              </>
+            )}
+            {periodType !== "CUSTOM" && (
+              <Select value={String(month)} onValueChange={() => {}}>
+                <SelectTrigger className="w-[130px] h-9 bg-white"><SelectValue /></SelectTrigger>
+                <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
+            <Select value={String(year)} onValueChange={() => {}}>
+              <SelectTrigger className="w-[90px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>{[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
+
+      {/* Laba Rugi Report */}
+      <Card className="shadow-sm">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 rounded-t-lg flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-white text-base">LAPORAN LABA RUGI</h3>
+            <p className="text-blue-100 text-xs">Periode: {lr.periodeLabel}</p>
+          </div>
+          <div className="flex gap-1.5">
+            <Button size="sm" variant="secondary" onClick={handleExportLabaRugiPDF} className="bg-white text-blue-700 hover:bg-blue-50">
+              <Download className="w-3.5 h-3.5 mr-1" /> PDF
+            </Button>
+            <Button size="sm" variant="secondary" onClick={handleExportLabaRugiExcel} className="bg-white text-green-700 hover:bg-green-50">
+              <FileSpreadsheet className="w-3.5 h-3.5 mr-1" /> Excel
+            </Button>
+            <Button size="sm" variant="secondary" onClick={() => window.print()} className="bg-white text-slate-700 hover:bg-slate-50">
+              <Printer className="w-3.5 h-3.5 mr-1" /> Print
+            </Button>
+          </div>
+        </div>
+        <CardContent className="p-6">
+          {/* PENDAPATAN USAHA */}
+          <div className="mb-1">
+            <p className="font-bold text-blue-700 text-sm mb-2">PENDAPATAN USAHA</p>
+            <div className="space-y-1 pl-4">
+              {lr.pendapatanItems.map((item: any, i: number) => (
+                <LRRow key={i} label={item.akun} value={item.jumlah} />
+              ))}
+            </div>
+            <div className="border-t border-slate-300 mt-2 pt-1">
+              <LRRow label="TOTAL PENDAPATAN USAHA" value={lr.totalPendapatan} bold />
+            </div>
+            <div className="border-t-2 border-slate-400 mt-1" />
+          </div>
+
+          {/* BIAYA OPERASIONAL */}
+          <div className="mt-4 mb-1">
+            <p className="font-bold text-rose-700 text-sm mb-2">BIAYA OPERASIONAL</p>
+            <div className="space-y-1 pl-4">
+              {lr.biayaItems.map((item: any, i: number) => (
+                <LRRow key={i} label={item.akun} value={-item.jumlah} />
+              ))}
+            </div>
+            <div className="border-t border-slate-300 mt-2 pt-1">
+              <LRRow label="TOTAL BIAYA OPERASIONAL" value={-lr.totalBiaya} bold />
+            </div>
+            <div className="border-t-2 border-slate-400 mt-1" />
+          </div>
+
+          {/* LABA SEBELUM PAJAK */}
+          <div className="mt-4">
+            <div className="border-t border-slate-300 pt-2">
+              <LRRow label="LABA SEBELUM PAJAK" value={lr.labaSebelumPajak} bold />
+            </div>
+            <div className="border-t border-slate-300 mt-1" />
+            <div className="pt-2">
+              <LRRow label={`Pajak Penghasilan Badan (${lr.pphBadanRate}%)`} value={-lr.pajakPenghasilan} bold />
+            </div>
+            <p className="text-[10px] text-slate-400 italic mt-1 pl-4">* {lr.pajakNote}</p>
+          </div>
+
+          {/* LABA BERSIH */}
+          <div className="mt-4 border-t-2 border-slate-400 pt-3">
+            <div className={cn("rounded-lg p-3 flex justify-between items-center", lr.labaBersih >= 0 ? "bg-blue-50" : "bg-rose-50")}>
+              <span className="font-bold text-slate-900 text-base">LABA BERSIH</span>
+              <span className={cn("font-bold text-xl", lr.labaBersih >= 0 ? "text-blue-700" : "text-rose-700")}>{formatRupiahID(lr.labaBersih)}</span>
+            </div>
+            <div className="border-t-2 border-slate-400 mt-3" />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Other reports */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Card className="shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={handleExportNeraca}>
+          <CardContent className="p-4 flex flex-col items-center text-center">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-2"><BarChart3 className="w-6 h-6 text-blue-600" /></div>
+            <p className="text-sm font-medium text-slate-900">Neraca</p>
+            <p className="text-xs text-slate-400 mt-0.5">Export PDF</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function LRRow({ label, value, bold }: { label: string; value: number; bold?: boolean }) {
+  return (
+    <div className="flex justify-between items-center py-0.5">
+      <span className={cn("text-slate-600", bold ? "font-bold text-slate-900" : "")}>{label}</span>
+      <span className={cn(bold ? "font-bold" : "font-medium", value < 0 ? "text-rose-600" : "text-slate-800")}>{formatRupiahID(value)}</span>
     </div>
   );
 }
@@ -1055,10 +1137,17 @@ function SptBadanModule({ year, month }: { year: number; month: number }) {
   function handleDownloadLabaRugi() {
     const lr = data.labaRugi;
     const doc = generateLabaRugiPDF({
-      periode: `${monthNames[month - 1]} ${year}`,
-      pendapatanByCat: lr.pendapatanByCat, totalPendapatan: lr.totalPendapatan,
-      biayaByCat: lr.biayaByCat, totalPengeluaran: lr.totalPengeluaran,
-      labaKotor: lr.labaKotor, labaOperasi: lr.labaOperasi, pajakEstimasi: lr.pajakEstimasi, labaBersih: lr.labaBersih,
+      periode: lr.periodeLabel || `${monthNames[month - 1]} ${year}`,
+      pendapatanItems: lr.pendapatanItems,
+      totalPendapatan: lr.totalPendapatan,
+      biayaItems: lr.biayaItems,
+      totalBiaya: lr.totalBiaya,
+      labaSebelumPajak: lr.labaSebelumPajak,
+      pajakEstimasi: lr.pajakPenghasilan || lr.pajakEstimasi || 0,
+      pajakPenghasilan: lr.pajakPenghasilan,
+      pphBadanRate: lr.pphBadanRate || 22,
+      pajakNote: lr.pajakNote,
+      labaBersih: lr.labaBersih,
     });
     doc.save(`Laporan-Laba-Rugi-SPT-${month}-${year}.pdf`);
     toast.success("Laporan Laba Rugi PDF diunduh");

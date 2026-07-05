@@ -67,7 +67,7 @@ function drawTitleBar(doc: jsPDF, title: string, subtitle: string, y: number): n
 }
 
 // Draw footer with page number and signature line
-function drawFooter(doc: jsPDF, pageContent: string) {
+export function drawFooter(doc: jsPDF, pageContent: string) {
   const pageWidth = 210;
   const pageHeight = 297;
   doc.setDrawColor(203, 213, 225);
@@ -204,16 +204,24 @@ export function generateNeracaPDF(data: {
 
 // ============================================================
 // 2. LAPORAN LABA RUGI (Income Statement) - SPT Badan
+//    Uses new format from laba-rugi-pdf.ts
 // ============================================================
 export function generateLabaRugiPDF(data: {
   periode: string;
-  pendapatanByCat: Record<string, number>;
+  pendapatanItems?: { akun: string; jumlah: number }[];
+  biayaItems?: { akun: string; jumlah: number }[];
+  pendapatanByCat?: Record<string, number>;
   totalPendapatan: number;
-  biayaByCat: Record<string, number>;
-  totalPengeluaran: number;
-  labaKotor: number;
-  labaOperasi: number;
+  biayaByCat?: Record<string, number>;
+  totalPengeluaran?: number;
+  totalBiaya?: number;
+  labaKotor?: number;
+  labaOperasi?: number;
+  labaSebelumPajak?: number;
   pajakEstimasi: number;
+  pajakPenghasilan?: number;
+  pphBadanRate?: number;
+  pajakNote?: string;
   labaBersih: number;
 }) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -237,8 +245,9 @@ export function generateLabaRugiPDF(data: {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(51, 65, 85);
-  for (const [k, v] of Object.entries(data.pendapatanByCat)) {
-    y = drawRow(doc, y, k, v);
+  const pendapatanItems = data.pendapatanItems || Object.entries(data.pendapatanByCat || {}).map(([k, v]: any) => ({ akun: k, jumlah: v }));
+  for (const item of pendapatanItems) {
+    y = drawRow(doc, y, item.akun, item.jumlah);
   }
   y = drawRow(doc, y, "Total Pendapatan", data.totalPendapatan, true);
   y += 6;
@@ -254,10 +263,12 @@ export function generateLabaRugiPDF(data: {
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(51, 65, 85);
-  for (const [k, v] of Object.entries(data.biayaByCat)) {
-    y = drawRow(doc, y, k, v, false, false, true);
+  const biayaItems = data.biayaItems || Object.entries(data.biayaByCat || {}).map(([k, v]: any) => ({ akun: k, jumlah: v }));
+  for (const item of biayaItems) {
+    y = drawRow(doc, y, item.akun, -item.jumlah, false, false, true);
   }
-  y = drawRow(doc, y, "Total Beban", data.totalPengeluaran, true, false, true);
+  const totalBiaya = data.totalBiaya ?? data.totalPengeluaran ?? 0;
+  y = drawRow(doc, y, "Total Beban", -totalBiaya, true, false, true);
   y += 6;
 
   // RINGKASAN
@@ -269,13 +280,21 @@ export function generateLabaRugiPDF(data: {
   doc.text("RINGKASAN LABA RUGI", margin + 3, y + 5);
   y += 10;
 
-  y = drawRow(doc, y, "Laba Kotor", data.labaKotor);
-  y = drawRow(doc, y, "Laba Operasi (sebelum pajak)", data.labaOperasi, true);
-  y = drawRow(doc, y, "Pajak Penghasilan (PPh Badan 22%)", -data.pajakEstimasi, false, false, true);
+  const labaSebelumPajak = data.labaSebelumPajak ?? data.labaOperasi ?? 0;
+  const pajak = data.pajakPenghasilan ?? data.pajakEstimasi;
+  y = drawRow(doc, y, "Laba Sebelum Pajak", labaSebelumPajak, true);
+  y = drawRow(doc, y, `Pajak Penghasilan Badan (${data.pphBadanRate ?? 22}%)`, -pajak, false, false, true);
   y += 3;
   y = drawRow(doc, y, "LABA BERSIH SETELAH PAJAK", data.labaBersih, true, true);
 
-  drawSignature(doc, y + 15, "Hormat kami,", "M. Aqil Baihaqi");
+  if (data.pajakNote) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(6);
+    doc.setTextColor(100, 116, 139);
+    doc.text("* " + data.pajakNote, margin + 3, y + 2);
+  }
+
+  drawSignature(doc, y + 10, "Hormat kami,", "M. Aqil Baihaqi");
   drawFooter(doc, "Lampiran SPT Badan - Laporan Laba Rugi");
 
   return doc;

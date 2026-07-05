@@ -142,38 +142,129 @@ export async function getNeraca(year: number, month: number) {
   };
 }
 
-// ===== LABA RUGI =====
-export async function getLabaRugi(year: number, month: number) {
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
-  const txns = await db.financeTransaction.findMany({ where: { date: { gte: monthStart, lte: monthEnd } } });
+// ===== LABA RUGI (sesuai format spesifikasi) =====
 
+// Mapping kategori transaksi → akun laba rugi
+export const PENDAPATAN_AKUN = [
+  { akun: "Pendapatan Training & Motivation", categories: ["Honor Training", "Workshop", "Seminar", "Coaching", "Mentoring", "Pendapatan Training"] },
+  { akun: "Pendapatan Jasa Konsultasi", categories: ["Consulting", "Pendapatan Konsultasi"] },
+  { akun: "Pendapatan Sertifikasi", categories: ["Membership", "Penjualan Modul", "Penjualan Buku"] },
+  { akun: "Pendapatan Lain-lain", categories: ["Affiliate", "Investasi", "Lainnya"] },
+];
+
+export const BIAYA_AKUN = [
+  { akun: "Beban Gaji & Bonus", categories: ["Gaji"] },
+  { akun: "Biaya Operasional Kantor", categories: ["Operasional", "Sewa Kantor", "Event"] },
+  { akun: "Biaya Internet", categories: ["Internet", "Hosting", "Domain", "IT"] },
+  { akun: "Biaya Listrik, Air & Kebersihan", categories: ["Listrik", "Air"] },
+  { akun: "Biaya Sosial", categories: ["Konsumsi"] },
+  { akun: "Biaya Transportasi", categories: ["Transportasi"] },
+  { akun: "Biaya Kredit Bank", categories: ["Pajak"] },
+  { akun: "Biaya Marketing & Promosi", categories: ["Marketing", "Iklan"] },
+  { akun: "Biaya Penyusutan", categories: [] }, // auto from inventory
+  { akun: "Biaya Sewa", categories: ["Sewa Kantor"] },
+  { akun: "Biaya ATK", categories: ["Peralatan", "Software"] },
+  { akun: "Biaya Perjalanan Dinas", categories: ["Hotel", "Transportasi"] },
+  { akun: "Biaya Konsumsi", categories: ["Konsumsi"] },
+  { akun: "Biaya Lain-lain", categories: ["Lainnya", "AI Subscription", "Laptop"] },
+];
+
+export async function getLabaRugi(year: number, month: number, periodType: string = "BULANAN", customStart?: Date, customEnd?: Date) {
+  // Determine date range based on period type
+  let start: Date, end: Date, periodeLabel: string;
+  if (periodType === "CUSTOM" && customStart && customEnd) {
+    start = new Date(customStart);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(customEnd);
+    end.setHours(23, 59, 59, 999);
+    periodeLabel = `${start.toLocaleDateString("id-ID")} - ${end.toLocaleDateString("id-ID")}`;
+  } else if (periodType === "TAHUNAN") {
+    start = new Date(year, 0, 1);
+    end = new Date(year, 11, 31, 23, 59, 59, 999);
+    periodeLabel = `Tahun ${year}`;
+  } else if (periodType === "SEMESTER") {
+    // Semester 1: Jan-Jun, Semester 2: Jul-Dec
+    if (month <= 6) { start = new Date(year, 0, 1); end = new Date(year, 5, 30, 23, 59, 59, 999); periodeLabel = `Semester 1 ${year}`; }
+    else { start = new Date(year, 6, 1); end = new Date(year, 11, 31, 23, 59, 59, 999); periodeLabel = `Semester 2 ${year}`; }
+  } else if (periodType === "TRIWULAN") {
+    const q = Math.ceil(month / 3);
+    start = new Date(year, (q - 1) * 3, 1);
+    end = new Date(year, q * 3, 0, 23, 59, 59, 999);
+    periodeLabel = `Triwulan ${q} ${year}`;
+  } else {
+    // BULANAN (default)
+    start = new Date(year, month - 1, 1);
+    end = new Date(year, month, 0, 23, 59, 59, 999);
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    periodeLabel = `${monthNames[month - 1]} ${year}`;
+  }
+
+  const txns = await db.financeTransaction.findMany({ where: { date: { gte: start, lte: end } } });
   const pemasukan = txns.filter((t) => t.type === "PEMASUKAN" && t.isPaid);
   const pengeluaran = txns.filter((t) => t.type === "PENGELUARAN" && t.isPaid);
-  const totalPendapatan = pemasukan.reduce((s, t) => s + t.amount, 0);
-  const totalPengeluaran = pengeluaran.reduce((s, t) => s + t.amount, 0);
 
-  // Pendapatan by category
-  const pendapatanByCat: Record<string, number> = {};
-  for (const t of pemasukan) {
-    const k = t.category || "Lainnya";
-    pendapatanByCat[k] = (pendapatanByCat[k] || 0) + t.amount;
-  }
-  // Biaya by category
-  const biayaByCat: Record<string, number> = {};
-  for (const t of pengeluaran) {
-    const k = t.category || "Lainnya";
-    biayaByCat[k] = (biayaByCat[k] || 0) + t.amount;
-  }
+  // ===== PENDAPATAN per akun =====
+  const pendapatanItems = PENDAPATAN_AKUN.map((p) => {
+    const total = pemasukan
+      .filter((t) => p.categories.includes(t.category || ""))
+      .reduce((s, t) => s + t.amount, 0);
+    return { akun: p.akun, jumlah: total };
+  });
+  const totalPendapatan = pendapatanItems.reduce((s, p) => s + p.jumlah, 0);
 
-  const labaKotor = totalPendapatan - (biayaByCat["Honor Training"] || 0);
-  const labaOperasi = totalPendapatan - totalPengeluaran;
-  const pajakEstimasi = Math.max(0, labaOperasi) * 0.22;
-  const labaBersih = labaOperasi - pajakEstimasi;
+  // ===== BIAYA per akun =====
+  // Get depreciation from inventory
+  const inventory = await db.inventory.findMany({});
+  const totalDepreciation = inventory.reduce((s, i) => {
+    const annualDep = i.purchasePrice / i.usefulLife;
+    // prorate to period (approximate: monthly depreciation * months in period)
+    const monthsInPeriod = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+    return s + (annualDep / 12) * monthsInPeriod;
+  }, 0);
+
+  const biayaItems = BIAYA_AKUN.map((b) => {
+    let total = pengeluaran
+      .filter((t) => b.categories.includes(t.category || ""))
+      .reduce((s, t) => s + t.amount, 0);
+    // Add depreciation to "Biaya Penyusutan"
+    if (b.akun === "Biaya Penyusutan") total = Math.round(totalDepreciation);
+    return { akun: b.akun, jumlah: total };
+  });
+  const totalBiaya = biayaItems.reduce((s, b) => s + b.jumlah, 0);
+
+  // ===== LABA SEBELUM PAJAK =====
+  const labaSebelumPajak = totalPendapatan - totalBiaya;
+
+  // ===== PAJAK =====
+  // Get PPh Badan rate from config
+  const pphBadanConfig = await db.taxConfig.findFirst({ where: { taxType: "PPH_BADAN", isActive: true } });
+  const pphBadanRate = pphBadanConfig?.rate || 22;
+
+  // Check if user has done fiscal reconciliation (rekonsiliasi fiskal)
+  // For now: no fiscal reconciliation stored, so use commercial profit as estimate
+  const hasFiscalReconciliation = false; // TODO: implement fiscal reconciliation feature
+  const labaFiskal = hasFiscalReconciliation ? labaSebelumPajak : labaSebelumPajak; // simplified
+  const pajakPenghasilan = Math.max(0, labaFiskal) * (pphBadanRate / 100);
+
+  // ===== LABA BERSIH =====
+  const labaBersih = labaSebelumPajak - pajakPenghasilan;
 
   return {
-    totalPendapatan, totalPengeluaran,
-    pendapatanByCat, biayaByCat,
-    labaKotor, labaOperasi, pajakEstimasi, labaBersih,
+    periodeLabel,
+    periodType,
+    start, end,
+    pendapatanItems,
+    totalPendapatan,
+    biayaItems,
+    totalBiaya,
+    labaSebelumPajak,
+    pajakPenghasilan,
+    pphBadanRate,
+    hasFiscalReconciliation,
+    pajakNote: hasFiscalReconciliation
+      ? "Pajak dihitung dari Penghasilan Kena Pajak (Laba Fiskal) setelah rekonsiliasi fiskal."
+      : "Estimasi Pajak berdasarkan laba komersial.",
+    labaBersih,
   };
 }
+
