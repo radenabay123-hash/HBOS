@@ -43,6 +43,11 @@ const LINE_STYLES = [
   { value: "dashed", label: "Garis Putus-putus" },
   { value: "none", label: "Tanpa Garis" },
 ];
+const INFO_POSITIONS = [
+  { value: "inside", label: "Di Dalam Kotak Navy" },
+  { value: "above", label: "Di Atas Kotak Navy" },
+  { value: "below", label: "Di Bawah Kotak Navy" },
+];
 
 const DEFAULT_SETTINGS: Record<string, any> = {
   SURAT: {
@@ -51,7 +56,7 @@ const DEFAULT_SETTINGS: Record<string, any> = {
     companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 14, logoColor: "#ff8000", logoText: "H", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "outside",
+    logoPosition: "left", logoSize: 14, logoColor: "#ff8000", logoText: "H", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
     accentLineColor: "#ff8000", accentLineHeight: 1.5,
     docTitleText: "Surat Penawaran", docTitlePosition: "left", docTitleFontSize: 9, docTitleColor: "#0f234b", docTitleShow: true,
     bodyFontSize: 10.5, bodyFontFamily: "Arial", bodyTextColor: "#2d3748", bodyLineHeight: 1.6,
@@ -65,7 +70,7 @@ const DEFAULT_SETTINGS: Record<string, any> = {
     companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 16, logoColor: "#f97316", logoText: "HF",
+    logoPosition: "left", logoSize: 16, logoColor: "#f97316", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
     accentLineColor: "#1e3a8a", accentLineHeight: 1.5,
     docTitleText: "INVOICE", docTitlePosition: "center", docTitleFontSize: 16, docTitleColor: "#1e3a8a", docTitleShow: true,
     tableHeaderBgColor: "#1e3a8a", tableHeaderTextColor: "#ffffff", tableRowAltColor: "#eff6ff",
@@ -73,7 +78,7 @@ const DEFAULT_SETTINGS: Record<string, any> = {
     totalLabelColor: "#1e3a8a", totalFontSize: 9,
     statusBadgePending: "#fbbf24", statusBadgePaid: "#22c55e", statusBadgeCancelled: "#ef4444",
     sigPosition: "right", sigNameColor: "#1e3a8a",
-    footerBgColor: "#1e3a8a", footerHeight: 8, footerShowCompany: false, footerShowContact: false,
+    footerBgColor: "#1e3a8a", footerHeight: 14, footerShowText: true, footerText: "Thank You!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
   },
   SLIP_GAJI: {
     paperSize: "A4",
@@ -81,14 +86,14 @@ const DEFAULT_SETTINGS: Record<string, any> = {
     companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 15, companyNameBold: true,
     companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
     companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
-    logoPosition: "left", logoSize: 16, logoColor: "#1e3a8a", logoText: "HF",
+    logoPosition: "left", logoSize: 16, logoColor: "#1e3a8a", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
     accentLineColor: "#2563eb", accentLineHeight: 1.5,
     docTitleText: "SLIP GAJI", docTitlePosition: "center", docTitleFontSize: 14, docTitleColor: "#1e3a8a", docTitleShow: true,
     sectionHeaderBgColor: "#eff6ff", sectionHeaderTextColor: "#1e3a8a",
     bodyFontSize: 8, bodyFontFamily: "Arial", bodyTextColor: "#334155",
     earningsColor: "#16a34a", deductionsColor: "#ef4444",
     netSalaryBgColor: "#1e3a8a", netSalaryTextColor: "#ffffff", netSalaryFontSize: 13,
-    footerBgColor: "#1e3a8a", footerHeight: 8, footerShowCompany: false, footerShowContact: false,
+    footerBgColor: "#1e3a8a", footerHeight: 14, footerShowText: true, footerText: "Terima Kasih!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
   },
 };
 
@@ -224,6 +229,7 @@ export function DocumentLayoutModule() {
                       <div className="flex items-center gap-2"><Switch checked={s.headerGradient} onCheckedChange={(v) => updateSetting(dt.key, "headerGradient", v)} /><Label className="text-xs">Gradient Background</Label></div>
                       <ColorField label="Warna Teks Header" value={s.headerTextColor} onChange={(v) => updateSetting(dt.key, "headerTextColor", v)} />
                       <Separator className="my-2" />
+                      <SelectField label="Posisi Info Perusahaan" value={s.companyInfoPosition || "above"} options={INFO_POSITIONS} onChange={(v) => updateSetting(dt.key, "companyInfoPosition", v)} />
                       <p className="text-xs font-semibold text-slate-500">ISI HEADER (urutan: Nama → Alamat → Kontak)</p>
                       <div className="space-y-1"><Label className="text-xs">Teks Nama Perusahaan</Label><Input value={s.companyNameText} onChange={(e) => updateSetting(dt.key, "companyNameText", e.target.value)} className="bg-white h-8" /></div>
                       <div className="grid grid-cols-3 gap-2">
@@ -349,71 +355,66 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
     ? `linear-gradient(135deg, ${s.headerBgColor} 0%, ${shadeColor(s.headerBgColor, 15)} 50%, ${s.headerBgColor} 100%)`
     : s.headerBgColor;
 
-  const infoOutside = s.companyInfoPosition === "outside";
+  const infoPos = s.companyInfoPosition || "above"; // inside, above, below
+  const showAbove = infoPos === "above";
+  const showBelow = infoPos === "below";
+  const showInside = infoPos === "inside";
+
+  // Company info block (reusable)
+  const companyInfoBlock = (onDark: boolean) => {
+    const nameColor = onDark ? "#ffffff" : s.companyNameColor;
+    const addrColor = onDark ? "#dce6f5" : s.companyAddressColor;
+    const contactColor = onDark ? "#b4c8e6" : s.companyContactColor;
+    return (
+      <div style={{ padding: onDark ? "0" : "8px 14px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", width: "100%" }}>
+        {/* Logo */}
+        {s.logoPosition !== "right" && (
+          <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+            ) : (
+              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+            )}
+          </div>
+        )}
+        {/* Info */}
+        <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
+          <p style={{ color: nameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
+          <p style={{ color: addrColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
+          <p style={{ color: contactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
+        </div>
+        {/* Logo RIGHT */}
+        {s.logoPosition === "right" && (
+          <div className="shrink-0">
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+            ) : (
+              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px", display: "flex", flexDirection: "column" }}>
-      {/* ===== COMPANY INFO OUTSIDE (on white paper, above navy box) ===== */}
-      {infoOutside && (
-        <div style={{ padding: "8px 14px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
-          {/* Logo LEFT */}
-          {s.logoPosition !== "right" && (
-            <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
-              ) : (
-                <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
-              )}
-            </div>
-          )}
-          {/* Company info: Name → Address → Contact (right-aligned, on white) */}
-          <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
-            <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
-            <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
-            <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
-          </div>
-          {/* Logo RIGHT */}
-          {s.logoPosition === "right" && (
-            <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              {logoUrl ? (
-                <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
-              ) : (
-                <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {/* ===== INFO ABOVE (on white paper, above navy box) ===== */}
+      {showAbove && companyInfoBlock(false)}
 
-      {/* ===== NAVY HEADER BOX (decorative bar — no company info inside) ===== */}
-      <div style={{ background: headerBg, height: `${s.headerHeight || 32}px`, padding: "0 14px", display: "flex", alignItems: "center" }}>
-        {/* If info is inside, show logo + company info here */}
-        {!infoOutside && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "10px" }}>
-            {s.logoPosition !== "right" && (
-              <div className="shrink-0">
-                {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
-                ) : (
-                  <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
-                )}
-              </div>
-            )}
-            <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
-              <p style={{ color: s.companyNameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
-              <p style={{ color: s.companyAddressColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", textAlign: addrAlign }}>{s.companyAddressText}</p>
-              <p style={{ color: s.companyContactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", textAlign: contactAlign }}>{s.companyContactText}</p>
-            </div>
-          </div>
-        )}
+      {/* ===== NAVY HEADER BOX ===== */}
+      <div style={{ background: headerBg, minHeight: `${s.headerHeight || 32}px`, padding: showInside ? "10px 14px" : "0 14px", display: "flex", alignItems: "center" }}>
+        {showInside ? companyInfoBlock(true) : null}
       </div>
 
       {/* ===== ACCENT LINE ===== */}
       <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
 
+      {/* ===== INFO BELOW (on white paper, below navy box + accent line) ===== */}
+      {showBelow && <div style={{ padding: "6px 14px 2px" }}>{companyInfoBlock(false)}</div>}
+
       {/* ===== BODY ===== */}
       <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px", flex: 1 }}>
-        {/* Document Title */}
         {s.docTitleShow && (
           <p style={{ textAlign: s.docTitlePosition, fontSize: `${s.docTitleFontSize}pt`, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
             {docType === "SURAT" ? (
@@ -421,13 +422,12 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
             ) : s.docTitleText}
           </p>
         )}
-
         {docType === "SURAT" && <SuratPreview s={s} directorName={directorName} directorTitle={directorTitle} sigUrl={sigUrl} />}
         {docType === "INVOICE" && <InvoicePreview s={s} directorName={directorName} directorTitle={directorTitle} sigUrl={sigUrl} />}
         {docType === "SLIP_GAJI" && <SlipGajiPreview s={s} />}
       </div>
 
-      {/* ===== FOOTER (navy background with text) ===== */}
+      {/* ===== FOOTER ===== */}
       {s.footerShowText ? (
         <div style={{ background: headerBg, padding: "8px 14px", textAlign: "center" }}>
           <p style={{ color: s.footerTextColor, fontWeight: "bold", fontSize: "11px" }}>{s.footerText || "Terima Kasih!"}</p>

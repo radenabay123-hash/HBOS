@@ -974,3 +974,28 @@ Stage Summary:
 - Layout now matches the reference image exactly
 - All 3 doc types (Surat, Invoice, Slip Gaji) use same header/footer style
 - Footer text can be toggled on/off, customized
+
+---
+Task ID: DOC-LAYOUT-3-POSITIONS
+Agent: Main (Z.ai Code)
+Task: Add 3 position options for company info (inside/above/below navy box) + remove "hafaragroup consulting"
+
+Work Log:
+- Added INFO_POSITIONS constant: "inside" (Di Dalam Kotak Navy), "above" (Di Atas Kotak Navy), "below" (Di Bawah Kotak Navy)
+- Updated DEFAULT_SETTINGS for all 3 doc types: companyInfoPosition: "above", logoSubText: "" (removed "hafaragroup consulting")
+- Updated DB: changed companyInfoPosition from "outside" to "above", cleared logoSubText
+- Added "Posisi Info Perusahaan" dropdown to UI settings (between gradient toggle and header content)
+- Rewrote LivePreview with companyInfoBlock reusable function:
+  - showAbove: company info on white paper, above navy box
+  - showInside: company info inside navy box (white text on dark)
+  - showBelow: company info on white paper, below navy box + accent line
+  - When inside: text colors auto-switch to white/light blue for dark background
+  - When above/below: text colors use user settings (dark navy/slate)
+- Removed all "hafaragroup consulting" subtext from defaults and DB
+- Verified: preview shows company info ABOVE navy box (child 0 = info on white, child 1 = navy box, child 2 = accent line, child 3 = body, child 4 = footer), no "hafaragroup consulting", position dropdown works, all APIs 200, lint clean
+
+Stage Summary:
+- 3 position options for company info: Di Dalam / Di Atas / Di Bawah Kotak Navy
+- "hafaragroup consulting" text removed from all layouts
+- Live preview updates in real-time when position changes
+- Default position: "above" (info on white paper above navy decorative bar)
