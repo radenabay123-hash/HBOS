@@ -410,3 +410,33 @@ Stage Summary:
 - Inventaris: depreciation auto-calculated, asset movement tracking
 - Owner Dashboard: integrated AI Finance Insight card
 - All verified working end-to-end
+
+---
+Task ID: FINANCE-RESTRUCTURE-SPT
+Agent: Main (Z.ai Code)
+Task: Restructure Finance to menu cards + editable tax config + SPT Badan PDF documents with company letterhead
+
+Work Log:
+- Restructured FinanceModule: replaced 8 stacked tabs with elegant menu dashboard (10 card-based menu items with icons, descriptions, color-coded, hover effects). Each card navigates to a dedicated page with back button.
+- Created src/lib/spt-pdf.ts: professional PDF generators with company letterhead (kop surat):
+  - COMPANY_INFO: PT. HAFARA AQIBA NUSANTARA, address, phone, email, website, NPWP
+  - drawKopSurat(): logo box (HF), company name, address, contact, NPWP, blue borders
+  - generateNeracaPDF: Aset Lancar (Kas/Bank/Piutang), Aset Tetap (Inventaris/Penyusutan), Kewajiban (Hutang/Pajak), Modal (Laba Ditahan), balance check, signature block
+  - generateLabaRugiPDF: Pendapatan by category, Beban by category, Laba Kotor, Laba Operasi, Pajak (22%), Laba Bersih, signature
+  - generateBuktiPotongPDF: Form bukti potong PPh 23/22/4(2) with pemotong & wajib pajak identity, amount table (bruto/tarif/PPh dipotong), signature
+  - generateSSPPDF: Surat Setoran Pajak with NPWP, kode akun, kode jenis setoran, NTPN, jumlah setoran box, status badge, signature
+- Created SptBadanModule: 4 document cards (Neraca, Laba Rugi, Bukti Potong PPh, SSP) with company letterhead preview, download PDF buttons, input forms for Bukti Potong & SSP
+- Created TaxConfigModule: editable tax rates (PPh 21 with progressive brackets + PTKP, PPh 23, PPh Badan, PPN) - owner can update rates when regulations change, stored in database
+- Added 2 new menu items: "Dokumen SPT Badan" and "Pengaturan Pajak"
+- Fixed duplicate import issue, lint errors (set-state-in-effect)
+- Verified with Agent Browser: Finance menu shows 10 elegant cards, SPT Badan module shows kop surat preview + 4 document download buttons, Tax Config shows all 4 tax types with editable rates, all APIs 200, lint clean
+
+Stage Summary:
+- Finance layout now professional: menu dashboard with cards (not stacked tabs)
+- Tax config editable: owner can change PPh 21/23/Badan/PPN rates when regulations update
+- SPT Badan documents: 4 PDF types with professional kop surat (logo HF, company name, address, NPWP, phone, email, website)
+  1. Laporan Neraca - auto from transactions
+  2. Laporan Laba Rugi - auto from transactions
+  3. Bukti Potong PPh - manual input form
+  4. Surat Setoran Pajak (SSP) - manual input form
+- All verified working

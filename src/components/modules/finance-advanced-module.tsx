@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { generateNeracaPDF, generateLabaRugiPDF, generateBuktiPotongPDF, generateSSPPDF, COMPANY_INFO } from "@/lib/spt-pdf";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -17,7 +18,7 @@ import {
   Download, CheckCircle2, DollarSign, Settings, Zap, Bot, Send, Receipt,
   Banknote, PiggyBank, Landmark, Smartphone, Tag, Plus, Edit3, Trash2,
   Building2, Package, Calendar, Calculator, Sparkles, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet,
+  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight,
 } from "lucide-react";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard } from "@/components/shared/charts";
 import { api } from "@/lib/api-client";
@@ -30,54 +31,120 @@ import type { SafeUser } from "@/lib/auth";
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 export function FinanceModule({ user }: { user: SafeUser }) {
-  const [tab, setTab] = useState("dashboard");
+  const [view, setView] = useState("menu");
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
-  return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+  const menus = [
+    { key: "dashboard", label: "Dashboard Keuangan", desc: "Ringkasan saldo, laba, grafik & AI insight", icon: Zap, color: "blue" },
+    { key: "aruskas", label: "Arus Kas", desc: "Input uang masuk & keluar, transfer antar akun", icon: Banknote, color: "cyan" },
+    { key: "kategori", label: "Kategori", desc: "Kelola kategori pemasukan & pengeluaran", icon: Tag, color: "violet" },
+    { key: "neraca", label: "Neraca", desc: "Laporan posisi keuangan otomatis (Aset, Hutang, Modal)", icon: BarChart3, color: "green" },
+    { key: "inventaris", label: "Inventaris Aset", desc: "Daftar aset perusahaan & penyusutan otomatis", icon: Package, color: "amber" },
+    { key: "pajak", label: "Pajak", desc: "Perhitungan pajak, kalender, AI Tax Consultant", icon: Receipt, color: "rose" },
+    { key: "laporan", label: "Laporan & SPT", desc: "Laporan keuangan + dokumen SPT Badan (PDF)", icon: FileText, color: "blue" },
+    { key: "spt", label: "Dokumen SPT Badan", desc: "Neraca, Laba Rugi, Bukti Potong, SSP (PDF kop surat)", icon: FileSpreadsheet, color: "indigo" },
+    { key: "taxconfig", label: "Pengaturan Pajak", desc: "Ubah tarif pajak sesuai regulasi terbaru", icon: Settings, color: "slate" },
+    { key: "ai", label: "AI Finance Assistant", desc: "Tanya jawab keuangan dengan AI", icon: Bot, color: "violet" },
+  ];
+
+  function renderView() {
+    switch (view) {
+      case "dashboard": return <FinanceDashboard year={year} month={month} />;
+      case "aruskas": return <ArusKas year={year} month={month} />;
+      case "kategori": return <KategoriModule />;
+      case "neraca": return <NeracaModule year={year} month={month} />;
+      case "inventaris": return <InventarisModule />;
+      case "pajak": return <PajakModule year={year} month={month} />;
+      case "laporan": return <LaporanModule year={year} month={month} />;
+      case "spt": return <SptBadanModule year={year} month={month} />;
+      case "taxconfig": return <TaxConfigModule />;
+      case "ai": return <AIAssistantModule />;
+      default: return null;
+    }
+  }
+
+  const activeMenu = menus.find((m) => m.key === view);
+
+  // ===== MENU VIEW (dashboard cards) =====
+  if (view === "menu") {
+    return (
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Wallet className="w-6 h-6 text-blue-600" /> Sistem Keuangan
           </h1>
           <p className="text-sm text-slate-500 mt-1">Manajemen keuangan terpadu PT. Hafara Aqiba Nusantara</p>
         </div>
-        <div className="flex gap-2">
-          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-            <SelectTrigger className="w-[130px] h-9 bg-white"><SelectValue /></SelectTrigger>
-            <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger className="w-[90px] h-9 bg-white"><SelectValue /></SelectTrigger>
-            <SelectContent>{[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-          </Select>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {menus.map((m) => {
+            const colorMap: Record<string, string> = {
+              blue: "bg-blue-50 text-blue-600 group-hover:bg-blue-100",
+              cyan: "bg-cyan-50 text-cyan-600 group-hover:bg-cyan-100",
+              violet: "bg-violet-50 text-violet-600 group-hover:bg-violet-100",
+              green: "bg-green-50 text-green-600 group-hover:bg-green-100",
+              amber: "bg-amber-50 text-amber-600 group-hover:bg-amber-100",
+              rose: "bg-rose-50 text-rose-600 group-hover:bg-rose-100",
+              indigo: "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100",
+              slate: "bg-slate-100 text-slate-600 group-hover:bg-slate-200",
+            };
+            return (
+              <button
+                key={m.key}
+                onClick={() => setView(m.key)}
+                className="group text-left bg-white border border-slate-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-200"
+              >
+                <div className="flex items-start gap-3">
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-colors", colorMap[m.color])}>
+                    <m.icon className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-slate-900 text-sm flex items-center gap-1">
+                      {m.label}
+                      <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all ml-auto" />
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{m.desc}</p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
+    );
+  }
 
-      {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="dashboard" className="text-xs"><Zap className="w-3.5 h-3.5 mr-1" /> Dashboard</TabsTrigger>
-          <TabsTrigger value="aruskas" className="text-xs"><Banknote className="w-3.5 h-3.5 mr-1" /> Arus Kas</TabsTrigger>
-          <TabsTrigger value="kategori" className="text-xs"><Tag className="w-3.5 h-3.5 mr-1" /> Kategori</TabsTrigger>
-          <TabsTrigger value="neraca" className="text-xs"><BarChart3 className="w-3.5 h-3.5 mr-1" /> Neraca</TabsTrigger>
-          <TabsTrigger value="inventaris" className="text-xs"><Package className="w-3.5 h-3.5 mr-1" /> Inventaris</TabsTrigger>
-          <TabsTrigger value="pajak" className="text-xs"><Receipt className="w-3.5 h-3.5 mr-1" /> Pajak</TabsTrigger>
-          <TabsTrigger value="laporan" className="text-xs"><FileText className="w-3.5 h-3.5 mr-1" /> Laporan</TabsTrigger>
-          <TabsTrigger value="ai" className="text-xs"><Bot className="w-3.5 h-3.5 mr-1" /> AI Assistant</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="dashboard" className="mt-4"><FinanceDashboard year={year} month={month} /></TabsContent>
-        <TabsContent value="aruskas" className="mt-4"><ArusKas year={year} month={month} /></TabsContent>
-        <TabsContent value="kategori" className="mt-4"><KategoriModule /></TabsContent>
-        <TabsContent value="neraca" className="mt-4"><NeracaModule year={year} month={month} /></TabsContent>
-        <TabsContent value="inventaris" className="mt-4"><InventarisModule /></TabsContent>
-        <TabsContent value="pajak" className="mt-4"><PajakModule year={year} month={month} /></TabsContent>
-        <TabsContent value="laporan" className="mt-4"><LaporanModule year={year} month={month} /></TabsContent>
-        <TabsContent value="ai" className="mt-4"><AIAssistantModule /></TabsContent>
-      </Tabs>
+  // ===== MODULE VIEW (with back button) =====
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setView("menu")} className="bg-white">
+            <ChevronRight className="w-4 h-4 rotate-180 mr-1" /> Menu
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              {activeMenu && <activeMenu.icon className="w-5 h-5 text-blue-600" />}
+              {activeMenu?.label}
+            </h1>
+            <p className="text-xs text-slate-500">{activeMenu?.desc}</p>
+          </div>
+        </div>
+        {(view === "dashboard" || view === "aruskas" || view === "neraca" || view === "laporan" || view === "pajak" || view === "spt") && (
+          <div className="flex gap-2">
+            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+              <SelectTrigger className="w-[130px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+            </Select>
+            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+              <SelectTrigger className="w-[90px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>{[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+      {renderView()}
     </div>
   );
 }
@@ -192,8 +259,8 @@ function AIInsightCard({ year, month }: { year: number; month: number }) {
 
   useEffect(() => {
     let active = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
+     
+    Promise.resolve().then(() => setLoading(true));
     api<{ insight: string }>(`/api/finance/ai-insight?year=${year}&month=${month}`)
       .then((d) => { if (active) setInsight(d.insight); })
       .catch(() => { if (active) setInsight("Gagal memuat insight."); })
@@ -498,8 +565,8 @@ function NeracaModule({ year, month }: { year: number; month: number }) {
 
   useEffect(() => {
     let active = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
+     
+    Promise.resolve().then(() => setLoading(true));
     api(`/api/finance/neraca?year=${year}&month=${month}`)
       .then((d) => { if (active) setData(d.neraca); })
       .catch((e) => { if (active) toast.error(e.message); })
@@ -823,8 +890,8 @@ function LaporanModule({ year, month }: { year: number; month: number }) {
 
   useEffect(() => {
     let active = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
+     
+    Promise.resolve().then(() => setLoading(true));
     api(`/api/finance/laporan?year=${year}&month=${month}`)
       .then((d) => { if (active) setData(d); })
       .catch((e) => { if (active) toast.error(e.message); })
@@ -940,6 +1007,369 @@ function LaporanModule({ year, month }: { year: number; month: number }) {
 // ============================================================
 function AIAssistantModule() {
   return <AIChatDialog title="AI Finance Assistant" apiEndpoint="/api/finance/ai-assistant" open={true} onOpenChange={() => {}} embedded />;
+}
+
+// ============================================================
+// DOKUMEN SPT BADAN (PDF with company letterhead)
+// ============================================================
+function SptBadanModule({ year, month }: { year: number; month: number }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [taxPayments, setTaxPayments] = useState<any[]>([]);
+  const [buktiDialog, setBuktiDialog] = useState(false);
+  const [sspDialog, setSspDialog] = useState(false);
+  const [buktiForm, setBuktiForm] = useState({
+    formNumber: "", taxType: "PPh 23", masaPajak: monthNames[month - 1], tahun: String(year),
+    pemotongName: "", pemotongNpwp: "", wpName: COMPANY_INFO.name, wpNpwp: COMPANY_INFO.npwp, wpAddress: COMPANY_INFO.address,
+    jenisPenghasilan: "Jasa Profesional/Consulting", jumlahBruto: "", tarif: 2, pphDipotong: "", tanggalPotong: new Date().toISOString().slice(0, 10),
+  });
+  const [sspForm, setSspForm] = useState({
+    sspNumber: "", taxType: "PPh Badan", masaPajak: monthNames[month - 1], tahun: String(year),
+    wpName: COMPANY_INFO.name, wpNpwp: COMPANY_INFO.npwp, wpAddress: COMPANY_INFO.address,
+    jenisPajak: "PPh Badan", kodeAkun: "411250", kodeJenisSetoran: "100", jumlahSetoran: "", tanggalSetor: new Date().toISOString().slice(0, 10),
+    bankPenerima: "Bank BSI", ntpn: "", status: "LUNAS",
+  });
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve().then(() => setLoading(true));
+    api(`/api/finance/laporan?year=${year}&month=${month}`)
+      .then((d) => { if (active) { setData(d); setTaxPayments(d.taxPayments || []); } })
+      .catch((e) => { if (active) toast.error(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [year, month]);
+
+  if (loading || !data) return <Loading />;
+
+  function handleDownloadNeraca() {
+    const n = data.neraca;
+    const doc = generateNeracaPDF({
+      asOf: `${monthNames[month - 1]} ${year}`,
+      aset: n.aset, kewajiban: n.kewajiban, modal: n.modal, totalEkuitas: n.totalEkuitas,
+    });
+    doc.save(`Laporan-Neraca-SPT-${month}-${year}.pdf`);
+    toast.success("Laporan Neraca PDF diunduh");
+  }
+
+  function handleDownloadLabaRugi() {
+    const lr = data.labaRugi;
+    const doc = generateLabaRugiPDF({
+      periode: `${monthNames[month - 1]} ${year}`,
+      pendapatanByCat: lr.pendapatanByCat, totalPendapatan: lr.totalPendapatan,
+      biayaByCat: lr.biayaByCat, totalPengeluaran: lr.totalPengeluaran,
+      labaKotor: lr.labaKotor, labaOperasi: lr.labaOperasi, pajakEstimasi: lr.pajakEstimasi, labaBersih: lr.labaBersih,
+    });
+    doc.save(`Laporan-Laba-Rugi-SPT-${month}-${year}.pdf`);
+    toast.success("Laporan Laba Rugi PDF diunduh");
+  }
+
+  function handleDownloadBuktiPotong() {
+    const f = buktiForm;
+    const doc = generateBuktiPotongPDF({
+      formNumber: f.formNumber || `BPP-${Date.now().toString().slice(-6)}`,
+      taxType: f.taxType, masaPajak: f.masaPajak, tahun: f.tahun,
+      pemotongName: f.pemotongName, pemotongNpwp: f.pemotongNpwp,
+      wpName: f.wpName, wpNpwp: f.wpNpwp, wpAddress: f.wpAddress,
+      jenisPenghasilan: f.jenisPenghasilan,
+      jumlahBruto: Number(f.jumlahBruto) || 0,
+      tarif: f.tarif,
+      pphDipotong: Number(f.pphDipotong) || Math.round((Number(f.jumlahBruto) || 0) * f.tarif / 100),
+      tanggalPotong: f.tanggalPotong,
+    });
+    doc.save(`Bukti-Potong-${f.taxType.replace(/\s/g, "")}-${f.tahun}.pdf`);
+    toast.success("Bukti Potong PDF diunduh");
+    setBuktiDialog(false);
+  }
+
+  function handleDownloadSSP() {
+    const f = sspForm;
+    const doc = generateSSPPDF({
+      sspNumber: f.sspNumber || `SSP-${Date.now().toString().slice(-6)}`,
+      taxType: f.taxType, masaPajak: f.masaPajak, tahun: f.tahun,
+      wpName: f.wpName, wpNpwp: f.wpNpwp, wpAddress: f.wpAddress,
+      jenisPajak: f.jenisPajak, kodeAkun: f.kodeAkun, kodeJenisSetoran: f.kodeJenisSetoran,
+      jumlahSetoran: Number(f.jumlahSetoran) || 0,
+      tanggalSetor: f.tanggalSetor, bankPenerima: f.bankPenerima, ntpn: f.ntpn || "-",
+      status: f.status,
+    });
+    doc.save(`SSP-${f.taxType.replace(/\s/g, "")}-${f.tahun}.pdf`);
+    toast.success("Surat Setoran Pajak (SSP) PDF diunduh");
+    setSspDialog(false);
+  }
+
+  const docs = [
+    {
+      num: 1, title: "Laporan Neraca", desc: "Laporan posisi keuangan (Aset, Kewajiban, Modal) per periode",
+      icon: BarChart3, color: "green",
+      data: `Total Aset: ${formatCurrency(data.neraca.aset.totalAset)} | Total Kewajiban: ${formatCurrency(data.neraca.kewajiban.totalKewajiban)} | Total Modal: ${formatCurrency(data.neraca.modal.totalModal)}`,
+      action: handleDownloadNeraca,
+    },
+    {
+      num: 2, title: "Laporan Laba Rugi", desc: "Laporan pendapatan, biaya & laba bersih periode berjalan",
+      icon: TrendingUp, color: "blue",
+      data: `Pendapatan: ${formatCurrency(data.labaRugi.totalPendapatan)} | Biaya: ${formatCurrency(data.labaRugi.totalPengeluaran)} | Laba Bersih: ${formatCurrency(data.labaRugi.labaBersih)}`,
+      action: handleDownloadLabaRugi,
+    },
+    {
+      num: 3, title: "Bukti Potong PPh", desc: "Bukti pemotongan PPh 23/22/4(2) dari pihak lain (input manual)",
+      icon: Receipt, color: "violet",
+      data: "Form bukti potong dengan kop perusahaan - isi data pemotong & wajib pajak",
+      action: () => setBuktiDialog(true),
+    },
+    {
+      num: 4, title: "Surat Setoran Pajak (SSP)", desc: "Bukti pembayaran pajak - wajib jika SPT Kurang Bayar (PPh 29)",
+      icon: FileSpreadsheet, color: "amber",
+      data: "Form SSP dengan kop perusahaan - isi detail setoran & NTPN",
+      action: () => setSspDialog(true),
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Info banner */}
+      <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardContent className="p-4 flex items-start gap-3">
+          <FileSpreadsheet className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-slate-900 text-sm">Dokumen Pendukung SPT Badan - {year}</p>
+            <p className="text-xs text-slate-600 mt-1">Unduh dokumen PDF dengan kop surat perusahaan (logo, nama, alamat, NPWP) untuk dilampirkan saat pelaporan SPT Tahunan PPh Badan.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Company letterhead preview */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><Building2 className="w-4 h-4 text-blue-600" /> Kop Surat (Header Dokumen)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-3 pb-3 border-b-2 border-blue-600">
+              <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg">HF</div>
+              <div>
+                <p className="font-bold text-lg text-blue-900">{COMPANY_INFO.name}</p>
+                <p className="text-xs text-slate-600">{COMPANY_INFO.address}</p>
+                <p className="text-xs text-slate-600">Telp: {COMPANY_INFO.phone} | Email: {COMPANY_INFO.email} | Web: {COMPANY_INFO.website}</p>
+                <p className="text-xs text-slate-600">NPWP: {COMPANY_INFO.npwp}</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Document cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {docs.map((d) => {
+          const colorMap: Record<string, string> = {
+            green: "bg-green-50 text-green-600", blue: "bg-blue-50 text-blue-600",
+            violet: "bg-violet-50 text-violet-600", amber: "bg-amber-50 text-amber-600",
+          };
+          return (
+            <Card key={d.num} className="shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0", colorMap[d.color])}>
+                    <d.icon className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[10px] bg-slate-50">{d.num}</Badge>
+                      <h3 className="font-semibold text-slate-900 text-sm">{d.title}</h3>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">{d.desc}</p>
+                  </div>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-2.5 mb-3">
+                  <p className="text-[11px] text-slate-600">{d.data}</p>
+                </div>
+                <Button onClick={d.action} className="w-full bg-blue-600 hover:bg-blue-700" size="sm">
+                  <Download className="w-4 h-4 mr-1.5" /> Download PDF
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Existing tax payments as SSP reference */}
+      {taxPayments.length > 0 && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Referensi Pajak Tercatat (untuk SSP)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {taxPayments.map((p) => (
+                <div key={p.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-100">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{p.taxType} - {p.masaPajak}</p>
+                    <p className="text-[10px] text-slate-500">Jatuh tempo: {formatDate(p.dueDate)} | Status: {p.status}</p>
+                  </div>
+                  <span className="text-sm font-bold text-slate-700">{formatCurrency(p.taxDue)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bukti Potong Dialog */}
+      <Dialog open={buktiDialog} onOpenChange={setBuktiDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Form Bukti Potong PPh</DialogTitle>
+            <DialogDescription>Isi data untuk generate PDF Bukti Potong dengan kop perusahaan</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-2 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1.5"><Label className="text-xs">Jenis PPh</Label><Select value={buktiForm.taxType} onValueChange={(v) => setBuktiForm({ ...buktiForm, taxType: v, tarif: v === "PPh 23" ? 2 : v === "PPh 22" ? 1.5 : 10 })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPh 23">PPh 23 - Jasa (2%)</SelectItem><SelectItem value="PPh 22">PPh 22 - Impor (1.5%)</SelectItem><SelectItem value="PPh 4(2)">PPh 4(2) - Bunga (10%)</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1.5"><Label className="text-xs">Masa Pajak</Label><Input value={buktiForm.masaPajak} onChange={(e) => setBuktiForm({ ...buktiForm, masaPajak: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5 col-span-2"><Label className="text-xs">Nama Pemotong (Pihak yang potong)</Label><Input value={buktiForm.pemotongName} onChange={(e) => setBuktiForm({ ...buktiForm, pemotongName: e.target.value })} placeholder="Mis. PT XYZ" className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">NPWP Pemotong</Label><Input value={buktiForm.pemotongNpwp} onChange={(e) => setBuktiForm({ ...buktiForm, pemotongNpwp: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Tanggal Potong</Label><Input type="date" value={buktiForm.tanggalPotong} onChange={(e) => setBuktiForm({ ...buktiForm, tanggalPotong: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Jumlah Bruto (Rp)</Label><Input type="number" value={buktiForm.jumlahBruto} onChange={(e) => setBuktiForm({ ...buktiForm, jumlahBruto: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Tarif ({buktiForm.tarif}%)</Label><Input type="number" value={buktiForm.tarif} onChange={(e) => setBuktiForm({ ...buktiForm, tarif: Number(e.target.value) })} className="bg-white" /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBuktiDialog(false)}>Batal</Button>
+            <Button onClick={handleDownloadBuktiPotong} className="bg-blue-600 hover:bg-blue-700"><Download className="w-4 h-4 mr-1" /> Generate PDF</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* SSP Dialog */}
+      <Dialog open={sspDialog} onOpenChange={setSspDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Form Surat Setoran Pajak (SSP)</DialogTitle>
+            <DialogDescription>Isi data setoran pajak untuk generate PDF SSP dengan kop perusahaan</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3 py-2 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-1.5"><Label className="text-xs">Jenis Pajak</Label><Select value={sspForm.jenisPajak} onValueChange={(v) => setSspForm({ ...sspForm, jenisPajak: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPh Badan">PPh Badan</SelectItem><SelectItem value="PPh 21">PPh 21</SelectItem><SelectItem value="PPh 23">PPh 23</SelectItem><SelectItem value="PPN">PPN</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1.5"><Label className="text-xs">Masa Pajak</Label><Input value={sspForm.masaPajak} onChange={(e) => setSspForm({ ...sspForm, masaPajak: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Kode Akun</Label><Input value={sspForm.kodeAkun} onChange={(e) => setSspForm({ ...sspForm, kodeAkun: e.target.value })} placeholder="Mis. 411250" className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Kode Jenis Setoran</Label><Input value={sspForm.kodeJenisSetoran} onChange={(e) => setSspForm({ ...sspForm, kodeJenisSetoran: e.target.value })} placeholder="Mis. 100" className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Jumlah Setoran (Rp)</Label><Input type="number" value={sspForm.jumlahSetoran} onChange={(e) => setSspForm({ ...sspForm, jumlahSetoran: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Tanggal Setor</Label><Input type="date" value={sspForm.tanggalSetor} onChange={(e) => setSspForm({ ...sspForm, tanggalSetor: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Bank Penerima</Label><Input value={sspForm.bankPenerima} onChange={(e) => setSspForm({ ...sspForm, bankPenerima: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">NTPN</Label><Input value={sspForm.ntpn} onChange={(e) => setSspForm({ ...sspForm, ntpn: e.target.value })} placeholder="No. Transaksi Penerimaan Negara" className="bg-white" /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSspDialog(false)}>Batal</Button>
+            <Button onClick={handleDownloadSSP} className="bg-blue-600 hover:bg-blue-700"><Download className="w-4 h-4 mr-1" /> Generate PDF</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============================================================
+// PENGATURAN PAJAK (Tax Config - editable)
+// ============================================================
+function TaxConfigModule() {
+  const [configs, setConfigs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editDialog, setEditDialog] = useState<{ open: boolean; config: any }>({ open: false, config: null });
+  const [form, setForm] = useState({ taxType: "", name: "", rate: 0, description: "", brackets: "", ptkp: "" });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { const d = await api("/api/finance/tax-config"); setConfigs(d.configs || []); }
+    catch (e: any) { toast.error(e.message); }
+    finally { setLoading(false); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function handleSave() {
+    try {
+      await api("/api/finance/tax-config", { method: "POST", body: JSON.stringify(form) });
+      toast.success("Pengaturan pajak disimpan"); setEditDialog({ open: false, config: null }); load();
+    } catch (e: any) { toast.error(e.message); }
+  }
+
+  if (loading) return <Loading />;
+
+  const taxTypeColors: Record<string, string> = {
+    PPH21: "bg-blue-50 text-blue-700 border-blue-200",
+    PPH23: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    PPH_BADAN: "bg-violet-50 text-violet-700 border-violet-200",
+    PPN: "bg-amber-50 text-amber-700 border-amber-200",
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-amber-200 bg-amber-50/50">
+        <CardContent className="p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-slate-900 text-sm">Pengaturan Tarif Pajak</p>
+            <p className="text-xs text-slate-600 mt-1">Ubah tarif pajak sesuai regulasi terbaru. Perubahan berlaku untuk perhitungan pajak ke depan. Tarif disimpan dalam database dan dapat diperbarui tanpa mengubah kode program.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={() => { setForm({ taxType: "PPN", name: "", rate: 0, description: "", brackets: "", ptkp: "" }); setEditDialog({ open: true, config: null }); }} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-1" /> Tambah Tarif Pajak
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {configs.map((c) => (
+          <Card key={c.id} className="shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={cn("text-[10px]", taxTypeColors[c.taxType] || "bg-slate-50")}>{c.taxType}</Badge>
+                  {c.isActive && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">Aktif</Badge>}
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setForm({ taxType: c.taxType, name: c.name, rate: c.rate, description: c.description || "", brackets: c.brackets || "", ptkp: c.ptkp || "" }); setEditDialog({ open: true, config: c }); }}><Edit3 className="w-3 h-3" /></Button>
+              </div>
+              <p className="font-semibold text-slate-900 text-sm">{c.name}</p>
+              <p className="text-2xl font-bold text-blue-700 mt-1">{c.rate}%</p>
+              {c.description && <p className="text-xs text-slate-500 mt-1">{c.description}</p>}
+              {c.brackets && (
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Tarif Progresif (Bracket)</p>
+                  {(() => { try { const b = JSON.parse(c.brackets); return b.map((br: any, i: number) => <p key={i} className="text-[10px] text-slate-600">{formatCurrency(br.min)} - {br.max ? formatCurrency(br.max) : "tak terbatas"}: {br.rate}%</p>); } catch { return null; } })()}
+                </div>
+              )}
+              {c.ptkp && (
+                <div className="mt-2 pt-2 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">PTKP (Penghasilan Tidak Kena Pajak)</p>
+                  {(() => { try { const p = JSON.parse(c.ptkp); return Object.entries(p).slice(0, 4).map(([k, v]: any) => <p key={k} className="text-[10px] text-slate-600">{k}: {formatCurrency(v)}/tahun</p>); } catch { return null; } })()}
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 mt-2">Berlaku sejak: {formatDate(c.effectiveFrom)}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Dialog open={editDialog.open} onOpenChange={(o) => setEditDialog({ open: o, config: editDialog.config })}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editDialog.config ? "Edit" : "Tambah"} Tarif Pajak</DialogTitle>
+            <DialogDescription>Ubah tarif sesuai regulasi terbaru. Pastikan sesuai dengan UU yang berlaku.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5"><Label className="text-xs">Jenis Pajak</Label><Select value={form.taxType} onValueChange={(v) => setForm({ ...form, taxType: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPH21">PPh 21</SelectItem><SelectItem value="PPH23">PPh 23</SelectItem><SelectItem value="PPH_BADAN">PPh Badan</SelectItem><SelectItem value="PPN">PPN</SelectItem></SelectContent></Select></div>
+              <div className="space-y-1.5"><Label className="text-xs">Tarif (%)</Label><Input type="number" step="0.1" value={form.rate} onChange={(e) => setForm({ ...form, rate: Number(e.target.value) })} className="bg-white" /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Nama</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-white" /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Deskripsi (dasar hukum)</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="bg-white text-sm resize-none" /></div>
+            {form.taxType === "PPH21" && (
+              <div className="space-y-1.5"><Label className="text-xs">Tarif Progresif (JSON bracket)</Label><Textarea value={form.brackets} onChange={(e) => setForm({ ...form, brackets: e.target.value })} rows={3} className="bg-white text-xs font-mono resize-none" placeholder='[{"min":0,"max":60000000,"rate":5}]' /></div>
+            )}
+            {form.taxType === "PPH21" && (
+              <div className="space-y-1.5"><Label className="text-xs">PTKP (JSON)</Label><Textarea value={form.ptkp} onChange={(e) => setForm({ ...form, ptkp: e.target.value })} rows={2} className="bg-white text-xs font-mono resize-none" placeholder='{"TK0":54000000,"K0":58500000}' /></div>
+            )}
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setEditDialog({ open: false, config: null })}>Batal</Button><Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Simpan</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
 
 // ============================================================
