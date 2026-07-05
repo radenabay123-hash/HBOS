@@ -78,15 +78,15 @@ export function TeamDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome header */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl p-6">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-slate-300 text-sm">Selamat datang kembali,</p>
+            <p className="text-blue-100 text-sm">Selamat datang kembali,</p>
             <h1 className="text-2xl font-bold">{u.name}</h1>
-            <p className="text-slate-300 text-sm mt-1">{u.roleLabel} · {u.position || ""}</p>
+            <p className="text-blue-100 text-sm mt-1">{u.roleLabel} · {u.position || ""}</p>
             {kpiScore && (
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-xs text-slate-300">KPI Score Anda:</span>
+                <span className="text-xs text-blue-100">KPI Score Anda:</span>
                 <span className={`text-2xl font-bold ${kpiScore.weightedScore >= 90 ? "text-blue-400" : kpiScore.weightedScore >= 80 ? "text-cyan-400" : kpiScore.weightedScore >= 70 ? "text-amber-400" : "text-rose-400"}`}>
                   {kpiScore.weightedScore}
                 </span>
@@ -111,7 +111,7 @@ export function TeamDashboard() {
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Ringkasan Hari Ini</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Tugas Hari Ini" value={d.todayTasks.length} icon={ListTodo} indicator={todayTaskProgress >= 80 ? "green" : todayTaskProgress >= 50 ? "yellow" : "red"} subtitle={`${todayTaskDone} selesai`} progress={todayTaskProgress} accent="bg-slate-100 text-slate-700" />
+          <StatCard title="Tugas Hari Ini" value={d.todayTasks.length} icon={ListTodo} indicator={todayTaskProgress >= 80 ? "green" : todayTaskProgress >= 50 ? "yellow" : "red"} subtitle={`${todayTaskDone} selesai`} progress={todayTaskProgress} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Konten Hari Ini" value={d.contentSummary.todayContents} icon={Film} indicator="neutral" accent="bg-pink-50 text-pink-600" />
           <StatCard title="Artikel Hari Ini" value={d.articleSummary.todayArticles} icon={FileText} indicator="neutral" accent="bg-amber-50 text-amber-600" />
           <StatCard title="Konten Pending ACC" value={d.contentSummary.pending} icon={Clock} indicator={d.contentSummary.pending > 0 ? "yellow" : "green"} accent="bg-amber-50 text-amber-600" />

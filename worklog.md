@@ -604,3 +604,28 @@ Stage Summary:
   - Edit tarif pajak default (PPh Badan, PPN, PPh 23)
 - Changes immediately affect all PDF documents (invoice, slip gaji, SPT)
 - Menu only visible to Owner/Super Admin
+
+---
+Task ID: BLUE-COLOR-FIX-ALL
+Agent: Main (Z.ai Code)
+Task: Fix all team role dashboards to use blue color (was still using slate-900/800)
+
+Work Log:
+- Fixed app-shell.tsx: changed all non-owner sidebar elements from slate to blue:
+  - Logo background: bg-slate-900 → bg-blue-600
+  - Sidebar avatar: bg-slate-700 → bg-blue-700
+  - Active menu item: bg-slate-900 → bg-blue-600
+  - Header avatar: bg-slate-700 → bg-blue-700
+- Fixed team-dashboard.tsx:
+  - Welcome header: from-slate-900 to-slate-800 → from-blue-600 to-blue-700
+  - Welcome header text: text-slate-300 → text-blue-100
+  - KPI score label: text-slate-300 → text-blue-100
+  - Stat card accent: bg-slate-100 text-slate-700 → bg-blue-50 text-blue-600
+- Verified with Agent Browser: all team role elements now blue (logo, avatar, active menu, welcome header, stat cards)
+- No remaining slate-900/800/700 backgrounds or emerald colors in any component
+- All APIs 200, lint clean, no errors
+
+Stage Summary:
+- All roles (Owner + all team members) now consistently use blue theme throughout
+- Sidebar, dashboard, stat cards, avatars, welcome headers all blue
+- No remaining old slate/emerald colors
