@@ -416,10 +416,12 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
       {/* ===== BODY ===== */}
       <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px", flex: 1 }}>
         {s.docTitleShow && (
-          <p style={{ textAlign: s.docTitlePosition, fontSize: `${s.docTitleFontSize}pt`, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
+          <p style={{ textAlign: s.docTitlePosition, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
             {docType === "SURAT" ? (
-              <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "2px 10px", borderRadius: "10px", fontSize: "9px" }}>{s.docTitleText}</span>
-            ) : s.docTitleText}
+              <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "2px 10px", borderRadius: "10px", fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
+            ) : (
+              <span style={{ fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
+            )}
           </p>
         )}
         {docType === "SURAT" && <SuratPreview s={s} directorName={directorName} directorTitle={directorTitle} sigUrl={sigUrl} />}
