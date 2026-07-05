@@ -861,3 +861,42 @@ Stage Summary:
 - Upload logo/tanda tangan juga bisa langsung di Layout Dokumen (shared ke app settings)
 - Live preview real-time untuk Surat, Invoice, Slip Gaji — update saat edit warna/font/ukuran/posisi
 - Preview menampilkan logo asli dan tanda tangan yang diupload
+
+---
+Task ID: DOC-LAYOUT-HEADER-FOOTER-PAPER
+Agent: Main (Z.ai Code)
+Task: Fix header order (Name→Address→Contact), empty footer, doc title settings, paper size option
+
+Work Log:
+- Updated default settings for all 3 document types with new structure:
+  - paperSize: A4 (with options for Letter, Legal, F4, A5)
+  - Header: companyNameText/Color/FontSize/Bold, companyAddressText/Color/FontSize, companyContactText/Color/FontSize
+  - docTitleText/Position/FontSize/Color/Show (for "Surat Penawaran", "INVOICE", "SLIP GAJI")
+  - Footer: footerBgColor, footerHeight only (no text - empty)
+- Rewrote DocumentLayoutModule:
+  - Added "Ukuran Kertas" card with dropdown (A4, Letter, Legal, F4, A5)
+  - Header card renamed to "Header (Nama → Alamat → Kontak)" with stacked layout:
+    - Teks Nama Perusahaan + Warna + Ukuran Font + Bold toggle
+    - Teks Alamat + Warna + Ukuran Font
+    - Teks Kontak (Email|Web|Telp) + Warna + Ukuran Font
+    - Logo: position, size, color, text
+  - Added "Judul Dokumen" card with:
+    - Toggle show/hide
+    - Teks Judul (e.g. "Surat Penawaran", "INVOICE", "SLIP GAJI")
+    - Posisi Judul (Kiri/Tengah/Kanan)
+    - Ukuran Font Judul
+    - Warna Judul
+  - Footer card: only BG color + height (no text fields - footer is empty)
+  - Live preview updated:
+    - Header: Logo left + Company Name → Address → Contact (stacked vertically)
+    - Document title shows in correct position/size/color (pill badge for Surat, plain text for Invoice/Slip Gaji)
+    - Footer: empty colored bar (no text)
+- Verified: API returns new settings, UI shows all new fields, live preview shows correct header order (Name→Address→Contact), footer empty, paper size dropdown, document title settings, all APIs 200, lint clean
+
+Stage Summary:
+- Header now: Nama Perusahaan → Alamat → Email/Web/Telp (stacked, not in footer)
+- Footer: empty (just colored bar, no text)
+- Document title (Surat Penawaran/INVOICE/SLIP GAJI): customizable position, font size, color, show/hide
+- Paper size: A4, Letter, Legal, F4, A5
+- Logo & tanda tangan: connected from Pengaturan Aplikasi, upload available in Layout Dokumen
+- Live preview: real-time update with correct header order, empty footer, doc title
