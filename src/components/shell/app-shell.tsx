@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat";
 
 interface MenuItem {
   key: ViewKey;
@@ -35,6 +35,7 @@ const MENU: MenuItem[] = [
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
   { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
   { key: "invoice", label: "Invoice", icon: InvoiceIcon, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
+  { key: "surat", label: "Surat Resmi", icon: FileStack, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
   { key: "tasks", label: "Tugas Harian", icon: ListTodo, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "content", label: "Tugas Konten", icon: Film, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },
   { key: "articles", label: "Data Artikel", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },

@@ -569,3 +569,46 @@ model AppSetting {
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
 }
+
+// ===================== SURAT RESMI =====================
+
+model Surat {
+  id              String   @id @default(cuid())
+  suratType       String   @default("Surat Penawaran") // jenis surat
+  suratNumber     String   @unique
+  issueDate       DateTime
+  city            String   @default("Jombang")
+  perihal         String?
+  lampiran        String?
+  recipientName   String?
+  recipientInstansi String?
+  recipientAddress String?
+  body            String   // isi surat
+  includeActivity Boolean  @default(false)
+  activityDate    String?
+  activityLocation String?
+  activityTime    String?
+  includePayment  Boolean  @default(false)
+  paymentAmount   Float?
+  paymentAmountText String?
+  bookingAmount   Float?
+  bookingAmountText String?
+  bankName        String?
+  bankAccount     String?
+  accountName     String?
+  // Header customization
+  logoWidth       Int      @default(144)
+  headerContact   String?
+  headerAddress1  String?
+  headerAddress2  String?
+  // Signature
+  signatoryName   String   @default("M. Aqil Baihaqi")
+  signatoryTitle  String   @default("Direktur Utama")
+  status          String   @default("DRAFT") // DRAFT, FINAL, ARCHIVED
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([suratType])
+  @@index([status])
+}

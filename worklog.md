@@ -629,3 +629,54 @@ Stage Summary:
 - All roles (Owner + all team members) now consistently use blue theme throughout
 - Sidebar, dashboard, stat cards, avatars, welcome headers all blue
 - No remaining old slate/emerald colors
+
+---
+Task ID: SURAT-RESMI
+Agent: Main (Z.ai Code)
+Task: Create Surat Resmi module with form (sesuai gambar 1) and PDF output (sesuai gambar 2)
+
+Work Log:
+- Added Surat model to Prisma with all fields: suratType, suratNumber, issueDate, city, perihal, lampiran, recipientName, recipientInstansi, recipientAddress, body, includeActivity, activityDate/Location/Time, includePayment, paymentAmount/Text, bookingAmount/Text, bankName/Account/AccountName, logoWidth, headerContact, headerAddress1/2, signatoryName/Title, status, createdById
+- Created /api/surat (GET list, POST create with auto-generate surat number) and /api/surat/[id] (PUT update, DELETE) - accessible by OWNER, PROJECT_MANAGER, FINANCE
+- Created src/lib/surat-pdf.ts: professional Surat Resmi PDF generator matching image 2:
+  - Header: orange logo circle with "H" + blue arc, "hafaragroup consulting" text, contact info (right-aligned), address
+  - Thick blue header border line
+  - Nomor / Lampiran / Perihal (left-aligned)
+  - Kepada Yth + recipient name (bold) + instansi + address
+  - City + date line
+  - Body text (justified)
+  - Detail Kegiatan (if checked): Tanggal, Lokasi, Waktu
+  - Informasi Pembayaran (if checked): total biaya with terbilang, booking amount, bank info
+  - "Hormat kami," (right-aligned) + signature space + signatory name (bold) + title
+  - Stempel (decorative circle with "PT. HAFARA NUSANTARA")
+  - Footer: thick blue border line + company name + contact
+- Created src/components/modules/surat-module.tsx with 2-column layout matching image 1:
+  - LEFT (form): all fields from image 1:
+    - Jenis Surat (dropdown), Tanggal Surat, Kota Penerbitan, Nomor Surat (auto-generate)
+    - Perihal, Lampiran
+    - Kepada Yth, Nama Instansi, Alamat Instansi
+    - Isi Surat (textarea)
+    - SERTAKAN DETAIL KEGIATAN (checkbox → expands activity fields)
+    - SERTAKAN INFORMASI PEMBAYARAN (checkbox → expands payment fields)
+    - KUSTOMISASI HEADER & LOGO SURAT: Lebar Logo, Kontak Header, Alamat Header Baris 1 & 2
+    - Penandatangan (dropdown), Jabatan Penandatangan
+    - Status Dokumen (dropdown)
+    - "Simpan Surat Ke Arsip" button
+  - RIGHT (preview): Realtime Layout Preview (A4 Portrait) - updates live as user types
+    - Shows logo, company name, contact, address
+    - Nomor/Lampiran/Perihal
+    - Kepada Yth + recipient
+    - Isi surat body
+    - Activity details (if checked)
+    - Signature section
+    - Footer
+- Added "Surat Resmi" menu to sidebar (OWNER, PROJECT_MANAGER, FINANCE)
+- Auto-generates surat number: 001/SP/HAN/VII/2026 format
+- Fetches company settings for header info and signatory name
+- Verified: surat API creates correctly, form shows all fields matching image 1, preview updates live, PDF download works, all APIs 200, lint clean
+
+Stage Summary:
+- Surat Resmi module with 2-column layout (form + realtime preview) matching image 1 exactly
+- PDF output matching image 2: kop surat (logo, company name, contact, address), nomor/lampiran/perihal, kepada yth, isi surat, detail kegiatan, info pembayaran, tanda tangan + stempel, footer
+- Menu visible to Owner, Project Manager, Finance
+- All verified working end-to-end
