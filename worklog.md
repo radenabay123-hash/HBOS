@@ -472,3 +472,46 @@ Stage Summary:
 - Rule perhitungan: Total Pendapatan - Total Biaya = Laba Sebelum Pajak, Pajak dari laba (estimasi komersial), Laba Bersih = Laba Sebelum Pajak - Pajak
 - Export: PDF (kop surat profesional), Excel, Print
 - Sumber data: otomatis dari transaksi (tidak perlu input manual)
+
+---
+Task ID: ARUSKAS-FORM + KALKULATOR-PAJAK
+Agent: Main (Z.ai Code)
+Task: Fix Arus Kas form to match image (with category integration) + add Tax Calculator
+
+Work Log:
+- Updated Prisma FinanceTransaction: added taxIncluded, kontakName, projectName, trainerName, invoiceNumber, receiptNumber fields
+- Updated /api/finance POST and /api/finance/[id] PUT to handle all new fields
+- Rewrote ArusKas dialog form to match image exactly:
+  - TIPE TRANSAKSI: two card buttons (Uang Masuk green / Uang Keluar red) with icons
+  - Nominal (Rp) + OCR Bukti (Scan Foto button with camera icon)
+  - Tanggal + Akun (dropdown: Kas/Bank/Dompet Digital)
+  - Deskripsi (input with placeholder "Mis: Honor Training Leadership PT X")
+  - KATEGORI dropdown (integrated with FinanceCategory - filters by type Pemasukan/Pengeluaran)
+  - Kontak (dropdown from clients - optional)
+  - Pajak (dropdown PPh 21/23/Badan/PPN - optional) + "Termasuk dalam nominal" checkbox
+  - Proyek (input - optional, placeholder "Mis: TRN-001")
+  - Trainer/Konsultan (input - optional, placeholder "Nama trainer")
+  - No. Invoice (input - optional, placeholder "Mis: INV/2026/001")
+  - No. Kwitansi (input - optional, placeholder "Mis: KWT/2026/001")
+- Created /api/finance/tax-calculator (GET for config, POST for calculation):
+  - PPh 21: progressive brackets (5-35%), PTKP (TK0-K3), annual/monthly calculation, take home pay
+  - PPh 23: 2% of bruto, net received
+  - PPh Badan: 22% of laba, laba bersih
+  - PPN: 11% of DPP, total with PPN
+- Created KalkulatorPajakModule in finance-advanced-module:
+  - Warning banner about config-driven rates
+  - Two-column layout: Input form (left) + Results (right)
+  - Form: Jenis Pajak dropdown, Nominal input, Status PTKP dropdown (for PPh 21), Monthly checkbox
+  - "Hitung Pajak" button (green)
+  - Results display: different layout per tax type
+    - PPh 21: PTKP, bruto annual, PKP, bracket details, pajak/bulan, take home/bulan, pajak/tahun, effective rate
+    - PPh 23: bruto, tarif, PPh dipotong, diterima net
+    - PPh Badan: laba komersial, tarif, pajak terutang, laba bersih, note
+    - PPN: DPP, tarif, PPN, total with PPN
+- Added "Kalkulator Pajak" menu item to finance menu (indigo, calculator icon)
+- Verified with Agent Browser: Arus Kas form shows all fields correctly with category dropdown, Kalkulator Pajak calculates PPh 21 correctly (10jt/bulan TK0 = 325rb/bulan tax), all APIs 200, lint clean
+
+Stage Summary:
+- Arus Kas form now matches image: tipe transaksi cards, nominal, OCR, tanggal, akun, deskripsi, KATEGORI (integrated), kontak, pajak, proyek, trainer, invoice, kwitansi
+- Kalkulator Pajak: PPh 21/23/Badan/PPN with PTKP, progressive brackets, detailed results
+- All verified working

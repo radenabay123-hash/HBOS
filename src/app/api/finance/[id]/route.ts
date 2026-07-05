@@ -15,8 +15,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const {
       type, amount, description, category, subCategory,
       accountType, accountName, date, clientId,
-      attachmentUrl, isTaxable, taxType, taxAmount,
+      attachmentUrl, isTaxable, taxType, taxAmount, taxIncluded,
       isPaid, dueDate, vendorName,
+      kontakName, projectName, trainerName, invoiceNumber, receiptNumber,
     } = body;
 
     const data: any = {};
@@ -33,9 +34,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (isTaxable != null) data.isTaxable = isTaxable;
     if (taxType != null) data.taxType = taxType;
     if (taxAmount != null) data.taxAmount = Number(taxAmount);
+    if (taxIncluded != null) data.taxIncluded = taxIncluded;
     if (isPaid != null) data.isPaid = isPaid;
     if (dueDate != null) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (vendorName != null) data.vendorName = vendorName;
+    if (kontakName != null) data.kontakName = kontakName;
+    if (projectName != null) data.projectName = projectName;
+    if (trainerName != null) data.trainerName = trainerName;
+    if (invoiceNumber != null) data.invoiceNumber = invoiceNumber;
+    if (receiptNumber != null) data.receiptNumber = receiptNumber;
 
     const txn = await db.financeTransaction.update({ where: { id }, data });
     return ok({ transaction: txn });

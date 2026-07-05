@@ -19,7 +19,7 @@ import {
   Download, CheckCircle2, DollarSign, Settings, Zap, Bot, Send, Receipt,
   Banknote, PiggyBank, Landmark, Smartphone, Tag, Plus, Edit3, Trash2,
   Building2, Package, Calendar, Calculator, Sparkles, ArrowUpRight, ArrowDownRight,
-  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight, Printer,
+  AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight, Printer, Camera,
 } from "lucide-react";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard } from "@/components/shared/charts";
 import { api } from "@/lib/api-client";
@@ -43,6 +43,7 @@ export function FinanceModule({ user }: { user: SafeUser }) {
     { key: "neraca", label: "Neraca", desc: "Laporan posisi keuangan otomatis (Aset, Hutang, Modal)", icon: BarChart3, color: "green" },
     { key: "inventaris", label: "Inventaris Aset", desc: "Daftar aset perusahaan & penyusutan otomatis", icon: Package, color: "amber" },
     { key: "pajak", label: "Pajak", desc: "Perhitungan pajak, kalender, AI Tax Consultant", icon: Receipt, color: "rose" },
+    { key: "kalkulator", label: "Kalkulator Pajak", desc: "Hitung PPh 21/23/Badan/PPN dengan PTKP", icon: Calculator, color: "indigo" },
     { key: "laporan", label: "Laporan & SPT", desc: "Laporan keuangan + dokumen SPT Badan (PDF)", icon: FileText, color: "blue" },
     { key: "spt", label: "Dokumen SPT Badan", desc: "Neraca, Laba Rugi, Bukti Potong, SSP (PDF kop surat)", icon: FileSpreadsheet, color: "indigo" },
     { key: "taxconfig", label: "Pengaturan Pajak", desc: "Ubah tarif pajak sesuai regulasi terbaru", icon: Settings, color: "slate" },
@@ -57,6 +58,7 @@ export function FinanceModule({ user }: { user: SafeUser }) {
       case "neraca": return <NeracaModule year={year} month={month} />;
       case "inventaris": return <InventarisModule />;
       case "pajak": return <PajakModule year={year} month={month} />;
+      case "kalkulator": return <KalkulatorPajakModule />;
       case "laporan": return <LaporanModule year={year} month={month} />;
       case "spt": return <SptBadanModule year={year} month={month} />;
       case "taxconfig": return <TaxConfigModule />;
@@ -302,17 +304,26 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   const [dialog, setDialog] = useState<{ open: boolean; txn: any }>({ open: false, txn: null });
   const [filterType, setFilterType] = useState("all");
   const [filterAccount, setFilterAccount] = useState("all");
+  const [categories, setCategories] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [form, setForm] = useState({
     type: "PEMASUKAN", amount: "", description: "", category: "", accountType: "BANK", accountName: "",
     date: new Date().toISOString().slice(0, 10), vendorName: "", isPaid: true, dueDate: "", attachmentUrl: "",
+    kontakName: "", projectName: "", trainerName: "", invoiceNumber: "", receiptNumber: "",
+    isTaxable: false, taxType: "", taxAmount: "", taxIncluded: false,
   });
 
   const load = useCallback(async () => {
-     
     setLoading(true);
     try {
-      const d = await api(`/api/finance?year=${year}&month=${month}`);
+      const [d, cats, cls] = await Promise.all([
+        api(`/api/finance?year=${year}&month=${month}`),
+        api("/api/finance/categories"),
+        api("/api/clients").catch(() => ({ clients: [] })),
+      ]);
       setTxns(d.transactions || []);
+      setCategories(cats.categories || []);
+      setClients(cls.clients || []);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, [year, month]);
@@ -320,7 +331,7 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   useEffect(() => { load(); }, [load]);
 
   async function handleSave() {
-    if (!form.amount) { toast.error("Jumlah wajib diisi"); return; }
+    if (!form.amount) { toast.error("Nominal wajib diisi"); return; }
     try {
       if (dialog.txn) {
         await api(`/api/finance/${dialog.txn.id}`, { method: "PUT", body: JSON.stringify(form) });
@@ -330,7 +341,12 @@ function ArusKas({ year, month }: { year: number; month: number }) {
         toast.success("Transaksi ditambahkan");
       }
       setDialog({ open: false, txn: null });
-      setForm({ ...form, amount: "", description: "", vendorName: "" });
+      setForm({
+        type: "PEMASUKAN", amount: "", description: "", category: "", accountType: "BANK", accountName: "",
+        date: new Date().toISOString().slice(0, 10), vendorName: "", isPaid: true, dueDate: "", attachmentUrl: "",
+        kontakName: "", projectName: "", trainerName: "", invoiceNumber: "", receiptNumber: "",
+        isTaxable: false, taxType: "", taxAmount: "", taxIncluded: false,
+      });
       load();
     } catch (e: any) { toast.error(e.message); }
   }
@@ -353,6 +369,9 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   const filtered = txns.filter((t) => (filterType === "all" || t.type === filterType) && (filterAccount === "all" || t.accountType === filterAccount));
   const totalIn = filtered.filter((t) => t.type === "PEMASUKAN" && t.isPaid).reduce((s, t) => s + t.amount, 0);
   const totalOut = filtered.filter((t) => t.type === "PENGELUARAN" && t.isPaid).reduce((s, t) => s + t.amount, 0);
+
+  // Filter categories by transaction type
+  const formCategories = categories.filter((c) => c.type === (form.type === "PEMASUKAN" ? "PEMASUKAN" : "PENGELUARAN"));
 
   if (loading) return <Loading />;
 
@@ -441,19 +460,145 @@ function ArusKas({ year, month }: { year: number; month: number }) {
 
       {/* Dialog */}
       <Dialog open={dialog.open} onOpenChange={(o) => setDialog({ open: o, txn: dialog.txn })}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{dialog.txn ? "Edit" : "Input"} {form.type === "PEMASUKAN" ? "Uang Masuk" : "Uang Keluar"}</DialogTitle></DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-2">
-            <div className="space-y-1.5"><Label className="text-xs">Tipe</Label><Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PEMASUKAN">Uang Masuk</SelectItem><SelectItem value="PENGELUARAN">Uang Keluar</SelectItem></SelectContent></Select></div>
-            <div className="space-y-1.5"><Label className="text-xs">Jumlah (Rp)</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="bg-white" /></div>
-            <div className="space-y-1.5 col-span-2"><Label className="text-xs">Deskripsi</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-white" /></div>
-            <div className="space-y-1.5"><Label className="text-xs">Tanggal</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-white" /></div>
-            <div className="space-y-1.5"><Label className="text-xs">Akun</Label><Select value={form.accountType} onValueChange={(v) => setForm({ ...form, accountType: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="KAS">Kas</SelectItem><SelectItem value="BANK">Bank</SelectItem><SelectItem value="EWALLET">Dompet Digital</SelectItem></SelectContent></Select></div>
-            {form.type === "PENGELUARAN" && <div className="space-y-1.5 col-span-2"><Label className="text-xs">Vendor/Penerima</Label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} className="bg-white" /></div>}
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Transaksi Baru</DialogTitle>
+            <DialogDescription>Isi data uang masuk atau uang keluar</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            {/* Tipe Transaksi - card selection */}
+            <div>
+              <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">TIPE TRANSAKSI</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, type: "PEMASUKAN" })}
+                  className={cn("flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    form.type === "PEMASUKAN" ? "border-green-500 bg-green-50" : "border-slate-200 hover:border-green-300")}
+                >
+                  <ArrowDownRight className={cn("w-5 h-5", form.type === "PEMASUKAN" ? "text-green-600" : "text-slate-400")} />
+                  <span className={cn("text-sm font-medium", form.type === "PEMASUKAN" ? "text-green-700" : "text-slate-600")}>Uang Masuk</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, type: "PENGELUARAN" })}
+                  className={cn("flex items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    form.type === "PENGELUARAN" ? "border-rose-500 bg-rose-50" : "border-slate-200 hover:border-rose-300")}
+                >
+                  <ArrowUpRight className={cn("w-5 h-5", form.type === "PENGELUARAN" ? "text-rose-600" : "text-slate-400")} />
+                  <span className={cn("text-sm font-medium", form.type === "PENGELUARAN" ? "text-rose-700" : "text-slate-600")}>Uang Keluar</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Nominal + OCR */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Nominal (Rp)</Label>
+                <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">OCR Bukti</Label>
+                <Button variant="outline" className="w-full bg-white" type="button">
+                  <Camera className="w-4 h-4 mr-1.5" /> Scan Foto
+                </Button>
+              </div>
+            </div>
+
+            {/* Tanggal + Akun */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Tanggal</Label>
+                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-white" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Akun</Label>
+                <Select value={form.accountType} onValueChange={(v) => setForm({ ...form, accountType: v })}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Pilih akun" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="KAS">Kas</SelectItem>
+                    <SelectItem value="BANK">Bank</SelectItem>
+                    <SelectItem value="EWALLET">Dompet Digital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Deskripsi */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-600">Deskripsi</Label>
+              <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Mis: Honor Training Leadership PT X" className="bg-white" />
+            </div>
+
+            {/* Kategori + Kontak */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Kategori</Label>
+                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
+                  <SelectContent>
+                    {formCategories.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Kontak <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Select value={form.kontakName} onValueChange={(v) => setForm({ ...form, kontakName: v })}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Tanpa kontak" /></SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => <SelectItem key={c.id} value={c.namaKlien}>{c.namaKlien}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Pajak */}
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Pajak <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Select value={form.taxType} onValueChange={(v) => setForm({ ...form, taxType: v, isTaxable: !!v })}>
+                  <SelectTrigger className="bg-white"><SelectValue placeholder="Tanpa Pajak" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PPH21">PPh 21</SelectItem>
+                    <SelectItem value="PPH23">PPh 23</SelectItem>
+                    <SelectItem value="PPH_BADAN">PPh Badan</SelectItem>
+                    <SelectItem value="PPN">PPN</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 pb-2">
+                <input type="checkbox" id="taxIncluded" checked={form.taxIncluded} onChange={(e) => setForm({ ...form, taxIncluded: e.target.checked })} className="rounded" />
+                <Label htmlFor="taxIncluded" className="text-xs text-slate-600 cursor-pointer">Termasuk dalam nominal</Label>
+              </div>
+            </div>
+
+            {/* Proyek + Trainer */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Proyek <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Input value={form.projectName} onChange={(e) => setForm({ ...form, projectName: e.target.value })} placeholder="Mis: TRN-001" className="bg-white" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">Trainer/Konsultan <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Input value={form.trainerName} onChange={(e) => setForm({ ...form, trainerName: e.target.value })} placeholder="Nama trainer" className="bg-white" />
+              </div>
+            </div>
+
+            {/* No Invoice + No Kwitansi */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">No. Invoice <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} placeholder="Mis: INV/2026/001" className="bg-white" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-slate-600">No. Kwitansi <span className="text-slate-400 font-normal">(opsional)</span></Label>
+                <Input value={form.receiptNumber} onChange={(e) => setForm({ ...form, receiptNumber: e.target.value })} placeholder="Mis: KWT/2026/001" className="bg-white" />
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialog({ open: false, txn: null })}>Batal</Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
+            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Simpan Transaksi</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1089,6 +1234,225 @@ function LRRow({ label, value, bold }: { label: string; value: number; bold?: bo
 // ============================================================
 function AIAssistantModule() {
   return <AIChatDialog title="AI Finance Assistant" apiEndpoint="/api/finance/ai-assistant" open={true} onOpenChange={() => {}} embedded />;
+}
+
+// ============================================================
+// KALKULATOR PAJAK
+// ============================================================
+function KalkulatorPajakModule() {
+  const [taxTypes, setTaxTypes] = useState<any[]>([]);
+  const [ptkpOptions, setPtkpOptions] = useState<any[]>([]);
+  const [form, setForm] = useState({ taxType: "PPH21", amount: "", ptkpStatus: "TK0", isMonthly: true });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  useEffect(() => {
+    api<{ taxTypes: any[]; ptkpOptions: any[] }>("/api/finance/tax-calculator")
+      .then((d) => { setTaxTypes(d.taxTypes || []); setPtkpOptions(d.ptkpOptions || []); setDataLoaded(true); })
+      .catch((e) => toast.error(e.message));
+  }, []);
+
+  async function handleCalculate() {
+    if (!form.amount || Number(form.amount) <= 0) { toast.error("Masukkan nominal yang valid"); return; }
+    setLoading(true);
+    try {
+      const d = await api<{ result: any }>("/api/finance/tax-calculator", {
+        method: "POST",
+        body: JSON.stringify(form),
+      });
+      setResult(d.result);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setLoading(false); }
+  }
+
+  if (!dataLoaded) return <Loading />;
+
+  return (
+    <div className="space-y-4">
+      {/* Warning banner */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="p-3 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-800">
+            <strong>Perhatian:</strong> Seluruh tarif & rumus pajak disimpan dalam tabel konfigurasi dan dapat diperbarui tanpa mengubah source code. Pastikan tarif sesuai dengan peraturan perpajakan terbaru. Konsultasi dengan konsultan pajak untuk kasus kompleks.
+          </p>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Input form */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Kalkulator Pajak</CardTitle>
+            <p className="text-xs text-slate-500">Pilih jenis pajak & masukkan data</p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-600">Jenis Pajak</Label>
+              <Select value={form.taxType} onValueChange={(v) => setForm({ ...form, taxType: v })}>
+                <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {taxTypes.map((t) => <SelectItem key={t.type} value={t.type}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-slate-600">
+                {form.taxType === "PPH21" ? "Gaji Bruto Bulanan (Rp)" : form.taxType === "PPH_BADAN" ? "Laba Sebelum Pajak (Rp)" : form.taxType === "PPN" ? "Dasar Pengenaan Pajak (Rp)" : "Jumlah Bruto (Rp)"}
+              </Label>
+              <Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0" className="bg-white text-right font-medium text-lg" />
+            </div>
+
+            {form.taxType === "PPH21" && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-600">Status PTKP</Label>
+                  <Select value={form.ptkpStatus} onValueChange={(v) => setForm({ ...form, ptkpStatus: v })}>
+                    <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {ptkpOptions.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="isMonthly" checked={form.isMonthly} onChange={(e) => setForm({ ...form, isMonthly: e.target.checked })} className="rounded" />
+                  <Label htmlFor="isMonthly" className="text-xs text-slate-600 cursor-pointer">Input adalah gaji bulanan (bukan tahunan)</Label>
+                </div>
+              </>
+            )}
+
+            <Button onClick={handleCalculate} disabled={loading} className="w-full bg-green-600 hover:bg-green-700 h-11">
+              {loading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Calculator className="w-4 h-4 mr-2" />}
+              {loading ? "Menghitung..." : "Hitung Pajak"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Result */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Hasil Perhitungan</CardTitle>
+            <p className="text-xs text-slate-500">Detail perhitungan pajak</p>
+          </CardHeader>
+          <CardContent>
+            {!result ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <Calculator className="w-12 h-12 text-slate-300 mb-3" />
+                <p className="text-sm text-slate-400">Masukkan data & klik "Hitung Pajak"</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Tax type badge */}
+                <div className="flex items-center justify-between pb-2 border-b">
+                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">{result.taxType}</Badge>
+                  <span className="text-xs text-slate-500">{result.configName}</span>
+                </div>
+
+                {/* PPh 21 result */}
+                {result.taxType === "PPH21" && (
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-500">PTKP ({result.ptkpStatus})</span><span className="font-medium">{formatCurrency(result.ptkpAnnual)}/thn</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Gaji Bruto/Tahun</span><span className="font-medium">{formatCurrency(result.brutoAnnual)}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Penghasilan Kena Pajak</span><span className="font-medium text-blue-600">{formatCurrency(result.pkpAnnual)}</span></div>
+                    </div>
+                    {/* Bracket details */}
+                    {result.bracketDetails && result.bracketDetails.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Rincian Tarif Progresif</p>
+                        {result.bracketDetails.map((b: any, i: number) => (
+                          <div key={i} className="flex justify-between text-xs bg-slate-50 rounded p-1.5">
+                            <span className="text-slate-600">{b.range} ({b.rate})</span>
+                            <span className="font-medium text-slate-700">{formatCurrency(b.tax)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-rose-50 rounded-lg p-3 text-center border border-rose-100">
+                        <p className="text-[10px] text-rose-600 uppercase">Pajak/Bulan</p>
+                        <p className="text-lg font-bold text-rose-700">{formatCurrency(result.taxMonthly)}</p>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+                        <p className="text-[10px] text-green-600 uppercase">Take Home Pay/Bulan</p>
+                        <p className="text-lg font-bold text-green-700">{formatCurrency(result.takeHomePayMonthly)}</p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-600 text-white rounded-lg p-3 flex justify-between items-center">
+                      <span className="text-sm font-medium">Pajak/Tahun</span>
+                      <span className="text-xl font-bold">{formatCurrency(result.taxAnnual)}</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Effective rate: {result.effectiveRate}</p>
+                  </div>
+                )}
+
+                {/* PPh 23 result */}
+                {result.taxType === "PPH23" && (
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-500">Bruto</span><span className="font-medium">{formatCurrency(result.bruto)}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Tarif PPh 23</span><span className="font-medium">{result.rate}%</span></div>
+                    </div>
+                    <div className="bg-rose-50 rounded-lg p-3 text-center border border-rose-100">
+                      <p className="text-[10px] text-rose-600 uppercase">PPh 23 Dipotong</p>
+                      <p className="text-2xl font-bold text-rose-700">{formatCurrency(result.tax)}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+                      <p className="text-[10px] text-green-600 uppercase">Diterima (Net)</p>
+                      <p className="text-2xl font-bold text-green-700">{formatCurrency(result.netReceived)}</p>
+                    </div>
+                    <p className="text-xs text-slate-500 italic">{result.description}</p>
+                  </div>
+                )}
+
+                {/* PPh Badan result */}
+                {result.taxType === "PPH_BADAN" && (
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-500">Laba Komersial</span><span className="font-medium">{formatCurrency(result.labaKomersial)}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Tarif PPh Badan</span><span className="font-medium">{result.rate}%</span></div>
+                    </div>
+                    <div className="bg-rose-50 rounded-lg p-3 text-center border border-rose-100">
+                      <p className="text-[10px] text-rose-600 uppercase">Pajak Terutang</p>
+                      <p className="text-2xl font-bold text-rose-700">{formatCurrency(result.pajakTerutang)}</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100">
+                      <p className="text-[10px] text-green-600 uppercase">Laba Bersih</p>
+                      <p className="text-2xl font-bold text-green-700">{formatCurrency(result.labaBersih)}</p>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-2 border border-amber-100">
+                      <p className="text-[10px] text-amber-700">{result.note}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* PPN result */}
+                {result.taxType === "PPN" && (
+                  <div className="space-y-2">
+                    <div className="bg-slate-50 rounded-lg p-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-500">DPP (Dasar Pengenaan)</span><span className="font-medium">{formatCurrency(result.dpp)}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Tarif PPN</span><span className="font-medium">{result.rate}%</span></div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3 text-center border border-amber-100">
+                      <p className="text-[10px] text-amber-600 uppercase">PPN (11%)</p>
+                      <p className="text-2xl font-bold text-amber-700">{formatCurrency(result.ppn)}</p>
+                    </div>
+                    <div className="bg-blue-600 text-white rounded-lg p-3 text-center">
+                      <p className="text-[10px] text-blue-100 uppercase">Total dengan PPN</p>
+                      <p className="text-2xl font-bold">{formatCurrency(result.totalWithPPN)}</p>
+                    </div>
+                    <p className="text-xs text-slate-500 italic">{result.description}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 // ============================================================

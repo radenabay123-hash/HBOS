@@ -58,8 +58,9 @@ export async function POST(req: Request) {
     const {
       type, amount, description, category, subCategory,
       accountType, accountName, date, clientId,
-      attachmentUrl, isTaxable, taxType, taxAmount,
+      attachmentUrl, isTaxable, taxType, taxAmount, taxIncluded,
       isPaid, dueDate, vendorName,
+      kontakName, projectName, trainerName, invoiceNumber, receiptNumber,
     } = body;
     if (!type || !amount) return err("Type dan amount wajib diisi", 400);
     if (!["PEMASUKAN", "PENGELUARAN", "TRANSFER"].includes(type)) return err("Type tidak valid", 400);
@@ -73,9 +74,11 @@ export async function POST(req: Request) {
         attachmentUrl,
         isTaxable: isTaxable || false,
         taxType, taxAmount: taxAmount ? Number(taxAmount) : 0,
+        taxIncluded: taxIncluded || false,
         isPaid: isPaid !== undefined ? isPaid : true,
         dueDate: dueDate ? new Date(dueDate) : null,
         vendorName,
+        kontakName, projectName, trainerName, invoiceNumber, receiptNumber,
       },
     });
     return ok({ transaction: txn });

@@ -205,9 +205,16 @@ model FinanceTransaction {
   isTaxable       Boolean  @default(false)
   taxType         String?  // PPH21, PPH23, PPH_BADAN, PPN
   taxAmount       Float    @default(0)
+  taxIncluded     Boolean  @default(false) // tax included in nominal
   isPaid          Boolean  @default(true) // for piutang/hutang: false = outstanding
   dueDate         DateTime?
   vendorName      String?  // for pengeluaran
+  // Additional fields for form (sesuai gambar)
+  kontakName      String?  // kontak (klien/vendor)
+  projectName     String?  // proyek
+  trainerName     String?  // trainer/konsultan
+  invoiceNumber   String?  // no. invoice
+  receiptNumber   String?  // no. kwitansi
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
