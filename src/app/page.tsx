@@ -13,6 +13,7 @@ import { TasksModule } from "@/components/modules/tasks-module";
 import { KpiModule } from "@/components/modules/kpi-module";
 import { AbsensiModule } from "@/components/modules/absensi-module";
 import { PayrollModule } from "@/components/modules/payroll-module";
+import { InvoiceModule } from "@/components/modules/invoice-module";
 import { ContentModule } from "@/components/modules/content-module";
 import { ArticlesModule } from "@/components/modules/articles-module";
 import { FinanceModule } from "@/components/modules/finance-module";
@@ -105,6 +106,8 @@ export default function Home() {
         return <AbsensiModule user={user} />;
       case "payroll":
         return <PayrollModule user={user} />;
+      case "invoice":
+        return <InvoiceModule user={user} />;
       case "crm":
         return <CrmModule user={user} />;
       case "events":

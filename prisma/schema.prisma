@@ -523,3 +523,36 @@ model AiChatHistory {
 
   @@index([userId, sessionType])
 }
+
+// ===================== INVOICE =====================
+
+model Invoice {
+  id              String   @id @default(cuid())
+  invoiceNumber   String   @unique
+  issueDate       DateTime
+  clientName      String
+  clientAddress   String?
+  city            String?  // kota penerbitan
+  description     String?  // deskripsi produk/layanan utama
+  // Items stored as JSON: [{description, qty, price, total}]
+  items           String
+  subtotal        Float    @default(0)
+  discount        Float    @default(0)
+  tax             Float    @default(0)
+  totalAmount     Float    @default(0)
+  status          String   @default("PENDING") // PENDING, PAID, CANCELLED
+  paymentInstruction String?
+  terms           String?
+  note            String?
+  // Bank info
+  bankName        String?
+  bankAccount     String?
+  accountName     String?
+  // Creator
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([issueDate])
+}

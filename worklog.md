@@ -515,3 +515,50 @@ Stage Summary:
 - Arus Kas form now matches image: tipe transaksi cards, nominal, OCR, tanggal, akun, deskripsi, KATEGORI (integrated), kontak, pajak, proyek, trainer, invoice, kwitansi
 - Kalkulator Pajak: PPh 21/23/Badan/PPN with PTKP, progressive brackets, detailed results
 - All verified working
+
+---
+Task ID: INVOICE-MODULE
+Agent: Main (Z.ai Code)
+Task: Create Invoice menu with form (sesuai gambar 1) and PDF output (sesuai gambar 2)
+
+Work Log:
+- Added Invoice model to Prisma (invoiceNumber, issueDate, clientName, clientAddress, city, description, items JSON, subtotal, discount, tax, totalAmount, status, paymentInstruction, terms, note, bankName, bankAccount, accountName, createdById)
+- Created /api/invoice (GET list, POST create) and /api/invoice/[id] (PUT update, DELETE) - accessible by OWNER, PROJECT_MANAGER, FINANCE
+- Created src/lib/invoice-pdf.ts: professional Invoice PDF generator matching image 2:
+  - Header: logo circle (orange+blue), PT. HAFARA AQIBA NUSANTARA, email/web/phone, address
+  - INVOICE title (center, large, blue)
+  - Nomor Invoice + Tanggal (right-aligned)
+  - DITAGIHKAN KEPADA: client name + address (left)
+  - Items table: blue dark header (DESKRIPSI/JUMLAH/HARGA SATUAN/TOTAL), alternating row colors
+  - Summary: Subtotal, Diskon, Pajak, TOTAL PEMBAYARAN (bold blue)
+  - Status badge (PENDING=amber, PAID=green, CANCELLED=red)
+  - INSTRUKSI PEMBAYARAN section
+  - SYARAT & KETENTUAN section
+  - Signature: logo + M. Aqil Baihaqi + Direktur Utama + www.HafaraGroup.com
+  - Footer: "Thank You!" (blue bar)
+- Created src/components/modules/invoice-module.tsx:
+  - Header with stats (Total/Pending/Lunas)
+  - Filter by status
+  - Invoice list table (Nomor, Klien, Tanggal, Total, Status, Actions)
+  - "Buat Invoice" dialog form matching image 1:
+    - Nomor Invoice + Tanggal Terbit
+    - Ditagihkan Ke + Kota Penerbitan
+    - Alamat Klien
+    - RINCIAN PRODUK/JASA (description + items table with add/remove rows)
+    - Diskon + Pajak
+    - TOTAL PEMBAYARAN (auto-calculated)
+    - Status Pembayaran dropdown + Catatan Internal
+    - Instruksi Pembayaran
+    - Bank/No.Rek/AN
+    - Syarat & Ketentuan
+  - Preview dialog (matching invoice layout)
+  - Download PDF button
+- Added "Invoice" menu to sidebar (visible to OWNER, PROJECT_MANAGER, FINANCE)
+- Wired InvoiceModule in page.tsx
+- Verified: Invoice API creates invoice correctly, form shows all fields, PDF download works, menu visible to all 3 roles, all APIs 200, lint clean
+
+Stage Summary:
+- Invoice menu created with form matching image 1 and PDF matching image 2
+- Menu visible to Owner, Project Manager, Finance
+- PDF has professional kop surat (logo, company name, address, NPWP, contact)
+- All features working end-to-end
