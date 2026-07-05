@@ -1103,3 +1103,58 @@ Stage Summary:
 - Layout Dokumen sekarang TERINTEGRASI dengan semua PDF generators
 - Saat download Surat/Invoice/Slip Gaji, PDF menggunakan desain dari Layout Dokumen settings
 - Perubahan warna, font, posisi, header, footer di Layout Dokumen langsung berlaku di PDF output
+
+---
+Task ID: LAYOUT-PDF-CLEAN-REWRITE
+Agent: Main (Z.ai Code)
+Task: Clear all old design elements from PDF generators and forms, then implement ONLY Layout Dokumen settings (fix overlapping old vs new design)
+
+Work Log:
+- Identified root cause: PDF generators were mixing OLD form data (data.headerAddress1, data.headerContact, data.companyAddress, etc.) with NEW layout settings (s.companyAddressText, s.companyContactText), causing design conflict/overlap
+- Identified surat-module.tsx had OLD hardcoded preview (lines 440-547) with "hafaragroup consulting" text and old header fields (logoWidth, headerContact, headerAddress1, headerAddress2)
+- Identified slip-gaji-pdf.ts always drew logo + "SLIP GAJI" title INSIDE navy header even when companyInfoPosition was "above"/"below" (mismatch with LivePreview)
+- Rewrote src/lib/surat-pdf.ts (CLEAN):
+  * Removed all old form data usage (data.headerAddress1, data.headerContact, data.companyName, data.companyLogo, data.companySignature)
+  * ALL company info now from layout settings (s.companyNameText, s.companyAddressText, s.companyContactText)
+  * Document title drawn as pill badge in body (matches LivePreview)
+  * Clean structure: INFO ABOVE → NAVY BOX → ACCENT LINE → INFO BELOW → DOC TITLE → CONTENT → SIGNATURE → FOOTER
+- Rewrote src/lib/invoice-pdf.ts (CLEAN):
+  * Removed old company fields from InvoiceData interface (companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature)
+  * ALL company info from layout settings
+  * Clean structure matching LivePreview
+- Rewrote src/lib/slip-gaji-pdf.ts (CLEAN):
+  * Removed old company fields from SlipGajiData interface (companyName, companyEmail, companyWebsite, companyPhone, companyAddress)
+  * CLEARED hardcoded logo + "SLIP GAJI" title that were always drawn inside navy header
+  * Document title now in BODY section (matches LivePreview), not inside navy header
+  * Clean structure matching LivePreview
+- Updated src/components/modules/surat-module.tsx:
+  * Removed old header form fields (logoWidth, headerContact, headerAddress1, headerAddress2) from form state
+  * Removed old "Kustomisasi Header & Logo Surat" section from form UI
+  * Added info banner: "Header & Footer dikelola via Layout Dokumen"
+  * Replaced old hardcoded preview (with "hafaragroup consulting") with new SuratLayoutPreview component using layout settings
+  * Updated handleDownloadPDF to pass only content data (no old company fields)
+- Updated src/components/modules/invoice-module.tsx:
+  * handleDownloadPDF now passes only content data (removed companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature)
+- Updated src/components/modules/payroll-module.tsx:
+  * handleDownloadSlip now passes only content data (removed companyName, companyEmail, companyWebsite, companyPhone, companyAddress)
+- Verified with Agent Browser:
+  * Surat form: old header fields GONE, new info banner visible, preview uses layout settings (PT. HAFARA AQIBA NUSANTARA, address, contact from layout), no "hafaragroup consulting" text
+  * Surat PDF download: GET /api/doc-layout?docType=SURAT 200, no errors
+  * Invoice PDF download: GET /api/doc-layout?docType=INVOICE 200, no errors
+  * Slip Gaji PDF download: GET /api/doc-layout?docType=SLIP_GAJI 200, no errors
+  * Lint clean (bun run lint passes)
+
+Stage Summary:
+- OLD design COMPLETELY CLEARED from all 3 PDF generators (surat, invoice, slip gaji)
+- OLD design CLEARED from surat form (removed old header fields + old hardcoded preview)
+- NEW design from Layout Dokumen is the ONLY design source for all PDFs
+- All 3 PDFs now match the LivePreview structure exactly:
+  1. Company info (above/inside/below navy box) - from layout
+  2. Navy header box - from layout
+  3. Accent line - from layout
+  4. Document title - in body, from layout
+  5. Content - from form data
+  6. Signature - from layout
+  7. Footer - from layout
+- No more overlapping/conflicting design elements between old and new
+- Changing Layout Dokumen settings now directly affects all downloaded PDFs

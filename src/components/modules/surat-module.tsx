@@ -42,8 +42,10 @@ export function SuratModule({ user }: { user: SafeUser }) {
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState<string | null>(null);
   const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
+  const [layoutSettings, setLayoutSettings] = useState<any>(null);
 
-  // Form state
+  // Form state - OLD header fields (logoWidth, headerContact, headerAddress1, headerAddress2) REMOVED
+  // Header design now comes entirely from Layout Dokumen settings
   const [form, setForm] = useState({
     suratType: "Surat Penawaran",
     suratNumber: "",
@@ -67,10 +69,6 @@ export function SuratModule({ user }: { user: SafeUser }) {
     bankName: "",
     bankAccount: "",
     accountName: "",
-    logoWidth: "144",
-    headerContact: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570",
-    headerAddress1: "New Head Office : Jl. Tanjung Sariloyo Sambongdukuh,",
-    headerAddress2: "Kab. Jombang, Jawa Timur",
     signatoryName: "M. Aqil Baihaqi",
     signatoryTitle: "Direktur Utama",
     status: "DRAFT",
@@ -89,7 +87,11 @@ export function SuratModule({ user }: { user: SafeUser }) {
       setCompanySettings(sMap);
       if (sMap.director_name) setForm((f) => ({ ...f, signatoryName: sMap.director_name }));
       if (sMap.director_title) setForm((f) => ({ ...f, signatoryTitle: sMap.director_title }));
-      if (sMap.header_contact) setForm((f) => ({ ...f, headerContact: sMap.header_contact }));
+      // Fetch layout settings for preview
+      try {
+        const ld = await fetchLayoutSettings("SURAT");
+        setLayoutSettings(ld.layout);
+      } catch {}
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, []);
@@ -113,10 +115,6 @@ export function SuratModule({ user }: { user: SafeUser }) {
       body: "", includeActivity: false, activityDate: "", activityLocation: "", activityTime: "",
       includePayment: false, paymentAmount: "", paymentAmountText: "", bookingAmount: "", bookingAmountText: "",
       bankName: "", bankAccount: "", accountName: "",
-      logoWidth: "144",
-      headerContact: companySettings.header_contact || "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570",
-      headerAddress1: companySettings.company_address ? companySettings.company_address.split(",")[0] : "New Head Office : Jl. Tanjung Sariloyo Sambongdukuh,",
-      headerAddress2: companySettings.company_address ? companySettings.company_address.split(",").slice(1).join(",").trim() : "Kab. Jombang, Jawa Timur",
       signatoryName: companySettings.director_name || "M. Aqil Baihaqi",
       signatoryTitle: companySettings.director_title || "Direktur Utama",
       status: "DRAFT",
@@ -149,10 +147,6 @@ export function SuratModule({ user }: { user: SafeUser }) {
       bankName: s.bankName || "",
       bankAccount: s.bankAccount || "",
       accountName: s.accountName || "",
-      logoWidth: String(s.logoWidth || 144),
-      headerContact: s.headerContact || "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570",
-      headerAddress1: s.headerAddress1 || "New Head Office : Jl. Tanjung Sariloyo Sambongdukuh,",
-      headerAddress2: s.headerAddress2 || "Kab. Jombang, Jawa Timur",
       signatoryName: s.signatoryName || "M. Aqil Baihaqi",
       signatoryTitle: s.signatoryTitle || "Direktur Utama",
       status: s.status || "DRAFT",
@@ -183,18 +177,38 @@ export function SuratModule({ user }: { user: SafeUser }) {
   }
 
   async function handleDownloadPDF(s: any) {
-    let layoutSettings: any = null;
+    let lSettings: any = null;
     try {
       const ld = await fetchLayoutSettings("SURAT");
-      layoutSettings = ld.layout;
+      lSettings = ld.layout;
     } catch {}
+    // CLEAN: only pass content data, all design comes from layout settings
     downloadSuratPDF({
-      ...s,
+      suratType: s.suratType,
+      suratNumber: s.suratNumber,
       issueDate: formatDate(s.issueDate),
-      companyName: companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA",
-      companyLogo: companySettings.company_logo || "",
-      companySignature: companySettings.company_signature || "",
-      layout: layoutSettings,
+      city: s.city,
+      perihal: s.perihal,
+      lampiran: s.lampiran,
+      recipientName: s.recipientName,
+      recipientInstansi: s.recipientInstansi,
+      recipientAddress: s.recipientAddress,
+      body: s.body,
+      includeActivity: s.includeActivity,
+      activityDate: s.activityDate,
+      activityLocation: s.activityLocation,
+      activityTime: s.activityTime,
+      includePayment: s.includePayment,
+      paymentAmount: Number(s.paymentAmount) || 0,
+      paymentAmountText: s.paymentAmountText,
+      bookingAmount: Number(s.bookingAmount) || 0,
+      bookingAmountText: s.bookingAmountText,
+      bankName: s.bankName,
+      bankAccount: s.bankAccount,
+      accountName: s.accountName,
+      signatoryName: s.signatoryName,
+      signatoryTitle: s.signatoryTitle,
+      layout: lSettings,
     });
     toast.success("Surat PDF diunduh");
   }
@@ -393,13 +407,13 @@ export function SuratModule({ user }: { user: SafeUser }) {
 
             <Separator />
 
-            {/* Kustomisasi Header & Logo */}
-            <p className="text-xs font-semibold text-blue-900 uppercase">Kustomisasi Header & Logo Surat</p>
-            <div className="grid grid-cols-1 gap-2">
-              <div className="space-y-1"><Label className="text-[10px]">Lebar Logo (Pixel)</Label><Input type="number" value={form.logoWidth} onChange={(e) => setForm({ ...form, logoWidth: e.target.value })} className="bg-white h-8 text-sm" placeholder="144" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Kontak Header</Label><Input value={form.headerContact} onChange={(e) => setForm({ ...form, headerContact: e.target.value })} className="bg-white h-8 text-sm" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Alamat Header Baris 1</Label><Input value={form.headerAddress1} onChange={(e) => setForm({ ...form, headerAddress1: e.target.value })} className="bg-white h-8 text-sm" /></div>
-              <div className="space-y-1"><Label className="text-[10px]">Alamat Header Baris 2</Label><Input value={form.headerAddress2} onChange={(e) => setForm({ ...form, headerAddress2: e.target.value })} className="bg-white h-8 text-sm" /></div>
+            {/* Info: Header design comes from Layout Dokumen */}
+            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 flex items-start gap-2">
+              <SettingsIcon className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+              <div className="text-xs text-blue-900">
+                <p className="font-semibold">Header &amp; Footer dikelola via Layout Dokumen</p>
+                <p className="text-blue-700 mt-0.5">Nama perusahaan, alamat, kontak, logo, warna header, dan footer sudah diatur di menu <strong>Layout Dokumen</strong>. Desain PDF otomatis mengikuti pengaturan tersebut.</p>
+              </div>
             </div>
 
             {/* Penandatangan + Status */}
@@ -428,113 +442,165 @@ export function SuratModule({ user }: { user: SafeUser }) {
           </CardContent>
         </Card>
 
-        {/* ===== RIGHT: Realtime Preview (A4 Portrait - Modern) ===== */}
+        {/* ===== RIGHT: Realtime Preview (uses Layout Dokumen settings) ===== */}
         <Card className="shadow-sm self-start sticky top-4">
           <CardHeader className="pb-2 bg-slate-50">
             <CardTitle className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1">
-              <Eye className="w-3.5 h-3.5" /> Realtime Layout Preview (A4 Portrait)
+              <Eye className="w-3.5 h-3.5" /> Preview (Mengikuti Layout Dokumen)
             </CardTitle>
-            <p className="text-[10px] text-slate-400">Modern Corporate Style</p>
+            <p className="text-[10px] text-slate-400">Desain header &amp; footer dari pengaturan Layout Dokumen</p>
           </CardHeader>
           <CardContent className="p-4">
-            {/* A4 Preview container - modern */}
-            <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden shadow-md" style={{ maxWidth: "210px", minHeight: "297px" }}>
-              {/* ===== NAVY BLUE HEADER (gradient effect) ===== */}
-              <div className="relative" style={{ background: "linear-gradient(135deg, #0f234b 0%, #1b3769 50%, #0f234b 100%)", padding: "8px 10px" }}>
-                <div className="flex items-start justify-between">
-                  {/* Logo (LEFT) */}
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[8px] font-bold relative shrink-0" style={{ backgroundColor: "#ff8000" }}>
-                      H
-                      <div className="absolute inset-0 rounded-full" style={{ backgroundColor: "#0f234b", opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
-                    </div>
-                    <div className="shrink-0">
-                      <p className="text-white font-bold text-[8px] leading-none tracking-tight">hafaragroup</p>
-                      <p className="text-[5px] leading-none mt-0.5" style={{ color: "#8da8c8" }}>consulting</p>
-                    </div>
-                  </div>
-                  {/* Contact + address (RIGHT) */}
-                  <div className="text-right max-w-[55%]">
-                    <p className="text-white text-[4.5px] leading-tight opacity-80">{form.headerContact}</p>
-                    <p className="text-white text-[4.5px] leading-tight mt-0.5 opacity-70">{form.headerAddress1}</p>
-                    <p className="text-white text-[4.5px] leading-tight opacity-70">{form.headerAddress2}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Orange accent line */}
-              <div style={{ height: "1.5px", background: "linear-gradient(90deg, #ff8000 0%, #ff8000 100%)" }}></div>
-
-              {/* ===== BODY CONTENT ===== */}
-              <div className="px-3 py-2.5">
-                {/* Document type badge (modern pill) */}
-                <div className="inline-block px-2 py-0.5 rounded-full mb-2" style={{ backgroundColor: "#0f234b" }}>
-                  <p className="text-white text-[5px] font-bold">{form.suratType || "Surat Penawaran"}</p>
-                </div>
-
-                {/* Nomor / Lampiran / Perihal (LEFT) + Tanggal (RIGHT) */}
-                <div className="space-y-0.5 mb-2">
-                  <div className="flex justify-between">
-                    <p className="text-slate-700 text-[5.5px]">Nomor&nbsp;&nbsp;&nbsp;: {form.suratNumber || "—"}</p>
-                    <p className="text-slate-500 text-[5.5px]">{form.city}, {formatDate(form.issueDate)}</p>
-                  </div>
-                  {form.lampiran && <p className="text-slate-700 text-[5.5px]">Lampiran : {form.lampiran}</p>}
-                  <p className="text-slate-700 text-[5.5px]">Perihal&nbsp;&nbsp;: {form.perihal || "—"}</p>
-                </div>
-
-                {/* Kepada Yth */}
-                <div className="space-y-0.5 mb-2">
-                  <p className="text-slate-700 text-[5.5px]">Kepada Yth,</p>
-                  {form.recipientName && <p className="text-slate-800 text-[5.5px] font-bold">{form.recipientName}</p>}
-                  {form.recipientInstansi && <p className="text-slate-700 text-[5.5px]">{form.recipientInstansi}</p>}
-                  {form.recipientAddress && <p className="text-slate-600 text-[5.5px]">{form.recipientAddress}</p>}
-                </div>
-
-                {/* Isi Surat - render HTML */}
-                <div
-                  className="text-slate-700 text-[5.5px] leading-relaxed mb-2"
-                  dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#cbd5e1;font-style:italic">Silakan tulis isi surat resmi Anda di form sebelah kiri...</p>' }}
-                />
-
-                {/* Detail Kegiatan */}
-                {form.includeActivity && (
-                  <div className="mt-1 space-y-0.5 mb-2">
-                    {form.activityDate && <p className="text-slate-700 text-[5.5px]">Tanggal&nbsp;&nbsp;&nbsp;: {form.activityDate}</p>}
-                    {form.activityLocation && <p className="text-slate-700 text-[5.5px]">Lokasi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityLocation}</p>}
-                    {form.activityTime && <p className="text-slate-700 text-[5.5px]">Waktu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityTime}</p>}
-                  </div>
-                )}
-
-                {/* Tanda Tangan (RIGHT - modern with dashed line) */}
-                <div className="mt-3 text-right">
-                  <p className="text-slate-700 text-[5.5px]">Hormat kami,</p>
-                  <div className="h-7"></div>
-                  {/* Dashed signature line */}
-                  <div className="border-t border-dashed border-slate-300 mb-1 ml-auto" style={{ width: "45%" }}></div>
-                  <p className="text-[5.5px] font-bold" style={{ color: "#0f234b" }}>{form.signatoryName}</p>
-                  <p className="text-slate-500 text-[5px]">{form.signatoryTitle}</p>
-                </div>
-              </div>
-
-              {/* ===== MODERN FOOTER (Navy blue) ===== */}
-              <div className="mt-auto">
-                <div style={{ height: "1px", background: "#ff8000" }}></div>
-                <div style={{ backgroundColor: "#0f234b", padding: "5px 10px" }}>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-white text-[4px] font-bold opacity-80">{companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA"}</p>
-                      <p className="text-white text-[3.5px] opacity-50">hafaragroup consulting</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-white text-[3.5px] opacity-60">{form.headerContact}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SuratLayoutPreview form={form} layout={layoutSettings} companySettings={companySettings} />
           </CardContent>
         </Card>
       </div>
     </div>
   );
+}
+
+// ===== Layout-driven Preview Component (matches PDF output) =====
+function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layout: any; companySettings: any }) {
+  const s = layout || {};
+  const infoPos = s.companyInfoPosition || "above";
+  const headerBg = s.headerBgColor || "#0f234b";
+  const accentLine = s.accentLineColor || "#ff8000";
+  const footerBg = s.footerBgColor || "#0f234b";
+  const docTitleColor = s.docTitleColor || "#0f234b";
+  const footerTextColor = s.footerTextColor || "#ffffff";
+  const logoColor = s.logoColor || "#ff8000";
+
+  const companyNameText = s.companyNameText || companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
+  const companyAddressText = s.companyAddressText || "";
+  const companyContactText = s.companyContactText || "";
+
+  // Company info block renderer (function, not component - to avoid lint error)
+  const renderCompanyInfo = (onDark: boolean) => {
+    const nameColor = onDark ? "#ffffff" : (s.companyNameColor || "#0f234b");
+    const addrColor = onDark ? "#dce6f5" : (s.companyAddressColor || "#64748b");
+    const contactColor = onDark ? "#b4c8e6" : (s.companyContactColor || "#94a3b8");
+    const nameAlign = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
+    const addrAlign = s.companyAddressAlign === "left" ? "left" : s.companyAddressAlign === "center" ? "center" : "right";
+    const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
+    return (
+      <div className="flex items-center gap-1.5 px-2 py-1">
+        {/* Logo */}
+        <div className="shrink-0">
+          <div className="rounded-full flex items-center justify-center text-white font-bold relative" style={{ width: "16px", height: "16px", backgroundColor: logoColor, fontSize: "8px" }}>
+            {s.logoText || "H"}
+            <div className="absolute inset-0 rounded-full" style={{ backgroundColor: headerBg, opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
+          </div>
+        </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p style={{ color: nameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: "8px", lineHeight: "1.3", textAlign: nameAlign }}>{companyNameText}</p>
+          <p style={{ color: addrColor, fontSize: "5px", lineHeight: "1.3", textAlign: addrAlign }}>{companyAddressText}</p>
+          <p style={{ color: contactColor, fontSize: "4.5px", lineHeight: "1.3", textAlign: contactAlign }}>{companyContactText}</p>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden shadow-md flex flex-col" style={{ maxWidth: "210px", minHeight: "297px" }}>
+      {/* 1. INFO ABOVE */}
+      {infoPos === "above" && renderCompanyInfo(false)}
+
+      {/* 2. NAVY HEADER BOX */}
+      <div style={{
+        background: s.headerGradient !== false ? `linear-gradient(180deg, ${headerBg} 0%, ${shadeColorInline(headerBg, 15)} 50%, ${headerBg} 100%)` : headerBg,
+        minHeight: "24px",
+        padding: infoPos === "inside" ? "4px 6px" : "0",
+      }}>
+        {infoPos === "inside" && renderCompanyInfo(true)}
+      </div>
+
+      {/* 3. ACCENT LINE */}
+      <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+
+      {/* 4. INFO BELOW */}
+      {infoPos === "below" && renderCompanyInfo(false)}
+
+      {/* 5. BODY */}
+      <div className="px-2.5 py-2 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6 }}>
+        {/* Document title (pill badge) */}
+        {s.docTitleShow !== false && (
+          <div className="mb-1.5" style={{ textAlign: s.docTitlePosition || "left" }}>
+            <span style={{ display: "inline-block", backgroundColor: docTitleColor, color: "#fff", padding: "1px 6px", borderRadius: "8px", fontSize: "5px", fontWeight: "bold" }}>
+              {s.docTitleText || form.suratType || "Surat Penawaran"}
+            </span>
+          </div>
+        )}
+
+        {/* Nomor / Lampiran / Perihal */}
+        <div className="space-y-0.5 mb-2">
+          <div className="flex justify-between">
+            <p>Nomor&nbsp;&nbsp;&nbsp;: {form.suratNumber || "—"}</p>
+            <p className="text-slate-500">{form.city}, {formatDate(form.issueDate)}</p>
+          </div>
+          {form.lampiran && <p>Lampiran : {form.lampiran}</p>}
+          <p>Perihal&nbsp;&nbsp;: {form.perihal || "—"}</p>
+        </div>
+
+        {/* Kepada Yth */}
+        <div className="space-y-0.5 mb-2">
+          <p>Kepada Yth,</p>
+          {form.recipientName && <p className="font-bold">{form.recipientName}</p>}
+          {form.recipientInstansi && <p>{form.recipientInstansi}</p>}
+          {form.recipientAddress && <p className="text-slate-600">{form.recipientAddress}</p>}
+        </div>
+
+        {/* Isi Surat */}
+        <div
+          className="leading-relaxed mb-2"
+          dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#cbd5e1;font-style:italic">Silakan tulis isi surat resmi Anda di form sebelah kiri...</p>' }}
+        />
+
+        {/* Detail Kegiatan */}
+        {form.includeActivity && (
+          <div className="mt-1 space-y-0.5 mb-2">
+            {form.activityDate && <p>Tanggal&nbsp;&nbsp;&nbsp;: {form.activityDate}</p>}
+            {form.activityLocation && <p>Lokasi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityLocation}</p>}
+            {form.activityTime && <p>Waktu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityTime}</p>}
+          </div>
+        )}
+
+        {/* Tanda Tangan */}
+        <div className="mt-3" style={{ textAlign: s.sigPosition || "right" }}>
+          <p>Hormat kami,</p>
+          <div className="h-6"></div>
+          {s.sigLineStyle !== "none" && (
+            <div style={{
+              width: "45%",
+              marginLeft: s.sigPosition === "right" ? "auto" : s.sigPosition === "center" ? "auto" : "0",
+              borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid",
+              borderColor: s.sigLineColor || "#d1d5db",
+              marginBottom: "2px",
+            }} />
+          )}
+          <p className="font-bold" style={{ color: s.sigNameColor || "#0f234b" }}>{form.signatoryName}</p>
+          <p className="text-slate-500" style={{ fontSize: "4.5px" }}>{form.signatoryTitle}</p>
+        </div>
+      </div>
+
+      {/* 6. FOOTER */}
+      {s.footerShowText ? (
+        <div style={{ background: footerBg, padding: "4px 8px", textAlign: "center" }}>
+          <p style={{ color: footerTextColor, fontWeight: "bold", fontSize: "6px" }}>{s.footerText || "Terima Kasih!"}</p>
+          {s.footerSubText && <p style={{ color: footerTextColor, fontSize: "4px", opacity: 0.8 }}>{s.footerSubText}</p>}
+        </div>
+      ) : (
+        <div style={{ backgroundColor: footerBg, height: `${s.footerHeight || 6}px` }}></div>
+      )}
+    </div>
+  );
+}
+
+// Inline shade color helper for preview
+function shadeColorInline(hex: string, percent: number): string {
+  const num = parseInt(hex.replace("#", ""), 16);
+  const r = Math.min(255, (num >> 16) + Math.round(2.55 * percent));
+  const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(2.55 * percent));
+  const b = Math.min(255, (num & 0xff) + Math.round(2.55 * percent));
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }

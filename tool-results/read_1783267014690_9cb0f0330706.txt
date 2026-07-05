@@ -1,0 +1,671 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Badge } from "@/components/ui/badge";
+     9→import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    10→import { Switch } from "@/components/ui/switch";
+    11→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    12→import { Separator } from "@/components/ui/separator";
+    13→import {
+    14→  FileText, Receipt, Wallet, Save, RefreshCw, Palette,
+    15→  Layout, Type, AlignLeft, Image as ImageIcon, Upload, Check, Eye,
+    16→} from "lucide-react";
+    17→import { api } from "@/lib/api-client";
+    18→import { toast } from "sonner";
+    19→import { cn } from "@/lib/utils";
+    20→
+    21→const DOC_TYPES = [
+    22→  { key: "SURAT", label: "Surat Resmi", icon: FileText, color: "blue" },
+    23→  { key: "INVOICE", label: "Invoice", icon: Receipt, color: "violet" },
+    24→  { key: "SLIP_GAJI", label: "Slip Gaji", icon: Wallet, color: "green" },
+    25→];
+    26→
+    27→const PAPER_SIZES = [
+    28→  { value: "A4", label: "A4 (210 × 297 mm)" },
+    29→  { value: "Letter", label: "Letter (216 × 279 mm)" },
+    30→  { value: "Legal", label: "Legal (216 × 356 mm)" },
+    31→  { value: "F4", label: "F4/Folio (215 × 330 mm)" },
+    32→  { value: "A5", label: "A5 (148 × 210 mm)" },
+    33→];
+    34→
+    35→const FONT_FAMILIES = ["Arial", "Times New Roman", "Courier New", "Georgia", "Verdana", "Calibri", "Tahoma"];
+    36→const POSITIONS = [
+    37→  { value: "left", label: "Kiri" },
+    38→  { value: "center", label: "Tengah" },
+    39→  { value: "right", label: "Kanan" },
+    40→];
+    41→const LINE_STYLES = [
+    42→  { value: "solid", label: "Garis Solid" },
+    43→  { value: "dashed", label: "Garis Putus-putus" },
+    44→  { value: "none", label: "Tanpa Garis" },
+    45→];
+    46→const INFO_POSITIONS = [
+    47→  { value: "inside", label: "Di Dalam Kotak Navy" },
+    48→  { value: "above", label: "Di Atas Kotak Navy" },
+    49→  { value: "below", label: "Di Bawah Kotak Navy" },
+    50→];
+    51→
+    52→const DEFAULT_SETTINGS: Record<string, any> = {
+    53→  SURAT: {
+    54→    paperSize: "A4",
+    55→    headerBgColor: "#0f234b", headerGradient: true, headerTextColor: "#ffffff", headerHeight: 42,
+    56→    companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
+    57→    companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
+    58→    companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
+    59→    logoPosition: "left", logoSize: 14, logoColor: "#ff8000", logoText: "H", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    60→    accentLineColor: "#ff8000", accentLineHeight: 1.5,
+    61→    docTitleText: "Surat Penawaran", docTitlePosition: "left", docTitleFontSize: 9, docTitleColor: "#0f234b", docTitleShow: true,
+    62→    bodyFontSize: 10.5, bodyFontFamily: "Arial", bodyTextColor: "#2d3748", bodyLineHeight: 1.6,
+    63→    sigPosition: "right", sigNameColor: "#0f234b", sigNameFontSize: 10, sigLineStyle: "dashed", sigLineColor: "#d1d5db",
+    64→    stampEnabled: true, stampColor: "#0f234b",
+    65→    footerBgColor: "#0f234b", footerHeight: 8, footerShowCompany: false, footerShowContact: false,
+    66→  },
+    67→  INVOICE: {
+    68→    paperSize: "A4",
+    69→    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 38,
+    70→    companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 13, companyNameBold: true,
+    71→    companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
+    72→    companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
+    73→    logoPosition: "left", logoSize: 16, logoColor: "#f97316", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    74→    accentLineColor: "#1e3a8a", accentLineHeight: 1.5,
+    75→    docTitleText: "INVOICE", docTitlePosition: "center", docTitleFontSize: 16, docTitleColor: "#1e3a8a", docTitleShow: true,
+    76→    tableHeaderBgColor: "#1e3a8a", tableHeaderTextColor: "#ffffff", tableRowAltColor: "#eff6ff",
+    77→    bodyFontSize: 8, bodyFontFamily: "Arial", bodyTextColor: "#334155",
+    78→    totalLabelColor: "#1e3a8a", totalFontSize: 9,
+    79→    statusBadgePending: "#fbbf24", statusBadgePaid: "#22c55e", statusBadgeCancelled: "#ef4444",
+    80→    sigPosition: "right", sigNameColor: "#1e3a8a",
+    81→    footerBgColor: "#1e3a8a", footerHeight: 14, footerShowText: true, footerText: "Thank You!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
+    82→  },
+    83→  SLIP_GAJI: {
+    84→    paperSize: "A4",
+    85→    headerBgColor: "#1e3a8a", headerGradient: false, headerTextColor: "#ffffff", headerHeight: 38,
+    86→    companyNameText: "PT. HAFARA AQIBA NUSANTARA", companyNameColor: "#ffffff", companyNameFontSize: 15, companyNameBold: true,
+    87→    companyAddressText: "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur", companyAddressColor: "#dce6f5", companyAddressFontSize: 7.5,
+    88→    companyContactText: "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570", companyContactColor: "#b4c8e6", companyContactFontSize: 7,
+    89→    logoPosition: "left", logoSize: 16, logoColor: "#1e3a8a", logoText: "HF", logoSubText: "", logoSubTextColor: "#8da8c8", companyInfoPosition: "above",
+    90→    accentLineColor: "#2563eb", accentLineHeight: 1.5,
+    91→    docTitleText: "SLIP GAJI", docTitlePosition: "center", docTitleFontSize: 14, docTitleColor: "#1e3a8a", docTitleShow: true,
+    92→    sectionHeaderBgColor: "#eff6ff", sectionHeaderTextColor: "#1e3a8a",
+    93→    bodyFontSize: 8, bodyFontFamily: "Arial", bodyTextColor: "#334155",
+    94→    earningsColor: "#16a34a", deductionsColor: "#ef4444",
+    95→    netSalaryBgColor: "#1e3a8a", netSalaryTextColor: "#ffffff", netSalaryFontSize: 13,
+    96→    footerBgColor: "#1e3a8a", footerHeight: 14, footerShowText: true, footerText: "Terima Kasih!", footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group.", footerTextColor: "#ffffff",
+    97→  },
+    98→};
+    99→
+   100→function shadeColor(hex: string, percent: number): string {
+   101→  const num = parseInt(hex.replace("#", ""), 16);
+   102→  const r = Math.min(255, (num >> 16) + Math.round(2.55 * percent));
+   103→  const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(2.55 * percent));
+   104→  const b = Math.min(255, (num & 0xff) + Math.round(2.55 * percent));
+   105→  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+   106→}
+   107→
+   108→export function DocumentLayoutModule() {
+   109→  const [activeDoc, setActiveDoc] = useState("SURAT");
+   110→  const [layouts, setLayouts] = useState<Record<string, any>>({});
+   111→  const [appSettings, setAppSettings] = useState<any>({});
+   112→  const [loading, setLoading] = useState(true);
+   113→  const [saving, setSaving] = useState(false);
+   114→
+   115→  const load = useCallback(async () => {
+   116→    setLoading(true);
+   117→    try {
+   118→      const d = await api<{ layouts: Record<string, any>; appSettings: any }>("/api/doc-layout");
+   119→      const merged: Record<string, any> = {};
+   120→      for (const dt of DOC_TYPES) {
+   121→        merged[dt.key] = { ...DEFAULT_SETTINGS[dt.key], ...(d.layouts?.[dt.key] || {}) };
+   122→      }
+   123→      setLayouts(merged);
+   124→      setAppSettings(d.appSettings || {});
+   125→    } catch (e: any) { toast.error(e.message); }
+   126→    finally { setLoading(false); }
+   127→  }, []);
+   128→
+   129→  useEffect(() => { load(); }, [load]);
+   130→
+   131→  async function handleSave(docType: string) {
+   132→    setSaving(true);
+   133→    try {
+   134→      await api("/api/doc-layout", { method: "PUT", body: JSON.stringify({ docType, settings: layouts[docType] }) });
+   135→      toast.success(`Pengaturan ${DOC_TYPES.find((d) => d.key === docType)?.label} disimpan`);
+   136→    } catch (e: any) { toast.error(e.message); }
+   137→    finally { setSaving(false); }
+   138→  }
+   139→
+   140→  function handleReset(docType: string) {
+   141→    setLayouts({ ...layouts, [docType]: { ...DEFAULT_SETTINGS[docType] } });
+   142→    toast.info("Direset ke default (klik Simpan untuk menyimpan)");
+   143→  }
+   144→
+   145→  function updateSetting(docType: string, key: string, value: any) {
+   146→    setLayouts({ ...layouts, [docType]: { ...layouts[docType], [key]: value } });
+   147→  }
+   148→
+   149→  async function handleUploadImage(key: string, file: File) {
+   150→    const reader = new FileReader();
+   151→    reader.onload = async () => {
+   152→      const base64 = reader.result as string;
+   153→      try {
+   154→        const d = await api<{ url: string }>("/api/doc-layout", { method: "POST", body: JSON.stringify({ key, base64Data: base64, fileName: file.name }) });
+   155→        setAppSettings({ ...appSettings, [key === "company_logo" ? "companyLogo" : "companySignature"]: d.url });
+   156→        toast.success("Gambar berhasil diupload");
+   157→      } catch (e: any) { toast.error(e.message); }
+   158→    };
+   159→    reader.readAsDataURL(file);
+   160→  }
+   161→
+   162→  if (loading) {
+   163→    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-blue-600" /></div>;
+   164→  }
+   165→
+   166→  return (
+   167→    <div className="space-y-5">
+   168→      <div>
+   169→        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+   170→          <Layout className="w-6 h-6 text-blue-600" /> Pengaturan Layout Dokumen
+   171→        </h1>
+   172→        <p className="text-sm text-slate-500 mt-1">
+   173→          Kustomisasi tata letak dengan live preview. Header: Nama Perusahaan → Alamat → Kontak. Footer kosong.
+   174→        </p>
+   175→      </div>
+   176→
+   177→      {/* Logo & Signature */}
+   178→      <Card className="shadow-sm border-blue-200">
+   179→        <CardHeader className="pb-3 bg-blue-50/50">
+   180→          <CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-blue-600" /> Logo Perusahaan & Tanda Tangan Digital</CardTitle>
+   181→          <p className="text-xs text-slate-500">Otomatis digunakan di semua dokumen. Terhubung dengan Pengaturan Aplikasi.</p>
+   182→        </CardHeader>
+   183→        <CardContent className="p-4">
+   184→          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   185→            <ImageUploadField label="Logo Perusahaan" value={appSettings.companyLogo} onChange={(file) => handleUploadImage("company_logo", file)} />
+   186→            <ImageUploadField label="Tanda Tangan Digital" value={appSettings.companySignature} onChange={(file) => handleUploadImage("company_signature", file)} />
+   187→          </div>
+   188→        </CardContent>
+   189→      </Card>
+   190→
+   191→      <Tabs value={activeDoc} onValueChange={setActiveDoc}>
+   192→        <TabsList className="flex-wrap h-auto gap-1">
+   193→          {DOC_TYPES.map((dt) => (
+   194→            <TabsTrigger key={dt.key} value={dt.key} className="text-xs"><dt.icon className="w-3.5 h-3.5 mr-1" /> {dt.label}</TabsTrigger>
+   195→          ))}
+   196→        </TabsList>
+   197→
+   198→        {DOC_TYPES.map((dt) => {
+   199→          const s = layouts[dt.key] || {};
+   200→          return (
+   201→            <TabsContent key={dt.key} value={dt.key} className="mt-4">
+   202→              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   203→                {/* ===== LEFT: Settings ===== */}
+   204→                <div className="space-y-4">
+   205→                  <div className="flex items-center justify-between">
+   206→                    <p className="text-sm text-slate-500">Atur layout untuk <strong>{dt.label}</strong></p>
+   207→                    <div className="flex gap-2">
+   208→                      <Button variant="outline" size="sm" onClick={() => handleReset(dt.key)} className="bg-white text-xs"><RefreshCw className="w-3.5 h-3.5 mr-1" /> Reset</Button>
+   209→                      <Button size="sm" onClick={() => handleSave(dt.key)} disabled={saving} className="bg-blue-600 hover:bg-blue-700">{saving ? <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />} Simpan</Button>
+   210→                    </div>
+   211→                  </div>
+   212→
+   213→                  {/* Paper Size */}
+   214→                  <Card className="shadow-sm">
+   215→                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Layout className="w-4 h-4 text-blue-600" /> Ukuran Kertas</CardTitle></CardHeader>
+   216→                    <CardContent>
+   217→                      <SelectField label="Ukuran Kertas" value={s.paperSize || "A4"} options={PAPER_SIZES} onChange={(v) => updateSetting(dt.key, "paperSize", v)} />
+   218→                    </CardContent>
+   219→                  </Card>
+   220→
+   221→                  {/* Header & Logo */}
+   222→                  <Card className="shadow-sm">
+   223→                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-blue-600" /> Header (Nama → Alamat → Kontak)</CardTitle></CardHeader>
+   224→                    <CardContent className="space-y-3">
+   225→                      <div className="grid grid-cols-2 gap-3">
+   226→                        <ColorField label="Warna BG Header" value={s.headerBgColor} onChange={(v) => updateSetting(dt.key, "headerBgColor", v)} />
+   227→                        <div className="space-y-1"><Label className="text-xs">Tinggi Header (mm)</Label><Input type="number" value={s.headerHeight} onChange={(e) => updateSetting(dt.key, "headerHeight", Number(e.target.value))} className="bg-white h-8" /></div>
+   228→                      </div>
+   229→                      <div className="flex items-center gap-2"><Switch checked={s.headerGradient} onCheckedChange={(v) => updateSetting(dt.key, "headerGradient", v)} /><Label className="text-xs">Gradient Background</Label></div>
+   230→                      <ColorField label="Warna Teks Header" value={s.headerTextColor} onChange={(v) => updateSetting(dt.key, "headerTextColor", v)} />
+   231→                      <Separator className="my-2" />
+   232→                      <SelectField label="Posisi Info Perusahaan" value={s.companyInfoPosition || "above"} options={INFO_POSITIONS} onChange={(v) => updateSetting(dt.key, "companyInfoPosition", v)} />
+   233→                      <p className="text-xs font-semibold text-slate-500">ISI HEADER (urutan: Nama → Alamat → Kontak)</p>
+   234→                      <div className="space-y-1"><Label className="text-xs">Teks Nama Perusahaan</Label><Input value={s.companyNameText} onChange={(e) => updateSetting(dt.key, "companyNameText", e.target.value)} className="bg-white h-8" /></div>
+   235→                      <div className="grid grid-cols-3 gap-2">
+   236→                        <ColorField label="Warna Nama" value={s.companyNameColor} onChange={(v) => updateSetting(dt.key, "companyNameColor", v)} />
+   237→                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyNameFontSize} onChange={(e) => updateSetting(dt.key, "companyNameFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   238→                        <SelectField label="Rata Teks" value={s.companyNameAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyNameAlign", v)} />
+   239→                      </div>
+   240→                      <div className="flex items-center gap-2"><Switch checked={s.companyNameBold} onCheckedChange={(v) => updateSetting(dt.key, "companyNameBold", v)} /><Label className="text-xs">Nama Perusahaan Bold</Label></div>
+   241→                      <div className="space-y-1"><Label className="text-xs">Teks Alamat</Label><Input value={s.companyAddressText} onChange={(e) => updateSetting(dt.key, "companyAddressText", e.target.value)} className="bg-white h-8" /></div>
+   242→                      <div className="grid grid-cols-3 gap-2">
+   243→                        <ColorField label="Warna Alamat" value={s.companyAddressColor} onChange={(v) => updateSetting(dt.key, "companyAddressColor", v)} />
+   244→                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyAddressFontSize} onChange={(e) => updateSetting(dt.key, "companyAddressFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   245→                        <SelectField label="Rata Teks" value={s.companyAddressAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyAddressAlign", v)} />
+   246→                      </div>
+   247→                      <div className="space-y-1"><Label className="text-xs">Teks Kontak (Email | Web | Telp)</Label><Input value={s.companyContactText} onChange={(e) => updateSetting(dt.key, "companyContactText", e.target.value)} className="bg-white h-8" /></div>
+   248→                      <div className="grid grid-cols-3 gap-2">
+   249→                        <ColorField label="Warna Kontak" value={s.companyContactColor} onChange={(v) => updateSetting(dt.key, "companyContactColor", v)} />
+   250→                        <div className="space-y-1"><Label className="text-xs">Ukuran Font</Label><Input type="number" step="0.5" value={s.companyContactFontSize} onChange={(e) => updateSetting(dt.key, "companyContactFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   251→                        <SelectField label="Rata Teks" value={s.companyContactAlign || "right"} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "companyContactAlign", v)} />
+   252→                      </div>
+   253→                      <Separator className="my-2" />
+   254→                      <div className="grid grid-cols-3 gap-2">
+   255→                        <SelectField label="Posisi Logo" value={s.logoPosition} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "logoPosition", v)} />
+   256→                        <div className="space-y-1"><Label className="text-xs">Ukuran Logo (mm)</Label><Input type="number" value={s.logoSize} onChange={(e) => updateSetting(dt.key, "logoSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   257→                        <ColorField label="Warna Logo" value={s.logoColor} onChange={(v) => updateSetting(dt.key, "logoColor", v)} />
+   258→                      </div>
+   259→                      <div className="space-y-1"><Label className="text-xs">Teks Logo</Label><Input value={s.logoText} onChange={(e) => updateSetting(dt.key, "logoText", e.target.value)} className="bg-white h-8" /></div>
+   260→                    </CardContent>
+   261→                  </Card>
+   262→
+   263→                  {/* Document Title */}
+   264→                  <Card className="shadow-sm">
+   265→                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Type className="w-4 h-4 text-blue-600" /> Judul Dokumen</CardTitle></CardHeader>
+   266→                    <CardContent className="space-y-3">
+   267→                      <div className="flex items-center gap-2"><Switch checked={s.docTitleShow} onCheckedChange={(v) => updateSetting(dt.key, "docTitleShow", v)} /><Label className="text-xs">Tampilkan Judul Dokumen</Label></div>
+   268→                      <div className="space-y-1"><Label className="text-xs">Teks Judul</Label><Input value={s.docTitleText} onChange={(e) => updateSetting(dt.key, "docTitleText", e.target.value)} className="bg-white h-8" /></div>
+   269→                      <div className="grid grid-cols-2 gap-2">
+   270→                        <SelectField label="Posisi Judul" value={s.docTitlePosition} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "docTitlePosition", v)} />
+   271→                        <div className="space-y-1"><Label className="text-xs">Ukuran Font Judul</Label><Input type="number" step="0.5" value={s.docTitleFontSize} onChange={(e) => updateSetting(dt.key, "docTitleFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   272→                      </div>
+   273→                      <ColorField label="Warna Judul" value={s.docTitleColor} onChange={(v) => updateSetting(dt.key, "docTitleColor", v)} />
+   274→                    </CardContent>
+   275→                  </Card>
+   276→
+   277→                  {/* Body & Accent */}
+   278→                  <Card className="shadow-sm">
+   279→                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Type className="w-4 h-4 text-blue-600" /> Isi & Garis Aksen</CardTitle></CardHeader>
+   280→                    <CardContent className="space-y-3">
+   281→                      <div className="grid grid-cols-2 gap-2">
+   282→                        <div className="space-y-1"><Label className="text-xs">Ukuran Font Isi</Label><Input type="number" step="0.5" value={s.bodyFontSize} onChange={(e) => updateSetting(dt.key, "bodyFontSize", Number(e.target.value))} className="bg-white h-8" /></div>
+   283→                        <SelectField label="Jenis Font" value={s.bodyFontFamily} options={FONT_FAMILIES.map(f => ({ value: f, label: f }))} onChange={(v) => updateSetting(dt.key, "bodyFontFamily", v)} />
+   284→                      </div>
+   285→                      <ColorField label="Warna Teks Isi" value={s.bodyTextColor} onChange={(v) => updateSetting(dt.key, "bodyTextColor", v)} />
+   286→                      {s.bodyLineHeight !== undefined && <div className="space-y-1"><Label className="text-xs">Line Height</Label><Input type="number" step="0.1" value={s.bodyLineHeight} onChange={(e) => updateSetting(dt.key, "bodyLineHeight", Number(e.target.value))} className="bg-white h-8" /></div>}
+   287→                      <Separator className="my-2" />
+   288→                      <ColorField label="Warna Garis Aksen" value={s.accentLineColor} onChange={(v) => updateSetting(dt.key, "accentLineColor", v)} />
+   289→                      <div className="space-y-1"><Label className="text-xs">Tebal Garis (mm)</Label><Input type="number" step="0.5" value={s.accentLineHeight} onChange={(e) => updateSetting(dt.key, "accentLineHeight", Number(e.target.value))} className="bg-white h-8" /></div>
+   290→                      {s.tableHeaderBgColor && (<><Separator className="my-2" /><p className="text-xs font-semibold text-slate-500">Tabel (Invoice)</p><div className="grid grid-cols-2 gap-2"><ColorField label="BG Header Tabel" value={s.tableHeaderBgColor} onChange={(v) => updateSetting(dt.key, "tableHeaderBgColor", v)} /><ColorField label="Teks Header Tabel" value={s.tableHeaderTextColor} onChange={(v) => updateSetting(dt.key, "tableHeaderTextColor", v)} /></div><ColorField label="Baris Alternatif" value={s.tableRowAltColor} onChange={(v) => updateSetting(dt.key, "tableRowAltColor", v)} /></>)}
+   291→                      {s.sectionHeaderBgColor && (<><Separator className="my-2" /><p className="text-xs font-semibold text-slate-500">Section (Slip Gaji)</p><div className="grid grid-cols-2 gap-2"><ColorField label="BG Section" value={s.sectionHeaderBgColor} onChange={(v) => updateSetting(dt.key, "sectionHeaderBgColor", v)} /><ColorField label="Teks Section" value={s.sectionHeaderTextColor} onChange={(v) => updateSetting(dt.key, "sectionHeaderTextColor", v)} /></div><div className="grid grid-cols-2 gap-2"><ColorField label="Warna Pendapatan" value={s.earningsColor} onChange={(v) => updateSetting(dt.key, "earningsColor", v)} /><ColorField label="Warna Potongan" value={s.deductionsColor} onChange={(v) => updateSetting(dt.key, "deductionsColor", v)} /></div><div className="grid grid-cols-2 gap-2"><ColorField label="BG Gaji Bersih" value={s.netSalaryBgColor} onChange={(v) => updateSetting(dt.key, "netSalaryBgColor", v)} /><ColorField label="Teks Gaji Bersih" value={s.netSalaryTextColor} onChange={(v) => updateSetting(dt.key, "netSalaryTextColor", v)} /></div></>)}
+   292→                      {s.statusBadgePending && (<><Separator className="my-2" /><p className="text-xs font-semibold text-slate-500">Status Badge (Invoice)</p><div className="grid grid-cols-3 gap-2"><ColorField label="Pending" value={s.statusBadgePending} onChange={(v) => updateSetting(dt.key, "statusBadgePending", v)} /><ColorField label="Paid" value={s.statusBadgePaid} onChange={(v) => updateSetting(dt.key, "statusBadgePaid", v)} /><ColorField label="Cancelled" value={s.statusBadgeCancelled} onChange={(v) => updateSetting(dt.key, "statusBadgeCancelled", v)} /></div></>)}
+   293→                    </CardContent>
+   294→                  </Card>
+   295→
+   296→                  {/* Signature & Footer */}
+   297→                  <Card className="shadow-sm">
+   298→                    <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><AlignLeft className="w-4 h-4 text-blue-600" /> Tanda Tangan & Footer</CardTitle></CardHeader>
+   299→                    <CardContent className="space-y-3">
+   300→                      <SelectField label="Posisi Tanda Tangan" value={s.sigPosition} options={POSITIONS} onChange={(v) => updateSetting(dt.key, "sigPosition", v)} />
+   301→                      <ColorField label="Warna Nama Penandatangan" value={s.sigNameColor} onChange={(v) => updateSetting(dt.key, "sigNameColor", v)} />
+   302→                      {s.sigLineStyle && (<><SelectField label="Gaya Garis TTD" value={s.sigLineStyle} options={LINE_STYLES} onChange={(v) => updateSetting(dt.key, "sigLineStyle", v)} /><ColorField label="Warna Garis TTD" value={s.sigLineColor} onChange={(v) => updateSetting(dt.key, "sigLineColor", v)} /></>)}
+   303→                      {s.stampEnabled !== undefined && <div className="flex items-center gap-2"><Switch checked={s.stampEnabled} onCheckedChange={(v) => updateSetting(dt.key, "stampEnabled", v)} /><Label className="text-xs">Tampilkan Stempel</Label></div>}
+   304→                      <Separator className="my-2" />
+   305→                      <p className="text-xs font-semibold text-slate-500">FOOTER</p>
+   306→                      <div className="flex items-center gap-2"><Switch checked={s.footerShowText} onCheckedChange={(v) => updateSetting(dt.key, "footerShowText", v)} /><Label className="text-xs">Tampilkan Teks di Footer</Label></div>
+   307→                      {s.footerShowText && (
+   308→                        <>
+   309→                          <div className="space-y-1"><Label className="text-xs">Teks Footer (judul)</Label><Input value={s.footerText} onChange={(e) => updateSetting(dt.key, "footerText", e.target.value)} className="bg-white h-8" placeholder="Terima Kasih!" /></div>
+   310→                          <div className="space-y-1"><Label className="text-xs">Sub-teks Footer</Label><Input value={s.footerSubText} onChange={(e) => updateSetting(dt.key, "footerSubText", e.target.value)} className="bg-white h-8" placeholder="Atas dedikasi & kontribusi Anda..." /></div>
+   311→                          <ColorField label="Warna Teks Footer" value={s.footerTextColor} onChange={(v) => updateSetting(dt.key, "footerTextColor", v)} />
+   312→                        </>
+   313→                      )}
+   314→                      <ColorField label="Warna BG Footer" value={s.footerBgColor} onChange={(v) => updateSetting(dt.key, "footerBgColor", v)} />
+   315→                      <div className="space-y-1"><Label className="text-xs">Tinggi Footer (mm)</Label><Input type="number" value={s.footerHeight} onChange={(e) => updateSetting(dt.key, "footerHeight", Number(e.target.value))} className="bg-white h-8" /></div>
+   316→                    </CardContent>
+   317→                  </Card>
+   318→                </div>
+   319→
+   320→                {/* ===== RIGHT: Live Preview ===== */}
+   321→                <div className="space-y-4">
+   322→                  <Card className="shadow-sm sticky top-4">
+   323→                    <CardHeader className="pb-2 bg-slate-50">
+   324→                      <CardTitle className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> Live Preview — {dt.label}</CardTitle>
+   325→                    </CardHeader>
+   326→                    <CardContent className="p-4">
+   327→                      <LivePreview docType={dt.key} settings={s} appSettings={appSettings} />
+   328→                    </CardContent>
+   329→                  </Card>
+   330→                </div>
+   331→              </div>
+   332→            </TabsContent>
+   333→          );
+   334→        })}
+   335→      </Tabs>
+   336→    </div>
+   337→  );
+   338→}
+   339→
+   340→// ===== LIVE PREVIEW =====
+   341→function LivePreview({ docType, settings, appSettings }: { docType: string; settings: any; appSettings: any }) {
+   342→  const s = settings;
+   343→  const logoUrl = appSettings.companyLogo;
+   344→  const sigUrl = appSettings.companySignature;
+   345→  const directorName = appSettings.directorName || "M. Aqil Baihaqi";
+   346→  const directorTitle = appSettings.directorTitle || "Direktur Utama";
+   347→  const logoSizePx = (s.logoSize || 12) * 2.5;
+   348→
+   349→  const alignMap: Record<string, string> = { left: "left", center: "center", right: "right" };
+   350→  const nameAlign = alignMap[s.companyNameAlign] || "right";
+   351→  const addrAlign = alignMap[s.companyAddressAlign] || "right";
+   352→  const contactAlign = alignMap[s.companyContactAlign] || "right";
+   353→
+   354→  const headerBg = s.headerGradient
+   355→    ? `linear-gradient(135deg, ${s.headerBgColor} 0%, ${shadeColor(s.headerBgColor, 15)} 50%, ${s.headerBgColor} 100%)`
+   356→    : s.headerBgColor;
+   357→
+   358→  const infoPos = s.companyInfoPosition || "above"; // inside, above, below
+   359→  const showAbove = infoPos === "above";
+   360→  const showBelow = infoPos === "below";
+   361→  const showInside = infoPos === "inside";
+   362→
+   363→  // Company info block (reusable)
+   364→  const companyInfoBlock = (onDark: boolean) => {
+   365→    const nameColor = onDark ? "#ffffff" : s.companyNameColor;
+   366→    const addrColor = onDark ? "#dce6f5" : s.companyAddressColor;
+   367→    const contactColor = onDark ? "#b4c8e6" : s.companyContactColor;
+   368→    return (
+   369→      <div style={{ padding: onDark ? "0" : "8px 14px 4px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px", width: "100%" }}>
+   370→        {/* Logo */}
+   371→        {s.logoPosition !== "right" && (
+   372→          <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+   373→            {logoUrl ? (
+   374→              <img src={logoUrl} alt="Logo" style={{ maxWidth: `${logoSizePx * 2}px`, maxHeight: `${logoSizePx}px`, objectFit: "contain", borderRadius: "4px" }} />
+   375→            ) : (
+   376→              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+   377→            )}
+   378→          </div>
+   379→        )}
+   380→        {/* Info */}
+   381→        <div className="flex-1 min-w-0" style={{ textAlign: nameAlign }}>
+   382→          <p style={{ color: nameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: `${s.companyNameFontSize}px`, lineHeight: "1.3" }}>{s.companyNameText}</p>
+   383→          <p style={{ color: addrColor, fontSize: `${s.companyAddressFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: addrAlign }}>{s.companyAddressText}</p>
+   384→          <p style={{ color: contactColor, fontSize: `${s.companyContactFontSize}px`, lineHeight: "1.3", marginTop: "1px", textAlign: contactAlign }}>{s.companyContactText}</p>
+   385→        </div>
+   386→        {/* Logo RIGHT */}
+   387→        {s.logoPosition === "right" && (
+   388→          <div className="shrink-0">
+   389→            {logoUrl ? (
+   390→              <img src={logoUrl} alt="Logo" style={{ maxWidth: `${logoSizePx * 2}px`, maxHeight: `${logoSizePx}px`, objectFit: "contain", borderRadius: "4px" }} />
+   391→            ) : (
+   392→              <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
+   393→            )}
+   394→          </div>
+   395→        )}
+   396→      </div>
+   397→    );
+   398→  };
+   399→
+   400→  return (
+   401→    <div className="bg-white border-2 border-slate-200 rounded-lg overflow-hidden mx-auto shadow-md" style={{ minHeight: "500px", display: "flex", flexDirection: "column" }}>
+   402→      {/* ===== INFO ABOVE (on white paper, above navy box) ===== */}
+   403→      {showAbove && companyInfoBlock(false)}
+   404→
+   405→      {/* ===== NAVY HEADER BOX ===== */}
+   406→      <div style={{ background: headerBg, minHeight: `${s.headerHeight || 32}px`, padding: showInside ? "10px 14px" : "0 14px", display: "flex", alignItems: "center" }}>
+   407→        {showInside ? companyInfoBlock(true) : null}
+   408→      </div>
+   409→
+   410→      {/* ===== ACCENT LINE ===== */}
+   411→      <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: s.accentLineColor }}></div>
+   412→
+   413→      {/* ===== INFO BELOW (on white paper, below navy box + accent line) ===== */}
+   414→      {showBelow && <div style={{ padding: "6px 14px 2px" }}>{companyInfoBlock(false)}</div>}
+   415→
+   416→      {/* ===== BODY ===== */}
+   417→      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "10px 14px", flex: 1 }}>
+   418→        {s.docTitleShow && (
+   419→          <p style={{ textAlign: s.docTitlePosition, color: s.docTitleColor, fontWeight: "bold", marginBottom: "6px" }}>
+   420→            {docType === "SURAT" ? (
+   421→              <span style={{ display: "inline-block", backgroundColor: s.docTitleColor, color: "#fff", padding: "2px 10px", borderRadius: "10px", fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
+   422→            ) : (
+   423→              <span style={{ fontSize: `${s.docTitleFontSize}pt` }}>{s.docTitleText}</span>
+   424→            )}
+   425→          </p>
+   426→        )}
+   427→        {docType === "SURAT" && <SuratPreview s={s} directorName={directorName} directorTitle={directorTitle} sigUrl={sigUrl} />}
+   428→        {docType === "INVOICE" && <InvoicePreview s={s} directorName={directorName} directorTitle={directorTitle} sigUrl={sigUrl} />}
+   429→        {docType === "SLIP_GAJI" && <SlipGajiPreview s={s} />}
+   430→      </div>
+   431→
+   432→      {/* ===== FOOTER ===== */}
+   433→      {s.footerShowText ? (
+   434→        <div style={{ background: headerBg, padding: "8px 14px", textAlign: "center" }}>
+   435→          <p style={{ color: s.footerTextColor, fontWeight: "bold", fontSize: "11px" }}>{s.footerText || "Terima Kasih!"}</p>
+   436→          {s.footerSubText && <p style={{ color: s.footerTextColor, fontSize: "7px", opacity: 0.8, marginTop: "1px" }}>{s.footerSubText}</p>}
+   437→        </div>
+   438→      ) : (
+   439→        <div style={{ backgroundColor: s.footerBgColor, height: `${s.footerHeight || 6}px` }}></div>
+   440→      )}
+   441→    </div>
+   442→  );
+   443→}
+   444→
+   445→function SuratPreview({ s, directorName, directorTitle, sigUrl }: any) {
+   446→  return (
+   447→    <div>
+   448→      <div style={{ fontSize: "10px", marginBottom: "6px" }}>
+   449→        <div style={{ display: "flex", justifyContent: "space-between" }}>
+   450→          <span>Nomor: 001/SP/HAN/VII/2026</span>
+   451→          <span style={{ color: "#888" }}>Jombang, 05 Juli 2026</span>
+   452→        </div>
+   453→        <span>Perihal: Penawaran Kerjasama Training</span>
+   454→      </div>
+   455→      <div style={{ fontSize: "10px", marginBottom: "6px" }}>
+   456→        <p>Kepada Yth,</p>
+   457→        <p style={{ fontWeight: "bold" }}>Bapak Budi Santoso</p>
+   458→        <p>PT Maju Jaya</p>
+   459→      </div>
+   460→      <div style={{ fontSize: "10px", marginBottom: "12px" }}>
+   461→        <p>Sehubungan dengan adanya permintaan PT Maju Jaya kepada PT Hafara Aqiba Nusantara untuk menyediakan Motivator...</p>
+   462→      </div>
+   463→      <div style={{ textAlign: s.sigPosition, marginTop: "16px" }}>
+   464→        <p style={{ fontSize: "10px" }}>Hormat kami,</p>
+   465→        <div style={{ height: "35px" }}>{sigUrl && <img src={sigUrl} alt="TTD" style={{ height: "30px", objectFit: "contain" }} />}</div>
+   466→        {s.sigLineStyle !== "none" && <div style={{ width: "40%", marginLeft: s.sigPosition === "right" ? "auto" : s.sigPosition === "center" ? "auto" : "0", borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid", borderColor: s.sigLineColor, marginBottom: "3px" }} />}
+   467→        <p style={{ fontWeight: "bold", color: s.sigNameColor, fontSize: `${s.sigNameFontSize}px` }}>{directorName}</p>
+   468→        <p style={{ fontSize: "9px", color: "#888" }}>{directorTitle}</p>
+   469→      </div>
+   470→    </div>
+   471→  );
+   472→}
+   473→
+   474→function InvoicePreview({ s, directorName, directorTitle, sigUrl }: any) {
+   475→  return (
+   476→    <div>
+   477→      {/* Invoice info + client info — 2 column layout */}
+   478→      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "10px" }}>
+   479→        {/* Left: Ditagihkan kepada */}
+   480→        <div style={{ fontSize: "9px" }}>
+   481→          <p style={{ fontWeight: "bold", color: s.totalLabelColor, fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "3px" }}>Ditagihkan Kepada</p>
+   482→          <p style={{ fontWeight: "bold", fontSize: "10px" }}>PT Maju Jaya</p>
+   483→          <p style={{ color: "#64748b" }}>Jl. Sudirman No. 45</p>
+   484→          <p style={{ color: "#64748b" }}>Jakarta Selatan</p>
+   485→        </div>
+   486→        {/* Right: Invoice details */}
+   487→        <div style={{ fontSize: "9px", textAlign: "right" }}>
+   488→          <div style={{ marginBottom: "4px" }}>
+   489→            <span style={{ display: "inline-block", padding: "2px 8px", borderRadius: "4px", fontSize: "7px", fontWeight: "bold", color: "#fff", backgroundColor: s.statusBadgePending }}>PENDING</span>
+   490→          </div>
+   491→          <p><span style={{ color: "#94a3b8" }}>No. Invoice:</span> <strong>001/INV/HAN/VII/2026</strong></p>
+   492→          <p><span style={{ color: "#94a3b8" }}>Tanggal:</span> 05 Juli 2026</p>
+   493→          <p><span style={{ color: "#94a3b8" }}>Jatuh Tempo:</span> 15 Juli 2026</p>
+   494→        </div>
+   495→      </div>
+   496→
+   497→      {/* Items table — modern with rounded corners */}
+   498→      <div style={{ borderRadius: "6px", overflow: "hidden", border: "1px solid #e2e8f0", marginBottom: "8px" }}>
+   499→        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
+   500→          <thead>
+   501→            <tr style={{ backgroundColor: s.tableHeaderBgColor, color: s.tableHeaderTextColor }}>
+   502→              <th style={{ padding: "6px 8px", textAlign: "left", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px" }}>Deskripsi</th>
+   503→              <th style={{ padding: "6px 8px", textAlign: "center", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "40px" }}>Qty</th>
+   504→              <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "70px" }}>Harga</th>
+   505→              <th style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold", fontSize: "8px", textTransform: "uppercase", letterSpacing: "0.3px", width: "70px" }}>Total</th>
+   506→            </tr>
+   507→          </thead>
+   508→          <tbody>
+   509→            <tr style={{ backgroundColor: s.tableRowAltColor, borderBottom: "1px solid #e2e8f0" }}>
+   510→              <td style={{ padding: "6px 8px", fontWeight: "500" }}>Leadership Training Batch 1</td>
+   511→              <td style={{ padding: "6px 8px", textAlign: "center", color: "#64748b" }}>1</td>
+   512→              <td style={{ padding: "6px 8px", textAlign: "right", color: "#64748b" }}>Rp 25.000.000</td>
+   513→              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold" }}>Rp 25.000.000</td>
+   514→            </tr>
+   515→            <tr style={{ borderBottom: "1px solid #e2e8f0" }}>
+   516→              <td style={{ padding: "6px 8px", fontWeight: "500" }}>Coaching Session</td>
+   517→              <td style={{ padding: "6px 8px", textAlign: "center", color: "#64748b" }}>1</td>
+   518→              <td style={{ padding: "6px 8px", textAlign: "right", color: "#64748b" }}>Rp 5.000.000</td>
+   519→              <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: "bold" }}>Rp 5.000.000</td>
+   520→            </tr>
+   521→          </tbody>
+   522→        </table>
+   523→      </div>
+   524→
+   525→      {/* Summary — right aligned with modern styling */}
+   526→      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "8px" }}>
+   527→        <div style={{ width: "160px", fontSize: "9px" }}>
+   528→          <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", color: "#64748b" }}>
+   529→            <span>Subtotal</span><span>Rp 30.000.000</span>
+   530→          </div>
+   531→          <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", color: "#64748b" }}>
+   532→            <span>Diskon</span><span>- Rp 0</span>
+   533→          </div>
+   534→          <div style={{ display: "flex", justifyContent: "space-between", padding: "4px 8px", marginTop: "2px", borderRadius: "4px", backgroundColor: s.totalLabelColor, color: "#fff" }}>
+   535→            <span style={{ fontWeight: "bold" }}>TOTAL</span><span style={{ fontWeight: "bold", fontSize: `${s.totalFontSize}px` }}>Rp 30.000.000</span>
+   536→          </div>
+   537→        </div>
+   538→      </div>
+   539→
+   540→      {/* Payment info — modern card */}
+   541→      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "6px 8px", marginBottom: "8px", fontSize: "8px", backgroundColor: "#f8fafc" }}>
+   542→        <p style={{ fontWeight: "bold", color: s.totalLabelColor, marginBottom: "2px" }}>Pembayaran via Transfer:</p>
+   543→        <p>Bank Mandiri — 1234567890 — PT Hafara Aqiba Nusantara</p>
+   544→      </div>
+   545→
+   546→      {/* Signature */}
+   547→      <div style={{ textAlign: s.sigPosition, marginTop: "8px" }}>
+   548→        <p style={{ fontSize: "9px" }}>Hormat kami,</p>
+   549→        <div style={{ height: "30px" }}>{sigUrl && <img src={sigUrl} alt="TTD" style={{ height: "25px" }} />}</div>
+   550→        {s.sigLineStyle !== "none" && <div style={{ width: "40%", marginLeft: s.sigPosition === "right" ? "auto" : "0", borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid", borderColor: s.sigLineColor, marginBottom: "2px" }} />}
+   551→        <p style={{ fontWeight: "bold", color: s.sigNameColor, fontSize: "9px" }}>{directorName}</p>
+   552→        <p style={{ fontSize: "8px", color: "#888" }}>{directorTitle}</p>
+   553→      </div>
+   554→    </div>
+   555→  );
+   556→}
+   557→
+   558→function SlipGajiPreview({ s }: any) {
+   559→  return (
+   560→    <div>
+   561→      {/* Employee info — modern card */}
+   562→      <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden", marginBottom: "8px" }}>
+   563→        <div style={{ backgroundColor: s.sectionHeaderBgColor, color: s.sectionHeaderTextColor, padding: "5px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5px" }}>Informasi Karyawan</div>
+   564→        <div style={{ padding: "6px 8px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px", fontSize: "9px" }}>
+   565→          <div><span style={{ color: "#94a3b8" }}>Nama:</span> <strong>Ahmad Fauzi</strong></div>
+   566→          <div><span style={{ color: "#94a3b8" }}>Periode:</span> <strong>Juli 2026</strong></div>
+   567→          <div><span style={{ color: "#94a3b8" }}>Jabatan:</span> Assistant Trainer</div>
+   568→          <div><span style={{ color: "#94a3b8" }}>Status:</span> Tetap</div>
+   569→        </div>
+   570→      </div>
+   571→
+   572→      {/* Earnings & Deductions — modern side-by-side cards */}
+   573→      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "8px" }}>
+   574→        {/* Earnings card */}
+   575→        <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+   576→          <div style={{ backgroundColor: s.earningsColor, color: "#fff", padding: "4px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.3px" }}>Pendapatan</div>
+   577→          <div style={{ padding: "5px 8px", fontSize: "8px" }}>
+   578→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   579→              <span style={{ color: "#64748b" }}>Gaji Pokok</span><span style={{ fontWeight: "500" }}>Rp 5.500.000</span>
+   580→            </div>
+   581→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   582→              <span style={{ color: "#64748b" }}>Tunjangan Makan</span><span style={{ fontWeight: "500" }}>Rp 300.000</span>
+   583→            </div>
+   584→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   585→              <span style={{ color: "#64748b" }}>Tunjangan Transport</span><span style={{ fontWeight: "500" }}>Rp 200.000</span>
+   586→            </div>
+   587→            <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0 1px", marginTop: "2px" }}>
+   588→              <span style={{ fontWeight: "bold", color: s.earningsColor }}>Total</span><span style={{ fontWeight: "bold", color: s.earningsColor }}>Rp 6.000.000</span>
+   589→            </div>
+   590→          </div>
+   591→        </div>
+   592→        {/* Deductions card */}
+   593→        <div style={{ borderRadius: "6px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+   594→          <div style={{ backgroundColor: s.deductionsColor, color: "#fff", padding: "4px 8px", fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.3px" }}>Potongan</div>
+   595→          <div style={{ padding: "5px 8px", fontSize: "8px" }}>
+   596→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   597→              <span style={{ color: "#64748b" }}>BPJS</span><span style={{ fontWeight: "500" }}>Rp 300.000</span>
+   598→            </div>
+   599→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   600→              <span style={{ color: "#64748b" }}>Pajak (PPh)</span><span style={{ fontWeight: "500" }}>Rp 350.000</span>
+   601→            </div>
+   602→            <div style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", borderBottom: "1px solid #f1f5f9" }}>
+   603→              <span style={{ color: "#64748b" }}>Potongan Absensi</span><span style={{ fontWeight: "500" }}>Rp 0</span>
+   604→            </div>
+   605→            <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0 1px", marginTop: "2px" }}>
+   606→              <span style={{ fontWeight: "bold", color: s.deductionsColor }}>Total</span><span style={{ fontWeight: "bold", color: s.deductionsColor }}>Rp 650.000</span>
+   607→            </div>
+   608→          </div>
+   609→        </div>
+   610→      </div>
+   611→
+   612→      {/* Net salary — modern highlight box */}
+   613→      <div style={{ borderRadius: "6px", overflow: "hidden", marginBottom: "6px" }}>
+   614→        <div style={{ backgroundColor: s.netSalaryBgColor, color: s.netSalaryTextColor, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+   615→          <div>
+   616→            <p style={{ fontSize: "8px", opacity: 0.8, textTransform: "uppercase", letterSpacing: "0.5px" }}>Gaji Bersih Diterima</p>
+   617→            <p style={{ fontSize: `${s.netSalaryFontSize}px`, fontWeight: "bold" }}>Rp 5.350.000</p>
+   618→          </div>
+   619→          <div style={{ textAlign: "right" }}>
+   620→            <p style={{ fontSize: "7px", opacity: 0.6 }}>Lima Juta Tiga Ratus Lima Puluh Ribu Rupiah</p>
+   621→          </div>
+   622→        </div>
+   623→      </div>
+   624→
+   625→      {/* Payment info — small card */}
+   626→      <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "5px 8px", fontSize: "8px", backgroundColor: "#f8fafc" }}>
+   627→        <p style={{ fontWeight: "bold", color: s.sectionHeaderTextColor, marginBottom: "1px" }}>Transfer ke:</p>
+   628→        <p style={{ color: "#64748b" }}>Bank Mandiri — 1234567890 — PT Hafara Aqiba Nusantara</p>
+   629→      </div>
+   630→    </div>
+   631→  );
+   632→}
+   633→
+   634→// ===== HELPER COMPONENTS =====
+   635→function ImageUploadField({ label, value, onChange }: { label: string; value: string; onChange: (file: File) => void }) {
+   636→  return (
+   637→    <div className="flex items-center gap-3">
+   638→      <div className="w-20 h-20 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden bg-slate-50 shrink-0">
+   639→        {value ? <img src={value} alt={label} className="w-full h-full object-contain" /> : <ImageIcon className="w-8 h-8 text-slate-300" />}
+   640→      </div>
+   641→      <div className="flex-1">
+   642→        <input type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; if (f) onChange(f); }} className="hidden" id={`upload-${label}`} />
+   643→        <Button variant="outline" className="bg-white" onClick={() => document.getElementById(`upload-${label}`)?.click()}><Upload className="w-4 h-4 mr-2" /> Upload {label}</Button>
+   644→        <p className="text-[10px] text-slate-400 mt-1">Format: JPG, PNG. Maks 2MB.</p>
+   645→        {value && <div className="flex items-center gap-1 mt-1"><Check className="w-3 h-3 text-green-600" /><p className="text-[10px] text-green-600">Terhubung ke semua dokumen</p></div>}
+   646→      </div>
+   647→    </div>
+   648→  );
+   649→}
+   650→
+   651→function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+   652→  return (
+   653→    <div className="space-y-1">
+   654→      <Label className="text-xs">{label}</Label>
+   655→      <div className="flex items-center gap-1.5">
+   656→        <input type="color" value={value || "#000000"} onChange={(e) => onChange(e.target.value)} className="w-8 h-8 rounded border border-slate-200 cursor-pointer shrink-0" />
+   657→        <Input value={value} onChange={(e) => onChange(e.target.value)} className="bg-white h-8 text-xs font-mono" />
+   658→      </div>
+   659→    </div>
+   660→  );
+   661→}
+   662→
+   663→function SelectField({ label, value, options, onChange }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+   664→  return (
+   665→    <div className="space-y-1">
+   666→      <Label className="text-xs">{label}</Label>
+   667→      <Select value={value} onValueChange={onChange}><SelectTrigger className="bg-white h-8"><SelectValue /></SelectTrigger><SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent></Select>
+   668→    </div>
+   669→  );
+   670→}
+   671→

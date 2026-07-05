@@ -184,18 +184,14 @@ export function PayrollModule({ user }: { user: SafeUser }) {
 
   async function handleDownloadSlip(p: Payroll) {
     const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
-    // Fetch layout settings
+    // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
     try {
       const ld = await fetchLayoutSettings("SLIP_GAJI");
       layoutSettings = ld.layout;
     } catch {}
+    // CLEAN: only pass content data, all design comes from layout settings
     const slipData: SlipGajiData = {
-      companyName: layoutSettings?.companyNameText || p.companyName || "PT. HAFARA AQIBA NUSANTARA",
-      companyEmail: "Info@hafaragroup.com",
-      companyWebsite: "www.HafaraGroup.com",
-      companyPhone: "081324511570",
-      companyAddress: layoutSettings?.companyAddressText || "New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur",
       employeeName: u.name,
       nik: p.nik || p.userId.slice(-4).toUpperCase(),
       jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",

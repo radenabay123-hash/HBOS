@@ -162,12 +162,13 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
 
   async function handleDownloadPDF(inv: Invoice) {
     const items = JSON.parse(inv.items || "[]");
-    // Fetch layout settings
+    // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
     try {
       const ld = await fetchLayoutSettings("INVOICE");
       layoutSettings = ld.layout;
     } catch {}
+    // CLEAN: only pass content data, all design comes from layout settings
     downloadInvoicePDF({
       invoiceNumber: inv.invoiceNumber,
       issueDate: formatDate(inv.issueDate),
@@ -186,14 +187,6 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       bankName: inv.bankName || "",
       bankAccount: inv.bankAccount || "",
       accountName: inv.accountName || "",
-      companyName: companySettings.company_name,
-      companyAddress: companySettings.company_address,
-      companyPhone: companySettings.company_phone,
-      companyEmail: companySettings.company_email,
-      companyWebsite: companySettings.company_website,
-      companyNpwp: companySettings.company_npwp,
-      companyLogo: companySettings.company_logo,
-      companySignature: companySettings.company_signature,
       directorName: companySettings.director_name,
       directorTitle: companySettings.director_title,
       layout: layoutSettings,
