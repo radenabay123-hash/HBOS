@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
   FileStack, Trophy, UserCog, FileBarChart, Bell, LogOut, Menu, Building2,
-  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle,
+  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle, Sparkles,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster";
 
 interface MenuItem {
   key: ViewKey;
@@ -49,6 +49,7 @@ const MENU: MenuItem[] = [
   { key: "reports", label: "Laporan", icon: FileBarChart, roles: ["OWNER"] },
   { key: "pengaturan", label: "Pengaturan Aplikasi", icon: Settings, roles: ["OWNER"] },
   { key: "doclayout", label: "Layout Dokumen", icon: Layout, roles: ["OWNER"] },
+  { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
 ];
 
 function getMenuForRole(role: string) {

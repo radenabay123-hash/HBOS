@@ -1289,3 +1289,72 @@ Stage Summary:
 - Fallback to orange/blue circle if no logo uploaded or image load fails
 - Surat form preview also shows uploaded logo (not just circle)
 - All 3 module callers (surat, invoice, payroll) now pass logoImageData to PDF generators
+
+---
+Task ID: AI-MASTER-CONTENT-MODULE
+Agent: Main (Z.ai Code)
+Task: Create new "AI Master Content" menu page for all roles - AI Content Research Engine V5.0
+
+Work Log:
+- Created API route /api/ai-master-content/route.ts:
+  * Available for ALL roles (no role restriction)
+  * Uses z-ai-web-dev-sdk (ZAI.create()) on backend
+  * Full system prompt (AI Content Research Engine V5.0) as assistant message
+  * System prompt includes: AI Identity, Tujuan, Filosofi Content, Target Audience, Content Pillar, Content Style, Storytelling Style, Humor Style, Hook Framework, Body Framework, CTA Framework, Yang Harus Dihindari, Emosi, Output format, Riset Konten instructions, Script framework, Prinsip Terakhir
+  * Supports conversation history (multi-turn chat)
+  * Includes user context (name, role) in each message
+  * Graceful fallback response if AI service unavailable
+- Created src/components/modules/ai-master-content-module.tsx:
+  * Header: "AI Master Content" with Sparkles icon + subtitle
+  * AI Identity Card: gradient blue card showing AI capabilities + content pillars badges
+  * 3-column grid layout (1 col quick prompts + info, 2 col chat)
+  * Left panel - 6 Quick Prompt buttons (color-coded):
+    1. Riset 30 Ide Konten (orange) - leadership problems
+    2. Script Konten Lengkap (blue) - micromanagement
+    3. Konten Tunggal (purple) - burnout for Gen Z
+    4. Analisis Pain Point (emerald) - delegation for Business Owner
+    5. Hook Tajam (rose) - 10 hooks for sales team
+    6. Content Pillar Strategy (amber) - HR Director 1 month strategy
+  * Left panel - Format Output info card (Judul, Hook, Isi, CTA, Punchline)
+  * Right panel - Chat interface:
+    * Scrollable message area with user/assistant bubbles
+    * User messages: right-aligned, slate background
+    * AI messages: left-aligned, blue background, with copy button + timestamp
+    * Loading state: "AI sedang meriset konten..." with spinner
+    * Empty state: welcome message with Sparkles icon
+    * Input textarea with Ctrl+Enter shortcut + Send button
+    * Reset Chat button to clear conversation
+  * Auto-scroll to bottom on new messages
+  * Copy to clipboard functionality with feedback
+  * Responsive (mobile: stacked, desktop: 3-column grid)
+- Updated src/components/shell/app-shell.tsx:
+  * Added Sparkles icon import from lucide-react
+  * Added "aimaster" to ViewKey type
+  * Added menu item: { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: [ALL 6 ROLES] }
+- Updated src/app/page.tsx:
+  * Imported AiMasterContentModule
+  * Added case "aimaster": return <AiMasterContentModule user={user} />
+- Verified with Agent Browser:
+  * Menu "AI Master Content" visible in sidebar (all roles)
+  * Module renders with header, AI identity card, quick prompts, chat area
+  * VLM confirmed: "layout terlihat profesional dengan struktur rapi (sidebar, konten utama, dan area chat terpisah)"
+  * Tested "Konten Tunggal" quick prompt → AI generated complete content:
+    - Judul: "Burnout Gen Z: Bukan Soal Malas, tapi Terlalu Banyak 'Semua Sehingga'"
+    - Hook: 2 kalimat tajam (curiosity pattern)
+    - Isi: 2 paragraf pendek, santai, uses "kamu", storytelling observasi
+    - CTA: "Pernah ngalamin kondisi kayak gini?"
+    - Punchline: "Kamu bukan mesin, kamu manusia. 🫶"
+  * Tested "Hook Tajam" quick prompt → AI generated 10 hooks with patterns (Kontras, Kontroversi, Curiosity, Shock, Fear)
+  * Multi-turn conversation works (AI remembers context + user name "Pak Aqil")
+  * POST /api/ai-master-content 200 (11.3s and 8.5s response times)
+  * No console errors, lint clean
+
+Stage Summary:
+- New "AI Master Content" menu added to sidebar for ALL 6 roles (Owner, PM, Trainer, Creative, Digital, Finance)
+- AI Content Research Engine V5.0 fully implemented with complete system prompt
+- Chat interface with 6 quick prompts for common content research tasks
+- AI generates content following all guidelines: santai style, hook tajam, 2-paragraph body, CTA mengundang komentar, punchline
+- Supports multi-turn conversations with history
+- Copy-to-clipboard for AI responses
+- Professional UI: gradient identity card, color-coded quick prompts, clean chat bubbles
+- Accessible to all team members for content research and personal branding
