@@ -191,13 +191,23 @@ model Article {
 
 model FinanceTransaction {
   id              String   @id @default(cuid())
-  type            String   // PEMASUKAN, PENGELUARAN
+  type            String   // PEMASUKAN, PENGELUARAN, TRANSFER
   amount          Float
   description     String?
-  category        String?  // Kas, Piutang, Hutang, Operasional, Gaji, Marketing, etc
+  category        String?  // category key (FinanceCategory)
+  subCategory     String?  // free text
+  accountType     String   @default("KAS") // KAS, BANK, EWALLET
+  accountName     String?  // e.g. "BCA 123456", "OVO", "Kas Besar"
   date            DateTime @default(now())
   userId          String
   clientId        String?
+  attachmentUrl   String?  // bukti transaksi (invoice/kwitansi/nota)
+  isTaxable       Boolean  @default(false)
+  taxType         String?  // PPH21, PPH23, PPH_BADAN, PPN
+  taxAmount       Float    @default(0)
+  isPaid          Boolean  @default(true) // for piutang/hutang: false = outstanding
+  dueDate         DateTime?
+  vendorName      String?  // for pengeluaran
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -207,6 +217,8 @@ model FinanceTransaction {
   @@index([type])
   @@index([date])
   @@index([userId])
+  @@index([category])
+  @@index([accountType])
 }
 
 model FinanceSetting {
@@ -381,4 +393,126 @@ model Payroll {
   @@unique([userId, month, year])
   @@index([userId])
   @@index([month, year])
+}
+
+// ===================== FINANCE CATEGORIES =====================
+
+model FinanceCategory {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // PEMASUKAN, PENGELUARAN
+  icon        String?  // lucide icon name
+  color       String?  // tailwind color
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([name, type])
+}
+
+// ===================== INVENTORY (ASET) =====================
+
+model Inventory {
+  id              String   @id @default(cuid())
+  name            String
+  category        String   // LAPTOP, KAMERA, PRINTER, MOBIL, MOTOR, MEJA, KURSI, PROYEKTOR, MONITOR, LAINNYA
+  photoUrl        String?
+  qrCode          String?
+  location        String?
+  pic             String?  // person in charge
+  purchaseDate    DateTime
+  purchasePrice   Float
+  usefulLife      Int      // umur ekonomis (tahun)
+  depreciationMethod String @default("STRAIGHT_LINE") // STRAIGHT_LINE
+  currentValue    Float    @default(0) // calculated
+  accumulatedDepreciation Float @default(0)
+  status          String   @default("AKTIF") // AKTIF, MAINTENANCE, RUSAK, DIJUAL
+  notes           String?
+  nextMaintenance DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  movements       AssetMovement[]
+
+  @@index([category])
+  @@index([status])
+}
+
+model AssetMovement {
+  id          String   @id @default(cuid())
+  assetId     String
+  fromLocation String?
+  toLocation  String
+  fromPic     String?
+  toPic       String?
+  reason      String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  asset       Inventory @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+// ===================== TAX CONFIG (Indonesia) =====================
+// Config-driven tax rates - can be updated without code changes
+
+model TaxConfig {
+  id              String   @id @default(cuid())
+  taxType         String   // PPH21, PPH23, PPH_BADAN, PPN
+  name            String
+  rate            Float    // percentage (e.g. 0.5 for PPh 23, 11 for PPN, 22 for PPh Badan)
+  description     String?
+  effectiveFrom   DateTime @default(now())
+  isActive        Boolean  @default(true)
+  // For PPh 21 progressive brackets (stored as JSON)
+  brackets        String?  // JSON: [{min, max, rate}]
+  // PTKP (untuk PPh 21)
+  ptkp            String?  // JSON: {TK0, TK1, K0, K1, K2, K3...}
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([taxType])
+}
+
+// ===================== TAX PAYMENT (Pajak Terutang & Pembayaran) =====================
+
+model TaxPayment {
+  id              String   @id @default(cuid())
+  taxType         String   // PPH21, PPH23, PPH_BADAN, PPN
+  period          String   // e.g. "2026-07" atau "2026-Q3"
+  periodType      String   // BULANAN, KUARTAL, TAHUNAN
+  masaPajak       String?  // Januari 2026, etc
+  taxableAmount   Float    // dasar pengenaan pajak
+  taxRate         Float    // tarif yang dipakai
+  taxDue          Float    // pajak terutang
+  taxPaid         Float    @default(0) // sudah dibayar
+  status          String   @default("TERUTANG") // TERUTANG, DIBAYAR, DILAPORKAN
+  dueDate         DateTime // jatuh tempo
+  paidAt          DateTime?
+  reportedAt      DateTime?
+  npwp            String?
+  notes           String?
+  // Dokumen
+  buktiPotongUrl  String?
+  buktiBayarUrl   String?
+  dokumenUrl      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([taxType])
+  @@index([period])
+  @@index([status])
+}
+
+// ===================== AI CHAT HISTORY (Finance Assistant & Tax Consultant) =====================
+
+model AiChatHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  sessionType String   // FINANCE_ASSISTANT, TAX_CONSULTANT
+  role        String   // user, assistant
+  content     String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, sessionType])
 }

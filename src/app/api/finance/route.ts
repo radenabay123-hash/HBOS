@@ -6,7 +6,6 @@ import { ROLES } from "@/lib/constants";
 export const runtime = "nodejs";
 
 // List finance transactions
-// Owner & Finance: all. Others: no access (or limited).
 export async function GET(req: Request) {
   return handleApi(async () => {
     const user = await getCurrentUser();
@@ -19,9 +18,13 @@ export async function GET(req: Request) {
     const year = searchParams.get("year");
     const month = searchParams.get("month");
     const type = searchParams.get("type");
+    const category = searchParams.get("category");
+    const accountType = searchParams.get("accountType");
 
     const where: any = {};
     if (type) where.type = type;
+    if (category) where.category = category;
+    if (accountType) where.accountType = accountType;
     if (year) {
       const y = Number(year);
       if (month) {
@@ -52,15 +55,27 @@ export async function POST(req: Request) {
       return err("Forbidden", 403);
     }
     const body = await req.json();
-    const { type, amount, description, category, date, clientId } = body;
+    const {
+      type, amount, description, category, subCategory,
+      accountType, accountName, date, clientId,
+      attachmentUrl, isTaxable, taxType, taxAmount,
+      isPaid, dueDate, vendorName,
+    } = body;
     if (!type || !amount) return err("Type dan amount wajib diisi", 400);
-    if (!["PEMASUKAN", "PENGELUARAN"].includes(type)) return err("Type tidak valid", 400);
+    if (!["PEMASUKAN", "PENGELUARAN", "TRANSFER"].includes(type)) return err("Type tidak valid", 400);
 
     const txn = await db.financeTransaction.create({
       data: {
-        type, amount: Number(amount), description, category,
+        type, amount: Number(amount), description, category, subCategory,
+        accountType: accountType || "BANK", accountName,
         date: date ? new Date(date) : new Date(),
         userId: user.id, clientId: clientId || null,
+        attachmentUrl,
+        isTaxable: isTaxable || false,
+        taxType, taxAmount: taxAmount ? Number(taxAmount) : 0,
+        isPaid: isPaid !== undefined ? isPaid : true,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        vendorName,
       },
     });
     return ok({ transaction: txn });

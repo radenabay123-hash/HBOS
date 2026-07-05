@@ -11,7 +11,7 @@ import {
   Users, FileText, Handshake, Percent, CalendarDays, Wallet, Target,
   Film, FileEdit, TrendingUp, Heart, Share2, Bookmark, MessageCircle,
   UserPlus, DollarSign, BarChart3, AlertCircle, CheckCircle2, Clock,
-  FileStack, Trophy, RefreshCw, ExternalLink, FileCheck, FileX,
+  FileStack, Trophy, RefreshCw, ExternalLink, FileCheck, FileX, Bot,
 } from "lucide-react";
 import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard, chartColors } from "@/components/shared/charts";
@@ -28,17 +28,20 @@ export function OwnerDashboard() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [data, setData] = useState<any>(null);
   const [kpiScores, setKpiScores] = useState<any[]>([]);
+  const [aiInsight, setAiInsight] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
     try {
-      const [d, kpi] = await Promise.all([
+      const [d, kpi, insight] = await Promise.all([
         api(`/api/dashboard/owner?year=${year}&month=${month}`),
         api<{ scores: any[] }>("/api/kpi/team-scores").catch(() => ({ scores: [] })),
+        api<{ insight: string }>(`/api/finance/ai-insight?year=${year}&month=${month}`).catch(() => ({ insight: "" })),
       ]);
       setData(d);
       setKpiScores(kpi.scores || []);
+      setAiInsight(insight.insight || "");
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat dashboard");
     } finally {
@@ -158,6 +161,24 @@ export function OwnerDashboard() {
                 );
               })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Finance Insight */}
+      {aiInsight && (
+        <Card className="border-blue-200 shadow-sm">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 rounded-t-lg flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-sm">AI Insight Keuangan</h3>
+              <p className="text-blue-100 text-xs">Analisis otomatis kondisi keuangan bulan ini</p>
+            </div>
+          </div>
+          <CardContent className="p-4">
+            <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{aiInsight}</div>
           </CardContent>
         </Card>
       )}

@@ -366,3 +366,47 @@ Stage Summary:
 - Payroll layout now elegant: 2/3 grid split, gradient headers, icon labels, clean table, sticky generator
 - Absensi check-in/check-out fully functional: team can check in (before 09:00=Hadir, after=Terlambat), check out (auto-calculates work hours), status updates live
 - Both verified working in browser
+
+---
+Task ID: ADVANCED-FINANCE
+Agent: Main (Z.ai Code)
+Task: Build advanced finance system for Finance role + AI integration + Owner Dashboard integration
+
+Work Log:
+- Updated Prisma schema: enhanced FinanceTransaction (accountType, accountName, attachmentUrl, isTaxable, taxType, isPaid, dueDate, vendorName), added FinanceCategory, Inventory, AssetMovement, TaxConfig, TaxPayment models
+- Created seed script: 31 categories (12 pemasukan + 19 pengeluaran), 10 inventory items with depreciation, tax config (PPh 21 progressive brackets, PPh 23 2%, PPh Badan 22%, PPN 11%), 5 sample tax payments
+- Created finance-engine.ts: getFinanceDashboard (saldo, kas, bank, ewallet, piutang, hutang, laba, tax, monthly chart, expense/income by category, reminders, forecast), getNeraca (auto balance sheet from transactions), getLabaRugi (income statement)
+- Built 9 backend API routes:
+  - /api/finance/dashboard (GET) - full dashboard aggregation
+  - /api/finance/categories (GET/POST) + [id] (PUT/DELETE) - category CRUD
+  - /api/finance/inventory (GET/POST) + [id] (PUT/DELETE) - inventory with auto-depreciation + asset movement tracking
+  - /api/finance/neraca (GET) - auto-generated balance sheet
+  - /api/finance/tax-config (GET/POST) - configurable tax rates
+  - /api/finance/tax (GET/POST) + [id] (PUT/DELETE) - tax payments with calendar, status, docs
+  - /api/finance/laporan (GET) - all financial reports
+  - /api/finance/ai-insight (GET) - daily AI insight using z-ai-web-dev-sdk
+  - /api/finance/ai-tax (POST) - AI Tax Consultant chat
+  - /api/finance/ai-assistant (POST) - AI Finance Assistant chat
+  - Updated /api/finance (transactions) + [id] for new fields
+- Created finance-advanced-module.tsx (1050+ lines): 8 sub-modules with tabs:
+  1. Dashboard: AI Insight card, saldo cards (Total/Kas/Bank/Dompet Digital), month cards (Pendapatan/Pengeluaran/Laba/Pajak), Piutang/Hutang, Cash Flow chart, Laba trend, expense/income pie, Forecast card, 3 Reminder cards (Pajak/Piutang/Hutang)
+  2. Arus Kas: summary (masuk/keluar/selisih), filter by type/account, input uang masuk/keluar dialog, transaction table, export Excel
+  3. Kategori: pemasukan & pengeluaran categories with CRUD, color-coded
+  4. Neraca: auto-generated (Aset Lancar, Aset Tetap, Kewajiban, Modal), balanced check
+  5. Inventaris: asset cards with photo/QR/location/PIC/depreciation, CRUD, nilai buku calculation
+  6. Pajak: AI Tax Consultant button, summary (terutang/dibayar/dilaporkan), tax calendar, tax table with status actions, tax types info (PPh 21/23/Badan/PPN)
+  7. Laporan: 6 report cards (Laba Rugi, Neraca, Arus Kas, Pajak, Inventaris, Piutang), export PDF, Laba Rugi preview
+  8. AI Assistant: chat interface with AI Finance Assistant
+- Integrated AI Insight into Owner Dashboard: fetches /api/finance/ai-insight and displays in blue gradient card with Bot icon
+- Replaced old finance-module.tsx with wrapper to finance-advanced-module
+- Verified with Agent Browser: Finance login shows "Sistem Keuangan" with 8 tabs, AI Insight displays real LLM analysis, Owner Dashboard shows "AI Insight Keuangan" section, all APIs return 200, AI Tax Consultant responds with PPh 23 explanation, AI Assistant answers finance questions, lint clean, no runtime errors
+
+Stage Summary:
+- Finance role now has advanced system: 8 modules (Dashboard, Arus Kas, Kategori, Neraca, Inventaris, Pajak, Laporan, AI Assistant)
+- AI features working: AI Insight (daily analysis), AI Tax Consultant (PPh/PPN explanations), AI Finance Assistant (Q&A)
+- Bahasa sederhana: uses "Uang Masuk/Keluar/Saldo/Piutang/Hutang" not "Debit/Kredit/Jurnal"
+- Tax: config-driven (PPh 21 progressive, PPh 23 2%, PPh Badan 22%, PPN 11%), calendar, status, AI consultant
+- Neraca: auto-generated from transactions (no manual journal)
+- Inventaris: depreciation auto-calculated, asset movement tracking
+- Owner Dashboard: integrated AI Finance Insight card
+- All verified working end-to-end
