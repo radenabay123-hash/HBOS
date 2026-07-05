@@ -1,0 +1,275 @@
+// HAFARA BUSINESS OPERATING SYSTEM (HBOS)
+// Prisma schema - SQLite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ===================== USERS & AUTH =====================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  name         String
+  role         String   @default("STAFF") // OWNER, PROJECT_MANAGER, ASSISTANT_TRAINER, CONTENT_CREATIVE, DIGITAL_MARKETING_IT, FINANCE
+  phone        String?
+  avatar       String?
+  position     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients          Client[]
+  events           Event[]
+  tasks            DailyTask[]
+  contentIdeas     ContentIdea[]
+  articles         Article[]
+  financeTxns      FinanceTransaction[]
+  documents        Document[]
+  scoredBy         ScoreLog[]         @relation("ScoreLogScorer")
+  scoredTarget     ScoreLog[]         @relation("ScoreLogTarget")
+  sessions         Session[]
+  notifications    Notification[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ===================== CRM CLIENT MANAGEMENT =====================
+
+model Client {
+  id              String   @id @default(cuid())
+  namaKlien       String
+  instansi        String?
+  pic             String?
+  nomorWA         String?
+  email           String?
+  jenisTraining   String?
+  jumlahPeserta   Int?
+  budget          Float?
+  lokasi          String?
+  tanggalEvent    DateTime?
+  status          String   @default("LEAD") // LEAD, FOLLOW_UP, PROPOSAL, NEGOTIATION, DEAL, LOST
+  catatanFollowUp String?
+  reminderFollowUp DateTime?
+  assignedToId    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignedTo      User?       @relation(fields: [assignedToId], references: [id])
+  events          Event[]
+  documents       Document[]
+  financeTxns     FinanceTransaction[]
+
+  @@index([status])
+  @@index([assignedToId])
+}
+
+// ===================== EVENT MANAGEMENT =====================
+
+model Event {
+  id              String   @id @default(cuid())
+  namaEvent       String
+  clientId        String?
+  tanggal         DateTime
+  lokasi          String?
+  trainer         String?
+  assistantTrainerId String?
+  statusPersiapan String   @default("PENDING") // PENDING, IN_PROGRESS, READY, COMPLETED
+  checklist       String?  // JSON array of {item, done}
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  client          Client?  @relation(fields: [clientId], references: [id])
+  assistantTrainer User?   @relation(fields: [assistantTrainerId], references: [id])
+
+  @@index([tanggal])
+}
+
+// ===================== DAILY TASK MANAGEMENT =====================
+
+model DailyTask {
+  id              String   @id @default(cuid())
+  userId          String
+  taskHariIni     String
+  progress        String?
+  persentaseSelesai Int    @default(0)
+  hambatan        String?
+  jamMulai        String?
+  jamSelesai      String?
+  status          String   @default("BELUM") // BELUM, SEDANG, SELESAI
+  tanggal         DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tanggal])
+}
+
+// ===================== CONTENT IDEAS (ACC WORKFLOW) =====================
+
+model ContentIdea {
+  id              String   @id @default(cuid())
+  userId          String
+  // Kategori: Instagram M. Aqil Baihaqi, TikTok Aqil Baihaqi, Hafara Group, MentorSkill
+  kategori        String
+  judul           String
+  link            String?
+  ideKonten       String?
+  script          String?
+  caption         String?
+  // Produksi
+  statusProduksi  String   @default("IDE") // IDE, PRODUKSI, EDITING, SIAP_PUBLISH, PUBLISHED
+  statusEditing   String   @default("PENDING") // PENDING, IN_PROGRESS, DONE
+  statusPublish   String   @default("PENDING") // PENDING, PUBLISHED
+  linkKonten      String?
+  metrikKonten    String?  // JSON {reach, views, watchTime, share, save, comment, followerGrowth}
+  // ACC workflow dari owner
+  statusACC       String   @default("PENDING") // PENDING, ACC, REVISI
+  catatanRevisi   String?
+  accAt           DateTime?
+  accById         String?
+  tanggal         DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([kategori])
+  @@index([statusACC])
+  @@index([statusPublish])
+}
+
+// ===================== SEO ARTICLE MANAGEMENT =====================
+
+model Article {
+  id              String   @id @default(cuid())
+  userId          String
+  judulArtikel    String
+  keyword         String?
+  websiteTujuan   String?
+  tanggalPublish  DateTime?
+  linkArtikel     String?
+  // ACC workflow
+  statusACC       String   @default("PENDING") // PENDING, ACC, REVISI_ADMIN
+  catatanRevisi   String?
+  accAt           DateTime?
+  accById         String?
+  status          String   @default("DRAFT") // DRAFT, PUBLISHED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([statusACC])
+  @@index([status])
+}
+
+// ===================== FINANCE =====================
+
+model FinanceTransaction {
+  id              String   @id @default(cuid())
+  type            String   // PEMASUKAN, PENGELUARAN
+  amount          Float
+  description     String?
+  category        String?  // Kas, Piutang, Hutang, Operasional, Gaji, Marketing, etc
+  date            DateTime @default(now())
+  userId          String
+  clientId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client          Client?  @relation(fields: [clientId], references: [id])
+
+  @@index([type])
+  @@index([date])
+  @@index([userId])
+}
+
+model FinanceSetting {
+  id              String   @id @default(cuid())
+  targetRevenue   Float    @default(500000000)
+  targetProfit    Float    @default(150000000)
+  month           Int      // 1-12
+  year            Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([month, year])
+}
+
+// ===================== DOCUMENTS (SURAT, INVOICE, SPK, dll) =====================
+
+model Document {
+  id              String   @id @default(cuid())
+  clientId        String?
+  documentType    String   // SURAT, INVOICE, SPK, KONTRAK, LAINNYA (custom)
+  documentName    String
+  documentNumber  String?
+  link            String
+  description     String?
+  uploadedById    String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  client          Client?  @relation(fields: [clientId], references: [id])
+  uploadedBy      User     @relation(fields: [uploadedById], references: [id])
+
+  @@index([clientId])
+  @@index([documentType])
+}
+
+// ===================== SCOREBOARD =====================
+
+model ScoreLog {
+  id              String   @id @default(cuid())
+  scorerId        String   // who awarded
+  targetUserId    String   // who received
+  points          Int
+  reason          String?
+  category        String   // PRODUKTIF, DISIPLIN, KERJA_SAMA, etc
+  date            DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  scorer          User     @relation("ScoreLogScorer", fields: [scorerId], references: [id])
+  targetUser      User     @relation("ScoreLogTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([targetUserId])
+  @@index([date])
+}
+
+// ===================== NOTIFICATIONS =====================
+
+model Notification {
+  id              String   @id @default(cuid())
+  userId          String
+  title           String
+  message         String
+  type            String   @default("INFO") // INFO, ACC, REVISI, TASK, REMINDER
+  read            Boolean  @default(false)
+  link            String?
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}

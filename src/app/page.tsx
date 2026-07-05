@@ -1,0 +1,135 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { Loader2 } from "lucide-react";
+import { LoginScreen } from "@/components/auth/login-screen";
+import { AppShell, type ViewKey } from "@/components/shell/app-shell";
+import { OwnerDashboard } from "@/components/owner/owner-dashboard";
+import { TeamDashboard } from "@/components/team/team-dashboard";
+import { CrmModule } from "@/components/modules/crm-module";
+import { EventsModule } from "@/components/modules/events-module";
+import { TasksModule } from "@/components/modules/tasks-module";
+import { ContentModule } from "@/components/modules/content-module";
+import { ArticlesModule } from "@/components/modules/articles-module";
+import { FinanceModule } from "@/components/modules/finance-module";
+import { DocumentsModule } from "@/components/modules/documents-module";
+import { ScoreboardModule } from "@/components/modules/scoreboard-module";
+import { TeamManagementModule } from "@/components/modules/team-management-module";
+import { ReportsModule } from "@/components/modules/reports-module";
+import { ROLES } from "@/lib/constants";
+import type { SafeUser } from "@/lib/auth";
+import { getMe, api } from "@/lib/api-client";
+
+export default function Home() {
+  const [user, setUser] = useState<SafeUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<ViewKey>("dashboard");
+  const [notifications, setNotifications] = useState<{ count: number; items: any[] }>({ count: 0, items: [] });
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const data = await api<{ notifications: any[]; unread: number }>("/api/notifications");
+      setNotifications({ count: data.unread, items: data.notifications });
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    getMe()
+      .then((d) => {
+        setUser(d.user);
+        if (d.user) {
+          setView("dashboard");
+          loadNotifications();
+        }
+      })
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, [loadNotifications]);
+
+  // Periodically refresh notifications
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(loadNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [user, loadNotifications]);
+
+  function handleLogin() {
+    getMe().then((d) => {
+      setUser(d.user);
+      setView("dashboard");
+      loadNotifications();
+    });
+  }
+
+  function handleLogout() {
+    setUser(null);
+    setView("dashboard");
+  }
+
+  function handleViewChange(v: ViewKey) {
+    setView(v);
+    loadNotifications();
+  }
+
+  function markNotificationsRead() {
+    api("/api/notifications", { method: "PUT" }).then(() => {
+      setNotifications((prev) => ({ count: 0, items: prev.items.map((n) => ({ ...n, read: true })) }));
+    }).catch(() => {});
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  const isOwner = user.role === ROLES.OWNER;
+
+  function renderView() {
+    switch (view) {
+      case "dashboard":
+        return isOwner ? <OwnerDashboard /> : <TeamDashboard />;
+      case "crm":
+        return <CrmModule user={user} />;
+      case "events":
+        return <EventsModule user={user} />;
+      case "tasks":
+        return <TasksModule user={user} />;
+      case "content":
+        return <ContentModule user={user} />;
+      case "articles":
+        return <ArticlesModule user={user} />;
+      case "finance":
+        return <FinanceModule user={user} />;
+      case "documents":
+        return <DocumentsModule user={user} />;
+      case "scoreboard":
+        return <ScoreboardModule />;
+      case "team":
+        return <TeamManagementModule />;
+      case "reports":
+        return <ReportsModule />;
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <AppShell
+      user={user}
+      activeView={view}
+      onViewChange={handleViewChange}
+      onLogout={handleLogout}
+      notifications={notifications}
+      onMarkNotificationsRead={markNotificationsRead}
+    >
+      {renderView()}
+    </AppShell>
+  );
+}
