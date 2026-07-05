@@ -21,12 +21,12 @@ export const ROLE_LABELS: Record<string, string> = {
 };
 
 export const ROLE_COLORS: Record<string, string> = {
-  OWNER: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  OWNER: "bg-blue-100 text-blue-700 border-blue-200",
   PROJECT_MANAGER: "bg-violet-100 text-violet-700 border-violet-200",
   ASSISTANT_TRAINER: "bg-amber-100 text-amber-700 border-amber-200",
   CONTENT_CREATIVE: "bg-pink-100 text-pink-700 border-pink-200",
   DIGITAL_MARKETING_IT: "bg-cyan-100 text-cyan-700 border-cyan-200",
-  FINANCE: "bg-teal-100 text-teal-700 border-teal-200",
+  FINANCE: "bg-sky-100 text-sky-700 border-sky-200",
 };
 
 // All non-owner roles
@@ -61,7 +61,7 @@ export const CLIENT_STATUS_COLORS: Record<string, string> = {
   FOLLOW_UP: "bg-blue-100 text-blue-700 border-blue-200",
   PROPOSAL: "bg-amber-100 text-amber-700 border-amber-200",
   NEGOTIATION: "bg-violet-100 text-violet-700 border-violet-200",
-  DEAL: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  DEAL: "bg-blue-100 text-blue-700 border-blue-200",
   LOST: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
@@ -74,7 +74,7 @@ export const TASK_STATUS_LABELS: Record<string, string> = {
 export const TASK_STATUS_COLORS: Record<string, string> = {
   BELUM: "bg-slate-100 text-slate-700 border-slate-200",
   SEDANG: "bg-amber-100 text-amber-700 border-amber-200",
-  SELESAI: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  SELESAI: "bg-blue-100 text-blue-700 border-blue-200",
 };
 
 export const EVENT_PREP_STATUS = [
@@ -117,7 +117,7 @@ export const ACC_STATUS_LABELS: Record<string, string> = {
 };
 export const ACC_STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700 border-amber-200",
-  ACC: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  ACC: "bg-blue-100 text-blue-700 border-blue-200",
   REVISI: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
@@ -153,7 +153,7 @@ export function getIndicatorColor(value: number, target: number): string {
 
 export function getIndicatorBadge(value: number, target: number) {
   const c = getIndicatorColor(value, target);
-  if (c === "green") return "bg-emerald-100 text-emerald-700 border-emerald-200";
+  if (c === "green") return "bg-blue-100 text-blue-700 border-blue-200";
   if (c === "yellow") return "bg-amber-100 text-amber-700 border-amber-200";
   return "bg-rose-100 text-rose-700 border-rose-200";
 }

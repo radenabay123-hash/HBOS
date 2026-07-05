@@ -377,7 +377,7 @@ export function CrmModule({ user }: CrmModuleProps) {
         description="Kelola prospek klien, follow up, dan status deal dari seluruh pipeline penjualan."
         action={
           canManage ? (
-            <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4" /> Tambah Klien
             </Button>
           ) : undefined
@@ -408,7 +408,7 @@ export function CrmModule({ user }: CrmModuleProps) {
           icon={Handshake}
           indicator="green"
           subtitle="Klien yang deal"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Total Lost"
@@ -532,7 +532,7 @@ export function CrmModule({ user }: CrmModuleProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-emerald-600"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
                               onClick={() => openEdit(c)}
                             >
                               <Pencil className="w-4 h-4" />
@@ -743,7 +743,7 @@ export function CrmModule({ user }: CrmModuleProps) {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {submitting ? (
                   <>

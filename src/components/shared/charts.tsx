@@ -7,7 +7,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-const COLORS = ["#059669", "#0d9488", "#0891b2", "#7c3aed", "#db2777", "#ea580c", "#ca8a04", "#475569"];
+const COLORS = ["#2563eb", "#0ea5e9", "#0891b2", "#7c3aed", "#db2777", "#ea580c", "#ca8a04", "#475569"];
 
 export function ChartCard({ title, children, className, action }: { title: string; children: React.ReactNode; className?: string; action?: React.ReactNode }) {
   return (

@@ -151,7 +151,7 @@ const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Se
 
 const ACC_COLORS: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700 border-amber-200",
-  ACC: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  ACC: "bg-blue-100 text-blue-700 border-blue-200",
   REVISI: "bg-rose-100 text-rose-700 border-rose-200",
   REVISI_ADMIN: "bg-rose-100 text-rose-700 border-rose-200",
 };
@@ -368,7 +368,7 @@ export function ReportsModule() {
         description="Generate laporan otomatis dan export ke PDF/Excel."
         action={
           <Button
-            className="bg-emerald-600 hover:bg-emerald-700"
+            className="bg-blue-600 hover:bg-blue-700"
             onClick={handleDownloadFullPDF}
             disabled={loading || !data}
           >
@@ -408,7 +408,7 @@ export function ReportsModule() {
             </Select>
           </div>
           <div className="sm:ml-auto text-sm text-slate-500">
-            Menampilkan data: <span className="font-semibold text-emerald-700">{periodLabel}</span>
+            Menampilkan data: <span className="font-semibold text-blue-700">{periodLabel}</span>
           </div>
         </CardContent>
       </Card>
@@ -549,7 +549,7 @@ function SummaryTab({
           value={formatCurrency(eff.revenue)}
           icon={DollarSign}
           indicator={data.finance.revenueAchievement >= 100 ? "green" : data.finance.revenueAchievement >= 60 ? "yellow" : "red"}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Target: ${formatCurrency(data.finance.targetRevenue)}`}
           progress={month === 0 ? undefined : data.finance.revenueAchievement}
         />
@@ -558,7 +558,7 @@ function SummaryTab({
           value={formatCurrency(eff.profit)}
           icon={eff.profit >= 0 ? TrendingUp : TrendingDown}
           indicator={eff.profit >= 0 ? "green" : "red"}
-          accent={eff.profit >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}
+          accent={eff.profit >= 0 ? "bg-blue-50 text-blue-600" : "bg-rose-50 text-rose-600"}
           subtitle={`Estimasi/bln: ${formatCurrency(data.finance.profitEstimation)}`}
         />
         <StatCard
@@ -566,7 +566,7 @@ function SummaryTab({
           value={eff.deals}
           icon={Award}
           indicator="green"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Revenue: ${formatCurrency(data.crm.dealRevenue)}`}
         />
         <StatCard
@@ -574,35 +574,35 @@ function SummaryTab({
           value={`${data.crm.conversionRate}%`}
           icon={Target}
           indicator={data.crm.conversionRate >= 30 ? "green" : data.crm.conversionRate >= 15 ? "yellow" : "red"}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`${data.crm.totalDeal} dari ${data.crm.totalClients} klien`}
         />
         <StatCard
           title="Konten Published"
           value={eff.contents}
           icon={Film}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Engagement: ${data.content.engagementRate}%`}
         />
         <StatCard
           title="Artikel Published"
           value={eff.articles}
           icon={FileText}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Total: ${data.articles.totalArticles} artikel`}
         />
         <StatCard
           title="Event"
           value={eff.events}
           icon={CalendarDays}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={periodLabel}
         />
         <StatCard
           title="Reach Konten"
           value={formatNumber(data.content.totalReach)}
           icon={Activity}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`${formatNumber(data.content.totalViews)} views`}
         />
       </div>
@@ -613,7 +613,7 @@ function SummaryTab({
           title="Pendapatan vs Pengeluaran (Bulanan)"
           data={data.monthlyData}
           keys={[
-            { key: "revenue", label: "Pendapatan", color: "#059669" },
+            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
             { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
           ]}
           height={280}
@@ -633,7 +633,7 @@ function SummaryTab({
           title="Tren Aktivitas (Deal, Konten, Artikel)"
           data={data.monthlyData}
           keys={[
-            { key: "deals", label: "Deal", color: "#059669" },
+            { key: "deals", label: "Deal", color: "#2563eb" },
             { key: "contents", label: "Konten", color: "#7c3aed" },
             { key: "articles", label: "Artikel", color: "#ea580c" },
           ]}
@@ -643,7 +643,7 @@ function SummaryTab({
           title="Pendapatan per Tahun (5 Tahun)"
           data={data.yearlyData}
           keys={[
-            { key: "revenue", label: "Pendapatan", color: "#059669" },
+            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
             { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
             { key: "profit", label: "Profit", color: "#0d9488" },
           ]}
@@ -674,7 +674,7 @@ function SummaryTab({
                 {data.monthlyData.map((m) => (
                   <TableRow key={m.month}>
                     <TableCell className="font-medium">{m.month}</TableCell>
-                    <TableCell className="text-right text-emerald-700">{formatCurrency(m.revenue)}</TableCell>
+                    <TableCell className="text-right text-blue-700">{formatCurrency(m.revenue)}</TableCell>
                     <TableCell className="text-right text-rose-700">{formatCurrency(m.expense)}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(m.profit)}</TableCell>
                     <TableCell className="text-center">{m.deals}</TableCell>
@@ -746,7 +746,7 @@ function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: strin
         <StatCard title="Follow Up" value={data.crm.totalFollowUp} icon={Users} accent="bg-blue-50 text-blue-600" />
         <StatCard title="Proposal" value={data.crm.totalProposal} icon={FileText} accent="bg-amber-50 text-amber-600" />
         <StatCard title="Negotiation" value={data.crm.totalNegotiation} icon={Activity} accent="bg-violet-50 text-violet-600" />
-        <StatCard title="Deal" value={data.crm.totalDeal} icon={Award} indicator="green" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Deal" value={data.crm.totalDeal} icon={Award} indicator="green" accent="bg-blue-50 text-blue-600" />
         <StatCard title="Lost" value={data.crm.totalLost} icon={TrendingDown} indicator="red" accent="bg-rose-50 text-rose-600" />
       </div>
 
@@ -755,21 +755,21 @@ function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: strin
           title="Total Klien"
           value={data.crm.totalClients}
           icon={Users}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Conversion Rate"
           value={`${data.crm.conversionRate}%`}
           icon={Target}
           indicator={data.crm.conversionRate >= 30 ? "green" : data.crm.conversionRate >= 15 ? "yellow" : "red"}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Total Revenue Deal"
           value={formatCurrency(data.crm.dealRevenue)}
           icon={DollarSign}
           indicator="green"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
       </div>
 
@@ -777,7 +777,7 @@ function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: strin
       <BarChartCard
         title="Distribusi Pipeline CRM"
         data={data.crm.crmPipeline}
-        keys={[{ key: "value", label: "Jumlah Klien", color: "#059669" }]}
+        keys={[{ key: "value", label: "Jumlah Klien", color: "#2563eb" }]}
         height={260}
       />
 
@@ -809,7 +809,7 @@ function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: strin
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.namaKlien}</TableCell>
                       <TableCell className="text-slate-600 text-sm">{c.instansi || "-"}</TableCell>
-                      <TableCell className="text-right text-emerald-700 font-medium">{formatCurrency(c.budget)}</TableCell>
+                      <TableCell className="text-right text-blue-700 font-medium">{formatCurrency(c.budget)}</TableCell>
                       <TableCell className="text-slate-600 text-xs">{formatDate(c.tanggalEvent)}</TableCell>
                       <TableCell className="text-center">
                         <DocBadge has={c.hasInvoice} />
@@ -839,7 +839,7 @@ function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: strin
 
 function DocBadge({ has }: { has: boolean }) {
   return has ? (
-    <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" />
+    <CheckCircle2 className="w-4 h-4 text-blue-600 inline" />
   ) : (
     <span className="text-xs text-slate-400">-</span>
   );
@@ -951,13 +951,13 @@ function ContentTab({
 
       {/* Content KPI */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-        <StatCard title="Konten Published" value={data.content.totalContentPublished} icon={Film} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Konten Produced" value={data.content.totalContentProduced} icon={CheckCircle2} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Artikel Published" value={data.articles.totalArticlesPublished} icon={FileText} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Engagement Rate" value={`${data.content.engagementRate}%`} icon={Activity} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Total Reach" value={formatNumber(data.content.totalReach)} icon={Users} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Total Views" value={formatNumber(data.content.totalViews)} icon={Activity} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Follower Growth" value={formatNumber(data.content.totalFollowerGrowth)} icon={TrendingUp} indicator="green" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Konten Published" value={data.content.totalContentPublished} icon={Film} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Konten Produced" value={data.content.totalContentProduced} icon={CheckCircle2} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Artikel Published" value={data.articles.totalArticlesPublished} icon={FileText} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Engagement Rate" value={`${data.content.engagementRate}%`} icon={Activity} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Reach" value={formatNumber(data.content.totalReach)} icon={Users} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Views" value={formatNumber(data.content.totalViews)} icon={Activity} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Follower Growth" value={formatNumber(data.content.totalFollowerGrowth)} icon={TrendingUp} indicator="green" accent="bg-blue-50 text-blue-600" />
         <StatCard title="Pending ACC" value={data.content.pendingAccContents + data.articles.pendingAccArticles} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
       </div>
 
@@ -1040,10 +1040,10 @@ function ContentTab({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    <FileCheck className="w-4 h-4 text-blue-600" />
                     Konten Published
                   </h3>
-                  <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">{publishedContents.length}</Badge>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">{publishedContents.length}</Badge>
                 </div>
                 {publishedContents.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-4">Belum ada konten published.</p>
@@ -1064,10 +1064,10 @@ function ContentTab({
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-emerald-600" />
+                    <FileCheck className="w-4 h-4 text-blue-600" />
                     Artikel Published
                   </h3>
-                  <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-emerald-200">{publishedArticles.length}</Badge>
+                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">{publishedArticles.length}</Badge>
                 </div>
                 {publishedArticles.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-4">Belum ada artikel published.</p>
@@ -1195,7 +1195,7 @@ function FinanceTab({
           value={formatCurrency(isAll ? data.monthlyData.reduce((s, m) => s + m.revenue, 0) : data.finance.revenueThisMonth)}
           icon={TrendingUp}
           indicator={data.finance.revenueAchievement >= 100 ? "green" : data.finance.revenueAchievement >= 60 ? "yellow" : "red"}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Capaian: ${data.finance.revenueAchievement}%`}
           progress={isAll ? undefined : data.finance.revenueAchievement}
         />
@@ -1211,14 +1211,14 @@ function FinanceTab({
           value={formatCurrency(isAll ? data.monthlyData.reduce((s, m) => s + m.profit, 0) : data.finance.profitThisMonth)}
           icon={DollarSign}
           indicator={(isAll ? data.monthlyData.reduce((s, m) => s + m.profit, 0) : data.finance.profitThisMonth) >= 0 ? "green" : "red"}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`Capaian: ${data.finance.profitAchievement}%`}
         />
         <StatCard
           title="Estimasi Profit/Bln"
           value={formatCurrency(data.finance.profitEstimation)}
           icon={Target}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle="Rata-rata tahun berjalan"
         />
       </div>
@@ -1229,7 +1229,7 @@ function FinanceTab({
           title="Pendapatan vs Pengeluaran (Bulanan)"
           data={data.monthlyData}
           keys={[
-            { key: "revenue", label: "Pendapatan", color: "#059669" },
+            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
             { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
           ]}
           height={280}
@@ -1269,13 +1269,13 @@ function FinanceTab({
                   return (
                     <TableRow key={m.month}>
                       <TableCell className="font-medium">{m.month}</TableCell>
-                      <TableCell className="text-right text-emerald-700">{formatCurrency(m.revenue)}</TableCell>
+                      <TableCell className="text-right text-blue-700">{formatCurrency(m.revenue)}</TableCell>
                       <TableCell className="text-right text-rose-700">{formatCurrency(m.expense)}</TableCell>
-                      <TableCell className={`text-right font-semibold ${m.profit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                      <TableCell className={`text-right font-semibold ${m.profit >= 0 ? "text-blue-700" : "text-rose-700"}`}>
                         {formatCurrency(m.profit)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline" className={margin >= 30 ? "bg-emerald-100 text-emerald-700 border-emerald-200" : margin >= 10 ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
+                        <Badge variant="outline" className={margin >= 30 ? "bg-blue-100 text-blue-700 border-blue-200" : margin >= 10 ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
                           {margin}%
                         </Badge>
                       </TableCell>
@@ -1318,14 +1318,14 @@ function FinanceTab({
                     <TableRow key={t.id}>
                       <TableCell className="text-xs text-slate-600">{formatDate(t.date)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={t.type === "PEMASUKAN" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
+                        <Badge variant="outline" className={t.type === "PEMASUKAN" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
                           {t.type === "PEMASUKAN" ? "Masuk" : "Keluar"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">{t.category || "-"}</TableCell>
                       <TableCell className="text-sm text-slate-700">{t.description || "-"}</TableCell>
                       <TableCell className="text-sm text-slate-600">{t.client?.namaKlien || "-"}</TableCell>
-                      <TableCell className={`text-right font-medium ${t.type === "PEMASUKAN" ? "text-emerald-700" : "text-rose-700"}`}>
+                      <TableCell className={`text-right font-medium ${t.type === "PEMASUKAN" ? "text-blue-700" : "text-rose-700"}`}>
                         {formatCurrency(t.amount)}
                       </TableCell>
                     </TableRow>
@@ -1393,10 +1393,10 @@ function TeamTab({ data, periodLabel }: { data: DashboardData; periodLabel: stri
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard title="Anggota Aktif" value={data.teamProductivity.length} icon={Users} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Total Tugas Selesai" value={totalTasksDone} icon={CheckCircle2} subtitle={`dari ${totalTasksTotal} tugas`} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Rata-rata Completion" value={`${avgCompletion}%`} icon={Target} indicator={avgCompletion >= 70 ? "green" : avgCompletion >= 40 ? "yellow" : "red"} accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Konten + Artikel" value={totalContents + totalArticles} icon={FileText} subtitle={`${totalContents} konten • ${totalArticles} artikel`} accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Anggota Aktif" value={data.teamProductivity.length} icon={Users} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Total Tugas Selesai" value={totalTasksDone} icon={CheckCircle2} subtitle={`dari ${totalTasksTotal} tugas`} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Rata-rata Completion" value={`${avgCompletion}%`} icon={Target} indicator={avgCompletion >= 70 ? "green" : avgCompletion >= 40 ? "yellow" : "red"} accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Konten + Artikel" value={totalContents + totalArticles} icon={FileText} subtitle={`${totalContents} konten • ${totalArticles} artikel`} accent="bg-blue-50 text-blue-600" />
       </div>
 
       <Card>
@@ -1431,13 +1431,13 @@ function TeamTab({ data, periodLabel }: { data: DashboardData; periodLabel: stri
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-slate-600">{t.position || "-"}</TableCell>
-                      <TableCell className="text-center text-emerald-700 font-medium">{t.tasksDone}</TableCell>
+                      <TableCell className="text-center text-blue-700 font-medium">{t.tasksDone}</TableCell>
                       <TableCell className="text-center">{t.tasksTotal}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Progress value={t.completionRate} className="h-2 flex-1" />
                           <span className={`text-xs font-semibold w-9 text-right ${
-                            t.completionRate >= 70 ? "text-emerald-700" : t.completionRate >= 40 ? "text-amber-700" : "text-rose-700"
+                            t.completionRate >= 70 ? "text-blue-700" : t.completionRate >= 40 ? "text-amber-700" : "text-rose-700"
                           }`}>
                             {t.completionRate}%
                           </span>

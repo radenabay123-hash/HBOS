@@ -11,6 +11,8 @@ import { CrmModule } from "@/components/modules/crm-module";
 import { EventsModule } from "@/components/modules/events-module";
 import { TasksModule } from "@/components/modules/tasks-module";
 import { KpiModule } from "@/components/modules/kpi-module";
+import { AbsensiModule } from "@/components/modules/absensi-module";
+import { PayrollModule } from "@/components/modules/payroll-module";
 import { ContentModule } from "@/components/modules/content-module";
 import { ArticlesModule } from "@/components/modules/articles-module";
 import { FinanceModule } from "@/components/modules/finance-module";
@@ -82,7 +84,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -99,6 +101,10 @@ export default function Home() {
         return isOwner ? <OwnerDashboard /> : <TeamDashboard />;
       case "kpi":
         return isOwner ? <OwnerKpiDashboard /> : <KpiModule user={user} />;
+      case "absensi":
+        return <AbsensiModule user={user} />;
+      case "payroll":
+        return <PayrollModule user={user} />;
       case "crm":
         return <CrmModule user={user} />;
       case "events":

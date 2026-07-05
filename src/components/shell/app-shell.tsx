@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
   FileStack, Trophy, UserCog, FileBarChart, Bell, LogOut, Menu, Building2,
-  ChevronDown, X, Target,
+  ChevronDown, X, Target, Clock, Receipt,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -18,7 +18,8 @@ import { cn } from "@/lib/utils";
 
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
-  | "finance" | "documents" | "scoreboard" | "team" | "reports";
+  | "finance" | "documents" | "scoreboard" | "team" | "reports"
+  | "absensi" | "payroll";
 
 interface MenuItem {
   key: ViewKey;
@@ -30,12 +31,14 @@ interface MenuItem {
 const MENU: MenuItem[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
+  { key: "absensi", label: "Absensi", icon: Clock, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
   { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
   { key: "tasks", label: "Tugas Harian", icon: ListTodo, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "content", label: "Tugas Konten", icon: Film, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },
   { key: "articles", label: "Data Artikel", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },
   { key: "finance", label: "Keuangan", icon: Wallet, roles: ["OWNER", "FINANCE"] },
+  { key: "payroll", label: "Payroll & Gaji", icon: Receipt, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "documents", label: "Dokumen", icon: FileStack, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
   { key: "scoreboard", label: "Scoreboard", icon: Trophy, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "team", label: "Manajemen Tim", icon: UserCog, roles: ["OWNER"] },
@@ -76,8 +79,8 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
   const SidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className={cn("flex items-center gap-3 px-5 py-5 border-b", isOwner ? "border-emerald-100" : "border-slate-100")}>
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", isOwner ? "bg-emerald-600 text-white" : "bg-slate-900 text-white")}>
+      <div className={cn("flex items-center gap-3 px-5 py-5 border-b", isOwner ? "border-blue-100" : "border-slate-100")}>
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", isOwner ? "bg-blue-600 text-white" : "bg-slate-900 text-white")}>
           <Building2 className="w-6 h-6" />
         </div>
         <div className="min-w-0">
@@ -88,9 +91,9 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
 
       {/* Role badge */}
       <div className="px-3 py-3 border-b border-slate-100">
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg", isOwner ? "bg-emerald-50" : "bg-slate-50")}>
+        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg", isOwner ? "bg-blue-50" : "bg-slate-50")}>
           <Avatar className="w-8 h-8">
-            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-emerald-600 text-white" : "bg-slate-700 text-white")}>
+            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-slate-700 text-white")}>
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -114,7 +117,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 active
-                  ? (isOwner ? "bg-emerald-600 text-white shadow-sm" : "bg-slate-900 text-white shadow-sm")
+                  ? (isOwner ? "bg-blue-600 text-white shadow-sm" : "bg-slate-900 text-white shadow-sm")
                   : "text-slate-600 hover:bg-slate-100"
               )}
             >
@@ -193,7 +196,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
                     ) : (
                       <div className="divide-y divide-slate-50">
                         {notifications.items.map((n: any) => (
-                          <div key={n.id} className={cn("px-4 py-3", !n.read && "bg-emerald-50/50")}>
+                          <div key={n.id} className={cn("px-4 py-3", !n.read && "bg-blue-50/50")}>
                             <p className="text-sm font-medium text-slate-900">{n.title}</p>
                             <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
                             <p className="text-[10px] text-slate-400 mt-1">{new Date(n.createdAt).toLocaleString("id-ID")}</p>
@@ -206,7 +209,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
               )}
             </div>
             <Avatar className="w-8 h-8">
-              <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-emerald-600 text-white" : "bg-slate-700 text-white")}>
+              <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-slate-700 text-white")}>
                 {initials(user.name)}
               </AvatarFallback>
             </Avatar>

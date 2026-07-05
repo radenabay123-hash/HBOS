@@ -40,7 +40,7 @@ export function exportToPDF(
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Header bar
-  doc.setFillColor(5, 150, 105); // emerald-600
+  doc.setFillColor(37, 99, 235); // blue-600
   doc.rect(0, 0, pageWidth, 26, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
@@ -63,8 +63,8 @@ export function exportToPDF(
     body: rows.map((r) => r.map((c) => String(c ?? ""))),
     startY: 32,
     styles: { fontSize: 8, cellPadding: 2 },
-    headStyles: { fillColor: [5, 150, 105], textColor: 255, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: [240, 253, 244] },
+    headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: [239, 246, 255] },
     margin: { left: 14, right: 14 },
   });
 
@@ -94,7 +94,7 @@ export function exportReportPDF(
   const doc = new jsPDF({ orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  doc.setFillColor(5, 150, 105);
+  doc.setFillColor(37, 99, 235);
   doc.rect(0, 0, pageWidth, 26, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
@@ -108,7 +108,7 @@ export function exportReportPDF(
 
   let y = 34;
   for (const s of sections) {
-    doc.setTextColor(5, 150, 105);
+    doc.setTextColor(37, 99, 235);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text(s.heading, 14, y);
@@ -118,8 +118,8 @@ export function exportReportPDF(
       body: s.rows.map((r) => r.map((c) => String(c ?? ""))),
       startY: y,
       styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [5, 150, 105], textColor: 255 },
-      alternateRowStyles: { fillColor: [240, 253, 244] },
+      headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+      alternateRowStyles: { fillColor: [239, 246, 255] },
       margin: { left: 14, right: 14 },
     });
     // @ts-ignore

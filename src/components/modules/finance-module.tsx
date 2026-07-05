@@ -89,7 +89,7 @@ const CATEGORIES = [
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Pendapatan Training": "#059669",
+  "Pendapatan Training": "#2563eb",
   "Pendapatan Konsultasi": "#0d9488",
   "Gaji": "#dc2777",
   "Operasional": "#ea580c",
@@ -508,7 +508,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
           indicator={revenueIndicator}
           subtitle={`Target: ${formatCurrency(targetRevenue)}`}
           progress={targetRevenue > 0 ? Math.min(100, Math.round((stats.revenue / targetRevenue) * 100)) : undefined}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Pengeluaran"
@@ -525,7 +525,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
           indicator={profitIndicator}
           subtitle={`Target: ${formatCurrency(targetProfit)}`}
           progress={targetProfit > 0 ? Math.min(100, Math.round((stats.profit / targetProfit) * 100)) : undefined}
-          accent="bg-teal-50 text-teal-600"
+          accent="bg-sky-50 text-sky-600"
         />
         <StatCard
           title="Margin"
@@ -544,14 +544,14 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
           value={formatCurrency(targetRevenue)}
           icon={Target}
           subtitle={`${MONTH_FULL[(Number(settingForm.month) || 1) - 1]} ${settingForm.year}`}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Target Profit"
           value={formatCurrency(targetProfit)}
           icon={PiggyBank}
           subtitle="Target laba bulan ini"
-          accent="bg-teal-50 text-teal-600"
+          accent="bg-sky-50 text-sky-600"
         />
         <StatCard
           title="Cash Flow"
@@ -577,7 +577,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
             title="Revenue vs Expense vs Profit (Bulanan)"
             data={monthlyData}
             keys={[
-              { key: "revenue", label: "Revenue", color: "#059669" },
+              { key: "revenue", label: "Revenue", color: "#2563eb" },
               { key: "expense", label: "Expense", color: "#e11d48" },
               { key: "profit", label: "Profit", color: "#0d9488" },
             ]}
@@ -595,7 +595,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
       <AreaChartCard
         title="Tren Revenue"
         data={monthlyData}
-        keys={[{ key: "revenue", label: "Revenue", color: "#059669" }]}
+        keys={[{ key: "revenue", label: "Revenue", color: "#2563eb" }]}
         formatY={formatY}
         height={240}
       />
@@ -618,7 +618,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
 
           {loading ? (
             <div className="flex items-center justify-center py-10">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : transactions.length === 0 ? (
             <EmptyState onAdd={openAdd} />
@@ -648,7 +648,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
                           variant="outline"
                           className={
                             t.type === "PEMASUKAN"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
                               : "bg-rose-50 text-rose-700 border-rose-200"
                           }
                         >
@@ -658,7 +658,7 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
                       <TableCell
                         className={
                           "text-right font-semibold whitespace-nowrap " +
-                          (t.type === "PEMASUKAN" ? "text-emerald-600" : "text-rose-600")
+                          (t.type === "PEMASUKAN" ? "text-blue-600" : "text-rose-600")
                         }
                       >
                         {t.type === "PEMASUKAN" ? "+" : "-"}
@@ -956,8 +956,8 @@ export function FinanceModule({ user: _user }: { user: SafeUser }) {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-        <Wallet className="w-8 h-8 text-emerald-500" />
+      <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+        <Wallet className="w-8 h-8 text-blue-500" />
       </div>
       <h3 className="text-base font-semibold text-slate-700">Belum ada transaksi</h3>
       <p className="text-sm text-slate-500 mt-1 max-w-sm">

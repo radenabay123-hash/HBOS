@@ -51,7 +51,7 @@ export function OwnerDashboard() {
   if (loading || !data) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw className="w-6 h-6 animate-spin text-emerald-600" />
+        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -119,12 +119,12 @@ export function OwnerDashboard() {
 
       {/* KPI Score Summary - Team Productivity */}
       {kpiScores.length > 0 && (
-        <Card className="border-emerald-200">
+        <Card className="border-blue-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-emerald-600" />
+              <Trophy className="w-4 h-4 text-blue-600" />
               KPI Score Tim - Productivity Score
-              <Badge variant="outline" className="ml-auto text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+              <Badge variant="outline" className="ml-auto text-[10px] bg-blue-50 text-blue-700 border-blue-200">
                 Rata-rata: {Math.round(kpiScores.reduce((s: number, x: any) => s + x.weightedScore, 0) / kpiScores.length)}
               </Badge>
             </CardTitle>
@@ -132,7 +132,7 @@ export function OwnerDashboard() {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {kpiScores.map((s: any) => {
-                const cat = s.weightedScore >= 90 ? { bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", label: "Excellent" }
+                const cat = s.weightedScore >= 90 ? { bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", label: "Excellent" }
                   : s.weightedScore >= 80 ? { bg: "bg-cyan-500", text: "text-cyan-700", light: "bg-cyan-50", label: "Good" }
                   : s.weightedScore >= 70 ? { bg: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", label: "Need Coaching" }
                   : { bg: "bg-rose-500", text: "text-rose-700", light: "bg-rose-50", label: "Warning" };
@@ -168,8 +168,8 @@ export function OwnerDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Total Lead Masuk" value={d.crm.totalLead} icon={UserPlus} indicator="yellow" accent="bg-amber-50 text-amber-600" />
           <StatCard title="Proposal Terkirim" value={d.crm.totalProposal} icon={FileText} indicator="yellow" accent="bg-violet-50 text-violet-600" />
-          <StatCard title="Total Deal" value={d.crm.totalDeal} icon={Handshake} indicator="green" subtitle={formatCurrency(d.crm.dealRevenue)} accent="bg-emerald-50 text-emerald-600" />
-          <StatCard title="Conversion Rate" value={`${d.crm.conversionRate}%`} icon={Percent} indicator={convIndicator} subtitle={`${d.crm.totalClients} total klien`} accent="bg-teal-50 text-teal-600" />
+          <StatCard title="Total Deal" value={d.crm.totalDeal} icon={Handshake} indicator="green" subtitle={formatCurrency(d.crm.dealRevenue)} accent="bg-blue-50 text-blue-600" />
+          <StatCard title="Conversion Rate" value={`${d.crm.conversionRate}%`} icon={Percent} indicator={convIndicator} subtitle={`${d.crm.totalClients} total klien`} accent="bg-sky-50 text-sky-600" />
         </div>
       </div>
 
@@ -177,8 +177,8 @@ export function OwnerDashboard() {
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Keuangan</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Revenue Bulan Ini" value={formatCurrency(d.finance.revenueThisMonth)} icon={Wallet} indicator={revIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetRevenue)}`} progress={d.finance.revenueAchievement} accent="bg-emerald-50 text-emerald-600" />
-          <StatCard title="Profit Bulan Ini" value={formatCurrency(d.finance.profitThisMonth)} icon={TrendingUp} indicator={profitIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetProfit)}`} progress={d.finance.profitAchievement} accent="bg-teal-50 text-teal-600" />
+          <StatCard title="Revenue Bulan Ini" value={formatCurrency(d.finance.revenueThisMonth)} icon={Wallet} indicator={revIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetRevenue)}`} progress={d.finance.revenueAchievement} accent="bg-blue-50 text-blue-600" />
+          <StatCard title="Profit Bulan Ini" value={formatCurrency(d.finance.profitThisMonth)} icon={TrendingUp} indicator={profitIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetProfit)}`} progress={d.finance.profitAchievement} accent="bg-sky-50 text-sky-600" />
           <StatCard title="Expense Bulan Ini" value={formatCurrency(d.finance.expenseThisMonth)} icon={DollarSign} indicator="neutral" accent="bg-rose-50 text-rose-600" />
           <StatCard title="Profit Estimation" value={formatCurrency(d.finance.profitEstimation)} icon={BarChart3} indicator="neutral" subtitle="Rata-rata/bulan" accent="bg-cyan-50 text-cyan-600" />
         </div>
@@ -194,7 +194,7 @@ export function OwnerDashboard() {
 
       {/* Social Growth */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Followers Growth" value={formatNumber(d.content.totalFollowerGrowth)} icon={UserPlus} indicator="green" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Total Followers Growth" value={formatNumber(d.content.totalFollowerGrowth)} icon={UserPlus} indicator="green" accent="bg-blue-50 text-blue-600" />
         <StatCard title="Total Reach" value={formatNumber(d.content.totalReach)} icon={TrendingUp} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
         <StatCard title="Total Share" value={formatNumber(d.content.totalShare)} icon={Share2} indicator="neutral" accent="bg-violet-50 text-violet-600" />
         <StatCard title="Total Save" value={formatNumber(d.content.totalSave)} icon={Bookmark} indicator="neutral" accent="bg-amber-50 text-amber-600" />
@@ -221,7 +221,7 @@ export function OwnerDashboard() {
           title={`Revenue vs Expense vs Profit - ${year}`}
           data={d.monthlyData}
           keys={[
-            { key: "revenue", label: "Revenue", color: "#059669" },
+            { key: "revenue", label: "Revenue", color: "#2563eb" },
             { key: "expense", label: "Expense", color: "#f43f5e" },
             { key: "profit", label: "Profit", color: "#0891b2" },
           ]}
@@ -232,7 +232,7 @@ export function OwnerDashboard() {
           title="Aktivitas Bisnis Bulanan"
           data={d.monthlyData}
           keys={[
-            { key: "deals", label: "Deal", color: "#059669" },
+            { key: "deals", label: "Deal", color: "#2563eb" },
             { key: "leads", label: "Lead", color: "#0891b2" },
             { key: "contents", label: "Konten", color: "#db2777" },
             { key: "articles", label: "Artikel", color: "#ca8a04" },
@@ -249,7 +249,7 @@ export function OwnerDashboard() {
           title="Tahunan (5 Tahun)"
           data={d.yearlyData}
           keys={[
-            { key: "revenue", label: "Revenue", color: "#059669" },
+            { key: "revenue", label: "Revenue", color: "#2563eb" },
             { key: "profit", label: "Profit", color: "#0891b2" },
           ]}
           height={260}
@@ -261,7 +261,7 @@ export function OwnerDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-emerald-600" />
+            <FileCheck className="w-4 h-4 text-blue-600" />
             Klien Deal - Status Dokumen (Invoice, SPK, Surat)
           </CardTitle>
         </CardHeader>
@@ -287,9 +287,9 @@ export function OwnerDashboard() {
                       <td className="py-2 pr-2 font-medium text-slate-900">{c.namaKlien}</td>
                       <td className="py-2 px-2 text-slate-600">{c.instansi || "-"}</td>
                       <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(c.budget || 0)}</td>
-                      <td className="py-2 px-2 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                      <td className="py-2 px-2 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                      <td className="py-2 px-2 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                      <td className="py-2 px-2 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                      <td className="py-2 px-2 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                      <td className="py-2 px-2 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -303,7 +303,7 @@ export function OwnerDashboard() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-emerald-600" />
+            <Trophy className="w-4 h-4 text-blue-600" />
             Produktivitas Tim - {monthNames[month - 1]} {year}
           </CardTitle>
         </CardHeader>

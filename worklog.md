@@ -280,3 +280,28 @@ Stage Summary:
 - Owner sees KPI scores for all team members on Dashboard Owner + dedicated Dashboard KPI
 - Scoreboard now ranks by KPI Score (transparent to all divisions)
 - All APIs return 200, lint passes clean, no runtime errors
+
+---
+Task ID: COLOR+ABSENSI+PAYROLL
+Agent: Main (Z.ai Code)
+Task: Change app color to blue + add Absensi, Payroll & Gaji features
+
+Work Log:
+- Changed app color theme from emerald to blue: global sed replace emerald→blue, teal→sky across all 21 source files; updated globals.css, chart colors (#059669→#2563eb), PDF export color (RGB 5,150,105 → 37,99,235), all hex colors
+- Added 3 Prisma models: Attendance (check-in/out, status, work hours), SalaryConfig (base salary, allowances, bonus, penalty, bpjs, tax per user), Payroll (monthly payslip with gross/deduction/net, KPI integration)
+- Pushed schema, generated Prisma client
+- Created seed script (prisma/seed-attendance.ts): 5 salary configs + 100 attendance records (30 days, weekdays, random statuses)
+- Built payroll calculation engine (src/lib/payroll-calc.ts): calculates gross from base+allowances+KPI bonus, deductions from attendance+bpjs+tax, net salary. KPI bonus: 100% if ≥90, 75% if ≥80, 50% if ≥70, 0 if <70. Allowances pro-rated by attendance rate.
+- Built 7 API routes: /api/attendance (GET/POST), /api/attendance/check-in (POST), /api/attendance/check-out (POST), /api/attendance/[id] (PUT/DELETE owner), /api/salary-config (GET/POST), /api/payroll (GET), /api/payroll/generate (POST owner), /api/payroll/[id] (GET/PUT/DELETE)
+- Created Absensi module (absensi-module.tsx): team check-in/out with live clock, today status card, monthly history table, owner view with all-team filter + edit status dialog, export PDF/Excel
+- Created Payroll module (payroll-module.tsx): owner view with summary stats, payroll table (generate/approve/pay), salary config tab (edit per-user), payslip detail dialog with download PDF; team view with own payslip (hero net salary, pendapatan/potongan breakdown, attendance summary, download slip PDF)
+- Added "Absensi" and "Payroll & Gaji" menu items to sidebar (visible to all roles)
+- Integrated page.tsx with new modules
+- Verified with Agent Browser: blue color theme confirmed, Absensi owner view (all team + filter + edit), Absensi team view (check-in card), Payroll owner view (generate + table + summary), Payroll team view (payslip with breakdown), all APIs return 200, lint clean, no errors
+
+Stage Summary:
+- App color changed to blue (primary #2563eb, gradients blue→sky)
+- Absensi feature: team check-in/out, 6 statuses (Hadir/Terlambat/Izin/Sakit/Alpha/Cuti), work hours auto-calculated, owner can view all + edit
+- Payroll & Gaji feature: auto-calculated from attendance + KPI score, 3 statuses (Draft/Approved/Paid), salary config per user, payslip PDF export
+- Payroll formula: Gross = Base + Meal Allowance (pro-rated) + Transport Allowance (pro-rated) + KPI Bonus; Net = Gross - (Attendance Deduction + BPJS + Tax + Other)
+- All verified working end-to-end

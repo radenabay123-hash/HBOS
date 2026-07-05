@@ -293,7 +293,7 @@ export function TeamManagementModule() {
             <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={loading || users.length === 0}>
               <FileSpreadsheet className="w-4 h-4" /> Excel
             </Button>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={openAdd}>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openAdd}>
               <UserPlus className="w-4 h-4" /> Tambah Anggota
             </Button>
           </div>
@@ -312,7 +312,7 @@ export function TeamManagementModule() {
               title="Total Anggota"
               value={total}
               icon={Users}
-              accent="bg-emerald-50 text-emerald-600"
+              accent="bg-blue-50 text-blue-600"
               subtitle="Seluruh akun tim"
             />
             <StatCard
@@ -320,7 +320,7 @@ export function TeamManagementModule() {
               value={activeCount}
               icon={UserCheck}
               indicator={activeCount > 0 ? "green" : "neutral"}
-              accent="bg-emerald-50 text-emerald-600"
+              accent="bg-blue-50 text-blue-600"
               subtitle={`${total > 0 ? Math.round((activeCount / total) * 100) : 0}% dari total`}
             />
             <StatCard
@@ -331,7 +331,7 @@ export function TeamManagementModule() {
               accent="bg-rose-50 text-rose-600"
               subtitle="Akun dimatikan"
             />
-            <Card className="border-l-4 border-l-emerald-500">
+            <Card className="border-l-4 border-l-blue-500">
               <CardContent className="p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Per Role</p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
@@ -418,7 +418,7 @@ export function TeamManagementModule() {
                       <TableCell className="text-slate-600 text-sm">{u.phone || "-"}</TableCell>
                       <TableCell>
                         {u.isActive ? (
-                          <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200">Aktif</Badge>
+                          <Badge className="bg-blue-100 text-blue-700 border border-blue-200">Aktif</Badge>
                         ) : (
                           <Badge className="bg-slate-100 text-slate-600 border border-slate-200">Nonaktif</Badge>
                         )}
@@ -432,7 +432,7 @@ export function TeamManagementModule() {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            className="h-8 w-8 text-slate-600 hover:text-blue-700 hover:bg-blue-50"
                             onClick={() => openEdit(u)}
                             title="Edit"
                           >
@@ -482,7 +482,7 @@ export function TeamManagementModule() {
               Batal
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-blue-600 hover:bg-blue-700"
               onClick={handleAdd}
               disabled={submitting}
             >
@@ -508,7 +508,7 @@ export function TeamManagementModule() {
               Batal
             </Button>
             <Button
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-blue-600 hover:bg-blue-700"
               onClick={handleEdit}
               disabled={submitting}
             >
@@ -636,8 +636,8 @@ function UserForm({
 function EmptyState({ onAdd, hasFilter }: { onAdd: () => void; hasFilter: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-        <Users className="w-7 h-7 text-emerald-600" />
+      <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+        <Users className="w-7 h-7 text-blue-600" />
       </div>
       <p className="text-sm font-medium text-slate-700">
         {hasFilter ? "Tidak ada anggota yang cocok" : "Belum ada anggota tim"}
@@ -648,7 +648,7 @@ function EmptyState({ onAdd, hasFilter }: { onAdd: () => void; hasFilter: boolea
           : "Tambahkan anggota tim pertama untuk mulai mengelola akun."}
       </p>
       {!hasFilter && (
-        <Button size="sm" className="mt-4 bg-emerald-600 hover:bg-emerald-700" onClick={onAdd}>
+        <Button size="sm" className="mt-4 bg-blue-600 hover:bg-blue-700" onClick={onAdd}>
           <UserPlus className="w-4 h-4" /> Tambah Anggota
         </Button>
       )}

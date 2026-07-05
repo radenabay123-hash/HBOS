@@ -61,13 +61,13 @@ function initials(name: string) {
 }
 
 function disciplineColor(rate: number): string {
-  if (rate >= 80) return "bg-emerald-500";
+  if (rate >= 80) return "bg-blue-500";
   if (rate >= 50) return "bg-amber-500";
   return "bg-rose-500";
 }
 
 function disciplineBadge(rate: number): string {
-  if (rate >= 80) return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (rate >= 80) return "bg-blue-50 text-blue-700 border-blue-200";
   if (rate >= 50) return "bg-amber-50 text-amber-700 border-amber-200";
   return "bg-rose-50 text-rose-700 border-rose-200";
 }
@@ -218,14 +218,14 @@ export function ScoreboardModule(_props?: Record<string, never>) {
             summary.avgKpi >= 70 ? "yellow" : "red"
           }
           subtitle={`${summary.totalMembers} anggota tim`}
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Tugas Selesai"
           value={formatNumber(summary.totalTasks)}
           icon={ClipboardCheck}
           subtitle="Akumulasi tim"
-          accent="bg-teal-50 text-teal-600"
+          accent="bg-sky-50 text-sky-600"
         />
         <StatCard
           title="Rata-rata Disiplin"
@@ -249,7 +249,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
       {loading ? (
         <Card>
           <CardContent className="py-16 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
           </CardContent>
         </Card>
       ) : sorted.length === 0 ? (
@@ -259,7 +259,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
           {/* Podium Top 3 */}
           {top3.length > 0 && (
             <Card className="overflow-hidden">
-              <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-emerald-50/50 via-amber-50/30 to-slate-50">
+              <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-blue-50/50 via-amber-50/30 to-slate-50">
                 <div className="flex items-center gap-2 mb-5">
                   <Trophy className="w-5 h-5 text-amber-500" />
                   <h3 className="text-base font-bold text-slate-800">Top 3 Podium</h3>
@@ -325,7 +325,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                             <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                               <span>KPI Score</span>
                               <span className={cn("font-bold text-lg",
-                                r.kpiScore != null && r.kpiScore >= 90 ? "text-emerald-600" :
+                                r.kpiScore != null && r.kpiScore >= 90 ? "text-blue-600" :
                                 r.kpiScore != null && r.kpiScore >= 80 ? "text-cyan-600" :
                                 r.kpiScore != null && r.kpiScore >= 70 ? "text-amber-600" :
                                 "text-rose-600"
@@ -335,7 +335,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                             </div>
                             {r.kpiCategory && (
                               <Badge variant="outline" className={cn("text-[9px] mb-2",
-                                r.kpiScore != null && r.kpiScore >= 90 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                r.kpiScore != null && r.kpiScore >= 90 ? "bg-blue-50 text-blue-700 border-blue-200" :
                                 r.kpiScore != null && r.kpiScore >= 80 ? "bg-cyan-50 text-cyan-700 border-cyan-200" :
                                 r.kpiScore != null && r.kpiScore >= 70 ? "bg-amber-50 text-amber-700 border-amber-200" :
                                 "bg-rose-50 text-rose-700 border-rose-200"
@@ -413,7 +413,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                           <div className="flex items-center gap-2.5">
                             <Avatar className="w-8 h-8">
                               {r.avatar ? <AvatarImage src={r.avatar} alt={r.name} /> : null}
-                              <AvatarFallback className="text-xs bg-emerald-50 text-emerald-700">
+                              <AvatarFallback className="text-xs bg-blue-50 text-blue-700">
                                 {initials(r.name)}
                               </AvatarFallback>
                             </Avatar>
@@ -433,7 +433,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                         <TableCell className="text-center">
                           {r.kpiScore != null ? (
                             <span className={cn("inline-flex items-center justify-center w-12 h-9 rounded-lg text-lg font-bold",
-                              r.kpiScore >= 90 ? "bg-emerald-100 text-emerald-700" :
+                              r.kpiScore >= 90 ? "bg-blue-100 text-blue-700" :
                               r.kpiScore >= 80 ? "bg-cyan-100 text-cyan-700" :
                               r.kpiScore >= 70 ? "bg-amber-100 text-amber-700" :
                               "bg-rose-100 text-rose-700"
@@ -447,7 +447,7 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                         <TableCell className="text-center">
                           {r.kpiCategory ? (
                             <Badge variant="outline" className={cn("text-[10px]",
-                              r.kpiScore != null && r.kpiScore >= 90 ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                              r.kpiScore != null && r.kpiScore >= 90 ? "bg-blue-50 text-blue-700 border-blue-200" :
                               r.kpiScore != null && r.kpiScore >= 80 ? "bg-cyan-50 text-cyan-700 border-cyan-200" :
                               r.kpiScore != null && r.kpiScore >= 70 ? "bg-amber-50 text-amber-700 border-amber-200" :
                               "bg-rose-50 text-rose-700 border-rose-200"
@@ -514,14 +514,14 @@ export function ScoreboardModule(_props?: Record<string, never>) {
                       </span>
                       <Avatar className="w-10 h-10 shrink-0">
                         {r.avatar ? <AvatarImage src={r.avatar} alt={r.name} /> : null}
-                        <AvatarFallback className="text-xs bg-emerald-50 text-emerald-700">
+                        <AvatarFallback className="text-xs bg-blue-50 text-blue-700">
                           {initials(r.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-semibold text-slate-900 truncate">{r.name}</p>
-                          <span className="inline-flex items-center gap-1 text-sm font-bold text-emerald-700 shrink-0">
+                          <span className="inline-flex items-center gap-1 text-sm font-bold text-blue-700 shrink-0">
                             <TrendingUp className="w-3.5 h-3.5" />
                             {formatNumber(r.productivityScore)}
                           </span>

@@ -92,7 +92,7 @@ interface DocumentsModuleProps {
 }
 
 const DOC_TYPE_COLORS: Record<string, string> = {
-  INVOICE: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  INVOICE: "bg-blue-100 text-blue-700 border-blue-200",
   SPK: "bg-violet-100 text-violet-700 border-violet-200",
   SURAT: "bg-amber-100 text-amber-700 border-amber-200",
   KONTRAK: "bg-cyan-100 text-cyan-700 border-cyan-200",
@@ -334,7 +334,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
         description="Kelola surat, invoice, SPK, dan dokumen administrasi lainnya beserta link dan keterangan."
         action={
           canManage ? (
-            <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4" /> Tambah Dokumen
             </Button>
           ) : undefined
@@ -357,7 +357,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
           icon={Receipt}
           indicator="green"
           subtitle="Dokumen tagihan"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Total SPK"
@@ -479,7 +479,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                             href={d.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
                             title="Buka dokumen"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -503,7 +503,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-emerald-600"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
                               onClick={() => openEdit(d)}
                             >
                               <Pencil className="w-4 h-4" />
@@ -642,7 +642,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {submitting ? (
                   <>

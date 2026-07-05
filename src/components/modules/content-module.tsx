@@ -319,7 +319,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
         title="Tugas Konten"
         description="Ajukan ide konten & judul. Owner akan ACC atau memberi catatan revisi. Jika ACC, akan muncul checklist publish di dashboard Anda."
         action={
-          <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4" /> Tambah Ide Konten
           </Button>
         }
@@ -329,9 +329,9 @@ export function ContentModule({ user }: { user: SafeUser }) {
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard title="Total Ide" value={formatNumber(stats.total)} icon={Film} indicator="neutral" accent="bg-slate-100 text-slate-600" />
         <StatCard title="Pending ACC" value={formatNumber(stats.pending)} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
-        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
         <StatCard title="Revisi" value={formatNumber(stats.revisi)} icon={AlertCircle} indicator="red" accent="bg-rose-50 text-rose-600" />
-        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-teal-50 text-teal-600" />
+        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-sky-50 text-sky-600" />
       </div>
 
       {/* Filters + Export */}
@@ -386,7 +386,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
       {/* Cards Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
       ) : filtered.length === 0 ? (
         <Card className="border-dashed border-slate-300">
@@ -400,7 +400,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                 ? "Tidak ada konten yang cocok dengan filter."
                 : "Mulai ajukan ide konten pertama Anda."}
             </p>
-            <Button onClick={openAdd} className="mt-4 bg-emerald-600 hover:bg-emerald-700" size="sm">
+            <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
               <Plus className="w-4 h-4" /> Tambah Ide Konten
             </Button>
           </CardContent>
@@ -428,7 +428,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                       <Badge variant="outline" className={cn(
                         "text-[10px]",
                         idea.statusProduksi === "PUBLISHED"
-                          ? "bg-teal-50 text-teal-700 border-teal-200"
+                          ? "bg-sky-50 text-sky-700 border-sky-200"
                           : "bg-slate-50 text-slate-600 border-slate-200"
                       )}>
                         {PRODUCTION_STATUS_LABELS[idea.statusProduksi] || idea.statusProduksi}
@@ -458,7 +458,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                         {idea.link && (
                           <a
                             href={idea.link} target="_blank" rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 hover:underline"
                           >
                             <Link2 className="w-3 h-3" /> Referensi
                           </a>
@@ -466,7 +466,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                         {idea.linkKonten && (
                           <a
                             href={idea.linkKonten} target="_blank" rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-teal-700 hover:text-teal-800 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs text-sky-700 hover:text-sky-800 hover:underline"
                           >
                             <Globe className="w-3 h-3" /> Konten Published
                           </a>
@@ -498,8 +498,8 @@ export function ContentModule({ user }: { user: SafeUser }) {
 
                     {/* Metrik */}
                     {isPublished && (
-                      <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-2.5">
-                        <p className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5 mb-1.5">
+                      <div className="rounded-md border border-blue-200 bg-blue-50/50 p-2.5">
+                        <p className="text-xs font-semibold text-blue-700 flex items-center gap-1.5 mb-1.5">
                           <BarChart3 className="w-3.5 h-3.5" /> Metrik Konten
                         </p>
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
@@ -509,7 +509,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                           <div className="flex justify-between"><span className="text-slate-500">Share</span><span className="font-medium text-slate-700">{formatNumber(m.share || 0)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-500">Save</span><span className="font-medium text-slate-700">{formatNumber(m.save || 0)}</span></div>
                           <div className="flex justify-between"><span className="text-slate-500">Comment</span><span className="font-medium text-slate-700">{formatNumber(m.comment || 0)}</span></div>
-                          <div className="flex justify-between col-span-2"><span className="text-slate-500">Follower Growth</span><span className="font-medium text-emerald-700">+{formatNumber(m.followerGrowth || 0)}</span></div>
+                          <div className="flex justify-between col-span-2"><span className="text-slate-500">Follower Growth</span><span className="font-medium text-blue-700">+{formatNumber(m.followerGrowth || 0)}</span></div>
                         </div>
                       </div>
                     )}
@@ -521,7 +521,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
                     {isOwner && idea.statusACC === "PENDING" && (
                       <div className="flex gap-2 pt-1 border-t border-slate-100">
                         <Button
-                          size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                          size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700"
                           onClick={() => handleAcc(idea)} disabled={accLoading}
                         >
                           <Check className="w-3.5 h-3.5" /> ACC
@@ -691,7 +691,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
             {/* Metrik */}
             <div className="rounded-lg border border-slate-200 p-3 space-y-3">
               <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-                <BarChart3 className="w-4 h-4 text-emerald-600" /> Metrik Konten
+                <BarChart3 className="w-4 h-4 text-blue-600" /> Metrik Konten
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
@@ -723,7 +723,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
               {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               {editingId ? "Simpan Perubahan" : "Ajukan Ide"}
             </Button>

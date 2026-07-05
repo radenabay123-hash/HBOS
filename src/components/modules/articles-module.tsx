@@ -57,7 +57,7 @@ const ACC_LABELS: Record<string, string> = {
 };
 const ACC_COLORS: Record<string, string> = {
   PENDING: "bg-amber-100 text-amber-700 border-amber-200",
-  ACC: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  ACC: "bg-blue-100 text-blue-700 border-blue-200",
   REVISI_ADMIN: "bg-rose-100 text-rose-700 border-rose-200",
 };
 
@@ -271,8 +271,8 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
 
   const websiteBadgeColor = (w: string | null) => {
     if (!w) return "bg-slate-100 text-slate-700 border-slate-200";
-    if (w.includes("hafaragroup")) return "bg-emerald-100 text-emerald-700 border-emerald-200";
-    if (w.includes("mentorskill")) return "bg-teal-100 text-teal-700 border-teal-200";
+    if (w.includes("hafaragroup")) return "bg-blue-100 text-blue-700 border-blue-200";
+    if (w.includes("mentorskill")) return "bg-sky-100 text-sky-700 border-sky-200";
     if (w.includes("aqilbaihaqi")) return "bg-amber-100 text-amber-700 border-amber-200";
     return "bg-slate-100 text-slate-700 border-slate-200";
   };
@@ -283,7 +283,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
         title="Data Artikel"
         description="Kelola artikel SEO. Owner akan ACC atau meminta revisi. Jika ACC, artikel dapat di-publish."
         action={
-          <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4" /> Tambah Artikel
           </Button>
         }
@@ -293,8 +293,8 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Total Artikel" value={formatNumber(stats.total)} icon={FileText} indicator="neutral" accent="bg-slate-100 text-slate-600" />
         <StatCard title="Pending ACC" value={formatNumber(stats.pending)} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
-        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-teal-50 text-teal-600" />
+        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-sky-50 text-sky-600" />
       </div>
 
       {/* Filters + Export */}
@@ -353,7 +353,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : articles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4">
@@ -366,7 +366,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                   ? "Tidak ada artikel yang cocok dengan filter."
                   : "Mulai tambahkan artikel SEO pertama."}
               </p>
-              <Button onClick={openAdd} className="mt-4 bg-emerald-600 hover:bg-emerald-700" size="sm">
+              <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
                 <Plus className="w-4 h-4" /> Tambah Artikel
               </Button>
             </div>
@@ -423,7 +423,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                           {a.linkArtikel ? (
                             <a
                               href={a.linkArtikel} target="_blank" rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-800 hover:underline"
+                              className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 hover:underline"
                             >
                               <ExternalLink className="w-3 h-3" /> Buka
                             </a>
@@ -437,7 +437,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                         <TableCell>
                           <Badge variant="outline" className={cn(
                             isPublished
-                              ? "bg-teal-100 text-teal-700 border-teal-200"
+                              ? "bg-sky-100 text-sky-700 border-sky-200"
                               : "bg-slate-100 text-slate-700 border-slate-200"
                           )}>
                             {a.status}
@@ -451,7 +451,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                                 <>
                                   <Button
                                     size="sm" variant="ghost"
-                                    className="h-7 px-2 text-emerald-700 hover:bg-emerald-50"
+                                    className="h-7 px-2 text-blue-700 hover:bg-blue-50"
                                     onClick={() => handleAcc(a)} disabled={accLoading}
                                     title="ACC Artikel"
                                   >
@@ -472,7 +472,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                               {isAccd && !isPublished && canEdit && (
                                 <Button
                                   size="sm" variant="outline"
-                                  className="h-7 px-2 border-teal-200 text-teal-700 hover:bg-teal-50"
+                                  className="h-7 px-2 border-sky-200 text-sky-700 hover:bg-sky-50"
                                   onClick={() => handlePublish(a)}
                                   title="Publish Artikel"
                                 >
@@ -597,7 +597,7 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
               {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               {editingId ? "Simpan Perubahan" : "Tambah Artikel"}
             </Button>

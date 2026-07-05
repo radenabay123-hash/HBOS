@@ -60,7 +60,7 @@ const PERIOD_LABELS = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" 
 const PERIOD_ICONS = { daily: Clock, weekly: Calendar, monthly: Target };
 
 function getCategoryColor(score: number) {
-  if (score >= 90) return { bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", label: "Excellent", indicator: "green" as const };
+  if (score >= 90) return { bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", label: "Excellent", indicator: "green" as const };
   if (score >= 80) return { bg: "bg-cyan-500", text: "text-cyan-700", light: "bg-cyan-50", label: "Good", indicator: "blue" as const };
   if (score >= 70) return { bg: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", label: "Need Coaching", indicator: "yellow" as const };
   return { bg: "bg-rose-500", text: "text-rose-700", light: "bg-rose-50", label: "Warning", indicator: "red" as const };
@@ -146,7 +146,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
   if (loading || !data || !score) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw className="w-6 h-6 animate-spin text-emerald-600" />
+        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -168,7 +168,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
       />
 
       {/* KPI Score Card - Hero */}
-      <Card className={cn("border-2 overflow-hidden", score.weightedScore >= 90 ? "border-emerald-300" : score.weightedScore >= 80 ? "border-cyan-300" : score.weightedScore >= 70 ? "border-amber-300" : "border-rose-300")}>
+      <Card className={cn("border-2 overflow-hidden", score.weightedScore >= 90 ? "border-blue-300" : score.weightedScore >= 80 ? "border-cyan-300" : score.weightedScore >= 70 ? "border-amber-300" : "border-rose-300")}>
         <div className={cn("bg-gradient-to-r p-6 text-white", cat.bg)}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
@@ -225,7 +225,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
         <TabsContent value={period} className="mt-4">
           {/* Achievement summary */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <StatCard title={`Pencapaian ${PERIOD_LABELS[period]}`} value={`${data.achievementRate}%`} icon={PeriodIcon} indicator={cat.indicator} subtitle="Rata-rata semua metrik" accent="bg-emerald-50 text-emerald-600" />
+            <StatCard title={`Pencapaian ${PERIOD_LABELS[period]}`} value={`${data.achievementRate}%`} icon={PeriodIcon} indicator={cat.indicator} subtitle="Rata-rata semua metrik" accent="bg-blue-50 text-blue-600" />
             <StatCard title="Metrik Tercapai" value={`${data.targets.filter((t) => t.achievement >= 100).length}/${data.targets.length}`} icon={CheckCircle2} indicator={cat.indicator} accent="bg-cyan-50 text-cyan-600" />
             <StatCard title="Perlu Perhatian" value={data.targets.filter((t) => t.achievement < 70).length} icon={AlertCircle} indicator={data.targets.filter((t) => t.achievement < 70).length > 0 ? "red" : "green"} accent="bg-amber-50 text-amber-600" />
             <StatCard title="KPI Score" value={score.weightedScore} icon={Award} indicator={cat.indicator} subtitle={score.category} accent="bg-violet-50 text-violet-600" />
@@ -235,7 +235,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Target className="w-4 h-4 text-emerald-600" />
+                <Target className="w-4 h-4 text-blue-600" />
                 Target {PERIOD_LABELS[period]} - {ROLE_LABELS[user.role]}
               </CardTitle>
             </CardHeader>
@@ -264,7 +264,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
                           <Edit3 className="w-3 h-3 mr-1" /> Update
                         </Button>
                       </div>
-                      <Progress value={t.achievement} className={cn("h-2", t.achievement >= 100 && "[&>div]:bg-emerald-500", t.achievement >= 80 && t.achievement < 100 && "[&>div]:bg-cyan-500", t.achievement >= 70 && t.achievement < 80 && "[&>div]:bg-amber-500", t.achievement < 70 && "[&>div]:bg-rose-500")} />
+                      <Progress value={t.achievement} className={cn("h-2", t.achievement >= 100 && "[&>div]:bg-blue-500", t.achievement >= 80 && t.achievement < 100 && "[&>div]:bg-cyan-500", t.achievement >= 70 && t.achievement < 80 && "[&>div]:bg-amber-500", t.achievement < 70 && "[&>div]:bg-rose-500")} />
                     </div>
                   );
                 })}
@@ -309,7 +309,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
               <div className="bg-slate-50 rounded-lg p-3 text-sm">
                 <p className="text-slate-600">Pencapaian: <span className="font-bold">{logDialog.item.target > 0 ? Math.min(100, Math.round((Number(logValue) / logDialog.item.target) * 100)) : 0}%</span></p>
                 {Number(logValue) >= logDialog.item.target ? (
-                  <p className="text-emerald-600 text-xs mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Target tercapai!</p>
+                  <p className="text-blue-600 text-xs mt-1 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Target tercapai!</p>
                 ) : (
                   <p className="text-amber-600 text-xs mt-1">Sisa {Math.max(0, logDialog.item.target - Number(logValue))} {logDialog.item.unit} lagi</p>
                 )}
@@ -318,7 +318,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLogDialog({ open: false, item: null })}>Batal</Button>
-            <Button onClick={handleSaveLog} className="bg-emerald-600 hover:bg-emerald-700">Simpan</Button>
+            <Button onClick={handleSaveLog} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -361,8 +361,8 @@ function SocialKpiCard({ role }: { role: string }) {
             <p className="text-lg font-bold text-slate-900">{s.share.toLocaleString("id-ID")}</p>
             <p className="text-[10px] text-slate-500">Share</p>
           </div>
-          <div className="bg-white rounded-lg p-3 text-center border border-emerald-100">
-            <Award className="w-5 h-5 mx-auto text-emerald-600 mb-1" />
+          <div className="bg-white rounded-lg p-3 text-center border border-blue-100">
+            <Award className="w-5 h-5 mx-auto text-blue-600 mb-1" />
             <p className="text-lg font-bold text-slate-900">{s.view.toLocaleString("id-ID")}</p>
             <p className="text-[10px] text-slate-500">View</p>
           </div>

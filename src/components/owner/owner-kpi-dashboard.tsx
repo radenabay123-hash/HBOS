@@ -41,7 +41,7 @@ function initials(name: string) {
 }
 
 function getCategoryStyle(score: number) {
-  if (score >= 90) return { label: "Excellent", bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", border: "border-emerald-200", gradient: "from-emerald-500 to-teal-600", indicator: "green" as const };
+  if (score >= 90) return { label: "Excellent", bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", border: "border-blue-200", gradient: "from-blue-500 to-sky-600", indicator: "green" as const };
   if (score >= 80) return { label: "Good", bg: "bg-cyan-500", text: "text-cyan-700", light: "bg-cyan-50", border: "border-cyan-200", gradient: "from-cyan-500 to-blue-500", indicator: "blue" as const };
   if (score >= 70) return { label: "Need Coaching", bg: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", border: "border-amber-200", gradient: "from-amber-500 to-orange-500", indicator: "yellow" as const };
   return { label: "Warning", bg: "bg-rose-500", text: "text-rose-700", light: "bg-rose-50", border: "border-rose-200", gradient: "from-rose-500 to-red-600", indicator: "red" as const };
@@ -69,7 +69,7 @@ export function OwnerKpiDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw className="w-6 h-6 animate-spin text-emerald-600" />
+        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
       </div>
     );
   }
@@ -124,21 +124,21 @@ export function OwnerKpiDashboard() {
       />
 
       {/* Formula explanation card */}
-      <Card className="border-emerald-200 bg-emerald-50/50">
+      <Card className="border-blue-200 bg-blue-50/50">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <Target className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <Target className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
             <div className="text-sm">
-              <p className="font-semibold text-emerald-800 mb-1">Formula KPI Score (Total 100%)</p>
+              <p className="font-semibold text-blue-800 mb-1">Formula KPI Score (Total 100%)</p>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                <div className="bg-white rounded px-2 py-1.5 border border-emerald-100"><span className="font-semibold">30%</span> Target Harian</div>
-                <div className="bg-white rounded px-2 py-1.5 border border-emerald-100"><span className="font-semibold">25%</span> Target Mingguan</div>
-                <div className="bg-white rounded px-2 py-1.5 border border-emerald-100"><span className="font-semibold">25%</span> Target Bulanan</div>
-                <div className="bg-white rounded px-2 py-1.5 border border-emerald-100"><span className="font-semibold">10%</span> Ketepatan Deadline</div>
-                <div className="bg-white rounded px-2 py-1.5 border border-emerald-100"><span className="font-semibold">10%</span> Kualitas (ACC Owner)</div>
+                <div className="bg-white rounded px-2 py-1.5 border border-blue-100"><span className="font-semibold">30%</span> Target Harian</div>
+                <div className="bg-white rounded px-2 py-1.5 border border-blue-100"><span className="font-semibold">25%</span> Target Mingguan</div>
+                <div className="bg-white rounded px-2 py-1.5 border border-blue-100"><span className="font-semibold">25%</span> Target Bulanan</div>
+                <div className="bg-white rounded px-2 py-1.5 border border-blue-100"><span className="font-semibold">10%</span> Ketepatan Deadline</div>
+                <div className="bg-white rounded px-2 py-1.5 border border-blue-100"><span className="font-semibold">10%</span> Kualitas (ACC Owner)</div>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
-                <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">90-100: Excellent</Badge>
+                <Badge className="bg-blue-100 text-blue-700 border-blue-200">90-100: Excellent</Badge>
                 <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200">80-89: Good</Badge>
                 <Badge className="bg-amber-100 text-amber-700 border-amber-200">70-79: Need Coaching</Badge>
                 <Badge className="bg-rose-100 text-rose-700 border-rose-200">&lt;70: Warning</Badge>
@@ -150,8 +150,8 @@ export function OwnerKpiDashboard() {
 
       {/* Summary stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Rata-rata Skor Tim" value={avgScore} icon={Award} indicator={avgScore >= 80 ? "green" : avgScore >= 70 ? "yellow" : "red"} subtitle="dari 100" accent="bg-emerald-50 text-emerald-600" />
-        <StatCard title="Excellent" value={excellent} icon={Crown} indicator="green" subtitle="≥90" accent="bg-emerald-50 text-emerald-600" />
+        <StatCard title="Rata-rata Skor Tim" value={avgScore} icon={Award} indicator={avgScore >= 80 ? "green" : avgScore >= 70 ? "yellow" : "red"} subtitle="dari 100" accent="bg-blue-50 text-blue-600" />
+        <StatCard title="Excellent" value={excellent} icon={Crown} indicator="green" subtitle="≥90" accent="bg-blue-50 text-blue-600" />
         <StatCard title="Need Coaching" value={coaching} icon={AlertCircle} indicator={coaching > 0 ? "yellow" : "green"} subtitle="70-79" accent="bg-amber-50 text-amber-600" />
         <StatCard title="Warning" value={warning} icon={AlertCircle} indicator={warning > 0 ? "red" : "green"} subtitle="<70" accent="bg-rose-50 text-rose-600" />
       </div>
@@ -178,7 +178,7 @@ export function OwnerKpiDashboard() {
       {/* Team KPI Score ranking table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Award className="w-4 h-4 text-emerald-600" /> Ranking KPI Score Tim</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2"><Award className="w-4 h-4 text-blue-600" /> Ranking KPI Score Tim</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -234,7 +234,7 @@ export function OwnerKpiDashboard() {
       {/* Detail per team member */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><Target className="w-4 h-4 text-emerald-600" /> Detail Target per Anggota Tim</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2"><Target className="w-4 h-4 text-blue-600" /> Detail Target per Anggota Tim</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

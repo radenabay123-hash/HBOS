@@ -226,7 +226,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
         title="Tugas Harian"
         description="Catat dan pantau tugas harian tim. Owner melihat semua, tim melihat tugas sendiri."
         action={
-          <Button onClick={openAdd} className="bg-emerald-600 hover:bg-emerald-700">
+          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4" /> Tambah Tugas
           </Button>
         }
@@ -290,7 +290,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
           value={formatNumber(stats.selesai)}
           icon={CheckCircle2}
           indicator="green"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
           subtitle={`${stats.total ? Math.round((stats.selesai / stats.total) * 100) : 0}% selesai`}
         />
         <StatCard
@@ -314,7 +314,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
             </div>
           ) : tasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4">
@@ -325,7 +325,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
               <p className="text-sm text-slate-500 mt-1">
                 Tidak ada tugas tercatat pada tanggal {formatDate(dateFilter)}.
               </p>
-              <Button onClick={openAdd} className="mt-4 bg-emerald-600 hover:bg-emerald-700" size="sm">
+              <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
                 <Plus className="w-4 h-4" /> Tambah Tugas
               </Button>
             </div>
@@ -367,7 +367,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
                               <div
                                 className={cn(
                                   "h-full rounded-full transition-all",
-                                  t.persentaseSelesai >= 100 ? "bg-emerald-500"
+                                  t.persentaseSelesai >= 100 ? "bg-blue-500"
                                     : t.persentaseSelesai >= 60 ? "bg-amber-500" : "bg-rose-500"
                                 )}
                                 style={{ width: `${Math.min(t.persentaseSelesai ?? 0, 100)}%` }}
@@ -468,7 +468,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <Label>Persentase Selesai</Label>
-                <span className="text-sm font-semibold text-emerald-700">{form.persentaseSelesai}%</span>
+                <span className="text-sm font-semibold text-blue-700">{form.persentaseSelesai}%</span>
               </div>
               <Slider
                 value={[form.persentaseSelesai]}
@@ -476,7 +476,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
                 max={100}
                 step={5}
                 onValueChange={(v) => setForm({ ...form, persentaseSelesai: v[0] })}
-                className="[&_[role=slider]]:bg-emerald-600"
+                className="[&_[role=slider]]:bg-blue-600"
               />
             </div>
 
@@ -520,7 +520,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
               {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               {editingId ? "Simpan Perubahan" : "Tambah Tugas"}
             </Button>

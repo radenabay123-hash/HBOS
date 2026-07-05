@@ -37,6 +37,9 @@ model User {
   sessions         Session[]
   notifications    Notification[]
   kpiLogs          KpiLog[]
+  attendances      Attendance[]
+  salaryConfig     SalaryConfig?
+  payrolls         Payroll[]
 }
 
 model Session {
@@ -293,4 +296,80 @@ model KpiLog {
   @@index([userId])
   @@index([metricKey])
   @@index([date])
+}
+
+// ===================== ATTENDANCE (ABSENSI) =====================
+
+model Attendance {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      String   @default("HADIR") // HADIR, TERLAMBAT, IZIN, SAKIT, ALPHA, CUTI
+  workHours   Float?   // calculated hours
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+// ===================== SALARY CONFIG (GAJI POKOK) =====================
+
+model SalaryConfig {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  baseSalary          Float    @default(5000000)
+  mealAllowance       Float    @default(0)
+  transportAllowance  Float    @default(0)
+  bonusTarget         Float    @default(0)  // bonus if KPI >= 90
+  penaltyPerAbsent    Float    @default(0)  // penalty per day absent
+  bpjs                Float    @default(0)
+  tax                 Float    @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ===================== PAYROLL (SLIP GAJI) =====================
+
+model Payroll {
+  id                  String   @id @default(cuid())
+  userId              String
+  month               Int
+  year                Int
+  baseSalary          Float
+  mealAllowance       Float
+  transportAllowance  Float
+  workingDays         Int      // total working days in month
+  presentDays         Int      // days present (HADIR + TERLAMBAT)
+  absentDays          Int      // days absent (ALPHA)
+  lateDays            Int      // days late (TERLAMBAT)
+  leaveDays           Int      // days on leave (IZIN + SAKIT + CUTI)
+  kpiScore            Float    // KPI score for the month
+  kpiBonus            Float    // bonus based on KPI
+  attendanceDeduction Float    // deduction for absences
+  bpjs                Float
+  tax                 Float
+  otherDeduction      Float    @default(0)
+  grossSalary         Float    // base + allowances + bonus
+  totalDeduction      Float    // attendance deduction + bpjs + tax + other
+  netSalary           Float    // gross - deduction
+  status              String   @default("DRAFT") // DRAFT, APPROVED, PAID
+  paidAt              DateTime?
+  note                String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@index([month, year])
 }

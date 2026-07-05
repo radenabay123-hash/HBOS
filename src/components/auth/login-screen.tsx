@@ -40,10 +40,10 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left brand panel */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-emerald-700 via-emerald-600 to-teal-700 text-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
+      <div className="lg:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-sky-700 text-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-300 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-sky-300 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
@@ -52,7 +52,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">HBOS</h1>
-              <p className="text-xs text-emerald-100">Hafara Business Operating System</p>
+              <p className="text-xs text-blue-100">Hafara Business Operating System</p>
             </div>
           </div>
         </div>
@@ -60,7 +60,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
           <h2 className="text-3xl lg:text-4xl font-bold leading-tight">
             Pantau Seluruh Aktivitas Bisnis Anda Secara Real-Time
           </h2>
-          <p className="text-emerald-50 text-lg">
+          <p className="text-blue-50 text-lg">
             Sistem operasi bisnis terpadu untuk training, consulting, dan human development.
             Kelola CRM, event, KPI tim, konten, dan keuangan dalam satu platform.
           </p>
@@ -77,7 +77,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
             ))}
           </div>
         </div>
-        <div className="relative z-10 text-xs text-emerald-100/80">
+        <div className="relative z-10 text-xs text-blue-100/80">
           © {new Date().getFullYear()} Hafara Group. All rights reserved.
         </div>
       </div>
@@ -126,7 +126,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700"
                   disabled={loading}
                 >
                   {loading ? (
@@ -154,7 +154,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                       key={a.email}
                       type="button"
                       onClick={() => quickFill(a.email)}
-                      className="text-left text-xs px-2 py-1.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 transition border border-slate-200"
+                      className="text-left text-xs px-2 py-1.5 rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition border border-slate-200"
                     >
                       {a.label}
                     </button>

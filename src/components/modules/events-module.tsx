@@ -118,7 +118,7 @@ const EVENT_PREP_BADGE_COLORS: Record<string, string> = {
   PENDING: "bg-slate-100 text-slate-700 border-slate-200",
   IN_PROGRESS: "bg-amber-100 text-amber-700 border-amber-200",
   READY: "bg-cyan-100 text-cyan-700 border-cyan-200",
-  COMPLETED: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  COMPLETED: "bg-blue-100 text-blue-700 border-blue-200",
 };
 
 const EMPTY_FORM = {
@@ -498,7 +498,7 @@ export function EventsModule({ user }: EventsModuleProps) {
         description="Kelola jadwal event training, persiapan, checklist, dan penugasan trainer."
         action={
           canManage ? (
-            <Button onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4" /> Tambah Event
             </Button>
           ) : undefined
@@ -521,7 +521,7 @@ export function EventsModule({ user }: EventsModuleProps) {
           icon={CheckCircle2}
           indicator="green"
           subtitle="Status: Completed"
-          accent="bg-emerald-50 text-emerald-600"
+          accent="bg-blue-50 text-blue-600"
         />
         <StatCard
           title="Event Pending"
@@ -616,16 +616,16 @@ export function EventsModule({ user }: EventsModuleProps) {
                           className={cn(
                             "min-h-[80px] sm:min-h-[100px] rounded-md border p-1.5 text-left transition-colors flex flex-col gap-1",
                             isSelected
-                              ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500"
+                              ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
                               : isToday
-                              ? "border-emerald-300 bg-emerald-50/30"
+                              ? "border-blue-300 bg-blue-50/30"
                               : "border-slate-200 bg-white hover:bg-slate-50"
                           )}
                         >
                           <span
                             className={cn(
                               "text-xs font-semibold",
-                              isToday ? "text-emerald-700" : "text-slate-700"
+                              isToday ? "text-blue-700" : "text-slate-700"
                             )}
                           >
                             {cell.date.getDate()}
@@ -637,7 +637,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                                 className={cn(
                                   "text-[10px] truncate px-1 py-0.5 rounded",
                                   e.statusPersiapan === "COMPLETED"
-                                    ? "bg-emerald-100 text-emerald-700"
+                                    ? "bg-blue-100 text-blue-700"
                                     : e.statusPersiapan === "READY"
                                     ? "bg-cyan-100 text-cyan-700"
                                     : e.statusPersiapan === "IN_PROGRESS"
@@ -799,7 +799,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                                     value={prog.pct}
                                     className={cn(
                                       "h-1.5",
-                                      prog.pct >= 100 && "[&>[data-slot=progress-indicator]]:bg-emerald-500"
+                                      prog.pct >= 100 && "[&>[data-slot=progress-indicator]]:bg-blue-500"
                                     )}
                                   />
                                 </div>
@@ -811,7 +811,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-emerald-600"
+                                    className="h-8 w-8 text-slate-500 hover:text-blue-600"
                                     onClick={() => openEdit(e)}
                                   >
                                     <Pencil className="w-4 h-4" />
@@ -995,7 +995,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                       key={idx}
                       className={cn(
                         "flex items-center gap-2 p-2 rounded-md border",
-                        it.done ? "bg-emerald-50/50 border-emerald-100" : "bg-white border-slate-200"
+                        it.done ? "bg-blue-50/50 border-blue-100" : "bg-white border-slate-200"
                       )}
                     >
                       <Checkbox
@@ -1041,7 +1041,7 @@ export function EventsModule({ user }: EventsModuleProps) {
               <Button
                 type="submit"
                 disabled={submitting}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 {submitting ? (
                   <>

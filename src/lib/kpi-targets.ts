@@ -232,7 +232,7 @@ export interface KpiCategory {
 }
 
 export const KPI_CATEGORIES: KpiCategory[] = [
-  { label: "Excellent", minScore: 90, color: "bg-emerald-100 text-emerald-700 border-emerald-200", bgColor: "from-emerald-500 to-teal-600" },
+  { label: "Excellent", minScore: 90, color: "bg-blue-100 text-blue-700 border-blue-200", bgColor: "from-blue-500 to-sky-600" },
   { label: "Good", minScore: 80, color: "bg-cyan-100 text-cyan-700 border-cyan-200", bgColor: "from-cyan-500 to-blue-500" },
   { label: "Need Coaching", minScore: 70, color: "bg-amber-100 text-amber-700 border-amber-200", bgColor: "from-amber-500 to-orange-500" },
   { label: "Warning", minScore: 0, color: "bg-rose-100 text-rose-700 border-rose-200", bgColor: "from-rose-500 to-red-600" },

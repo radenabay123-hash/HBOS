@@ -87,10 +87,10 @@ export function TeamDashboard() {
             {kpiScore && (
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-xs text-slate-300">KPI Score Anda:</span>
-                <span className={`text-2xl font-bold ${kpiScore.weightedScore >= 90 ? "text-emerald-400" : kpiScore.weightedScore >= 80 ? "text-cyan-400" : kpiScore.weightedScore >= 70 ? "text-amber-400" : "text-rose-400"}`}>
+                <span className={`text-2xl font-bold ${kpiScore.weightedScore >= 90 ? "text-blue-400" : kpiScore.weightedScore >= 80 ? "text-cyan-400" : kpiScore.weightedScore >= 70 ? "text-amber-400" : "text-rose-400"}`}>
                   {kpiScore.weightedScore}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${kpiScore.weightedScore >= 90 ? "bg-emerald-500/20 text-emerald-300" : kpiScore.weightedScore >= 80 ? "bg-cyan-500/20 text-cyan-300" : kpiScore.weightedScore >= 70 ? "bg-amber-500/20 text-amber-300" : "bg-rose-500/20 text-rose-300"}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${kpiScore.weightedScore >= 90 ? "bg-blue-500/20 text-blue-300" : kpiScore.weightedScore >= 80 ? "bg-cyan-500/20 text-cyan-300" : kpiScore.weightedScore >= 70 ? "bg-amber-500/20 text-amber-300" : "bg-rose-500/20 text-rose-300"}`}>
                   {kpiScore.category}
                 </span>
               </div>
@@ -129,8 +129,8 @@ export function TeamDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="bg-emerald-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-emerald-700">{d.contentSummary.acc}</p>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-blue-700">{d.contentSummary.acc}</p>
                 <p className="text-[10px] text-slate-500 mt-1">ACC</p>
               </div>
               <div className="bg-amber-50 rounded-lg p-3">
@@ -141,8 +141,8 @@ export function TeamDashboard() {
                 <p className="text-2xl font-bold text-rose-700">{d.contentSummary.revisi}</p>
                 <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
               </div>
-              <div className="bg-teal-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-teal-700">{d.contentSummary.published}</p>
+              <div className="bg-sky-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-sky-700">{d.contentSummary.published}</p>
                 <p className="text-[10px] text-slate-500 mt-1">Published</p>
               </div>
             </div>
@@ -161,8 +161,8 @@ export function TeamDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="bg-emerald-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-emerald-700">{d.articleSummary.acc}</p>
+              <div className="bg-blue-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-blue-700">{d.articleSummary.acc}</p>
                 <p className="text-[10px] text-slate-500 mt-1">ACC</p>
               </div>
               <div className="bg-amber-50 rounded-lg p-3">
@@ -173,8 +173,8 @@ export function TeamDashboard() {
                 <p className="text-2xl font-bold text-rose-700">{d.articleSummary.revisi}</p>
                 <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
               </div>
-              <div className="bg-teal-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-teal-700">{d.articleSummary.published}</p>
+              <div className="bg-sky-50 rounded-lg p-3">
+                <p className="text-2xl font-bold text-sky-700">{d.articleSummary.published}</p>
                 <p className="text-[10px] text-slate-500 mt-1">Published</p>
               </div>
             </div>
@@ -222,7 +222,7 @@ export function TeamDashboard() {
         keys={[
           { key: "contents", label: "Konten", color: "#db2777" },
           { key: "articles", label: "Artikel", color: "#ca8a04" },
-          { key: "tasksDone", label: "Tugas Selesai", color: "#059669" },
+          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
         ]}
         height={280}
       />
@@ -234,7 +234,7 @@ export function TeamDashboard() {
         keys={[
           { key: "contents", label: "Konten", color: "#db2777" },
           { key: "articles", label: "Artikel", color: "#ca8a04" },
-          { key: "tasksDone", label: "Tugas Selesai", color: "#059669" },
+          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
         ]}
         height={260}
       />
@@ -277,7 +277,7 @@ export function TeamDashboard() {
                       <p className="text-sm font-medium text-slate-900 truncate">{a.judulArtikel}</p>
                       <p className="text-[10px] text-slate-500">{a.websiteTujuan}</p>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] ${a.statusACC === "ACC" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : a.statusACC === "REVISI_ADMIN" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                    <Badge variant="outline" className={`text-[10px] ${a.statusACC === "ACC" ? "bg-blue-100 text-blue-700 border-blue-200" : a.statusACC === "REVISI_ADMIN" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
                       {a.statusACC === "ACC" ? "ACC" : a.statusACC === "REVISI_ADMIN" ? "Revisi" : "Pending"}
                     </Badge>
                   </div>
@@ -300,7 +300,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">CRM & Pipeline</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <StatCard title="Total Klien" value={roleData.totalClients} icon={Users} indicator="neutral" accent="bg-violet-50 text-violet-600" />
-          <StatCard title="Total Deal" value={roleData.pipeline.DEAL} icon={CheckCircle2} indicator="green" subtitle={formatCurrency(roleData.dealRevenue)} accent="bg-emerald-50 text-emerald-600" />
+          <StatCard title="Total Deal" value={roleData.pipeline.DEAL} icon={CheckCircle2} indicator="green" subtitle={formatCurrency(roleData.dealRevenue)} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Event Bulan Ini" value={roleData.eventsThisMonth} icon={CalendarDays} indicator="neutral" accent="bg-amber-50 text-amber-600" />
           <StatCard title="Total Dokumen" value={roleData.documents} icon={FileStack} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
         </div>
@@ -349,7 +349,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Assistant Trainer</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <StatCard title="Reels Diproduksi Hari Ini" value={`${k.reelsProducedToday}/${k.reelsTargetToday}`} icon={Film} indicator={k.reelsProducedToday >= k.reelsTargetToday ? "green" : "yellow"} accent="bg-pink-50 text-pink-600" />
-          <StatCard title="Reels Dipublish Hari Ini" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-emerald-50 text-emerald-600" />
+          <StatCard title="Reels Dipublish Hari Ini" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Artikel Mingguan" value={`${k.articlesWeekly}/${k.articlesWeeklyTarget}`} icon={FileText} indicator={k.articlesWeekly >= k.articlesWeeklyTarget ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
           <StatCard title="Backup Website" value="2 Minggu" icon={FileCheck} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
         </div>
@@ -385,7 +385,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <StatCard title="Ide Konten Hari Ini" value={`${k.ideasToday}/${k.ideasTargetToday}`} icon={Target} indicator={k.ideasToday >= k.ideasTargetToday ? "green" : "yellow"} accent="bg-violet-50 text-violet-600" />
           <StatCard title="Reels Diproduksi" value={`${k.reelsProducedToday}/${k.reelsProducedTargetToday}`} icon={Film} indicator={k.reelsProducedToday >= k.reelsProducedTargetToday ? "green" : "yellow"} accent="bg-pink-50 text-pink-600" />
-          <StatCard title="Reels Dipublish" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-emerald-50 text-emerald-600" />
+          <StatCard title="Reels Dipublish" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Artikel SEO Hari Ini" value={`${k.articlesToday}/${k.articlesTargetToday}`} icon={FileText} indicator={k.articlesToday >= k.articlesTargetToday ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -404,7 +404,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
               <div className="grid grid-cols-2 gap-3 text-center">
                 <div className="bg-slate-50 rounded-lg p-2"><Eye className="w-4 h-4 mx-auto text-cyan-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.reach)}</p><p className="text-[10px] text-slate-500">Reach</p></div>
                 <div className="bg-slate-50 rounded-lg p-2"><BarChart3 className="w-4 h-4 mx-auto text-violet-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.views)}</p><p className="text-[10px] text-slate-500">Views</p></div>
-                <div className="bg-slate-50 rounded-lg p-2"><Share2 className="w-4 h-4 mx-auto text-emerald-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.share)}</p><p className="text-[10px] text-slate-500">Share</p></div>
+                <div className="bg-slate-50 rounded-lg p-2"><Share2 className="w-4 h-4 mx-auto text-blue-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.share)}</p><p className="text-[10px] text-slate-500">Share</p></div>
                 <div className="bg-slate-50 rounded-lg p-2"><UserPlus className="w-4 h-4 mx-auto text-pink-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.followerGrowth)}</p><p className="text-[10px] text-slate-500">Follower+</p></div>
               </div>
             </CardContent>
@@ -423,7 +423,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
           <StatCard title="Artikel SEO Hari Ini" value={`${k.articlesToday}/${k.articlesTargetToday}`} icon={FileText} indicator={k.articlesToday >= k.articlesTargetToday ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
           <StatCard title="Optimasi Website" value={`${k.websiteOptimizationToday}/${k.websiteOptimizationTarget}`} icon={CheckCircle2} indicator="green" accent="bg-cyan-50 text-cyan-600" />
           <StatCard title="Materi Promosi" value={`${k.promoMaterialToday}/${k.promoMaterialTarget}`} icon={Target} indicator="green" accent="bg-violet-50 text-violet-600" />
-          <StatCard title="Analisis Kompetitor" value={`${k.competitorAnalysisToday}/${k.competitorAnalysisTarget}`} icon={BarChart3} indicator="green" accent="bg-teal-50 text-teal-600" />
+          <StatCard title="Analisis Kompetitor" value={`${k.competitorAnalysisToday}/${k.competitorAnalysisTarget}`} icon={BarChart3} indicator="green" accent="bg-sky-50 text-sky-600" />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
@@ -444,7 +444,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
             <CardHeader className="pb-3"><CardTitle className="text-base">Peningkatan Mingguan</CardTitle></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="bg-emerald-50 rounded-lg p-3"><TrendingUp className="w-4 h-4 mx-auto text-emerald-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.traffic}</p><p className="text-[10px] text-slate-500">Traffic</p></div>
+                <div className="bg-blue-50 rounded-lg p-3"><TrendingUp className="w-4 h-4 mx-auto text-blue-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.traffic}</p><p className="text-[10px] text-slate-500">Traffic</p></div>
                 <div className="bg-cyan-50 rounded-lg p-3"><BarChart3 className="w-4 h-4 mx-auto text-cyan-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.seoRanking}</p><p className="text-[10px] text-slate-500">SEO Rank</p></div>
                 <div className="bg-violet-50 rounded-lg p-3"><UserPlus className="w-4 h-4 mx-auto text-violet-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.leads}</p><p className="text-[10px] text-slate-500">Leads</p></div>
                 <div className="bg-pink-50 rounded-lg p-3"><Heart className="w-4 h-4 mx-auto text-pink-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.engagement}</p><p className="text-[10px] text-slate-500">Engagement</p></div>
@@ -463,13 +463,13 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Finance</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <StatCard title="Revenue Bulan Ini" value={formatCurrency(r.revenue)} icon={Wallet} indicator={r.revenue >= r.targetRevenue ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetRevenue)}`} progress={r.targetRevenue > 0 ? Math.round((r.revenue / r.targetRevenue) * 100) : 0} accent="bg-emerald-50 text-emerald-600" />
+          <StatCard title="Revenue Bulan Ini" value={formatCurrency(r.revenue)} icon={Wallet} indicator={r.revenue >= r.targetRevenue ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetRevenue)}`} progress={r.targetRevenue > 0 ? Math.round((r.revenue / r.targetRevenue) * 100) : 0} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Expense Bulan Ini" value={formatCurrency(r.expense)} icon={TrendingUp} indicator="neutral" accent="bg-rose-50 text-rose-600" />
-          <StatCard title="Profit Bulan Ini" value={formatCurrency(r.profit)} icon={BarChart3} indicator={r.profit >= r.targetProfit ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetProfit)}`} accent="bg-teal-50 text-teal-600" />
+          <StatCard title="Profit Bulan Ini" value={formatCurrency(r.profit)} icon={BarChart3} indicator={r.profit >= r.targetProfit ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetProfit)}`} accent="bg-sky-50 text-sky-600" />
           <StatCard title="Margin" value={`${r.margin}%`} icon={Percent} indicator={marginIndicator} accent="bg-cyan-50 text-cyan-600" />
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-          <StatCard title="Cash Flow" value={formatCurrency(r.cashFlow)} icon={Wallet} indicator={r.cashFlow >= 0 ? "green" : "red"} accent="bg-emerald-50 text-emerald-600" />
+          <StatCard title="Cash Flow" value={formatCurrency(r.cashFlow)} icon={Wallet} indicator={r.cashFlow >= 0 ? "green" : "red"} accent="bg-blue-50 text-blue-600" />
           <StatCard title="Piutang" value={formatCurrency(r.piutang)} icon={FileText} indicator="neutral" accent="bg-amber-50 text-amber-600" />
           <StatCard title="Hutang" value={formatCurrency(r.hutang)} icon={FileStack} indicator="neutral" accent="bg-rose-50 text-rose-600" />
           <StatCard title="Forecast" value={formatCurrency(r.forecast)} icon={Target} indicator="neutral" accent="bg-violet-50 text-violet-600" />
@@ -478,7 +478,7 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
           title={`Revenue vs Expense vs Profit ${year}`}
           data={r.financeMonthly}
           keys={[
-            { key: "revenue", label: "Revenue", color: "#059669" },
+            { key: "revenue", label: "Revenue", color: "#2563eb" },
             { key: "expense", label: "Expense", color: "#f43f5e" },
             { key: "profit", label: "Profit", color: "#0891b2" },
           ]}

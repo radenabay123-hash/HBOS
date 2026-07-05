@@ -15,14 +15,14 @@ interface StatCardProps {
 }
 
 const indicatorStyles = {
-  green: "border-l-emerald-500",
+  green: "border-l-blue-500",
   yellow: "border-l-amber-500",
   red: "border-l-rose-500",
   neutral: "border-l-slate-300",
 };
 
 const indicatorDot = {
-  green: "bg-emerald-500",
+  green: "bg-blue-500",
   yellow: "bg-amber-500",
   red: "bg-rose-500",
   neutral: "bg-slate-400",
@@ -35,7 +35,7 @@ export function StatCard({
   indicator = "neutral",
   subtitle,
   progress,
-  accent = "bg-emerald-50 text-emerald-600",
+  accent = "bg-blue-50 text-blue-600",
 }: StatCardProps) {
   return (
     <Card className={cn("border-l-4 overflow-hidden hover:shadow-md transition-shadow", indicatorStyles[indicator])}>
@@ -60,7 +60,7 @@ export function StatCard({
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
-                  progress >= 100 ? "bg-emerald-500" : progress >= 60 ? "bg-amber-500" : "bg-rose-500"
+                  progress >= 100 ? "bg-blue-500" : progress >= 60 ? "bg-amber-500" : "bg-rose-500"
                 )}
                 style={{ width: `${Math.min(progress, 100)}%` }}
               />
@@ -75,7 +75,7 @@ export function StatCard({
 export function IndicatorBadge({ indicator, label }: { indicator: "green" | "yellow" | "red" | "neutral"; label: string }) {
   return (
     <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium",
-      indicator === "green" ? "bg-emerald-100 text-emerald-700" :
+      indicator === "green" ? "bg-blue-100 text-blue-700" :
       indicator === "yellow" ? "bg-amber-100 text-amber-700" :
       indicator === "red" ? "bg-rose-100 text-rose-700" :
       "bg-slate-100 text-slate-600"
