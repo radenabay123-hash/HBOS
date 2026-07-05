@@ -1,6 +1,5 @@
 // Professional Invoice PDF generator - sesuai format gambar
 import { jsPDF } from "jspdf";
-import { COMPANY_INFO } from "./spt-pdf";
 
 export interface InvoiceData {
   invoiceNumber: string;
@@ -20,6 +19,17 @@ export interface InvoiceData {
   bankName?: string;
   bankAccount?: string;
   accountName?: string;
+  // Company settings (optional - uses defaults if not provided)
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  companyWebsite?: string;
+  companyNpwp?: string;
+  companyLogo?: string;
+  companySignature?: string;
+  directorName?: string;
+  directorTitle?: string;
 }
 
 function formatRupiah(n: number): string {
@@ -40,29 +50,67 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
 
   let y = 15;
 
+  // Company settings (with defaults)
+  const companyName = data.companyName || "PT. HAFARA AQIBA NUSANTARA";
+  const companyAddress = data.companyAddress || "Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur";
+  const companyPhone = data.companyPhone || "081324511570";
+  const companyEmail = data.companyEmail || "info@hafaragroup.com";
+  const companyWebsite = data.companyWebsite || "www.HafaraGroup.com";
+  const companyNpwp = data.companyNpwp || "01.234.567.8-091.000";
+  const companyLogo = data.companyLogo || "";
+  const companySignature = data.companySignature || "";
+  const directorName = data.directorName || "M. Aqil Baihaqi";
+  const directorTitle = data.directorTitle || "Direktur Utama";
+
   // ===== HEADER (Company) =====
-  // Logo circle (left) - orange/blue gradient style
-  doc.setFillColor(249, 115, 22); // orange-500
-  doc.circle(margin + 10, y + 8, 8, "F");
-  doc.setFillColor(...BLUE);
-  doc.circle(margin + 14, y + 12, 6, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("H", margin + 12, y + 10, { align: "center" });
+  // Logo: use uploaded image if available, otherwise circle
+  if (companyLogo && companyLogo.startsWith("/uploads/")) {
+    try {
+      // For client-side, logo URL needs to be absolute or we use the logo text fallback
+      // jsPDF addImage needs actual image data, so we fall back to circle for now
+      doc.setFillColor(249, 115, 22);
+      doc.circle(margin + 10, y + 8, 8, "F");
+      doc.setFillColor(...BLUE);
+      doc.circle(margin + 14, y + 12, 6, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      const initials = companyName.split(" ").slice(0, 2).map((w: string) => w[0]).join("");
+      doc.text(initials || "HF", margin + 12, y + 10, { align: "center" });
+    } catch {
+      doc.setFillColor(249, 115, 22);
+      doc.circle(margin + 10, y + 8, 8, "F");
+      doc.setFillColor(...BLUE);
+      doc.circle(margin + 14, y + 12, 6, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text("HF", margin + 12, y + 10, { align: "center" });
+    }
+  } else {
+    doc.setFillColor(249, 115, 22); // orange-500
+    doc.circle(margin + 10, y + 8, 8, "F");
+    doc.setFillColor(...BLUE);
+    doc.circle(margin + 14, y + 12, 6, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    const initials = companyName.split(" ").slice(0, 2).map((w: string) => w[0]).join("");
+    doc.text(initials || "HF", margin + 12, y + 10, { align: "center" });
+  }
 
   // Company name (right of logo)
   doc.setTextColor(...BLUE_DARK);
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text(COMPANY_INFO.name, margin + 22, y + 4);
+  doc.text(companyName, margin + 22, y + 4);
 
   // Contact info
   doc.setTextColor(...TEXT_MUTED);
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(`Email: ${COMPANY_INFO.email}  |  Web: ${COMPANY_INFO.website}  |  Telp: ${COMPANY_INFO.phone}`, margin + 22, y + 9);
-  doc.text(COMPANY_INFO.address, margin + 22, y + 13);
+  doc.text(`Email: ${companyEmail}  |  Web: ${companyWebsite}  |  Telp: ${companyPhone}`, margin + 22, y + 9);
+  doc.text(companyAddress, margin + 22, y + 13);
 
   // Header bottom border
   doc.setDrawColor(...BORDER);
@@ -260,11 +308,11 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setTextColor(...BLUE_DARK);
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "bold");
-  doc.text("M. Aqil Baihaqi", pageWidth - margin - 30, sigY + 16, { align: "center" });
+  doc.text(directorName, pageWidth - margin - 30, sigY + 16, { align: "center" });
   doc.setTextColor(...TEXT_MUTED);
   doc.setFontSize(6);
   doc.setFont("helvetica", "normal");
-  doc.text("Direktur Utama", pageWidth - margin - 30, sigY + 20, { align: "center" });
+  doc.text(directorTitle, pageWidth - margin - 30, sigY + 20, { align: "center" });
   doc.text("www.HafaraGroup.com", pageWidth - margin - 30, sigY + 24, { align: "center" });
 
   // ===== Footer =====

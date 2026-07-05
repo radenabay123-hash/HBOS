@@ -21,6 +21,7 @@ import { DocumentsModule } from "@/components/modules/documents-module";
 import { ScoreboardModule } from "@/components/modules/scoreboard-module";
 import { TeamManagementModule } from "@/components/modules/team-management-module";
 import { ReportsModule } from "@/components/modules/reports-module";
+import { PengaturanModule } from "@/components/modules/pengaturan-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -128,6 +129,8 @@ export default function Home() {
         return <TeamManagementModule />;
       case "reports":
         return <ReportsModule />;
+      case "pengaturan":
+        return <PengaturanModule />;
       default:
         return null;
     }

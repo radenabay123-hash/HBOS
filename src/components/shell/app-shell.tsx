@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
   FileStack, Trophy, UserCog, FileBarChart, Bell, LogOut, Menu, Building2,
-  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon,
+  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice";
+  | "absensi" | "payroll" | "invoice" | "pengaturan";
 
 interface MenuItem {
   key: ViewKey;
@@ -44,6 +44,7 @@ const MENU: MenuItem[] = [
   { key: "scoreboard", label: "Scoreboard", icon: Trophy, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "team", label: "Manajemen Tim", icon: UserCog, roles: ["OWNER"] },
   { key: "reports", label: "Laporan", icon: FileBarChart, roles: ["OWNER"] },
+  { key: "pengaturan", label: "Pengaturan Aplikasi", icon: Settings, roles: ["OWNER"] },
 ];
 
 function getMenuForRole(role: string) {

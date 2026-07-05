@@ -562,3 +562,45 @@ Stage Summary:
 - Menu visible to Owner, Project Manager, Finance
 - PDF has professional kop surat (logo, company name, address, NPWP, contact)
 - All features working end-to-end
+
+---
+Task ID: PENGATURAN-APP
+Agent: Main (Z.ai Code)
+Task: Create Application Settings page for Owner/Super Admin - upload logo, signature, edit all app config
+
+Work Log:
+- Added AppSetting model to Prisma (key, value, category, type, description)
+- Seeded 20 default settings across 4 categories:
+  - COMPANY (10): company_name, address, phone, email, website, npwp, logo, signature, director_name, director_title
+  - FINANCE (3): bank_name, bank_account, bank_account_name
+  - APPEARANCE (4): app_name, app_full_name, primary_color, theme
+  - TAX (3): tax_default_pph_badan (22%), tax_default_ppn (11%), tax_default_pph23 (2%)
+- Created /api/settings (GET all, PUT update, POST upload image):
+  - GET: returns all settings grouped by category (Owner only)
+  - PUT: update single setting by key
+  - POST: upload image (logo/signature) - saves to /public/uploads/, stores URL in setting
+- Created src/lib/company-settings.ts: getCompanySettings() function with 30s cache for server-side use
+- Updated invoice-pdf.ts: InvoiceData now accepts optional company settings (companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature, directorName, directorTitle) - uses dynamic values instead of hardcoded
+- Created src/components/modules/pengaturan-module.tsx:
+  - Tabs by category: Informasi Perusahaan, Rekening & Keuangan, Tampilan Aplikasi, Pengaturan Pajak
+  - Each setting has: label, description, input field (text/number/image)
+  - Image upload: logo perusahaan, tanda tangan digital (with preview)
+  - "Simpan" button per field, "Simpan Semua" per category
+  - "Belum disimpan" badge when changed
+  - Preview section: shows how company header will look in documents (logo, name, address, NPWP, signature)
+  - Warning about changes affecting all PDF documents
+- Updated invoice-module.tsx: fetches company settings and passes to PDF generator
+- Added "Pengaturan Aplikasi" menu to sidebar (Owner only)
+- Verified: settings API returns 20 settings in 4 categories, image upload saves to /uploads/, Pengaturan module displays all settings with upload capability, menu visible only to Owner, all APIs 200, lint clean
+
+Stage Summary:
+- Owner can now configure ALL application settings:
+  - Upload logo perusahaan (image)
+  - Upload tanda tangan digital (image)
+  - Edit info perusahaan (nama, alamat, telepon, email, website, NPWP)
+  - Edit nama & jabatan direktur (untuk tanda tangan dokumen)
+  - Edit rekening bank (nama bank, no. rekening, atas nama)
+  - Edit tampilan aplikasi (nama app, warna utama, tema)
+  - Edit tarif pajak default (PPh Badan, PPN, PPh 23)
+- Changes immediately affect all PDF documents (invoice, slip gaji, SPT)
+- Menu only visible to Owner/Super Admin

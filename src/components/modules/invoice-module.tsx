@@ -65,6 +65,7 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
   const [dialog, setDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
   const [previewDialog, setPreviewDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
   const [filterStatus, setFilterStatus] = useState("all");
+  const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     invoiceNumber: "", issueDate: new Date().toISOString().slice(0, 10),
     clientName: "", clientAddress: "", city: "Jombang", description: "",
@@ -78,8 +79,16 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await api<{ invoices: Invoice[] }>("/api/invoice");
+      const [d, settings] = await Promise.all([
+        api<{ invoices: Invoice[] }>("/api/invoice"),
+        api<{ settings: any[] }>("/api/settings").catch(() => ({ settings: [] })),
+      ]);
       setInvoices(d.invoices || []);
+      const sMap: Record<string, string> = {};
+      for (const s of settings.settings || []) {
+        sMap[s.key] = s.value;
+      }
+      setCompanySettings(sMap);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, []);
@@ -170,6 +179,17 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       bankName: inv.bankName || "",
       bankAccount: inv.bankAccount || "",
       accountName: inv.accountName || "",
+      // Company settings from form (if available)
+      companyName: companySettings.company_name,
+      companyAddress: companySettings.company_address,
+      companyPhone: companySettings.company_phone,
+      companyEmail: companySettings.company_email,
+      companyWebsite: companySettings.company_website,
+      companyNpwp: companySettings.company_npwp,
+      companyLogo: companySettings.company_logo,
+      companySignature: companySettings.company_signature,
+      directorName: companySettings.director_name,
+      directorTitle: companySettings.director_title,
     });
     toast.success("Invoice PDF diunduh");
   }
