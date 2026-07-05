@@ -1,5 +1,5 @@
-// Professional Surat Resmi PDF generator - sesuai format gambar 2
-// Layout: Blue header background, logo left, contact right, thick blue line, body left, signature right
+// Modern Surat Resmi PDF generator
+// Layout: Navy blue header (full width), logo left, company name right, modern footer
 import { jsPDF } from "jspdf";
 
 export interface SuratData {
@@ -40,87 +40,90 @@ function formatRupiah(n: number): string {
   return "Rp. " + (n || 0).toLocaleString("id-ID");
 }
 
-// Convert HTML to plain text with formatting markers for jsPDF
-function htmlToPdfText(html: string): { text: string; alignments: { text: string; align: string }[] } {
-  // Simple HTML parser for basic formatting
-  // jsPDF doesn't support HTML directly, so we parse and apply formatting
-  return { text: html.replace(/<[^>]+>/g, ""), alignments: [] };
-}
-
 export function generateSuratPDF(data: SuratData): jsPDF {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const margin = 20;
   const pageWidth = 210;
   const pageHeight = 297;
   const contentWidth = pageWidth - margin * 2;
-  const BLUE_DARK: [number, number, number] = [0, 51, 102]; // navy blue
+
+  const NAVY: [number, number, number] = [15, 35, 75];
+  const NAVY_LIGHT: [number, number, number] = [25, 55, 105];
   const ORANGE: [number, number, number] = [255, 128, 0];
-  const TEXT_DARK: [number, number, number] = [64, 64, 64];
-  const TEXT_MUTED: [number, number, number] = [100, 116, 139];
+  const TEXT_DARK: [number, number, number] = [45, 55, 72];
+  const TEXT_MUTED: [number, number, number] = [120, 130, 145];
+  const BORDER: [number, number, number] = [220, 225, 232];
 
-  // ===== BLUE HEADER BACKGROUND (full width) =====
-  const headerHeight = 35;
-  doc.setFillColor(...BLUE_DARK);
+  // ===== MODERN HEADER (Navy blue full width) =====
+  const headerHeight = 38;
+  // Navy gradient effect (simulate with 2 rectangles)
+  doc.setFillColor(...NAVY);
   doc.rect(0, 0, pageWidth, headerHeight, "F");
+  doc.setFillColor(...NAVY_LIGHT);
+  doc.rect(0, 0, pageWidth, headerHeight / 2, "F");
 
-  let y = 8;
+  let hy = 10;
 
-  // ===== LOGO (LEFT - inside blue header) =====
-  const logoSize = (data.logoWidth || 144) / 5; // scale to mm (~28mm for 144px)
+  // ===== LOGO (LEFT - orange circle) =====
+  const logoSize = 14;
   const logoX = margin;
-  const logoY = y;
+  const logoY = hy;
 
-  // Orange circle
   doc.setFillColor(...ORANGE);
   doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, "F");
-  // Blue arc overlay
-  doc.setFillColor(...BLUE_DARK);
-  doc.circle(logoX + logoSize * 0.7, logoY + logoSize * 0.7, logoSize * 0.35, "F");
-  // "H" text
+  doc.setFillColor(...NAVY);
+  doc.circle(logoX + logoSize * 0.68, logoY + logoSize * 0.68, logoSize * 0.35, "F");
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("H", logoX + logoSize / 2 - 1, logoY + logoSize / 2 + 2, { align: "center" });
+  doc.text("H", logoX + logoSize / 2 - 0.5, logoY + logoSize / 2 + 1.5, { align: "center" });
 
-  // "hafaragroup consulting" text (below logo, inside blue header)
+  // Company name text (RIGHT of logo, inside header)
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
-  doc.text("hafaragroup", logoX, logoY + logoSize + 4);
-  doc.setFontSize(8);
+  doc.text("hafaragroup", logoX + logoSize + 3, hy + 4);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(180, 200, 230); // light blue
-  doc.text("consulting", logoX, logoY + logoSize + 8);
+  doc.setTextColor(180, 200, 230);
+  doc.text("consulting", logoX + logoSize + 3, hy + 8);
 
-  // ===== CONTACT (RIGHT - inside blue header) =====
+  // Contact info (RIGHT side of header)
   const contact = data.headerContact || "Info@hafaragroup.com | www.HafaraGroup.com | Phone: 081324511570";
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(8);
+  doc.setTextColor(220, 230, 245);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text(contact, pageWidth - margin, y + 2, { align: "right", maxWidth: 80 });
+  doc.text(contact, pageWidth - margin, hy + 2, { align: "right", maxWidth: 75 });
 
-  // Address (right, below contact)
   if (data.headerAddress1) {
-    doc.text(data.headerAddress1, pageWidth - margin, y + 7, { align: "right", maxWidth: 80 });
+    doc.text(data.headerAddress1, pageWidth - margin, hy + 6, { align: "right", maxWidth: 75 });
   }
   if (data.headerAddress2) {
-    doc.text(data.headerAddress2, pageWidth - margin, y + 11, { align: "right", maxWidth: 80 });
+    doc.text(data.headerAddress2, pageWidth - margin, hy + 10, { align: "right", maxWidth: 75 });
   }
 
-  y = headerHeight + 8;
+  // ===== Thin orange accent line below header =====
+  doc.setFillColor(...ORANGE);
+  doc.rect(0, headerHeight, pageWidth, 1.5, "F");
 
-  // ===== THICK BLUE LINE (below header) =====
-  doc.setDrawColor(...BLUE_DARK);
-  doc.setLineWidth(1.5);
-  doc.line(0, headerHeight, pageWidth, headerHeight);
-  doc.setLineWidth(0.2);
+  let y = headerHeight + 8;
 
-  // ===== NOMOR / LAMPIRAN / PERIHAL (LEFT) =====
+  // ===== DOCUMENT TYPE BADGE (modern pill shape) =====
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(margin, y, 50, 6, 1, 1, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.text(data.suratType || "Surat Penawaran", margin + 25, y + 4, { align: "center" });
+  y += 10;
+
+  // ===== Nomor / Lampiran / Perihal (LEFT) + Tanggal (RIGHT) =====
   doc.setTextColor(...TEXT_DARK);
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setFont("helvetica", "normal");
 
   doc.text(`Nomor   : ${data.suratNumber}`, margin, y);
+  doc.text(`${data.city}, ${data.issueDate}`, pageWidth - margin, y, { align: "right" });
   y += 5;
   if (data.lampiran) {
     doc.text(`Lampiran : ${data.lampiran}`, margin, y);
@@ -129,7 +132,7 @@ export function generateSuratPDF(data: SuratData): jsPDF {
   doc.text(`Perihal  : ${data.perihal || "-"}`, margin, y);
   y += 8;
 
-  // ===== KEPADA YTH (LEFT) =====
+  // ===== KEPADA YTH =====
   doc.text("Kepada Yth,", margin, y);
   y += 5;
   if (data.recipientName) {
@@ -147,36 +150,27 @@ export function generateSuratPDF(data: SuratData): jsPDF {
     doc.text(addrLines, margin, y);
     y += addrLines.length * 4;
   }
-  y += 5;
-
-  // ===== CITY + DATE (RIGHT) =====
-  doc.text(`${data.city}, ${data.issueDate}`, pageWidth - margin, y, { align: "right" });
   y += 6;
 
-  // ===== ISI SURAT (parse HTML, apply formatting) =====
+  // ===== ISI SURAT (parse HTML) =====
   doc.setFontSize(10.5);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TEXT_DARK);
 
-  // Parse HTML body - extract paragraphs and alignment
   const bodyHTML = data.body || "";
-  // Split by paragraph or line break
+  // Parse paragraphs
   const paragraphs = bodyHTML.split(/<(?:p|div|br)[^>]*>/i).filter((p) => p.trim());
 
   for (const para of paragraphs) {
     const cleanText = para.replace(/<[^>]+>/g, "").trim();
     if (!cleanText) continue;
 
-    // Check alignment from HTML
     const isCenter = /align=["']center["']/i.test(para) || /text-align:\s*center/i.test(para);
     const isRight = /align=["']right["']/i.test(para) || /text-align:\s*right/i.test(para);
     const isJustify = /align=["']justify["']/i.test(para) || /text-align:\s*justify/i.test(para);
-
-    // Check for bold/italic
     const isBold = /<b>|<strong>/i.test(para);
     const isItalic = /<i>|<em>/i.test(para);
 
     doc.setFont("helvetica", isBold && isItalic ? "bolditalic" : isBold ? "bold" : isItalic ? "italic" : "normal");
+    doc.setTextColor(...TEXT_DARK);
 
     const lines = doc.splitTextToSize(cleanText, contentWidth);
     for (const line of lines) {
@@ -184,12 +178,14 @@ export function generateSuratPDF(data: SuratData): jsPDF {
         doc.text(line, pageWidth / 2, y, { align: "center" });
       } else if (isRight) {
         doc.text(line, pageWidth - margin, y, { align: "right" });
+      } else if (isJustify) {
+        doc.text(line, margin, y, { align: "justify", maxWidth: contentWidth });
       } else {
         doc.text(line, margin, y);
       }
       y += 5;
     }
-    y += 2; // paragraph spacing
+    y += 2;
   }
 
   y += 3;
@@ -198,6 +194,7 @@ export function generateSuratPDF(data: SuratData): jsPDF {
   if (data.includeActivity) {
     y += 2;
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
     if (data.activityDate) { doc.text(`Tanggal   : ${data.activityDate}`, margin, y); y += 5; }
     if (data.activityLocation) { doc.text(`Lokasi    : ${data.activityLocation}`, margin, y); y += 5; }
     if (data.activityTime) { doc.text(`Waktu     : ${data.activityTime}`, margin, y); y += 5; }
@@ -220,7 +217,6 @@ export function generateSuratPDF(data: SuratData): jsPDF {
       if (data.accountName) paymentText += ` A/N : ${data.accountName}`;
       paymentText += `. Selanjutnya sisa pembayaranya dapat dilakukan saat hari H.`;
     }
-
     const payLines = doc.splitTextToSize(paymentText, contentWidth);
     doc.text(payLines, margin, y);
     y += payLines.length * 5 + 5;
@@ -228,48 +224,65 @@ export function generateSuratPDF(data: SuratData): jsPDF {
 
   y += 8;
 
-  // ===== TANDA TANGAN (RIGHT) =====
+  // ===== TANDA TANGAN (RIGHT - modern with line) =====
   const sigX = pageWidth - margin - 50;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10.5);
+  doc.setTextColor(...TEXT_DARK);
   doc.text("Hormat kami,", sigX, y);
   y += 4;
 
   // Signature space
-  y += 20;
+  y += 18;
 
-  // Signatory name (bold)
+  // Signature line (modern dashed line)
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.setLineDashPattern([1, 0.5], 0);
+  doc.line(sigX, y, sigX + 50, y);
+  doc.setLineDashPattern([], 0);
+
+  y += 3;
+
+  // Signatory name
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...BLUE_DARK);
+  doc.setTextColor(...NAVY);
   doc.text(data.signatoryName, sigX, y);
   y += 4;
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...TEXT_DARK);
+  doc.setTextColor(...TEXT_MUTED);
+  doc.setFontSize(9);
   doc.text(data.signatoryTitle, sigX, y);
-  y += 3;
 
-  // ===== STEMPEL (circle, left of signature) =====
-  doc.setDrawColor(...BLUE_DARK);
-  doc.setLineWidth(0.5);
-  doc.circle(sigX - 15, y - 14, 10, "S");
-  doc.setFontSize(5);
-  doc.setTextColor(...BLUE_DARK);
-  doc.text("PT. HAFARA", sigX - 15, y - 16, { align: "center" });
-  doc.text("NUSANTARA", sigX - 15, y - 12, { align: "center" });
+  // ===== STEMPEL (circle, decorative) =====
+  const stampY = y - 22;
+  doc.setDrawColor(...NAVY);
+  doc.setLineWidth(0.4);
+  doc.circle(sigX - 15, stampY, 9, "S");
   doc.setLineWidth(0.2);
+  doc.setFontSize(4.5);
+  doc.setTextColor(...NAVY);
+  doc.text("PT. HAFARA", sigX - 15, stampY - 2, { align: "center" });
+  doc.text("NUSANTARA", sigX - 15, stampY + 1, { align: "center" });
+  doc.circle(sigX - 15, stampY, 7, "S");
 
-  // ===== FOOTER LINE =====
-  y = pageHeight - 20;
-  doc.setDrawColor(...BLUE_DARK);
-  doc.setLineWidth(1.5);
-  doc.line(0, y, pageWidth, y);
-  doc.setLineWidth(0.2);
+  // ===== MODERN FOOTER (Navy blue full width) =====
+  const footerY = pageHeight - 18;
+  doc.setFillColor(...NAVY);
+  doc.rect(0, footerY, pageWidth, 18, "F");
+
+  // Orange accent line above footer
+  doc.setFillColor(...ORANGE);
+  doc.rect(0, footerY, pageWidth, 1, "F");
 
   // Footer text
+  doc.setTextColor(200, 210, 225);
   doc.setFontSize(7);
-  doc.setTextColor(...TEXT_MUTED);
-  doc.text(data.companyName || "PT. HAFARA AQIBA NUSANTARA", margin, y + 5);
-  doc.text(`${data.headerContact || "info@hafaragroup.com"}`, pageWidth - margin, y + 5, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.text(data.companyName || "PT. HAFARA AQIBA NUSANTARA", margin, footerY + 8);
+  doc.text("hafaragroup consulting", margin, footerY + 13);
+  doc.text(`${data.headerContact || "info@hafaragroup.com"}`, pageWidth - margin, footerY + 8, { align: "right" });
+  doc.text(`${data.headerAddress1 || ""} ${data.headerAddress2 || ""}`, pageWidth - margin, footerY + 13, { align: "right", maxWidth: 80 });
 
   return doc;
 }

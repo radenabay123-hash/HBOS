@@ -751,3 +751,45 @@ Stage Summary:
 - Cards display assignee name
 - Owner can assign work to team members when creating cards
 - Team members only see their own cards
+
+---
+Task ID: SURAT-MODERN-REDESIGN
+Agent: Main (Z.ai Code)
+Task: Redesign Surat Resmi with modern layout + full rich text editor (Word-like)
+
+Work Log:
+- Redesigned src/lib/surat-pdf.ts with modern layout:
+  - Navy blue gradient header (full width, 38mm height) with gradient effect
+  - Logo (orange circle) LEFT inside header + "hafaragroup consulting" text
+  - Contact info RIGHT inside header (white text on navy)
+  - Orange accent line (1.5mm) below header
+  - Document type badge (modern pill shape - navy rounded rectangle)
+  - Nomor/Lampiran/Perihal LEFT + Tanggal RIGHT (same line for nomor/tanggal)
+  - Body text with HTML parsing (bold/italic/alignment/center/right/justify)
+  - Tanda tangan RIGHT with dashed signature line (modern)
+  - Stempel (decorative circle with double border)
+  - Modern footer: navy blue (full width) with orange accent line + company name + contact
+- Upgraded src/components/shared/rich-text-editor.tsx with full Word-like toolbar:
+  - Font Family dropdown: Arial, Times New Roman, Courier New, Georgia, Verdana, Calibri, Tahoma, Trebuchet MS
+  - Font Size dropdown: 8pt, 10pt, 12pt (Normal), 14pt, 16pt, 18pt, 24pt
+  - Bold, Italic, Underline (with active state highlighting - blue bg when active)
+  - Text Color picker (12 colors: black, gray, navy, blue, red, green, yellow, purple, pink, cyan)
+  - Align Left, Center, Right, Justify (with active state)
+  - Bullet List, Numbered List (with active state)
+  - Increase/Decrease Indent
+  - Active format tracking (updates button highlights on cursor position)
+  - Placeholder text when empty
+- Redesigned preview in surat-module.tsx with modern layout:
+  - Navy gradient header (135deg gradient) with logo left + contact right
+  - Orange accent line
+  - Document type badge (modern pill - navy rounded)
+  - Nomor/Tanggal on same line (left/right)
+  - Isi surat rendered as HTML (preserves rich text formatting)
+  - Tanda tangan with dashed line
+  - Modern navy footer with company info
+- Verified: toolbar shows all 12 buttons + 2 selects, preview shows modern layout, PDF download works, all APIs 200, lint clean
+
+Stage Summary:
+- Surat layout now modern: navy gradient header, orange accent, pill badge, dashed signature line, modern footer
+- Rich text editor full Word-like: font family (8 options), font size (7 options), bold/italic/underline, text color (12 colors), align left/center/right/justify, bullet/number list, indent
+- Preview updates in real-time with modern layout matching PDF
