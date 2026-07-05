@@ -640,3 +640,13 @@ model KanbanCard {
   @@index([assigneeId])
   @@index([completedAt])
 }
+
+// ===================== DOCUMENT LAYOUT (Custom design settings per document type) =====================
+
+model DocumentLayout {
+  id          String   @id @default(cuid())
+  docType     String   @unique // SURAT, INVOICE, SLIP_GAJI
+  settings    String   // JSON: all layout customization
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}

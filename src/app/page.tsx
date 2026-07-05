@@ -22,6 +22,7 @@ import { ScoreboardModule } from "@/components/modules/scoreboard-module";
 import { TeamManagementModule } from "@/components/modules/team-management-module";
 import { ReportsModule } from "@/components/modules/reports-module";
 import { PengaturanModule } from "@/components/modules/pengaturan-module";
+import { DocumentLayoutModule } from "@/components/modules/document-layout-module";
 import { SuratModule } from "@/components/modules/surat-module";
 import { KanbanModule } from "@/components/modules/kanban-module";
 import { ROLES } from "@/lib/constants";
@@ -133,6 +134,8 @@ export default function Home() {
         return <ReportsModule />;
       case "pengaturan":
         return <PengaturanModule />;
+      case "doclayout":
+        return <DocumentLayoutModule />;
       case "surat":
         return <SuratModule user={user} />;
       case "kanban":

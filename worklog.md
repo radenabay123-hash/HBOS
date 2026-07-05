@@ -793,3 +793,39 @@ Stage Summary:
 - Surat layout now modern: navy gradient header, orange accent, pill badge, dashed signature line, modern footer
 - Rich text editor full Word-like: font family (8 options), font size (7 options), bold/italic/underline, text color (12 colors), align left/center/right/justify, bullet/number list, indent
 - Preview updates in real-time with modern layout matching PDF
+
+---
+Task ID: DOC-LAYOUT-CUSTOM
+Agent: Main (Z.ai Code)
+Task: Create document layout customization for Surat, Invoice, Slip Gaji
+
+Work Log:
+- Added DocumentLayout model to Prisma (docType, settings JSON) - stores all layout customization per document type
+- Seeded 3 default layouts (SURAT, INVOICE, SLIP_GAJI) with 29-35 settings each
+- Created /api/doc-layout (GET all/single, PUT update - Owner only)
+- Created DocumentLayoutModule with comprehensive customization UI:
+  - 3 tabs: Surat Resmi, Invoice, Slip Gaji
+  - Per document type, 4 customization cards:
+    1. Header & Logo: bg color, height, gradient toggle, text color, logo position/size/color/text, company name text/color/font size, sub-text, contact position/font size/color
+    2. Isi & Garis Aksen: body font size, font family, text color, line height, accent line color/height, table settings (Invoice), section header settings (Slip Gaji), status badge colors (Invoice)
+    3. Tanda Tangan: position, name color, font size, line style (solid/dashed/none), line color, stamp toggle/color
+    4. Footer: bg color, text color, height, footer text, show company toggle, show contact toggle
+  - Color picker (native HTML color input + hex text field)
+  - Reset to default button
+  - Save button per document type
+- Added "Layout Dokumen" menu to sidebar (Owner only, Layout icon)
+- Verified: API returns 3 layouts with all settings, UI shows all customization fields, tabs switch between document types, lint clean, no errors
+
+Stage Summary:
+- Owner can now fully customize layout of Surat Resmi, Invoice, and Slip Gaji:
+  - Header: background color, gradient, height, text color
+  - Logo: position, size, color, text
+  - Company name: text, color, font size, sub-text
+  - Contact: position, font size, color
+  - Body: font size, font family, text color, line height
+  - Accent line: color, thickness
+  - Table (Invoice): header bg/text color, row alt color
+  - Section (Slip Gaji): header bg/text, earnings/deductions colors, net salary bg/text
+  - Signature: position, name color/font size, line style/color, stamp toggle/color
+  - Footer: bg color, text color, height, footer text, show company/contact toggles
+- All settings stored in database, can be updated without code changes
