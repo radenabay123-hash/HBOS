@@ -680,3 +680,40 @@ Stage Summary:
 - PDF output matching image 2: kop surat (logo, company name, contact, address), nomor/lampiran/perihal, kepada yth, isi surat, detail kegiatan, info pembayaran, tanda tangan + stempel, footer
 - Menu visible to Owner, Project Manager, Finance
 - All verified working end-to-end
+
+---
+Task ID: KANBAN-BOARD
+Agent: Main (Z.ai Code)
+Task: Add Kanban Board feature with drag-drop, auto-save completed work, and PDF report
+
+Work Log:
+- Added KanbanCard model to Prisma: title, description, status (TODO/IN_PROGRESS/REVIEW/DONE), priority (LOW/MEDIUM/HIGH/URGENT), category, dueDate, position, completedAt, completedById
+- Created /api/kanban (GET list, POST create with auto-position) and /api/kanban/[id] (PUT update with AUTO-SAVE, DELETE):
+  - AUTO-SAVE: when card moved to DONE, automatically sets completedAt + completedById
+  - When moved away from DONE, clears completedAt
+- Created /api/kanban/report (GET) - generates PDF report of completed work:
+  - Header with PT. HAFARA AQIBA NUSANTARA
+  - Summary (total completed, high priority count, categories)
+  - Table of completed work (#, Judul, Kategori, Prioritas, Selesai Pada)
+  - Footer with page numbers
+  - Filter by period: all, week (7 days), month (current month)
+- Created src/components/modules/kanban-module.tsx with @dnd-kit drag-and-drop:
+  - 4 columns: To Do (slate), Sedang Dikerjakan (amber), Review (violet), Selesai (green)
+  - Each column shows count, colored header, droppable area
+  - Cards: drag handle, priority badge (color-coded), title, description, category badge, due date, completed date
+  - DONE cards have left border green + strikethrough title
+  - Add/Edit dialog: title, description, status, priority, category, due date
+  - Delete with confirmation
+  - "Tambah Pekerjaan" button + per-column "Tambah" button
+  - "Laporan PDF" button + period filters (7 Hari Terakhir, Bulan Ini, Semua)
+  - Drag overlay with rotation effect
+  - Optimistic update on drag (reverts on error)
+  - Toast notification on auto-save: "✅ Pekerjaan selesai & tersimpan otomatis!"
+- Added "Kanban Board" menu to sidebar (all roles)
+- Verified: 5 test cards created (TODO, IN_PROGRESS, REVIEW, DONE x2), drag-drop works, auto-save sets completedAt when moved to DONE, PDF report generates 9.3KB 1-page PDF, all APIs 200, lint clean
+
+Stage Summary:
+- Kanban Board with 4 columns and drag-and-drop (using @dnd-kit)
+- Auto-save: when card moved to "Selesai" column, completedAt is automatically recorded
+- PDF report: download laporan pekerjaan selesai with company header, summary, and detail table
+- Menu visible to all roles (Owner, PM, Assistant Trainer, Content Creative, Digital Marketing & IT, Finance)

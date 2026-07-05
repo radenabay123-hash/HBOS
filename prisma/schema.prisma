@@ -612,3 +612,26 @@ model Surat {
   @@index([suratType])
   @@index([status])
 }
+
+// ===================== KANBAN BOARD =====================
+
+model KanbanCard {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("TODO") // TODO, IN_PROGRESS, REVIEW, DONE
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  assigneeId  String?
+  category    String?  // e.g. "Training", "Marketing", "Content", "Finance"
+  dueDate     DateTime?
+  position    Int      @default(0) // for ordering within column
+  // Auto-save tracking
+  completedAt DateTime? // when card moved to DONE
+  completedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([assigneeId])
+  @@index([completedAt])
+}

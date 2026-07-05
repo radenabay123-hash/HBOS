@@ -23,6 +23,7 @@ import { TeamManagementModule } from "@/components/modules/team-management-modul
 import { ReportsModule } from "@/components/modules/reports-module";
 import { PengaturanModule } from "@/components/modules/pengaturan-module";
 import { SuratModule } from "@/components/modules/surat-module";
+import { KanbanModule } from "@/components/modules/kanban-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -134,6 +135,8 @@ export default function Home() {
         return <PengaturanModule />;
       case "surat":
         return <SuratModule user={user} />;
+      case "kanban":
+        return <KanbanModule />;
       default:
         return null;
     }

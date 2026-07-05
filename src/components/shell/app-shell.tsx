@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
   FileStack, Trophy, UserCog, FileBarChart, Bell, LogOut, Menu, Building2,
-  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings,
+  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban";
 
 interface MenuItem {
   key: ViewKey;
@@ -32,6 +32,7 @@ const MENU: MenuItem[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "absensi", label: "Absensi", icon: Clock, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
+  { key: "kanban", label: "Kanban Board", icon: KanbanSquare, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
   { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
   { key: "invoice", label: "Invoice", icon: InvoiceIcon, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
