@@ -42,6 +42,7 @@ model User {
   payrolls         Payroll[]
   kanbanAssigned   KanbanCard[]  @relation("KanbanAssignee")
   kanbanCompleted  KanbanCard[]  @relation("KanbanCompletedBy")
+  employeeProfile  EmployeeProfile?
 }
 
 model Session {
@@ -649,4 +650,76 @@ model DocumentLayout {
   settings    String   // JSON: all layout customization
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+// ===================== EMPLOYEE PROFILE (Biodata Karyawan) =====================
+
+model EmployeeProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  
+  // Data Pribadi
+  nik             String?  // NIK KTP (16 digit)
+  tempatLahir     String?
+  tanggalLahir    DateTime?
+  jenisKelamin    String?  // LAKI_LAKI, PEREMPUAN
+  golonganDarah   String?  // A, B, AB, O
+  agama           String?  // Islam, Kristen, Katolik, Hindu, Buddha, Konghucu
+  statusPernikahan String? // BELUM_KAWIN, KAWIN, CERAI
+  kewarganegaraan String   @default("WNI")
+  
+  // Alamat
+  alamatKtp       String?
+  alamatDomisili  String?
+  provinsi        String?
+  kota            String?
+  kodePos         String?
+  
+  // Kontak Darurat
+  kontakDaruratNama  String?
+  kontakDaruratHubungan String? // suami/istri/anak/etc
+  kontakDaruratPhone String?
+  
+  // Pendidikan & Pekerjaan
+  pendidikanTerakhir String? // SD, SMP, SMA, D3, S1, S2, S3
+  institusiPendidikan String?
+  jurusan         String?
+  tanggalMasuk    DateTime?
+  statusKaryawan  String? // TETAP, KONTRAK, PROBATION, MAGANG
+  
+  // NPWP & Pajak
+  npwp            String?  // 15 digit NPWP
+  ptkpStatus      String?  // TK0, TK1, TK2, TK3, K0, K1, K2, K3
+  jumlahTanggungan Int     @default(0)
+  noBPJSKesehatan String?
+  noBPJSTenagaKerja String?
+  noBPJSPensiun   String?
+  
+  // Bank & Pembayaran
+  bankName        String?
+  bankAccount     String?
+  bankAccountName String?
+  
+  // Salary info (private - only owner can see/edit)
+  gajiPokok       Float?
+  tunjanganMakan  Float    @default(0)
+  tunjanganTransport Float  @default(0)
+  
+  // Dokumen
+  fotoUrl         String?
+  ktpUrl          String?
+  npwpUrl         String?
+  ijazahUrl       String?
+  
+  // Status
+  isComplete      Boolean  @default(false)
+  completedAt     DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([npwp])
+  @@index([ptkpStatus])
 }

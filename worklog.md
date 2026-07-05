@@ -1027,3 +1027,43 @@ Stage Summary:
 - Invoice: modern 2-column layout, rounded table, colored summary box, payment card
 - Slip Gaji: modern employee card, side-by-side earnings/deductions cards with colored headers, elegant net salary box with terbilang
 - Both use customizable colors from layout settings
+
+---
+Task ID: BIODATA-KARYAWAN
+Agent: Main (Z.ai Code)
+Task: Create Employee Biodata system integrated with NPWP, tax, and payroll
+
+Work Log:
+- Added EmployeeProfile model to Prisma with 30+ fields:
+  - Data Pribadi: NIK, tempat/tanggal lahir, jenis kelamin, golongan darah, agama, status pernikahan, kewarganegaraan
+  - Alamat: alamat KTP, domisili, provinsi, kota, kode pos
+  - Kontak Darurat: nama, hubungan, phone
+  - Pendidikan: pendidikan terakhir, institusi, jurusan
+  - NPWP & Pajak: NPWP, PTKP status, jumlah tanggungan, BPJS Kesehatan/Tenaga Kerja/Pensiun
+  - Bank: nama bank, no rekening, atas nama
+  - Salary (owner-only): gaji pokok, tunjangan makan, tunjangan transport, status karyawan, tanggal masuk
+  - Dokumen: foto, KTP, NPWP, ijazah URLs
+  - isComplete + completedAt tracking
+- Created 2 API routes:
+  - /api/employee-profile (GET own, PUT update own) - auto-creates empty profile
+  - /api/employee-profile/all (GET all for owner, PUT salary info for owner) - also syncs to SalaryConfig
+- Created BiodataModule with:
+  - Owner view: "Biodata Karyawan" - search, summary cards (total/lengkap/belum/NPWP), profile cards per employee with NPWP/PTKP/bank/gaji, edit salary & status dialog
+  - Team view: "Biodata Saya" - completion progress bar, 5 tabs (Data Pribadi, Alamat, NPWP & Pajak, Bank, Pendidikan)
+  - NPWP & Pajak tab shows integration status: "Integrasi Pajak Aktif" with green cards showing Payroll PPh 21, Kalkulator Pajak, Slip Gaji all connected
+  - Salary info (read-only for team)
+- Integrated with payroll calculation (payroll-calc.ts):
+  - Fetches PTKP status from EmployeeProfile
+  - Calculates PPh 21 using progressive tax brackets + PTKP from profile
+  - Returns pph21, ptkpStatus, npwp in payroll result
+  - PPh 21 included in totalDeduction and netSalary calculation
+- Added "Biodata Karyawan" menu to sidebar (all roles, UserCircle icon)
+- Verified: API creates/updates profile, isComplete tracking works, owner sees all profiles, team fills own data, NPWP+PTKP saved correctly, payroll calculation uses PTKP, no errors, lint clean
+
+Stage Summary:
+- Employee biodata system with NPWP & PTKP integration
+- Team members fill their own data (NIK, NPWP, PTKP, bank, etc.)
+- Owner can view all profiles + edit salary/status
+- NPWP & PTKP auto-connected to: Payroll (PPh 21 calculation), Kalkulator Pajak, Slip Gaji
+- Progress tracking (0-100% completion)
+- Integration status shown when NPWP+PTKP filled

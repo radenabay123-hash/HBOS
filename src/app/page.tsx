@@ -25,6 +25,7 @@ import { PengaturanModule } from "@/components/modules/pengaturan-module";
 import { DocumentLayoutModule } from "@/components/modules/document-layout-module";
 import { SuratModule } from "@/components/modules/surat-module";
 import { KanbanModule } from "@/components/modules/kanban-module";
+import { BiodataModule } from "@/components/modules/biodata-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -140,6 +141,8 @@ export default function Home() {
         return <SuratModule user={user} />;
       case "kanban":
         return <KanbanModule user={user} />;
+      case "biodata":
+        return <BiodataModule user={user} />;
       default:
         return null;
     }

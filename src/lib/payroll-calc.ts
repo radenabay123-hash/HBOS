@@ -92,7 +92,41 @@ export async function calculatePayroll(
   const transportAllowance = Math.round(config.transportAllowance * attendanceRate);
 
   const grossSalary = config.baseSalary + mealAllowance + transportAllowance + kpiBonus;
-  const totalDeduction = attendanceDeduction + config.bpjs + config.tax;
+
+  // ===== PPh 21 Calculation using Employee Profile PTKP =====
+  let pph21 = 0;
+  let ptkpStatus = "TK0";
+  let npwp = null as string | null;
+
+  // Fetch employee profile for NPWP & PTKP
+  const empProfile = await db.employeeProfile.findUnique({ where: { userId } }).catch(() => null);
+  if (empProfile) {
+    ptkpStatus = empProfile.ptkpStatus || "TK0";
+    npwp = empProfile.npwp || null;
+
+    // Get PTKP amount from tax config
+    const pph21Config = await db.taxConfig.findFirst({ where: { taxType: "PPH21", isActive: true } });
+    if (pph21Config?.ptkp) {
+      const ptkpMap = JSON.parse(pph21Config.ptkp);
+      const ptkpAnnual = ptkpMap[ptkpStatus] || 54000000;
+      const annualBruto = grossSalary * 12;
+      const pkp = Math.max(0, annualBruto - ptkpAnnual);
+
+      // Progressive tax calculation
+      const brackets = pph21Config.brackets ? JSON.parse(pph21Config.brackets) : [];
+      let remainingPKP = pkp;
+      for (const bracket of brackets) {
+        if (remainingPKP <= 0) break;
+        const bracketRange = bracket.max ? bracket.max - bracket.min : Infinity;
+        const taxableInBracket = Math.min(remainingPKP, bracketRange);
+        pph21 += taxableInBracket * (bracket.rate / 100);
+        remainingPKP -= taxableInBracket;
+      }
+      pph21 = Math.round(pph21 / 12); // Monthly PPh 21
+    }
+  }
+
+  const totalDeduction = attendanceDeduction + config.bpjs + config.tax + pph21;
   const netSalary = grossSalary - totalDeduction;
 
   return {
@@ -114,6 +148,9 @@ export async function calculatePayroll(
     attendanceDeduction,
     bpjs: config.bpjs,
     tax: config.tax,
+    pph21,
+    ptkpStatus,
+    npwp,
     otherDeduction: 0,
     grossSalary,
     totalDeduction,
