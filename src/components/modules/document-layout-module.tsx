@@ -371,7 +371,7 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
         {s.logoPosition !== "right" && (
           <div className="shrink-0" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+              <img src={logoUrl} alt="Logo" style={{ maxWidth: `${logoSizePx * 2}px`, maxHeight: `${logoSizePx}px`, objectFit: "contain", borderRadius: "4px" }} />
             ) : (
               <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
             )}
@@ -387,7 +387,7 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
         {s.logoPosition === "right" && (
           <div className="shrink-0">
             {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, objectFit: "contain", borderRadius: "50%" }} />
+              <img src={logoUrl} alt="Logo" style={{ maxWidth: `${logoSizePx * 2}px`, maxHeight: `${logoSizePx}px`, objectFit: "contain", borderRadius: "4px" }} />
             ) : (
               <div style={{ width: `${logoSizePx}px`, height: `${logoSizePx}px`, borderRadius: "50%", backgroundColor: s.logoColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>{s.logoText}</div>
             )}
