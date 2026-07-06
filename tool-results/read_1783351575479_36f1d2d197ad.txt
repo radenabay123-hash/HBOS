@@ -1,0 +1,809 @@
+     1→// HAFARA BUSINESS OPERATING SYSTEM (HBOS)
+     2→// Prisma schema - SQLite
+     3→
+     4→generator client {
+     5→  provider = "prisma-client-js"
+     6→}
+     7→
+     8→datasource db {
+     9→  provider = "sqlite"
+    10→  url      = env("DATABASE_URL")
+    11→}
+    12→
+    13→// ===================== USERS & AUTH =====================
+    14→
+    15→model User {
+    16→  id           String   @id @default(cuid())
+    17→  email        String   @unique
+    18→  password     String
+    19→  name         String
+    20→  role         String   @default("STAFF") // OWNER, PROJECT_MANAGER, ASSISTANT_TRAINER, CONTENT_CREATIVE, DIGITAL_MARKETING_IT, FINANCE
+    21→  phone        String?
+    22→  avatar       String?
+    23→  position     String?
+    24→  isActive     Boolean  @default(true)
+    25→  createdAt    DateTime @default(now())
+    26→  updatedAt    DateTime @updatedAt
+    27→
+    28→  clients          Client[]
+    29→  events           Event[]
+    30→  tasks            DailyTask[]
+    31→  contentIdeas     ContentIdea[]
+    32→  articles         Article[]
+    33→  financeTxns      FinanceTransaction[]
+    34→  documents        Document[]
+    35→  scoredBy         ScoreLog[]         @relation("ScoreLogScorer")
+    36→  scoredTarget     ScoreLog[]         @relation("ScoreLogTarget")
+    37→  sessions         Session[]
+    38→  notifications    Notification[]
+    39→  kpiLogs          KpiLog[]
+    40→  attendances      Attendance[]
+    41→  salaryConfig     SalaryConfig?
+    42→  payrolls         Payroll[]
+    43→  kanbanAssigned   KanbanCard[]  @relation("KanbanAssignee")
+    44→  kanbanCompleted  KanbanCard[]  @relation("KanbanCompletedBy")
+    45→  employeeProfile  EmployeeProfile?
+    46→  dailyWorkSummaries DailyWorkSummary[]
+    47→  subscriptions    Subscription[]  @relation("UserSubscriptions")
+    48→}
+    49→
+    50→// ===================== SUBSCRIPTION MANAGER (Owner only) =====================
+    51→
+    52→model RoleResponsibility {
+    53→  id          String   @id @default(cuid())
+    54→  role        String   // OWNER, PROJECT_MANAGER, ASSISTANT_TRAINER, etc.
+    55→  title       String   // The responsibility text
+    56→  order       Int      @default(0) // for sorting
+    57→  createdAt   DateTime @default(now())
+    58→  updatedAt   DateTime @updatedAt
+    59→
+    60→  @@index([role])
+    61→}
+    62→
+    63→model Subscription {
+    64→  id          String   @id @default(cuid())
+    65→  name        String
+    66→  category    String   @default("Pribadi") // Pribadi, Team Kerja, Operasional, dll
+    67→  amount      Float    // biaya per bulan
+    68→  dueDay      Int      @default(1) // tanggal jatuh tempo setiap bulan (1-31)
+    69→  description String?
+    70→  isActive    Boolean  @default(true)
+    71→  ownerId     String
+    72→  createdAt   DateTime @default(now())
+    73→  updatedAt   DateTime @updatedAt
+    74→
+    75→  owner       User     @relation("UserSubscriptions", fields: [ownerId], references: [id], onDelete: Cascade)
+    76→  payments    SubscriptionPayment[]
+    77→
+    78→  @@index([category])
+    79→  @@index([isActive])
+    80→}
+    81→
+    82→model SubscriptionPayment {
+    83→  id              String   @id @default(cuid())
+    84→  subscriptionId  String
+    85→  year            Int
+    86→  month           Int      // 1-12
+    87→  isPaid          Boolean  @default(false)
+    88→  paidAt          DateTime?
+    89→  note            String?
+    90→  createdAt       DateTime @default(now())
+    91→  updatedAt       DateTime @updatedAt
+    92→
+    93→  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+    94→
+    95→  @@unique([subscriptionId, year, month])
+    96→  @@index([year, month])
+    97→  @@index([isPaid])
+    98→}
+    99→
+   100→model Session {
+   101→  id        String   @id @default(cuid())
+   102→  userId    String
+   103→  token     String   @unique
+   104→  expiresAt DateTime
+   105→  createdAt DateTime @default(now())
+   106→  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   107→
+   108→  @@index([userId])
+   109→}
+   110→
+   111→// ===================== CRM CLIENT MANAGEMENT =====================
+   112→
+   113→model Client {
+   114→  id              String   @id @default(cuid())
+   115→  namaKlien       String
+   116→  instansi        String?
+   117→  pic             String?
+   118→  nomorWA         String?
+   119→  email           String?
+   120→  jenisTraining   String?
+   121→  jumlahPeserta   Int?
+   122→  budget          Float?
+   123→  lokasi          String?
+   124→  tanggalEvent    DateTime?
+   125→  status          String   @default("LEAD") // LEAD, FOLLOW_UP, PROPOSAL, NEGOTIATION, DEAL, LOST
+   126→  catatanFollowUp String?
+   127→  reminderFollowUp DateTime?
+   128→  assignedToId    String?
+   129→  createdAt       DateTime @default(now())
+   130→  updatedAt       DateTime @updatedAt
+   131→
+   132→  assignedTo      User?       @relation(fields: [assignedToId], references: [id])
+   133→  events          Event[]
+   134→  documents       Document[]
+   135→  financeTxns     FinanceTransaction[]
+   136→
+   137→  @@index([status])
+   138→  @@index([assignedToId])
+   139→}
+   140→
+   141→// ===================== EVENT MANAGEMENT =====================
+   142→
+   143→model Event {
+   144→  id              String   @id @default(cuid())
+   145→  namaEvent       String
+   146→  clientId        String?
+   147→  tanggal         DateTime
+   148→  lokasi          String?
+   149→  trainer         String?
+   150→  assistantTrainerId String?
+   151→  statusPersiapan String   @default("PENDING") // PENDING, IN_PROGRESS, READY, COMPLETED
+   152→  checklist       String?  // JSON array of {item, done}
+   153→  createdAt       DateTime @default(now())
+   154→  updatedAt       DateTime @updatedAt
+   155→
+   156→  client          Client?  @relation(fields: [clientId], references: [id])
+   157→  assistantTrainer User?   @relation(fields: [assistantTrainerId], references: [id])
+   158→
+   159→  @@index([tanggal])
+   160→}
+   161→
+   162→// ===================== DAILY TASK MANAGEMENT =====================
+   163→
+   164→model DailyTask {
+   165→  id              String   @id @default(cuid())
+   166→  userId          String
+   167→  taskHariIni     String
+   168→  progress        String?
+   169→  persentaseSelesai Int    @default(0)
+   170→  hambatan        String?
+   171→  jamMulai        String?
+   172→  jamSelesai      String?
+   173→  status          String   @default("BELUM") // BELUM, SEDANG, SELESAI
+   174→  tanggal         DateTime @default(now())
+   175→  createdAt       DateTime @default(now())
+   176→  updatedAt       DateTime @updatedAt
+   177→
+   178→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   179→
+   180→  @@index([userId])
+   181→  @@index([tanggal])
+   182→}
+   183→
+   184→// ===================== CONTENT IDEAS (ACC WORKFLOW) =====================
+   185→
+   186→model ContentIdea {
+   187→  id              String   @id @default(cuid())
+   188→  userId          String
+   189→  // Kategori: Instagram M. Aqil Baihaqi, TikTok Aqil Baihaqi, Hafara Group, MentorSkill
+   190→  kategori        String
+   191→  judul           String
+   192→  link            String?
+   193→  ideKonten       String?
+   194→  script          String?
+   195→  caption         String?
+   196→  // Produksi
+   197→  statusProduksi  String   @default("IDE") // IDE, PRODUKSI, EDITING, SIAP_PUBLISH, PUBLISHED
+   198→  statusEditing   String   @default("PENDING") // PENDING, IN_PROGRESS, DONE
+   199→  statusPublish   String   @default("PENDING") // PENDING, PUBLISHED
+   200→  linkKonten      String?
+   201→  metrikKonten    String?  // JSON {reach, views, watchTime, share, save, comment, followerGrowth}
+   202→  // ACC workflow dari owner
+   203→  statusACC       String   @default("PENDING") // PENDING, ACC, REVISI
+   204→  catatanRevisi   String?
+   205→  accAt           DateTime?
+   206→  accById         String?
+   207→  tanggal         DateTime @default(now())
+   208→  createdAt       DateTime @default(now())
+   209→  updatedAt       DateTime @updatedAt
+   210→
+   211→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   212→
+   213→  @@index([userId])
+   214→  @@index([kategori])
+   215→  @@index([statusACC])
+   216→  @@index([statusPublish])
+   217→}
+   218→
+   219→// ===================== SEO ARTICLE MANAGEMENT =====================
+   220→
+   221→model Article {
+   222→  id              String   @id @default(cuid())
+   223→  userId          String
+   224→  judulArtikel    String
+   225→  keyword         String?
+   226→  websiteTujuan   String?
+   227→  tanggalPublish  DateTime?
+   228→  linkArtikel     String?
+   229→  // ACC workflow
+   230→  statusACC       String   @default("PENDING") // PENDING, ACC, REVISI_ADMIN
+   231→  catatanRevisi   String?
+   232→  accAt           DateTime?
+   233→  accById         String?
+   234→  status          String   @default("DRAFT") // DRAFT, PUBLISHED
+   235→  createdAt       DateTime @default(now())
+   236→  updatedAt       DateTime @updatedAt
+   237→
+   238→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   239→
+   240→  @@index([userId])
+   241→  @@index([statusACC])
+   242→  @@index([status])
+   243→}
+   244→
+   245→// ===================== FINANCE =====================
+   246→
+   247→model FinanceTransaction {
+   248→  id              String   @id @default(cuid())
+   249→  type            String   // PEMASUKAN, PENGELUARAN, TRANSFER
+   250→  amount          Float
+   251→  description     String?
+   252→  category        String?  // category key (FinanceCategory)
+   253→  subCategory     String?  // free text
+   254→  accountType     String   @default("KAS") // KAS, BANK, EWALLET
+   255→  accountName     String?  // e.g. "BCA 123456", "OVO", "Kas Besar"
+   256→  date            DateTime @default(now())
+   257→  userId          String
+   258→  clientId        String?
+   259→  attachmentUrl   String?  // bukti transaksi (invoice/kwitansi/nota)
+   260→  isTaxable       Boolean  @default(false)
+   261→  taxType         String?  // PPH21, PPH23, PPH_BADAN, PPN
+   262→  taxAmount       Float    @default(0)
+   263→  taxIncluded     Boolean  @default(false) // tax included in nominal
+   264→  isPaid          Boolean  @default(true) // for piutang/hutang: false = outstanding
+   265→  dueDate         DateTime?
+   266→  vendorName      String?  // for pengeluaran
+   267→  // Additional fields for form (sesuai gambar)
+   268→  kontakName      String?  // kontak (klien/vendor)
+   269→  projectName     String?  // proyek
+   270→  trainerName     String?  // trainer/konsultan
+   271→  invoiceNumber   String?  // no. invoice
+   272→  receiptNumber   String?  // no. kwitansi
+   273→  createdAt       DateTime @default(now())
+   274→  updatedAt       DateTime @updatedAt
+   275→
+   276→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   277→  client          Client?  @relation(fields: [clientId], references: [id])
+   278→
+   279→  @@index([type])
+   280→  @@index([date])
+   281→  @@index([userId])
+   282→  @@index([category])
+   283→  @@index([accountType])
+   284→}
+   285→
+   286→model FinanceSetting {
+   287→  id              String   @id @default(cuid())
+   288→  targetRevenue   Float    @default(500000000)
+   289→  targetProfit    Float    @default(150000000)
+   290→  month           Int      // 1-12
+   291→  year            Int
+   292→  createdAt       DateTime @default(now())
+   293→  updatedAt       DateTime @updatedAt
+   294→
+   295→  @@unique([month, year])
+   296→}
+   297→
+   298→// ===================== DOCUMENTS (SURAT, INVOICE, SPK, dll) =====================
+   299→
+   300→model Document {
+   301→  id              String   @id @default(cuid())
+   302→  clientId        String?
+   303→  documentType    String   // SURAT, INVOICE, SPK, KONTRAK, LAINNYA (custom)
+   304→  documentName    String
+   305→  documentNumber  String?
+   306→  link            String
+   307→  description     String?
+   308→  uploadedById    String
+   309→  createdAt       DateTime @default(now())
+   310→  updatedAt       DateTime @updatedAt
+   311→
+   312→  client          Client?  @relation(fields: [clientId], references: [id])
+   313→  uploadedBy      User     @relation(fields: [uploadedById], references: [id])
+   314→
+   315→  @@index([clientId])
+   316→  @@index([documentType])
+   317→}
+   318→
+   319→// ===================== SCOREBOARD =====================
+   320→
+   321→model ScoreLog {
+   322→  id              String   @id @default(cuid())
+   323→  scorerId        String   // who awarded
+   324→  targetUserId    String   // who received
+   325→  points          Int
+   326→  reason          String?
+   327→  category        String   // PRODUKTIF, DISIPLIN, KERJA_SAMA, etc
+   328→  date            DateTime @default(now())
+   329→  createdAt       DateTime @default(now())
+   330→
+   331→  scorer          User     @relation("ScoreLogScorer", fields: [scorerId], references: [id])
+   332→  targetUser      User     @relation("ScoreLogTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+   333→
+   334→  @@index([targetUserId])
+   335→  @@index([date])
+   336→}
+   337→
+   338→// ===================== NOTIFICATIONS =====================
+   339→
+   340→model Notification {
+   341→  id              String   @id @default(cuid())
+   342→  userId          String
+   343→  title           String
+   344→  message         String
+   345→  type            String   @default("INFO") // INFO, ACC, REVISI, TASK, REMINDER, EVALUATION, URGENT_TASK, ANNOUNCEMENT, WARNING
+   346→  priority        String   @default("normal") // normal, high, urgent
+   347→  read            Boolean  @default(false)
+   348→  link            String?
+   349→  actionUrl       String?  // URL to navigate when notification clicked
+   350→  senderId        String?  // who sent this notification (for broadcasts)
+   351→  createdAt       DateTime @default(now())
+   352→
+   353→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   354→
+   355→  @@index([userId])
+   356→  @@index([type])
+   357→  @@index([read])
+   358→}
+   359→
+   360→// ===================== KPI LOGS (Daily/Weekly/Monthly Achievement Tracking) =====================
+   361→
+   362→model KpiLog {
+   363→  id              String   @id @default(cuid())
+   364→  userId          String
+   365→  metricKey       String   // e.g. pm_artikel_kota, at_ide_konten
+   366→  value           Float    // actual achievement value
+   367→  date            DateTime @default(now())
+   368→  note            String?
+   369→  createdAt       DateTime @default(now())
+   370→  updatedAt       DateTime @updatedAt
+   371→
+   372→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   373→
+   374→  @@unique([userId, metricKey, date])
+   375→  @@index([userId])
+   376→  @@index([metricKey])
+   377→  @@index([date])
+   378→}
+   379→
+   380→// ===================== ATTENDANCE (ABSENSI) =====================
+   381→
+   382→model Attendance {
+   383→  id          String   @id @default(cuid())
+   384→  userId      String
+   385→  date        DateTime
+   386→  checkIn     DateTime?
+   387→  checkOut    DateTime?
+   388→  status      String   @default("HADIR") // HADIR, TERLAMBAT, IZIN, SAKIT, ALPHA, CUTI
+   389→  workHours   Float?   // calculated hours
+   390→  note        String?
+   391→  createdAt   DateTime @default(now())
+   392→  updatedAt   DateTime @updatedAt
+   393→
+   394→  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   395→
+   396→  @@unique([userId, date])
+   397→  @@index([userId])
+   398→  @@index([date])
+   399→}
+   400→
+   401→// ===================== SALARY CONFIG (GAJI POKOK) =====================
+   402→
+   403→model SalaryConfig {
+   404→  id                  String   @id @default(cuid())
+   405→  userId              String   @unique
+   406→  baseSalary          Float    @default(5000000)
+   407→  mealAllowance       Float    @default(0)
+   408→  transportAllowance  Float    @default(0)
+   409→  bonusTarget         Float    @default(0)  // bonus if KPI >= 90
+   410→  penaltyPerAbsent    Float    @default(0)  // penalty per day absent
+   411→  bpjs                Float    @default(0)
+   412→  tax                 Float    @default(0)
+   413→  createdAt           DateTime @default(now())
+   414→  updatedAt           DateTime @updatedAt
+   415→
+   416→  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   417→}
+   418→
+   419→// ===================== PAYROLL (SLIP GAJI) =====================
+   420→
+   421→model Payroll {
+   422→  id                  String   @id @default(cuid())
+   423→  userId              String
+   424→  month               Int
+   425→  year                Int
+   426→  baseSalary          Float
+   427→  mealAllowance       Float    @default(0)
+   428→  transportAllowance  Float    @default(0)
+   429→  workingDays         Int      @default(0)
+   430→  presentDays         Int      @default(0)
+   431→  absentDays          Int      @default(0)
+   432→  lateDays            Int      @default(0)
+   433→  leaveDays           Int      @default(0)
+   434→  kpiScore            Float    @default(0)
+   435→  kpiBonus            Float    @default(0)
+   436→  attendanceDeduction Float    @default(0)
+   437→  bpjs                Float    @default(0)
+   438→  tax                 Float    @default(0)
+   439→  otherDeduction      Float    @default(0)
+   440→  grossSalary         Float
+   441→  totalDeduction      Float    @default(0)
+   442→  netSalary           Float
+   443→  status              String   @default("DRAFT") // DRAFT, APPROVED, PAID
+   444→  paidAt              DateTime?
+   445→  note                String?
+   446→  // Manual input & slip gaji fields
+   447→  isManual            Boolean  @default(false)
+   448→  nik                 String?
+   449→  jabatan             String?
+   450→  bankName            String?
+   451→  bankAccount         String?
+   452→  accountName         String?
+   453→  periodeLabel        String?
+   454→  companyName         String?  @default("PT. HAFARA AIQBA NUSANTARA")
+   455→  createdAt           DateTime @default(now())
+   456→  updatedAt           DateTime @updatedAt
+   457→
+   458→  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   459→
+   460→  @@unique([userId, month, year])
+   461→  @@index([userId])
+   462→  @@index([month, year])
+   463→}
+   464→
+   465→// ===================== FINANCE CATEGORIES =====================
+   466→
+   467→model FinanceCategory {
+   468→  id          String   @id @default(cuid())
+   469→  name        String
+   470→  type        String   // PEMASUKAN, PENGELUARAN
+   471→  icon        String?  // lucide icon name
+   472→  color       String?  // tailwind color
+   473→  isDefault   Boolean  @default(false)
+   474→  createdAt   DateTime @default(now())
+   475→
+   476→  @@unique([name, type])
+   477→}
+   478→
+   479→// ===================== INVENTORY (ASET) =====================
+   480→
+   481→model Inventory {
+   482→  id              String   @id @default(cuid())
+   483→  name            String
+   484→  category        String   // LAPTOP, KAMERA, PRINTER, MOBIL, MOTOR, MEJA, KURSI, PROYEKTOR, MONITOR, LAINNYA
+   485→  photoUrl        String?
+   486→  qrCode          String?
+   487→  location        String?
+   488→  pic             String?  // person in charge
+   489→  purchaseDate    DateTime
+   490→  purchasePrice   Float
+   491→  usefulLife      Int      // umur ekonomis (tahun)
+   492→  depreciationMethod String @default("STRAIGHT_LINE") // STRAIGHT_LINE
+   493→  currentValue    Float    @default(0) // calculated
+   494→  accumulatedDepreciation Float @default(0)
+   495→  status          String   @default("AKTIF") // AKTIF, MAINTENANCE, RUSAK, DIJUAL
+   496→  notes           String?
+   497→  nextMaintenance DateTime?
+   498→  createdAt       DateTime @default(now())
+   499→  updatedAt       DateTime @updatedAt
+   500→
+   501→  movements       AssetMovement[]
+   502→
+   503→  @@index([category])
+   504→  @@index([status])
+   505→}
+   506→
+   507→model AssetMovement {
+   508→  id          String   @id @default(cuid())
+   509→  assetId     String
+   510→  fromLocation String?
+   511→  toLocation  String
+   512→  fromPic     String?
+   513→  toPic       String?
+   514→  reason      String?
+   515→  date        DateTime @default(now())
+   516→  createdAt   DateTime @default(now())
+   517→
+   518→  asset       Inventory @relation(fields: [assetId], references: [id], onDelete: Cascade)
+   519→
+   520→  @@index([assetId])
+   521→}
+   522→
+   523→// ===================== TAX CONFIG (Indonesia) =====================
+   524→// Config-driven tax rates - can be updated without code changes
+   525→
+   526→model TaxConfig {
+   527→  id              String   @id @default(cuid())
+   528→  taxType         String   // PPH21, PPH23, PPH_BADAN, PPN
+   529→  name            String
+   530→  rate            Float    // percentage (e.g. 0.5 for PPh 23, 11 for PPN, 22 for PPh Badan)
+   531→  description     String?
+   532→  effectiveFrom   DateTime @default(now())
+   533→  isActive        Boolean  @default(true)
+   534→  // For PPh 21 progressive brackets (stored as JSON)
+   535→  brackets        String?  // JSON: [{min, max, rate}]
+   536→  // PTKP (untuk PPh 21)
+   537→  ptkp            String?  // JSON: {TK0, TK1, K0, K1, K2, K3...}
+   538→  createdAt       DateTime @default(now())
+   539→  updatedAt       DateTime @updatedAt
+   540→
+   541→  @@index([taxType])
+   542→}
+   543→
+   544→// ===================== TAX PAYMENT (Pajak Terutang & Pembayaran) =====================
+   545→
+   546→model TaxPayment {
+   547→  id              String   @id @default(cuid())
+   548→  taxType         String   // PPH21, PPH23, PPH_BADAN, PPN
+   549→  period          String   // e.g. "2026-07" atau "2026-Q3"
+   550→  periodType      String   // BULANAN, KUARTAL, TAHUNAN
+   551→  masaPajak       String?  // Januari 2026, etc
+   552→  taxableAmount   Float    // dasar pengenaan pajak
+   553→  taxRate         Float    // tarif yang dipakai
+   554→  taxDue          Float    // pajak terutang
+   555→  taxPaid         Float    @default(0) // sudah dibayar
+   556→  status          String   @default("TERUTANG") // TERUTANG, DIBAYAR, DILAPORKAN
+   557→  dueDate         DateTime // jatuh tempo
+   558→  paidAt          DateTime?
+   559→  reportedAt      DateTime?
+   560→  npwp            String?
+   561→  notes           String?
+   562→  // Dokumen
+   563→  buktiPotongUrl  String?
+   564→  buktiBayarUrl   String?
+   565→  dokumenUrl      String?
+   566→  createdAt       DateTime @default(now())
+   567→  updatedAt       DateTime @updatedAt
+   568→
+   569→  @@index([taxType])
+   570→  @@index([period])
+   571→  @@index([status])
+   572→}
+   573→
+   574→// ===================== AI CHAT HISTORY (Finance Assistant & Tax Consultant) =====================
+   575→
+   576→model AiChatHistory {
+   577→  id          String   @id @default(cuid())
+   578→  userId      String
+   579→  sessionType String   // FINANCE_ASSISTANT, TAX_CONSULTANT
+   580→  role        String   // user, assistant
+   581→  content     String
+   582→  createdAt   DateTime @default(now())
+   583→
+   584→  @@index([userId, sessionType])
+   585→}
+   586→
+   587→// ===================== INVOICE =====================
+   588→
+   589→model Invoice {
+   590→  id              String   @id @default(cuid())
+   591→  invoiceNumber   String   @unique
+   592→  issueDate       DateTime
+   593→  clientName      String
+   594→  clientAddress   String?
+   595→  city            String?  // kota penerbitan
+   596→  description     String?  // deskripsi produk/layanan utama
+   597→  // Items stored as JSON: [{description, qty, price, total}]
+   598→  items           String
+   599→  subtotal        Float    @default(0)
+   600→  discount        Float    @default(0)
+   601→  tax             Float    @default(0)
+   602→  totalAmount     Float    @default(0)
+   603→  status          String   @default("PENDING") // PENDING, PAID, CANCELLED
+   604→  paymentInstruction String?
+   605→  terms           String?
+   606→  note            String?
+   607→  // Bank info
+   608→  bankName        String?
+   609→  bankAccount     String?
+   610→  accountName     String?
+   611→  // Creator
+   612→  createdById     String
+   613→  createdAt       DateTime @default(now())
+   614→  updatedAt       DateTime @updatedAt
+   615→
+   616→  @@index([status])
+   617→  @@index([issueDate])
+   618→}
+   619→
+   620→// ===================== APP SETTING (Configurable application settings) =====================
+   621→
+   622→model AppSetting {
+   623→  id          String   @id @default(cuid())
+   624→  key         String   @unique
+   625→  value       String
+   626→  category    String   @default("GENERAL") // GENERAL, COMPANY, FINANCE, TAX, APPEARANCE
+   627→  type        String   @default("TEXT") // TEXT, NUMBER, BOOLEAN, IMAGE, JSON
+   628→  description String?
+   629→  updatedAt   DateTime @updatedAt
+   630→  createdAt   DateTime @default(now())
+   631→}
+   632→
+   633→// ===================== SURAT RESMI =====================
+   634→
+   635→model Surat {
+   636→  id              String   @id @default(cuid())
+   637→  suratType       String   @default("Surat Penawaran") // jenis surat
+   638→  suratNumber     String   @unique
+   639→  issueDate       DateTime
+   640→  city            String   @default("Jombang")
+   641→  perihal         String?
+   642→  lampiran        String?
+   643→  recipientName   String?
+   644→  recipientInstansi String?
+   645→  recipientAddress String?
+   646→  body            String   // isi surat
+   647→  includeActivity Boolean  @default(false)
+   648→  activityDate    String?
+   649→  activityLocation String?
+   650→  activityTime    String?
+   651→  includePayment  Boolean  @default(false)
+   652→  paymentAmount   Float?
+   653→  paymentAmountText String?
+   654→  bookingAmount   Float?
+   655→  bookingAmountText String?
+   656→  bankName        String?
+   657→  bankAccount     String?
+   658→  accountName     String?
+   659→  // Header customization
+   660→  logoWidth       Int      @default(144)
+   661→  headerContact   String?
+   662→  headerAddress1  String?
+   663→  headerAddress2  String?
+   664→  // Signature
+   665→  signatoryName   String   @default("M. Aqil Baihaqi")
+   666→  signatoryTitle  String   @default("Direktur Utama")
+   667→  status          String   @default("DRAFT") // DRAFT, FINAL, ARCHIVED
+   668→  createdById     String
+   669→  createdAt       DateTime @default(now())
+   670→  updatedAt       DateTime @updatedAt
+   671→
+   672→  @@index([suratType])
+   673→  @@index([status])
+   674→}
+   675→
+   676→// ===================== KANBAN BOARD =====================
+   677→
+   678→model KanbanCard {
+   679→  id          String   @id @default(cuid())
+   680→  title       String
+   681→  description String?
+   682→  status      String   @default("TODO") // TODO, IN_PROGRESS, REVIEW, DONE
+   683→  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+   684→  assigneeId  String?
+   685→  category    String?  // e.g. "Training", "Marketing", "Content", "Finance"
+   686→  dueDate     DateTime?
+   687→  position    Int      @default(0) // for ordering within column
+   688→  // Auto-save tracking
+   689→  completedAt DateTime? // when card moved to DONE
+   690→  completedById String?
+   691→  createdAt   DateTime @default(now())
+   692→  updatedAt   DateTime @updatedAt
+   693→
+   694→  assignee    User?    @relation("KanbanAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+   695→  completedBy User?    @relation("KanbanCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+   696→
+   697→  @@index([status])
+   698→  @@index([assigneeId])
+   699→  @@index([completedAt])
+   700→}
+   701→
+   702→// ===================== DAILY WORK SUMMARY (Auto-generated from Kanban DONE cards) =====================
+   703→
+   704→model DailyWorkSummary {
+   705→  id              String   @id @default(cuid())
+   706→  userId          String
+   707→  date            DateTime // the date of work (date-only, stored as midnight)
+   708→  // Aggregated stats for the day
+   709→  totalCompleted  Int      @default(0)
+   710→  highPriorityCount Int    @default(0)
+   711→  mediumPriorityCount Int  @default(0)
+   712→  lowPriorityCount  Int    @default(0)
+   713→  categories      String   // comma-separated list of categories worked on
+   714→  // Structured summary content
+   715→  summaryText     String   // auto-generated narrative summary
+   716→  taskDetails     String   // JSON array of { title, category, priority, completedAt, description }
+   717→  // Metadata
+   718→  generatedAt     DateTime @default(now())
+   719→  updatedAt       DateTime @updatedAt
+   720→
+   721→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   722→
+   723→  @@unique([userId, date]) // one summary per user per day
+   724→  @@index([userId])
+   725→  @@index([date])
+   726→}
+   727→
+   728→// ===================== DOCUMENT LAYOUT (Custom design settings per document type) =====================
+   729→
+   730→model DocumentLayout {
+   731→  id          String   @id @default(cuid())
+   732→  docType     String   @unique // SURAT, INVOICE, SLIP_GAJI
+   733→  settings    String   // JSON: all layout customization
+   734→  updatedAt   DateTime @updatedAt
+   735→  createdAt   DateTime @default(now())
+   736→}
+   737→
+   738→// ===================== EMPLOYEE PROFILE (Biodata Karyawan) =====================
+   739→
+   740→model EmployeeProfile {
+   741→  id              String   @id @default(cuid())
+   742→  userId          String   @unique
+   743→  
+   744→  // Data Pribadi
+   745→  nik             String?  // NIK KTP (16 digit)
+   746→  tempatLahir     String?
+   747→  tanggalLahir    DateTime?
+   748→  jenisKelamin    String?  // LAKI_LAKI, PEREMPUAN
+   749→  golonganDarah   String?  // A, B, AB, O
+   750→  agama           String?  // Islam, Kristen, Katolik, Hindu, Buddha, Konghucu
+   751→  statusPernikahan String? // BELUM_KAWIN, KAWIN, CERAI
+   752→  kewarganegaraan String   @default("WNI")
+   753→  
+   754→  // Alamat
+   755→  alamatKtp       String?
+   756→  alamatDomisili  String?
+   757→  provinsi        String?
+   758→  kota            String?
+   759→  kodePos         String?
+   760→  
+   761→  // Kontak Darurat
+   762→  kontakDaruratNama  String?
+   763→  kontakDaruratHubungan String? // suami/istri/anak/etc
+   764→  kontakDaruratPhone String?
+   765→  
+   766→  // Pendidikan & Pekerjaan
+   767→  pendidikanTerakhir String? // SD, SMP, SMA, D3, S1, S2, S3
+   768→  institusiPendidikan String?
+   769→  jurusan         String?
+   770→  tanggalMasuk    DateTime?
+   771→  statusKaryawan  String? // TETAP, KONTRAK, PROBATION, MAGANG
+   772→  
+   773→  // NPWP & Pajak
+   774→  npwp            String?  // 15 digit NPWP
+   775→  ptkpStatus      String?  // TK0, TK1, TK2, TK3, K0, K1, K2, K3
+   776→  jumlahTanggungan Int     @default(0)
+   777→  noBPJSKesehatan String?
+   778→  noBPJSTenagaKerja String?
+   779→  noBPJSPensiun   String?
+   780→  
+   781→  // Bank & Pembayaran
+   782→  bankName        String?
+   783→  bankAccount     String?
+   784→  bankAccountName String?
+   785→  
+   786→  // Salary info (private - only owner can see/edit)
+   787→  gajiPokok       Float?
+   788→  tunjanganMakan  Float    @default(0)
+   789→  tunjanganTransport Float  @default(0)
+   790→  
+   791→  // Dokumen
+   792→  fotoUrl         String?
+   793→  ktpUrl          String?
+   794→  npwpUrl         String?
+   795→  ijazahUrl       String?
+   796→  
+   797→  // Status
+   798→  isComplete      Boolean  @default(false)
+   799→  completedAt     DateTime?
+   800→  
+   801→  createdAt       DateTime @default(now())
+   802→  updatedAt       DateTime @updatedAt
+   803→  
+   804→  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   805→  
+   806→  @@index([npwp])
+   807→  @@index([ptkpStatus])
+   808→}
+   809→

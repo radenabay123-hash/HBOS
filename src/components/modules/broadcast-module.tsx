@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import {
   Megaphone, Send, RefreshCw, AlertTriangle, Zap, Bell, MessageSquare,
-  CheckCircle2, Clock,
+  CheckCircle2, Clock, Smartphone, BellRing, Users,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatDateTime } from "@/lib/constants";
@@ -44,16 +44,21 @@ export function BroadcastModule() {
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [targetUserId, setTargetUserId] = useState("");
+  const [lastPushResult, setLastPushResult] = useState<any>(null);
+  const [subscriberStats, setSubscriberStats] = useState<{ total: number; byRole: Record<string, number> }>({ total: 0, byRole: {} });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const d = await api<{ notifications: any[] }>("/api/notifications?all=true");
-      // Filter only broadcast notifications (have senderId)
+      const [d, usersRes, statsRes] = await Promise.all([
+        api<{ notifications: any[] }>("/api/notifications?all=true"),
+        api<{ users: any[] }>("/api/users"),
+        api<{ total: number; byRole: Record<string, number> }>("/api/push/stats").catch(() => ({ total: 0, byRole: {} })),
+      ]);
       const broadcastNotifs = (d.notifications || []).filter((n: any) => n.senderId);
       setHistory(broadcastNotifs.slice(0, 20));
-      const usersRes = await api<{ users: any[] }>("/api/users");
       setTeamMembers((usersRes.users || []).filter((u: any) => u.role !== ROLES.OWNER));
+      setSubscriberStats(statsRes);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, []);
@@ -67,6 +72,7 @@ export function BroadcastModule() {
     }
     const notifType = NOTIF_TYPES.find(t => t.value === form.type);
     setSending(true);
+    setLastPushResult(null);
     try {
       const body: any = {
         title: form.title,
@@ -78,11 +84,18 @@ export function BroadcastModule() {
       if (targetUserId) body.targetUserId = targetUserId;
       else body.targetRole = form.targetRole;
 
-      const d = await api<{ sent: number }>("/api/notifications/broadcast", {
+      const d = await api<{ sent: number; push: any }>("/api/notifications/broadcast", {
         method: "POST",
         body: JSON.stringify(body),
       });
-      toast.success(`Notifikasi terkirim ke ${d.sent} orang! 🔔`);
+
+      setLastPushResult(d.push || null);
+
+      const pushMsg = d.push
+        ? ` · ${d.push.reachedUsers}/${d.sent} org menerima push background`
+        : "";
+      toast.success(`Notifikasi terkirim ke ${d.sent} orang${pushMsg}`);
+
       setForm({ title: "", message: "", type: "EVALUATION", targetRole: "ALL", actionUrl: "" });
       setTargetUserId("");
       load();
@@ -100,9 +113,38 @@ export function BroadcastModule() {
           <Megaphone className="w-6 h-6 text-blue-600" /> Broadcast & Evaluasi
         </h1>
         <p className="text-sm text-slate-500 mt-1">
-          Kirim evaluasi, tugas dadakan, atau pengumuman ke tim. Notifikasi muncul dengan suara di HP/browser tim.
+          Kirim evaluasi, tugas dadakan, atau pengumuman ke tim. Notifikasi otomatis terkirim ke HP/laptop mereka walau aplikasi tidak dibuka.
         </p>
       </div>
+
+      {/* Subscriber stats banner */}
+      <Card className="border-blue-200 bg-gradient-to-br from-blue-50/50 to-white">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                <BellRing className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-slate-700">Push Notification Aktif</p>
+                <p className="text-[10px] text-slate-500">{subscriberStats.total} perangkat tim siap menerima push background</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+              {Object.entries(subscriberStats.byRole || {}).map(([role, count]) => (
+                <Badge key={role} variant="outline" className="text-[9px] bg-white">
+                  {ROLE_LABELS[role as string] || role}: {count as number}
+                </Badge>
+              ))}
+              {subscriberStats.total === 0 && (
+                <span className="text-[10px] text-amber-600 italic">
+                  Belum ada tim yang mengaktifkan push. Minta mereka buka "Notifikasi Saya" → Aktifkan.
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT: Compose */}
@@ -142,7 +184,6 @@ export function BroadcastModule() {
                   </SelectContent>
                 </Select>
               </div>
-              {/* Or select specific person */}
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-slate-400 whitespace-nowrap">atau orang spesifik:</span>
                 <select
@@ -187,9 +228,32 @@ export function BroadcastModule() {
               </div>
             )}
 
+            {/* Last push result */}
+            {lastPushResult && (
+              <div className="p-2.5 rounded-lg bg-green-50 border border-green-200 text-xs">
+                <p className="font-semibold text-green-800 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Push terkirim
+                </p>
+                <div className="grid grid-cols-3 gap-2 mt-1.5 text-center">
+                  <div>
+                    <p className="text-base font-bold text-green-700">{lastPushResult.sent}</p>
+                    <p className="text-[9px] text-green-600">Push terkirim</p>
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-blue-700">{lastPushResult.reachedUsers}</p>
+                    <p className="text-[9px] text-blue-600">User terjangkau</p>
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-amber-700">{lastPushResult.failed}</p>
+                    <p className="text-[9px] text-amber-600">Gagal</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Send button */}
             <Button onClick={handleSend} disabled={sending} className="w-full bg-blue-600 hover:bg-blue-700 h-10">
-              {sending ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Mengirim...</> : <><Send className="w-4 h-4 mr-1" /> Kirim Notifikasi 🔔</>}
+              {sending ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Mengirim...</> : <><Send className="w-4 h-4 mr-1" /> Kirim Notifikasi (In-App + Push Background)</>}
             </Button>
           </CardContent>
         </Card>
@@ -212,7 +276,6 @@ export function BroadcastModule() {
                 {history.map((n) => {
                   const typeInfo = NOTIF_TYPES.find(t => t.value === n.type) || NOTIF_TYPES[0];
                   const Icon = typeInfo.icon;
-                  // Count how many people received this (same title+message+createdAt)
                   const recipientCount = history.filter(h => h.title === n.title && h.message === n.message && h.createdAt === n.createdAt).length;
                   return (
                     <div key={n.id} className="p-3 hover:bg-slate-50/50">
@@ -221,15 +284,21 @@ export function BroadcastModule() {
                           <Icon className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-sm font-medium text-slate-900 truncate">{n.title}</p>
                             {n.priority === "urgent" && <Badge variant="outline" className="text-[8px] bg-rose-100 text-rose-700 border-rose-300 shrink-0">URGENT</Badge>}
+                            {recipientCount > 1 && (
+                              <Badge variant="outline" className="text-[8px] bg-blue-50 text-blue-700 border-blue-200 shrink-0 flex items-center gap-0.5">
+                                <Users className="w-2.5 h-2.5" /> {recipientCount}
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
-                          <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400">
+                          <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 flex-wrap">
                             <span>{typeInfo.label}</span>
                             <span>·</span>
                             <span>{formatDateTime(n.createdAt)}</span>
+                            {n.user && <><span>·</span><span>ke: {n.user.name}</span></>}
                           </div>
                         </div>
                       </div>

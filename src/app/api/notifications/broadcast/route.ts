@@ -2,10 +2,13 @@ import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ok, err, handleApi } from "@/lib/api";
 import { ROLES } from "@/lib/constants";
+import { sendPushToUsers } from "@/lib/web-push";
 
 export const runtime = "nodejs";
 
-// POST — Owner broadcasts notification to team members
+// POST — Owner broadcasts notification to team members.
+// Creates in-app notifications AND sends Web Push to recipients' devices,
+// so they get notified even when the app is NOT open.
 export async function POST(req: Request) {
   return handleApi(async () => {
     const user = await getCurrentUser();
@@ -31,6 +34,10 @@ export async function POST(req: Request) {
 
     if (recipients.length === 0) return err("Tidak ada penerima ditemukan", 400);
 
+    const notifType = type || "ANNOUNCEMENT";
+    const notifPriority = priority || "normal";
+    const actionUrlFinal = actionUrl || null;
+
     // Create notification for each recipient
     const notifications = [];
     for (const r of recipients) {
@@ -39,9 +46,9 @@ export async function POST(req: Request) {
           userId: r.id,
           title: String(title).trim(),
           message: String(message).trim(),
-          type: type || "ANNOUNCEMENT",
-          priority: priority || "normal",
-          actionUrl: actionUrl || null,
+          type: notifType,
+          priority: notifPriority,
+          actionUrl: actionUrlFinal,
           senderId: user.id,
           read: false,
         },
@@ -49,6 +56,29 @@ export async function POST(req: Request) {
       notifications.push(n);
     }
 
-    return ok({ sent: notifications.length, notifications });
+    // Send Web Push to all recipients (background delivery)
+    // Non-blocking — failures don't break the in-app notification.
+    let pushResult = { sent: 0, failed: 0, removedStale: 0, reachedUsers: 0 };
+    try {
+      pushResult = await sendPushToUsers(
+        recipients.map((r) => r.id),
+        {
+          title: String(title).trim(),
+          message: String(message).trim(),
+          type: notifType,
+          priority: notifPriority as "normal" | "high" | "urgent",
+          actionUrl: actionUrlFinal || "/",
+        }
+      );
+    } catch (e) {
+      // Push failed but in-app notif already saved — log silently
+      console.error("[broadcast] push send failed:", e);
+    }
+
+    return ok({
+      sent: notifications.length,
+      notifications,
+      push: pushResult,
+    });
   });
 }
