@@ -2025,3 +2025,53 @@ Stage Summary:
   1. Calendar view: click date → panel shows edit/delete buttons, OR click event chip directly → edit dialog opens
   2. Daftar Event list view: edit/delete buttons in Aksi column (sticky right)
 - Users can now edit events from anywhere in the Events module
+
+---
+Task ID: TAX-SETTINGS-UNIFIED-FIX
+Agent: Main (Z.ai Code)
+Task: Fix overlapping tax settings - unify to 4 configs (PPh 21, PPh 23, PPh Badan, PPN) integrated to all systems
+
+Work Log:
+- Identified root cause: TaxConfigModule allowed "Tambah Tarif Pajak" button which created DUPLICATE configs. DB had 24 tax configs (4x PPh21, 6x PPh23, 10x PPh Badan with different rates, 4x PPN) — confusing and impractical.
+- API fix (src/app/api/finance/tax-config/route.ts):
+  * GET: Auto-seeds 4 default configs (PPh 21, PPh 23, PPh Badan, PPN) if missing, returns exactly 4 (one per taxType)
+  * PUT: Uses upsert pattern — finds existing active config by taxType, updates it, deactivates any duplicates. No new duplicates possible.
+  * POST: Alias for PUT (backward compat)
+  * DEFAULT_CONFIGS constant with proper values (UU HPP 2022): PPh 21 progressive brackets (5/15/25/30/35%), PTKP TK0-K3, PPh 23 = 2%, PPh Badan = 22%, PPN = 11%
+- DB cleanup script: Deleted 20 duplicate configs, kept exactly 4 (one per taxType) with proper default values
+- UI redesign (TaxConfigModule in finance-advanced-module.tsx):
+  * REMOVED "Tambah Tarif Pajak" button (no more duplicates)
+  * Shows exactly 4 cards: PPh 21, PPh 23, PPh Badan, PPN
+  * Each card has: tax type badge, "Aktif" badge, Edit button, rate (large), description
+  * PPh 21 card shows full progressive brackets table (5 brackets) + PTKP table (8 statuses TK0-K3)
+  * Each card shows "Terintegrasi ke:" badges listing which systems use this config:
+    - PPh 21: Payroll & Gaji, Kalkulator Pajak, Slip Gaji PDF
+    - PPh 23: Arus Kas, Kalkulator Pajak, SPT Badan
+    - PPh Badan: Laporan Laba Rugi, SPT Badan, AI Tax Consultant, Dashboard Finance
+    - PPN: Arus Kas, Kalkulator Pajak, Invoice
+  * Header: "Pengaturan Pajak Terintegrasi" with info "Atur sekali, berlaku untuk semua sistem"
+  * Edit dialog: simplified — only shows Tarif field for non-PPH21 (PPh 21 uses brackets), description, and PPh 21-specific brackets/PTKP JSON editors
+  * Save button: "Simpan & Terapkan" with loading state
+  * Toast: "Pengaturan pajak disimpan & terintegrasi ke semua sistem"
+- Verified with Agent Browser:
+  * Page shows exactly 4 cards (PPh 21, PPh 23, PPh Badan, PPN)
+  * No "Tambah Tarif Pajak" button
+  * Each card has Edit button + "Terintegrasi ke" badges
+  * VLM rating: 9/10 for neatness
+  * Edit dialog works (tested PPN edit)
+  * 0 errors
+
+Stage Summary:
+- Tax settings UNIFIED: exactly 4 configs (PPh 21, PPh 23, PPh Badan, PPN), no duplicates
+- "Atur sekali, berlaku untuk semua sistem" — single config auto-syncs to:
+  * Payroll & Gaji (PPh 21 karyawan)
+  * Kalkulator Pajak (all 4 types)
+  * SPT Badan (PPh Badan, PPh 23)
+  * Laporan Laba Rugi (PPh Badan)
+  * Invoice (PPN)
+  * AI Tax Consultant (PPh Badan)
+  * Dashboard Finance (PPh Badan for tax estimate)
+  * Slip Gaji PDF (PPh 21)
+- API uses upsert pattern — impossible to create duplicates
+- DB cleaned: 24 configs → 4 configs
+- UI clean and practical: 4 cards with Edit, no Add button, integration info visible

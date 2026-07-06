@@ -1874,6 +1874,7 @@ function TaxConfigModule() {
   const [loading, setLoading] = useState(true);
   const [editDialog, setEditDialog] = useState<{ open: boolean; config: any }>({ open: false, config: null });
   const [form, setForm] = useState({ taxType: "", name: "", rate: 0, description: "", brackets: "", ptkp: "" });
+  const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1884,10 +1885,14 @@ function TaxConfigModule() {
   useEffect(() => { load(); }, [load]);
 
   async function handleSave() {
+    setSaving(true);
     try {
-      await api("/api/finance/tax-config", { method: "POST", body: JSON.stringify(form) });
-      toast.success("Pengaturan pajak disimpan"); setEditDialog({ open: false, config: null }); load();
+      await api("/api/finance/tax-config", { method: "PUT", body: JSON.stringify(form) });
+      toast.success("Pengaturan pajak disimpan & terintegrasi ke semua sistem");
+      setEditDialog({ open: false, config: null });
+      load();
     } catch (e: any) { toast.error(e.message); }
+    finally { setSaving(false); }
   }
 
   if (loading) return <Loading />;
@@ -1899,77 +1904,170 @@ function TaxConfigModule() {
     PPN: "bg-amber-50 text-amber-700 border-amber-200",
   };
 
+  const taxTypeLabels: Record<string, string> = {
+    PPH21: "PPh 21 — Pajak Karyawan",
+    PPH23: "PPh 23 — Pajak Jasa",
+    PPH_BADAN: "PPh Badan — Pajak Perusahaan",
+    PPN: "PPN — Pajak Pertambahan Nilai",
+  };
+
+  const taxTypeIntegrations: Record<string, string[]> = {
+    PPH21: ["Payroll & Gaji (PPh 21 karyawan)", "Kalkulator Pajak", "Slip Gaji PDF"],
+    PPH23: ["Arus Kas (transaksi jasa)", "Kalkulator Pajak", "SPT Badan"],
+    PPH_BADAN: ["Laporan Laba Rugi", "SPT Badan", "AI Tax Consultant", "Dashboard Finance"],
+    PPN: ["Arus Kas (transaksi penjualan)", "Kalkulator Pajak", "Invoice"],
+  };
+
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200 bg-amber-50/50">
+      {/* Header Info */}
+      <Card className="border-blue-200 bg-blue-50/50">
         <CardContent className="p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-slate-900 text-sm">Pengaturan Tarif Pajak</p>
-            <p className="text-xs text-slate-600 mt-1">Ubah tarif pajak sesuai regulasi terbaru. Perubahan berlaku untuk perhitungan pajak ke depan. Tarif disimpan dalam database dan dapat diperbarui tanpa mengubah kode program.</p>
+            <p className="font-semibold text-slate-900 text-sm">Pengaturan Pajak Terintegrasi</p>
+            <p className="text-xs text-slate-600 mt-1">
+              Atur sekali, berlaku untuk semua sistem. Perubahan tarif otomatis tersinkron ke: Payroll & Gaji, Kalkulator Pajak, SPT Badan, Laporan Laba Rugi, Invoice, dan AI Tax Consultant.
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => { setForm({ taxType: "PPN", name: "", rate: 0, description: "", brackets: "", ptkp: "" }); setEditDialog({ open: true, config: null }); }} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-1" /> Tambah Tarif Pajak
-        </Button>
-      </div>
-
+      {/* 4 Tax Cards - exactly PPh 21, PPh 23, PPh Badan, PPN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {configs.map((c) => (
-          <Card key={c.id} className="shadow-sm">
+          <Card key={c.id} className="shadow-sm hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={cn("text-[10px]", taxTypeColors[c.taxType] || "bg-slate-50")}>{c.taxType}</Badge>
-                  {c.isActive && <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">Aktif</Badge>}
+                  <Badge variant="outline" className={cn("text-[10px] font-semibold", taxTypeColors[c.taxType] || "bg-slate-50")}>{c.taxType}</Badge>
+                  <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                    <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" /> Aktif
+                  </Badge>
                 </div>
-                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setForm({ taxType: c.taxType, name: c.name, rate: c.rate, description: c.description || "", brackets: c.brackets || "", ptkp: c.ptkp || "" }); setEditDialog({ open: true, config: c }); }}><Edit3 className="w-3 h-3" /></Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs bg-white"
+                  onClick={() => {
+                    setForm({ taxType: c.taxType, name: c.name, rate: c.rate, description: c.description || "", brackets: c.brackets || "", ptkp: c.ptkp || "" });
+                    setEditDialog({ open: true, config: c });
+                  }}
+                >
+                  <Edit3 className="w-3 h-3 mr-1" /> Edit
+                </Button>
               </div>
-              <p className="font-semibold text-slate-900 text-sm">{c.name}</p>
-              <p className="text-2xl font-bold text-blue-700 mt-1">{c.rate}%</p>
+              <p className="font-semibold text-slate-900 text-sm">{taxTypeLabels[c.taxType] || c.name}</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <p className="text-3xl font-bold text-blue-700">{c.rate}%</p>
+                {c.taxType === "PPH21" && <p className="text-xs text-slate-400">(progresif)</p>}
+              </div>
               {c.description && <p className="text-xs text-slate-500 mt-1">{c.description}</p>}
-              {c.brackets && (
-                <div className="mt-2 pt-2 border-t border-slate-100">
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Tarif Progresif (Bracket)</p>
-                  {(() => { try { const b = JSON.parse(c.brackets); return b.map((br: any, i: number) => <p key={i} className="text-[10px] text-slate-600">{formatCurrency(br.min)} - {br.max ? formatCurrency(br.max) : "tak terbatas"}: {br.rate}%</p>); } catch { return null; } })()}
+
+              {/* Progressive brackets for PPh 21 */}
+              {c.taxType === "PPH21" && c.brackets && (
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1.5">Tarif Progresif (UU HPP)</p>
+                  <div className="space-y-1">
+                    {(() => {
+                      try {
+                        const b = JSON.parse(c.brackets);
+                        return b.map((br: any, i: number) => (
+                          <div key={i} className="flex justify-between text-[10px] text-slate-600">
+                            <span>{formatCurrency(br.min)} - {br.max ? formatCurrency(br.max) : "tak terbatas"}</span>
+                            <span className="font-semibold text-blue-600">{br.rate}%</span>
+                          </div>
+                        ));
+                      } catch { return null; }
+                    })()}
+                  </div>
                 </div>
               )}
-              {c.ptkp && (
+
+              {/* PTKP for PPh 21 */}
+              {c.taxType === "PPH21" && c.ptkp && (
                 <div className="mt-2 pt-2 border-t border-slate-100">
-                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">PTKP (Penghasilan Tidak Kena Pajak)</p>
-                  {(() => { try { const p = JSON.parse(c.ptkp); return Object.entries(p).slice(0, 4).map(([k, v]: any) => <p key={k} className="text-[10px] text-slate-600">{k}: {formatCurrency(v)}/tahun</p>); } catch { return null; } })()}
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1.5">PTKP (Penghasilan Tidak Kena Pajak)</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                    {(() => {
+                      try {
+                        const p = JSON.parse(c.ptkp);
+                        return Object.entries(p).map(([k, v]: any) => (
+                          <div key={k} className="flex justify-between text-[10px] text-slate-600">
+                            <span>{k}</span>
+                            <span className="font-medium">{formatCurrency(v)}/th</span>
+                          </div>
+                        ));
+                      } catch { return null; }
+                    })()}
+                  </div>
                 </div>
               )}
-              <p className="text-[10px] text-slate-400 mt-2">Berlaku sejak: {formatDate(c.effectiveFrom)}</p>
+
+              {/* Integration info */}
+              <div className="mt-3 pt-3 border-t border-slate-100">
+                <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1.5">Terintegrasi ke:</p>
+                <div className="flex flex-wrap gap-1">
+                  {(taxTypeIntegrations[c.taxType] || []).map((int, i) => (
+                    <Badge key={i} variant="outline" className="text-[9px] bg-slate-50 text-slate-600 border-slate-200">{int}</Badge>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
+      {/* Edit Dialog */}
       <Dialog open={editDialog.open} onOpenChange={(o) => setEditDialog({ open: o, config: editDialog.config })}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editDialog.config ? "Edit" : "Tambah"} Tarif Pajak</DialogTitle>
-            <DialogDescription>Ubah tarif sesuai regulasi terbaru. Pastikan sesuai dengan UU yang berlaku.</DialogDescription>
+            <DialogTitle>Edit {taxTypeLabels[form.taxType] || "Tarif Pajak"}</DialogTitle>
+            <DialogDescription>Ubah tarif sesuai regulasi terbaru. Perubahan otomatis berlaku ke semua sistem terkait.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label className="text-xs">Jenis Pajak</Label><Select value={form.taxType} onValueChange={(v) => setForm({ ...form, taxType: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPH21">PPh 21</SelectItem><SelectItem value="PPH23">PPh 23</SelectItem><SelectItem value="PPH_BADAN">PPh Badan</SelectItem><SelectItem value="PPN">PPN</SelectItem></SelectContent></Select></div>
-              <div className="space-y-1.5"><Label className="text-xs">Tarif (%)</Label><Input type="number" step="0.1" value={form.rate} onChange={(e) => setForm({ ...form, rate: Number(e.target.value) })} className="bg-white" /></div>
-            </div>
-            <div className="space-y-1.5"><Label className="text-xs">Nama</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="bg-white" /></div>
-            <div className="space-y-1.5"><Label className="text-xs">Deskripsi (dasar hukum)</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="bg-white text-sm resize-none" /></div>
-            {form.taxType === "PPH21" && (
-              <div className="space-y-1.5"><Label className="text-xs">Tarif Progresif (JSON bracket)</Label><Textarea value={form.brackets} onChange={(e) => setForm({ ...form, brackets: e.target.value })} rows={3} className="bg-white text-xs font-mono resize-none" placeholder='[{"min":0,"max":60000000,"rate":5}]' /></div>
+            {/* Tarif - only show for non-PPH21 (PPh 21 uses brackets) */}
+            {form.taxType !== "PPH21" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Tarif (%)</Label>
+                <Input type="number" step="0.1" value={form.rate} onChange={(e) => setForm({ ...form, rate: Number(e.target.value) })} className="bg-white" />
+                <p className="text-[10px] text-slate-400">
+                  {form.taxType === "PPH23" && "Tarif PPh 23 atas jasa profesional (default: 2%)"}
+                  {form.taxType === "PPH_BADAN" && "Tarif PPh Badan (UU HPP 2022: 22%)"}
+                  {form.taxType === "PPN" && "Tarif PPN (UU HPP 2022: 11%)"}
+                </p>
+              </div>
             )}
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Deskripsi / Dasar Hukum</Label>
+              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className="bg-white text-sm resize-none" />
+            </div>
+
+            {/* PPh 21: progressive brackets */}
             {form.taxType === "PPH21" && (
-              <div className="space-y-1.5"><Label className="text-xs">PTKP (JSON)</Label><Textarea value={form.ptkp} onChange={(e) => setForm({ ...form, ptkp: e.target.value })} rows={2} className="bg-white text-xs font-mono resize-none" placeholder='{"TK0":54000000,"K0":58500000}' /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Tarif Progresif (Bracket JSON)</Label>
+                <Textarea value={form.brackets} onChange={(e) => setForm({ ...form, brackets: e.target.value })} rows={5} className="bg-white text-xs font-mono resize-none" placeholder='[{"min":0,"max":60000000,"rate":5}]' />
+                <p className="text-[10px] text-slate-400">Format: array of {"{ min, max, rate }"}. max = null untuk tak terbatas.</p>
+              </div>
+            )}
+
+            {/* PPh 21: PTKP */}
+            {form.taxType === "PPH21" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">PTKP (JSON)</Label>
+                <Textarea value={form.ptkp} onChange={(e) => setForm({ ...form, ptkp: e.target.value })} rows={4} className="bg-white text-xs font-mono resize-none" placeholder='{"TK0":54000000,"K0":58500000}' />
+                <p className="text-[10px] text-slate-400">Format: object dengan key TK0-TK3, K0-K3 dan value PTKP tahunan.</p>
+              </div>
             )}
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setEditDialog({ open: false, config: null })}>Batal</Button><Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">Simpan</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialog({ open: false, config: null })}>Batal</Button>
+            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+              {saving ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" /> Menyimpan...</> : "Simpan & Terapkan"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
