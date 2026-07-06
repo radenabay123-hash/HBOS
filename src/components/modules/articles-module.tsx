@@ -5,7 +5,7 @@ import {
   FileText, Plus, Pencil, Trash2, FileSpreadsheet, FileText as FilePdf,
   Loader2, CheckCircle2, Clock, AlertCircle, Globe, ExternalLink,
   Check, X, MessageSquare,
-  Search, CheckSquare,
+  Search, CheckSquare, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import {
   ROLES, WEBSITE_OPTIONS, ARTICLE_ACC_STATUS, ARTICLE_STATUS,
-  formatDate, formatNumber,
+  formatDate, formatNumber, formatDateTime,
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -100,6 +100,8 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
   const [revisiTarget, setRevisiTarget] = useState<Article | null>(null);
   const [catatanRevisi, setCatatanRevisi] = useState("");
   const [accLoading, setAccLoading] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: Article | null }>({ open: false, item: null });
 
   const loadArticles = useCallback(async () => {
     setLoading(true);
@@ -638,6 +640,14 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                               )}
                             </div>
                             <div className="flex gap-1 justify-end">
+                              <Button
+                                size="icon" variant="ghost"
+                                className="h-7 w-7 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                onClick={() => setPreviewDialog({ open: true, item: a })}
+                                title="Preview Artikel"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
                               {isAccd && !isPublished && canEdit && (
                                 <Button
                                   size="sm" variant="outline"
@@ -820,6 +830,84 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
               {accLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               Kirim Revisi
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Artikel</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const a = previewDialog.item;
+            return (
+              <div className="space-y-3 py-2">
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Judul Artikel</p>
+                  <p className="text-sm text-slate-700 font-medium">{a.judulArtikel || "-"}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Keyword</p>
+                    <p className="text-sm text-slate-700">{a.keyword || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Website Tujuan</p>
+                    <Badge variant="outline" className={websiteBadgeColor(a.websiteTujuan)}>
+                      {a.websiteTujuan || "-"}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal Publish</p>
+                    <p className="text-sm text-slate-700">{a.tanggalPublish ? formatDate(a.tanggalPublish) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status ACC</p>
+                    <Badge variant="outline" className={ACC_COLORS[a.statusACC]}>
+                      {ACC_LABELS[a.statusACC] || a.statusACC}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                    <Badge variant="outline" className={cn(
+                      a.status === "PUBLISHED"
+                        ? "bg-sky-100 text-sky-700 border-sky-200"
+                        : "bg-slate-100 text-slate-700 border-slate-200"
+                    )}>
+                      {a.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{a.createdAt ? formatDateTime(a.createdAt) : "-"}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Link Artikel</p>
+                  {a.linkArtikel ? (
+                    <a
+                      href={a.linkArtikel} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-blue-700 hover:text-blue-800 hover:underline break-all"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" /> {a.linkArtikel}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-700">-</p>
+                  )}
+                </div>
+                {a.catatanRevisi && (
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Catatan Revisi</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">{a.catatanRevisi}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

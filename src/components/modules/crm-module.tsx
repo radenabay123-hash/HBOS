@@ -76,6 +76,7 @@ import {
   Inbox,
   Loader2,
   CheckSquare,
+  Eye,
 } from "lucide-react";
 
 interface ClientItem {
@@ -177,6 +178,8 @@ export function CrmModule({ user }: CrmModuleProps) {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: ClientItem | null }>({ open: false, item: null });
 
   const loadClients = useCallback(async () => {
     setLoading(true);
@@ -619,7 +622,7 @@ export function CrmModule({ user }: CrmModuleProps) {
                     <TableHead className="text-right min-w-[110px]">Budget</TableHead>
                     <TableHead className="min-w-[100px]">Status</TableHead>
                     <TableHead className="min-w-[90px]">Tgl Event</TableHead>
-                    {canManage && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
+                    <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -660,30 +663,41 @@ export function CrmModule({ user }: CrmModuleProps) {
                       <TableCell className="text-slate-700 text-xs whitespace-nowrap">
                         {c.tanggalEvent ? formatDate(c.tanggalEvent) : "-"}
                       </TableCell>
-                      {canManage && (
-                        <TableCell className="sticky right-0 bg-white z-10">
-                          <div className="flex items-center justify-center gap-0.5">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
-                              onClick={() => openEdit(c)}
-                              title="Edit Klien"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-rose-600 hover:bg-rose-50"
-                              onClick={() => setDeleteId(c.id)}
-                              title="Hapus Klien"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
+                      <TableCell className="sticky right-0 bg-white z-10">
+                        <div className="flex items-center justify-center gap-0.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                            onClick={() => setPreviewDialog({ open: true, item: c })}
+                            title="Preview Klien"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          {canManage && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                onClick={() => openEdit(c)}
+                                title="Edit Klien"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+                                onClick={() => setDeleteId(c.id)}
+                                title="Hapus Klien"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -937,6 +951,89 @@ export function CrmModule({ user }: CrmModuleProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Klien CRM</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const c = previewDialog.item;
+            return (
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nama Klien</p>
+                    <p className="text-sm text-slate-700 font-medium">{c.namaKlien || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Instansi</p>
+                    <p className="text-sm text-slate-700">{c.instansi || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">PIC</p>
+                    <p className="text-sm text-slate-700">{c.pic || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nomor WA</p>
+                    <p className="text-sm text-slate-700">{c.nomorWA || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Email</p>
+                    <p className="text-sm text-blue-600 break-all">{c.email || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jenis Training</p>
+                    <p className="text-sm text-slate-700">{c.jenisTraining || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jumlah Peserta</p>
+                    <p className="text-sm text-slate-700">{c.jumlahPeserta != null ? c.jumlahPeserta : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Budget</p>
+                    <p className="text-sm text-slate-700">{c.budget != null ? formatCurrency(c.budget) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Lokasi</p>
+                    <p className="text-sm text-slate-700">{c.lokasi || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal Event</p>
+                    <p className="text-sm text-slate-700">{c.tanggalEvent ? formatDate(c.tanggalEvent) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                    <Badge variant="outline" className={CLIENT_STATUS_COLORS[c.status] || "bg-slate-100 text-slate-700 border-slate-200"}>
+                      {CLIENT_STATUS_LABELS[c.status] || c.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Ditugaskan Kepada</p>
+                    <p className="text-sm text-slate-700">{c.assignedTo?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Reminder Follow Up</p>
+                    <p className="text-sm text-slate-700">{c.reminderFollowUp ? formatDateTime(c.reminderFollowUp) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{formatDateTime(c.createdAt)}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Catatan Follow Up</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{c.catatanFollowUp || "-"}</p>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

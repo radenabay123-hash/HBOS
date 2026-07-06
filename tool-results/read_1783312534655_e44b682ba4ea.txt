@@ -1,0 +1,786 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState, useCallback, useMemo } from "react";
+     4→import { toast } from "sonner";
+     5→import {
+     6→  Users, UserCheck, UserX, UserPlus, Pencil, Trash2, Power, FileDown,
+     7→  FileSpreadsheet, Loader2, Search, ShieldAlert, CheckSquare, X,
+     8→} from "lucide-react";
+     9→
+    10→import { api } from "@/lib/api-client";
+    11→import {
+    12→  ROLES, ROLE_LABELS, ROLE_COLORS, TEAM_ROLES,
+    13→  formatDate,
+    14→} from "@/lib/constants";
+    15→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    16→
+    17→import { Button } from "@/components/ui/button";
+    18→import { Input } from "@/components/ui/input";
+    19→import { Label } from "@/components/ui/label";
+    20→import { Badge } from "@/components/ui/badge";
+    21→import { Switch } from "@/components/ui/switch";
+    22→import { Card, CardContent } from "@/components/ui/card";
+    23→import { Skeleton } from "@/components/ui/skeleton";
+    24→import {
+    25→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    26→} from "@/components/ui/table";
+    27→import {
+    28→  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+    29→} from "@/components/ui/dialog";
+    30→import {
+    31→  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    32→  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+    33→} from "@/components/ui/alert-dialog";
+    34→import {
+    35→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    36→} from "@/components/ui/select";
+    37→
+    38→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    39→import { usePagination } from "@/lib/hooks/use-pagination";
+    40→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    41→import { Pagination } from "@/components/shared/pagination";
+    42→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    43→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    44→import { cn } from "@/lib/utils";
+    45→
+    46→interface UserRow {
+    47→  id: string;
+    48→  email: string;
+    49→  name: string;
+    50→  role: string;
+    51→  phone?: string | null;
+    52→  avatar?: string | null;
+    53→  position?: string | null;
+    54→  isActive: boolean;
+    55→  createdAt: string;
+    56→  _count: { tasks: number; contentIdeas: number; articles: number };
+    57→}
+    58→
+    59→interface FormState {
+    60→  name: string;
+    61→  email: string;
+    62→  password: string;
+    63→  role: string;
+    64→  phone: string;
+    65→  position: string;
+    66→  isActive: boolean;
+    67→}
+    68→
+    69→const EMPTY_FORM: FormState = {
+    70→  name: "",
+    71→  email: "",
+    72→  password: "",
+    73→  role: TEAM_ROLES[0],
+    74→  phone: "",
+    75→  position: "",
+    76→  isActive: true,
+    77→};
+    78→
+    79→export function TeamManagementModule() {
+    80→  const [users, setUsers] = useState<UserRow[]>([]);
+    81→  const [loading, setLoading] = useState(true);
+    82→  const [submitting, setSubmitting] = useState(false);
+    83→  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+    84→  const [search, setSearch] = useState("");
+    85→  const [bulkMode, setBulkMode] = useState(false);
+    86→
+    87→  const [addOpen, setAddOpen] = useState(false);
+    88→  const [editOpen, setEditOpen] = useState(false);
+    89→  const [editing, setEditing] = useState<UserRow | null>(null);
+    90→  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+    91→
+    92→  const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
+    93→  const [deleting, setDeleting] = useState(false);
+    94→
+    95→  const loadUsers = useCallback(async () => {
+    96→    setLoading(true);
+    97→    try {
+    98→      const data = await api<{ users: UserRow[] }>("/api/users");
+    99→      setUsers(data.users);
+   100→    } catch (e: any) {
+   101→      toast.error(e?.message || "Gagal memuat data tim");
+   102→    } finally {
+   103→      setLoading(false);
+   104→    }
+   105→  }, []);
+   106→
+   107→  useEffect(() => {
+   108→    loadUsers();
+   109→  }, [loadUsers]);
+   110→
+   111→  // Stat cards
+   112→  const total = users.length;
+   113→  const activeCount = users.filter((u) => u.isActive).length;
+   114→  const inactiveCount = total - activeCount;
+   115→  const roleBreakdown = TEAM_ROLES.map((r) => ({
+   116→    role: r,
+   117→    count: users.filter((u) => u.role === r).length,
+   118→  }));
+   119→
+   120→  // Filtered list
+   121→  const filtered = useMemo(() => users.filter((u) => {
+   122→    if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+   123→    if (search) {
+   124→      const q = search.toLowerCase();
+   125→      return (
+   126→        u.name.toLowerCase().includes(q) ||
+   127→        u.email.toLowerCase().includes(q) ||
+   128→        (u.position || "").toLowerCase().includes(q)
+   129→      );
+   130→    }
+   131→    return true;
+   132→  }), [users, roleFilter, search]);
+   133→
+   134→  // Pagination (max 15 per page)
+   135→  const {
+   136→    paginatedItems: paginatedUsers,
+   137→    goToPage: goToUserPage,
+   138→    nextPage: nextUserPage,
+   139→    prevPage: prevUserPage,
+   140→    pageInfo: userPageInfo,
+   141→    resetPage: resetUserPage,
+   142→  } = usePagination(filtered, { pageSize: 15 });
+   143→
+   144→  // Bulk selection (Owner-only feature — module is mounted on owner-only route)
+   145→  const {
+   146→    selectedArray: selectedUserArray,
+   147→    selectedCount: selectedUserCount,
+   148→    isSelected: isUserSelected,
+   149→    toggle: toggleUser,
+   150→    toggleAll: toggleAllUsers,
+   151→    clearSelection: clearUserSelection,
+   152→    resetSelection: resetUserSelection,
+   153→    isAllSelected: isAllUsersSelected,
+   154→  } = useBulkSelect({ getId: (u: UserRow) => u.id });
+   155→
+   156→  // Reset selection + page when client-side filters change
+   157→  useEffect(() => {
+   158→    resetUserSelection();
+   159→    resetUserPage();
+   160→  }, [search, roleFilter, resetUserSelection, resetUserPage]);
+   161→
+   162→  async function handleBulkDelete() {
+   163→    if (!confirm(`Hapus ${selectedUserCount} anggota terpilih?`)) return;
+   164→    let success = 0;
+   165→    let failed = 0;
+   166→    for (const id of selectedUserArray) {
+   167→      try {
+   168→        await api(`/api/users/${id}`, { method: "DELETE" });
+   169→        success++;
+   170→      } catch {
+   171→        failed++;
+   172→      }
+   173→    }
+   174→    clearUserSelection();
+   175→    setBulkMode(false);
+   176→    await loadUsers();
+   177→    if (failed === 0) {
+   178→      toast.success(`${success} anggota berhasil dihapus`);
+   179→    } else {
+   180→      toast.error(`${success} dihapus, ${failed} gagal`);
+   181→    }
+   182→  }
+   183→
+   184→  function openAdd() {
+   185→    setForm(EMPTY_FORM);
+   186→    setAddOpen(true);
+   187→  }
+   188→
+   189→  function openEdit(u: UserRow) {
+   190→    setEditing(u);
+   191→    setForm({
+   192→      name: u.name,
+   193→      email: u.email,
+   194→      password: "",
+   195→      role: u.role,
+   196→      phone: u.phone || "",
+   197→      position: u.position || "",
+   198→      isActive: u.isActive,
+   199→    });
+   200→    setEditOpen(true);
+   201→  }
+   202→
+   203→  async function handleAdd() {
+   204→    if (!form.name || !form.email || !form.password || !form.role) {
+   205→      toast.error("Nama, email, password, dan role wajib diisi");
+   206→      return;
+   207→    }
+   208→    setSubmitting(true);
+   209→    try {
+   210→      await api("/api/users", {
+   211→        method: "POST",
+   212→        body: JSON.stringify({
+   213→          name: form.name,
+   214→          email: form.email,
+   215→          password: form.password,
+   216→          role: form.role,
+   217→          phone: form.phone || undefined,
+   218→          position: form.position || undefined,
+   219→        }),
+   220→      });
+   221→      toast.success("Anggota tim berhasil ditambahkan");
+   222→      setAddOpen(false);
+   223→      loadUsers();
+   224→    } catch (e: any) {
+   225→      toast.error(e?.message || "Gagal menambah anggota");
+   226→    } finally {
+   227→      setSubmitting(false);
+   228→    }
+   229→  }
+   230→
+   231→  async function handleEdit() {
+   232→    if (!editing) return;
+   233→    if (!form.name || !form.email || !form.role) {
+   234→      toast.error("Nama, email, dan role wajib diisi");
+   235→      return;
+   236→    }
+   237→    setSubmitting(true);
+   238→    try {
+   239→      const body: any = {
+   240→        name: form.name,
+   241→        email: form.email,
+   242→        role: form.role,
+   243→        phone: form.phone || "",
+   244→        position: form.position || "",
+   245→        isActive: form.isActive,
+   246→      };
+   247→      if (form.password) body.password = form.password;
+   248→      await api(`/api/users/${editing.id}`, {
+   249→        method: "PUT",
+   250→        body: JSON.stringify(body),
+   251→      });
+   252→      toast.success("Data anggota diperbarui");
+   253→      setEditOpen(false);
+   254→      setEditing(null);
+   255→      loadUsers();
+   256→    } catch (e: any) {
+   257→      toast.error(e?.message || "Gagal memperbarui anggota");
+   258→    } finally {
+   259→      setSubmitting(false);
+   260→    }
+   261→  }
+   262→
+   263→  async function handleToggleActive(u: UserRow) {
+   264→    try {
+   265→      await api(`/api/users/${u.id}`, {
+   266→        method: "PUT",
+   267→        body: JSON.stringify({ isActive: !u.isActive }),
+   268→      });
+   269→      toast.success(u.isActive ? "Anggota dinonaktifkan" : "Anggota diaktifkan");
+   270→      loadUsers();
+   271→    } catch (e: any) {
+   272→      toast.error(e?.message || "Gagal mengubah status");
+   273→    }
+   274→  }
+   275→
+   276→  async function handleDelete() {
+   277→    if (!deleteTarget) return;
+   278→    setDeleting(true);
+   279→    try {
+   280→      await api(`/api/users/${deleteTarget.id}`, { method: "DELETE" });
+   281→      toast.success("Anggota dihapus");
+   282→      setDeleteTarget(null);
+   283→      loadUsers();
+   284→    } catch (e: any) {
+   285→      toast.error(e?.message || "Gagal menghapus anggota");
+   286→    } finally {
+   287→      setDeleting(false);
+   288→    }
+   289→  }
+   290→
+   291→  function handleExportExcel() {
+   292→    if (filtered.length === 0) {
+   293→      toast.error("Tidak ada data untuk diekspor");
+   294→      return;
+   295→    }
+   296→    const rows = filtered.map((u) => ({
+   297→      Nama: u.name,
+   298→      Email: u.email,
+   299→      Role: ROLE_LABELS[u.role] || u.role,
+   300→      Posisi: u.position || "-",
+   301→      Telepon: u.phone || "-",
+   302→      Status: u.isActive ? "Aktif" : "Nonaktif",
+   303→      Tugas: u._count.tasks,
+   304→      Konten: u._count.contentIdeas,
+   305→      Artikel: u._count.articles,
+   306→      Bergabung: formatDate(u.createdAt),
+   307→    }));
+   308→    exportToExcel(rows, "manajemen-tim", "Tim");
+   309→    toast.success("Excel diunduh");
+   310→  }
+   311→
+   312→  function handleExportPDF() {
+   313→    if (filtered.length === 0) {
+   314→      toast.error("Tidak ada data untuk diekspor");
+   315→      return;
+   316→    }
+   317→    const columns = ["Nama", "Email", "Role", "Posisi", "Telepon", "Status", "Tugas", "Konten", "Artikel", "Bergabung"];
+   318→    const rows = filtered.map((u) => [
+   319→      u.name,
+   320→      u.email,
+   321→      ROLE_LABELS[u.role] || u.role,
+   322→      u.position || "-",
+   323→      u.phone || "-",
+   324→      u.isActive ? "Aktif" : "Nonaktif",
+   325→      u._count.tasks,
+   326→      u._count.contentIdeas,
+   327→      u._count.articles,
+   328→      formatDate(u.createdAt),
+   329→    ]);
+   330→    exportToPDF(
+   331→      "Manajemen Tim",
+   332→      columns,
+   333→      rows,
+   334→      "manajemen-tim",
+   335→      `Total: ${filtered.length} anggota`
+   336→    );
+   337→    toast.success("PDF diunduh");
+   338→  }
+   339→
+   340→  return (
+   341→    <div className="space-y-5">
+   342→      <SectionHeader
+   343→        title="Manajemen Tim"
+   344→        description="Kelola akun tim. Hanya owner yang dapat menambah, mengedit, atau menghapus akun."
+   345→        action={
+   346→          <div className="flex flex-wrap items-center gap-2">
+   347→            <Button variant="outline" size="sm" onClick={handleExportPDF} disabled={loading || users.length === 0}>
+   348→              <FileDown className="w-4 h-4" /> PDF
+   349→            </Button>
+   350→            <Button variant="outline" size="sm" onClick={handleExportExcel} disabled={loading || users.length === 0}>
+   351→              <FileSpreadsheet className="w-4 h-4" /> Excel
+   352→            </Button>
+   353→            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openAdd}>
+   354→              <UserPlus className="w-4 h-4" /> Tambah Anggota
+   355→            </Button>
+   356→          </div>
+   357→        }
+   358→      />
+   359→
+   360→      {/* Stat cards */}
+   361→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+   362→        {loading ? (
+   363→          Array.from({ length: 4 }).map((_, i) => (
+   364→            <Card key={i}><CardContent className="p-4"><Skeleton className="h-16 w-full" /></CardContent></Card>
+   365→          ))
+   366→        ) : (
+   367→          <>
+   368→            <StatCard
+   369→              title="Total Anggota"
+   370→              value={total}
+   371→              icon={Users}
+   372→              accent="bg-blue-50 text-blue-600"
+   373→              subtitle="Seluruh akun tim"
+   374→            />
+   375→            <StatCard
+   376→              title="Aktif"
+   377→              value={activeCount}
+   378→              icon={UserCheck}
+   379→              indicator={activeCount > 0 ? "green" : "neutral"}
+   380→              accent="bg-blue-50 text-blue-600"
+   381→              subtitle={`${total > 0 ? Math.round((activeCount / total) * 100) : 0}% dari total`}
+   382→            />
+   383→            <StatCard
+   384→              title="Nonaktif"
+   385→              value={inactiveCount}
+   386→              icon={UserX}
+   387→              indicator={inactiveCount > 0 ? "red" : "neutral"}
+   388→              accent="bg-rose-50 text-rose-600"
+   389→              subtitle="Akun dimatikan"
+   390→            />
+   391→            <Card className="border-l-4 border-l-blue-500">
+   392→              <CardContent className="p-4">
+   393→                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Per Role</p>
+   394→                <div className="mt-2 flex flex-wrap gap-1.5">
+   395→                  {roleBreakdown.map((r) => (
+   396→                    <Badge
+   397→                      key={r.role}
+   398→                      variant="outline"
+   399→                      className={`text-[10px] ${ROLE_COLORS[r.role] || "bg-slate-100 text-slate-700 border-slate-200"}`}
+   400→                    >
+   401→                      {ROLE_LABELS[r.role] || r.role}: {r.count}
+   402→                    </Badge>
+   403→                  ))}
+   404→                </div>
+   405→              </CardContent>
+   406→            </Card>
+   407→          </>
+   408→        )}
+   409→      </div>
+   410→
+   411→      {/* Filter & search */}
+   412→      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+   413→        <div className="relative flex-1">
+   414→          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   415→          <Input
+   416→            placeholder="Cari nama, email, posisi..."
+   417→            value={search}
+   418→            onChange={(e) => setSearch(e.target.value)}
+   419→            className="pl-8"
+   420→          />
+   421→          {search && (
+   422→            <button
+   423→              onClick={() => setSearch("")}
+   424→              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   425→            >
+   426→              <X className="w-4 h-4" />
+   427→            </button>
+   428→          )}
+   429→        </div>
+   430→        <Select value={roleFilter} onValueChange={setRoleFilter}>
+   431→          <SelectTrigger className="w-full sm:w-56">
+   432→            <SelectValue placeholder="Semua Role" />
+   433→          </SelectTrigger>
+   434→          <SelectContent>
+   435→            <SelectItem value="ALL">Semua Role</SelectItem>
+   436→            {TEAM_ROLES.map((r) => (
+   437→              <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+   438→            ))}
+   439→          </SelectContent>
+   440→        </Select>
+   441→        <Button
+   442→          variant={bulkMode ? "default" : "outline"}
+   443→          size="sm"
+   444→          onClick={() => {
+   445→            setBulkMode(!bulkMode);
+   446→            if (bulkMode) clearUserSelection();
+   447→          }}
+   448→          className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   449→        >
+   450→          <CheckSquare className="w-3.5 h-3.5" />
+   451→          {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   452→        </Button>
+   453→      </div>
+   454→
+   455→      {/* Bulk Action Bar */}
+   456→      {bulkMode && selectedUserCount > 0 && (
+   457→        <BulkActionBar
+   458→          selectedCount={selectedUserCount}
+   459→          actions={[
+   460→            {
+   461→              label: "Hapus Terpilih",
+   462→              icon: Trash2,
+   463→              onClick: handleBulkDelete,
+   464→              variant: "destructive",
+   465→              confirmText: `Hapus ${selectedUserCount} anggota terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   466→            },
+   467→          ]}
+   468→          onClearSelection={clearUserSelection}
+   469→        />
+   470→      )}
+   471→
+   472→      {/* Table */}
+   473→      <Card>
+   474→        <CardContent className="p-0">
+   475→          {loading ? (
+   476→            <div className="p-4 space-y-2">
+   477→              {Array.from({ length: 5 }).map((_, i) => (
+   478→                <Skeleton key={i} className="h-10 w-full" />
+   479→              ))}
+   480→            </div>
+   481→          ) : users.length === 0 ? (
+   482→            <EmptyState onAdd={openAdd} hasFilter={false} />
+   483→          ) : filtered.length === 0 ? (
+   484→            <EmptyState onAdd={openAdd} hasFilter={search !== "" || roleFilter !== "ALL"} />
+   485→          ) : (
+   486→            <>
+   487→            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
+   488→              <Table>
+   489→                <TableHeader className="sticky top-0 bg-slate-50 z-10">
+   490→                  <TableRow>
+   491→                    {bulkMode && (
+   492→                      <TableHead className="w-[40px]">
+   493→                        <SelectCheckbox
+   494→                          checked={isAllUsersSelected(paginatedUsers)}
+   495→                          onChange={() => toggleAllUsers(paginatedUsers)}
+   496→                        />
+   497→                      </TableHead>
+   498→                    )}
+   499→                    <TableHead className="min-w-[160px]">Nama</TableHead>
+   500→                    <TableHead className="min-w-[180px]">Email</TableHead>
+   501→                    <TableHead className="min-w-[140px]">Role</TableHead>
+   502→                    <TableHead className="min-w-[140px]">Posisi</TableHead>
+   503→                    <TableHead className="min-w-[130px]">Telepon</TableHead>
+   504→                    <TableHead className="min-w-[100px]">Status</TableHead>
+   505→                    <TableHead className="text-center min-w-[70px]">Tugas</TableHead>
+   506→                    <TableHead className="text-center min-w-[70px]">Konten</TableHead>
+   507→                    <TableHead className="text-center min-w-[70px]">Artikel</TableHead>
+   508→                    <TableHead className="min-w-[110px]">Bergabung</TableHead>
+   509→                    {!bulkMode && <TableHead className="text-right min-w-[160px]">Aksi</TableHead>}
+   510→                  </TableRow>
+   511→                </TableHeader>
+   512→                <TableBody>
+   513→                  {paginatedUsers.map((u) => (
+   514→                    <TableRow key={u.id} className={!u.isActive ? "opacity-60" : ""}>
+   515→                      {bulkMode && (
+   516→                        <TableCell>
+   517→                          <SelectCheckbox
+   518→                            checked={isUserSelected(u)}
+   519→                            onChange={() => toggleUser(u)}
+   520→                          />
+   521→                        </TableCell>
+   522→                      )}
+   523→                      <TableCell className="font-medium text-slate-900">{u.name}</TableCell>
+   524→                      <TableCell className="text-slate-600 text-xs">{u.email}</TableCell>
+   525→                      <TableCell>
+   526→                        <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[u.role] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+   527→                          {ROLE_LABELS[u.role] || u.role}
+   528→                        </Badge>
+   529→                      </TableCell>
+   530→                      <TableCell className="text-slate-600 text-sm">{u.position || "-"}</TableCell>
+   531→                      <TableCell className="text-slate-600 text-sm">{u.phone || "-"}</TableCell>
+   532→                      <TableCell>
+   533→                        {u.isActive ? (
+   534→                          <Badge className="bg-blue-100 text-blue-700 border border-blue-200">Aktif</Badge>
+   535→                        ) : (
+   536→                          <Badge className="bg-slate-100 text-slate-600 border border-slate-200">Nonaktif</Badge>
+   537→                        )}
+   538→                      </TableCell>
+   539→                      <TableCell className="text-center text-sm">{u._count.tasks}</TableCell>
+   540→                      <TableCell className="text-center text-sm">{u._count.contentIdeas}</TableCell>
+   541→                      <TableCell className="text-center text-sm">{u._count.articles}</TableCell>
+   542→                      <TableCell className="text-slate-600 text-xs">{formatDate(u.createdAt)}</TableCell>
+   543→                      {!bulkMode && (
+   544→                        <TableCell>
+   545→                          <div className="flex items-center justify-end gap-1">
+   546→                            <Button
+   547→                              size="icon"
+   548→                              variant="ghost"
+   549→                              className="h-8 w-8 text-slate-600 hover:text-blue-700 hover:bg-blue-50"
+   550→                              onClick={() => openEdit(u)}
+   551→                              title="Edit"
+   552→                            >
+   553→                              <Pencil className="w-4 h-4" />
+   554→                            </Button>
+   555→                            <Button
+   556→                              size="icon"
+   557→                              variant="ghost"
+   558→                              className="h-8 w-8 text-slate-600 hover:text-amber-700 hover:bg-amber-50"
+   559→                              onClick={() => handleToggleActive(u)}
+   560→                              title={u.isActive ? "Nonaktifkan" : "Aktifkan"}
+   561→                            >
+   562→                              <Power className="w-4 h-4" />
+   563→                            </Button>
+   564→                            <Button
+   565→                              size="icon"
+   566→                              variant="ghost"
+   567→                              className="h-8 w-8 text-slate-600 hover:text-rose-700 hover:bg-rose-50"
+   568→                              onClick={() => setDeleteTarget(u)}
+   569→                              title="Hapus"
+   570→                            >
+   571→                              <Trash2 className="w-4 h-4" />
+   572→                            </Button>
+   573→                          </div>
+   574→                        </TableCell>
+   575→                      )}
+   576→                    </TableRow>
+   577→                  ))}
+   578→                </TableBody>
+   579→              </Table>
+   580→            </div>
+   581→            <Pagination
+   582→              currentPage={userPageInfo.currentPage}
+   583→              totalPages={userPageInfo.totalPages}
+   584→              totalItems={userPageInfo.totalItems}
+   585→              startIndex={userPageInfo.startIndex}
+   586→              endIndex={userPageInfo.endIndex}
+   587→              hasNext={userPageInfo.hasNext}
+   588→              hasPrev={userPageInfo.hasPrev}
+   589→              onPageChange={goToUserPage}
+   590→              onNext={nextUserPage}
+   591→              onPrev={prevUserPage}
+   592→            />
+   593→            </>
+   594→          )}
+   595→        </CardContent>
+   596→      </Card>
+   597→
+   598→      {/* Add dialog */}
+   599→      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+   600→        <DialogContent className="max-w-lg">
+   601→          <DialogHeader>
+   602→            <DialogTitle>Tambah Anggota Tim</DialogTitle>
+   603→            <DialogDescription>
+   604→              Buat akun baru untuk anggota tim. Role owner tidak dapat dibuat melalui form ini.
+   605→            </DialogDescription>
+   606→          </DialogHeader>
+   607→          <UserForm form={form} setForm={setForm} passwordRequired />
+   608→          <DialogFooter>
+   609→            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={submitting}>
+   610→              Batal
+   611→            </Button>
+   612→            <Button
+   613→              className="bg-blue-600 hover:bg-blue-700"
+   614→              onClick={handleAdd}
+   615→              disabled={submitting}
+   616→            >
+   617→              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+   618→              Simpan
+   619→            </Button>
+   620→          </DialogFooter>
+   621→        </DialogContent>
+   622→      </Dialog>
+   623→
+   624→      {/* Edit dialog */}
+   625→      <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setEditing(null); }}>
+   626→        <DialogContent className="max-w-lg">
+   627→          <DialogHeader>
+   628→            <DialogTitle>Edit Anggota Tim</DialogTitle>
+   629→            <DialogDescription>
+   630→              Perbarui data anggota. Kosongkan password jika tidak ingin mengubahnya.
+   631→            </DialogDescription>
+   632→          </DialogHeader>
+   633→          <UserForm form={form} setForm={setForm} passwordRequired={false} />
+   634→          <DialogFooter>
+   635→            <Button variant="outline" onClick={() => { setEditOpen(false); setEditing(null); }} disabled={submitting}>
+   636→              Batal
+   637→            </Button>
+   638→            <Button
+   639→              className="bg-blue-600 hover:bg-blue-700"
+   640→              onClick={handleEdit}
+   641→              disabled={submitting}
+   642→            >
+   643→              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+   644→              Simpan Perubahan
+   645→            </Button>
+   646→          </DialogFooter>
+   647→        </DialogContent>
+   648→      </Dialog>
+   649→
+   650→      {/* Delete confirmation */}
+   651→      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+   652→        <AlertDialogContent>
+   653→          <AlertDialogHeader>
+   654→            <AlertDialogTitle className="flex items-center gap-2">
+   655→              <ShieldAlert className="w-5 h-5 text-rose-600" />
+   656→              Hapus Anggota Tim?
+   657→            </AlertDialogTitle>
+   658→            <AlertDialogDescription>
+   659→              Anda akan menghapus akun <strong>{deleteTarget?.name}</strong> ({deleteTarget?.email}).
+   660→              Tindakan ini tidak dapat dibatalkan. Semua data terkait akan ikut terhapus.
+   661→            </AlertDialogDescription>
+   662→          </AlertDialogHeader>
+   663→          <AlertDialogFooter>
+   664→            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+   665→            <AlertDialogAction
+   666→              onClick={handleDelete}
+   667→              disabled={deleting}
+   668→              className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-600"
+   669→            >
+   670→              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+   671→              Hapus Permanen
+   672→            </AlertDialogAction>
+   673→          </AlertDialogFooter>
+   674→        </AlertDialogContent>
+   675→      </AlertDialog>
+   676→    </div>
+   677→  );
+   678→}
+   679→
+   680→// ============================ Sub components ============================
+   681→
+   682→function UserForm({
+   683→  form,
+   684→  setForm,
+   685→  passwordRequired,
+   686→}: {
+   687→  form: FormState;
+   688→  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+   689→  passwordRequired: boolean;
+   690→}) {
+   691→  return (
+   692→    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   693→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   694→        <Label>Nama Lengkap *</Label>
+   695→        <Input
+   696→          value={form.name}
+   697→          onChange={(e) => setForm({ ...form, name: e.target.value })}
+   698→          placeholder="cth. Budi Santoso"
+   699→        />
+   700→      </div>
+   701→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   702→        <Label>Email *</Label>
+   703→        <Input
+   704→          type="email"
+   705→          value={form.email}
+   706→          onChange={(e) => setForm({ ...form, email: e.target.value })}
+   707→          placeholder="nama@hafara.com"
+   708→        />
+   709→      </div>
+   710→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   711→        <Label>Password {passwordRequired ? "*" : "(opsional)"}</Label>
+   712→        <Input
+   713→          type="password"
+   714→          value={form.password}
+   715→          onChange={(e) => setForm({ ...form, password: e.target.value })}
+   716→          placeholder={passwordRequired ? "Min. 6 karakter" : "Kosongkan jika tidak diubah"}
+   717→        />
+   718→      </div>
+   719→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   720→        <Label>Role *</Label>
+   721→        <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
+   722→          <SelectTrigger>
+   723→            <SelectValue placeholder="Pilih role" />
+   724→          </SelectTrigger>
+   725→          <SelectContent>
+   726→            {TEAM_ROLES.map((r) => (
+   727→              <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>
+   728→            ))}
+   729→          </SelectContent>
+   730→        </Select>
+   731→      </div>
+   732→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   733→        <Label>Posisi / Jabatan</Label>
+   734→        <Input
+   735→          value={form.position}
+   736→          onChange={(e) => setForm({ ...form, position: e.target.value })}
+   737→          placeholder="cth. Senior Trainer"
+   738→        />
+   739→      </div>
+   740→      <div className="space-y-1.5 col-span-2 sm:col-span-1">
+   741→        <Label>Telepon</Label>
+   742→        <Input
+   743→          value={form.phone}
+   744→          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+   745→          placeholder="08xxxxxxxxxx"
+   746→        />
+   747→      </div>
+   748→      {!passwordRequired && (
+   749→        <div className="col-span-2 flex items-center justify-between rounded-md border border-slate-200 p-3">
+   750→          <div>
+   751→            <Label className="text-sm">Status Aktif</Label>
+   752→            <p className="text-xs text-slate-500">Nonaktif untuk melarang login</p>
+   753→          </div>
+   754→          <Switch
+   755→            checked={form.isActive}
+   756→            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+   757→          />
+   758→        </div>
+   759→      )}
+   760→    </div>
+   761→  );
+   762→}
+   763→
+   764→function EmptyState({ onAdd, hasFilter }: { onAdd: () => void; hasFilter: boolean }) {
+   765→  return (
+   766→    <div className="flex flex-col items-center justify-center py-12 text-center">
+   767→      <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center mb-3">
+   768→        <Users className="w-7 h-7 text-blue-600" />
+   769→      </div>
+   770→      <p className="text-sm font-medium text-slate-700">
+   771→        {hasFilter ? "Tidak ada anggota yang cocok" : "Belum ada anggota tim"}
+   772→      </p>
+   773→      <p className="text-xs text-slate-500 mt-1 max-w-sm">
+   774→        {hasFilter
+   775→          ? "Coba ubah kata kunci pencarian atau filter role."
+   776→          : "Tambahkan anggota tim pertama untuk mulai mengelola akun."}
+   777→      </p>
+   778→      {!hasFilter && (
+   779→        <Button size="sm" className="mt-4 bg-blue-600 hover:bg-blue-700" onClick={onAdd}>
+   780→          <UserPlus className="w-4 h-4" /> Tambah Anggota
+   781→        </Button>
+   782→      )}
+   783→    </div>
+   784→  );
+   785→}
+   786→

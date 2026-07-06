@@ -75,6 +75,7 @@ import {
   ListChecks,
   Search,
   CheckSquare,
+  Eye,
 } from "lucide-react";
 import { usePagination } from "@/lib/hooks/use-pagination";
 import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
@@ -205,6 +206,8 @@ export function EventsModule({ user }: EventsModuleProps) {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: EventItem | null }>({ open: false, item: null });
 
   // Client-side search + status + month filters (for the list tab)
   const [search, setSearch] = useState("");
@@ -994,7 +997,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                         <TableHead className="min-w-[100px]">Trainer</TableHead>
                         <TableHead className="min-w-[100px]">Status</TableHead>
                         <TableHead className="min-w-[120px]">Checklist</TableHead>
-                        {canManage && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
+                        <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1056,6 +1059,15 @@ export function EventsModule({ user }: EventsModuleProps) {
                                   <Button
                                     variant="ghost"
                                     size="icon"
+                                    className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setPreviewDialog({ open: true, item: e })}
+                                    title="Preview Event"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
                                     className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                                     onClick={() => openEdit(e)}
                                     title="Edit Event"
@@ -1070,6 +1082,21 @@ export function EventsModule({ user }: EventsModuleProps) {
                                     title="Hapus Event"
                                   >
                                     <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            )}
+                            {!canManage && (
+                              <TableCell className="sticky right-0 bg-white z-10">
+                                <div className="flex items-center justify-center gap-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                    onClick={() => setPreviewDialog({ open: true, item: e })}
+                                    title="Preview Event"
+                                  >
+                                    <Eye className="w-4 h-4" />
                                   </Button>
                                 </div>
                               </TableCell>
@@ -1345,6 +1372,84 @@ export function EventsModule({ user }: EventsModuleProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Event</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const e = previewDialog.item;
+            const cl = parseChecklist(e.checklist);
+            const prog = checklistProgress(cl);
+            return (
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nama Event</p>
+                    <p className="text-sm text-slate-700 font-medium">{e.namaEvent || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Klien</p>
+                    <p className="text-sm text-slate-700">{e.client?.namaKlien || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal & Jam</p>
+                    <p className="text-sm text-slate-700">{formatDateTime(e.tanggal)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Lokasi</p>
+                    <p className="text-sm text-slate-700">{e.lokasi || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Trainer</p>
+                    <p className="text-sm text-slate-700">{e.trainer || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Assistant Trainer</p>
+                    <p className="text-sm text-slate-700">{e.assistantTrainer?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status Persiapan</p>
+                    <Badge variant="outline" className={EVENT_PREP_BADGE_COLORS[e.statusPersiapan] || "bg-slate-100 text-slate-700 border-slate-200"}>
+                      {EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Checklist Progress</p>
+                    <p className="text-sm text-slate-700">{prog.done} / {prog.total} ({prog.pct}%)</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{formatDateTime(e.createdAt)}</p>
+                  </div>
+                </div>
+                {cl.length > 0 && (
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase mb-1">Daftar Checklist</p>
+                    <div className="space-y-1">
+                      {cl.map((it, idx) => (
+                        <div key={idx} className="flex items-start gap-2 text-sm">
+                          {it.done ? (
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          ) : (
+                            <Clock className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                          )}
+                          <span className={it.done ? "text-slate-700 line-through" : "text-slate-700"}>{it.item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

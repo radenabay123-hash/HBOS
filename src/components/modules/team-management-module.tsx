@@ -4,13 +4,13 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Users, UserCheck, UserX, UserPlus, Pencil, Trash2, Power, FileDown,
-  FileSpreadsheet, Loader2, Search, ShieldAlert, CheckSquare, X,
+  FileSpreadsheet, Loader2, Search, ShieldAlert, CheckSquare, X, Eye,
 } from "lucide-react";
 
 import { api } from "@/lib/api-client";
 import {
   ROLES, ROLE_LABELS, ROLE_COLORS, TEAM_ROLES,
-  formatDate,
+  formatDate, formatDateTime,
 } from "@/lib/constants";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 
@@ -91,6 +91,8 @@ export function TeamManagementModule() {
 
   const [deleteTarget, setDeleteTarget] = useState<UserRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: UserRow | null }>({ open: false, item: null });
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -546,6 +548,15 @@ export function TeamManagementModule() {
                             <Button
                               size="icon"
                               variant="ghost"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => setPreviewDialog({ open: true, item: u })}
+                              title="Preview Anggota"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
                               className="h-8 w-8 text-slate-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => openEdit(u)}
                               title="Edit"
@@ -673,6 +684,84 @@ export function TeamManagementModule() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Anggota Tim</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const u = previewDialog.item;
+            const biodataComplete = Boolean(u.name && u.email && u.phone && u.position);
+            return (
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nama</p>
+                    <p className="text-sm text-slate-700 font-medium">{u.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Email</p>
+                    <p className="text-sm text-blue-600 break-all">{u.email || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Role</p>
+                    <Badge variant="outline" className={ROLE_COLORS[u.role] || "bg-slate-100 text-slate-700 border-slate-200"}>
+                      {ROLE_LABELS[u.role] || u.role}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Posisi / Jabatan</p>
+                    <p className="text-sm text-slate-700">{u.position || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Telepon</p>
+                    <p className="text-sm text-slate-700">{u.phone || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                    {u.isActive ? (
+                      <Badge className="bg-blue-100 text-blue-700 border border-blue-200">Aktif</Badge>
+                    ) : (
+                      <Badge className="bg-slate-100 text-slate-600 border border-slate-200">Nonaktif</Badge>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Bergabung Pada</p>
+                    <p className="text-sm text-slate-700">{formatDateTime(u.createdAt)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Biodata</p>
+                    {biodataComplete ? (
+                      <Badge className="bg-blue-100 text-blue-700 border border-blue-200">Lengkap</Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-700 border border-amber-200">Belum Lengkap</Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Total Tugas</p>
+                    <p className="text-sm text-slate-700 font-medium">{u._count?.tasks ?? 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Total Konten</p>
+                    <p className="text-sm text-slate-700 font-medium">{u._count?.contentIdeas ?? 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Total Artikel</p>
+                    <p className="text-sm text-slate-700 font-medium">{u._count?.articles ?? 0}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

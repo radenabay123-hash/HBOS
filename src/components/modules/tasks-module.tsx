@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ListTodo, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
   Loader2, CalendarDays, CheckCircle2, Clock, CircleDashed, Filter,
-  Search, CheckSquare, X,
+  Search, CheckSquare, X, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,7 @@ import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import {
   ROLES, TASK_STATUS, TASK_STATUS_LABELS, TASK_STATUS_COLORS,
-  formatDate, formatNumber,
+  formatDate, formatNumber, formatDateTime,
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,7 @@ interface Task {
   status: string;
   tanggal: string;
   user: TaskUser;
+  createdAt?: string;
 }
 
 interface TeamMember { id: string; name: string; role: string; }
@@ -85,6 +86,8 @@ export function TasksModule({ user }: { user: SafeUser }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [saving, setSaving] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: Task | null }>({ open: false, item: null });
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -557,6 +560,14 @@ export function TasksModule({ user }: { user: SafeUser }) {
                         <TableCell className="align-top text-right">
                           <div className="flex justify-end gap-1">
                             <Button
+                              size="icon" variant="ghost"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                              onClick={() => setPreviewDialog({ open: true, item: t })}
+                              title="Preview Tugas"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
                               size="icon" variant="ghost" className="h-8 w-8"
                               onClick={() => openEdit(t)}
                               disabled={!canEdit}
@@ -699,6 +710,69 @@ export function TasksModule({ user }: { user: SafeUser }) {
               {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
               {editingId ? "Simpan Perubahan" : "Tambah Tugas"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Tugas Harian</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const t = previewDialog.item;
+            return (
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal</p>
+                    <p className="text-sm text-slate-700">{formatDate(t.tanggal)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">User</p>
+                    <p className="text-sm text-slate-700">{t.user?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jam Mulai</p>
+                    <p className="text-sm text-slate-700">{t.jamMulai || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jam Selesai</p>
+                    <p className="text-sm text-slate-700">{t.jamSelesai || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Persentase Selesai</p>
+                    <p className="text-sm text-slate-700">{t.persentaseSelesai ?? 0}%</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                    <Badge variant="outline" className={TASK_STATUS_COLORS[t.status]}>
+                      {TASK_STATUS_LABELS[t.status] || t.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{t.createdAt ? formatDateTime(t.createdAt) : "-"}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Task Hari Ini</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{t.taskHariIni || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Progress</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{t.progress || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Hambatan</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{t.hambatan || "-"}</p>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

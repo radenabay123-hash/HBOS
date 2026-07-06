@@ -1,0 +1,708 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import {
+     5→  ListTodo, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
+     6→  Loader2, CalendarDays, CheckCircle2, Clock, CircleDashed, Filter,
+     7→  Search, CheckSquare, X,
+     8→} from "lucide-react";
+     9→import { Button } from "@/components/ui/button";
+    10→import { Badge } from "@/components/ui/badge";
+    11→import { Card, CardContent } from "@/components/ui/card";
+    12→import { Input } from "@/components/ui/input";
+    13→import { Textarea } from "@/components/ui/textarea";
+    14→import { Label } from "@/components/ui/label";
+    15→import { Slider } from "@/components/ui/slider";
+    16→import {
+    17→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    18→} from "@/components/ui/select";
+    19→import {
+    20→  Dialog, DialogContent, DialogDescription, DialogFooter,
+    21→  DialogHeader, DialogTitle,
+    22→} from "@/components/ui/dialog";
+    23→import {
+    24→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    25→} from "@/components/ui/table";
+    26→import { toast } from "sonner";
+    27→import { api } from "@/lib/api-client";
+    28→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    29→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    30→import {
+    31→  ROLES, TASK_STATUS, TASK_STATUS_LABELS, TASK_STATUS_COLORS,
+    32→  formatDate, formatNumber,
+    33→} from "@/lib/constants";
+    34→import type { SafeUser } from "@/lib/auth";
+    35→import { cn } from "@/lib/utils";
+    36→import { usePagination } from "@/lib/hooks/use-pagination";
+    37→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    38→import { Pagination } from "@/components/shared/pagination";
+    39→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    40→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    41→
+    42→interface TaskUser { id: string; name: string; role: string; }
+    43→interface Task {
+    44→  id: string;
+    45→  userId: string;
+    46→  taskHariIni: string;
+    47→  progress: string | null;
+    48→  persentaseSelesai: number;
+    49→  hambatan: string | null;
+    50→  jamMulai: string | null;
+    51→  jamSelesai: string | null;
+    52→  status: string;
+    53→  tanggal: string;
+    54→  user: TaskUser;
+    55→}
+    56→
+    57→interface TeamMember { id: string; name: string; role: string; }
+    58→
+    59→const todayStr = () => new Date().toISOString().split("T")[0];
+    60→
+    61→const emptyForm = {
+    62→  taskHariIni: "",
+    63→  progress: "",
+    64→  persentaseSelesai: 0,
+    65→  hambatan: "",
+    66→  jamMulai: "",
+    67→  jamSelesai: "",
+    68→  status: "BELUM",
+    69→  tanggal: todayStr(),
+    70→};
+    71→
+    72→export function TasksModule({ user }: { user: SafeUser }) {
+    73→  const isOwner = user.role === ROLES.OWNER;
+    74→
+    75→  const [tasks, setTasks] = useState<Task[]>([]);
+    76→  const [loading, setLoading] = useState(true);
+    77→  const [dateFilter, setDateFilter] = useState<string>(""); // empty = Semua Tanggal (show all by default)
+    78→  const [userFilter, setUserFilter] = useState<string>("all");
+    79→  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+    80→  const [search, setSearch] = useState("");
+    81→  const [statusFilter, setStatusFilter] = useState<string>("all");
+    82→  const [bulkMode, setBulkMode] = useState(false);
+    83→
+    84→  const [dialogOpen, setDialogOpen] = useState(false);
+    85→  const [editingId, setEditingId] = useState<string | null>(null);
+    86→  const [form, setForm] = useState({ ...emptyForm });
+    87→  const [saving, setSaving] = useState(false);
+    88→
+    89→  const loadTasks = useCallback(async () => {
+    90→    setLoading(true);
+    91→    try {
+    92→      const params = new URLSearchParams();
+    93→      if (dateFilter) params.set("date", dateFilter);
+    94→      if (isOwner && userFilter !== "all") params.set("userId", userFilter);
+    95→      const data = await api<{ tasks: Task[] }>(`/api/tasks?${params.toString()}`);
+    96→      setTasks(data.tasks || []);
+    97→    } catch (e: any) {
+    98→      toast.error(e?.message || "Gagal memuat tugas");
+    99→    } finally {
+   100→      setLoading(false);
+   101→    }
+   102→  }, [dateFilter, userFilter, isOwner]);
+   103→
+   104→  const loadTeam = useCallback(async () => {
+   105→    if (!isOwner) return;
+   106→    try {
+   107→      const data = await api<{ users: any[] }>("/api/users");
+   108→      setTeamMembers(data.users.map((u) => ({ id: u.id, name: u.name, role: u.role })));
+   109→    } catch {}
+   110→  }, [isOwner]);
+   111→
+   112→  useEffect(() => { loadTasks(); }, [loadTasks]);
+   113→  useEffect(() => { loadTeam(); }, [loadTeam]);
+   114→
+   115→  const stats = useMemo(() => {
+   116→    const total = tasks.length;
+   117→    const selesai = tasks.filter((t) => t.status === "SELESAI").length;
+   118→    const sedang = tasks.filter((t) => t.status === "SEDANG").length;
+   119→    const belum = tasks.filter((t) => t.status === "BELUM").length;
+   120→    return { total, selesai, sedang, belum };
+   121→  }, [tasks]);
+   122→
+   123→  // Client-side search + status filter (on top of backend date/user filter)
+   124→  const filtered = useMemo(() => {
+   125→    let r = tasks;
+   126→    if (statusFilter !== "all") r = r.filter((t) => t.status === statusFilter);
+   127→    if (search.trim()) {
+   128→      const q = search.toLowerCase().trim();
+   129→      r = r.filter((t) =>
+   130→        (t.taskHariIni || "").toLowerCase().includes(q) ||
+   131→        (t.progress || "").toLowerCase().includes(q)
+   132→      );
+   133→    }
+   134→    return r;
+   135→  }, [tasks, search, statusFilter]);
+   136→
+   137→  // Pagination (max 15 per page)
+   138→  const {
+   139→    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+   140→  } = usePagination(filtered, { pageSize: 15 });
+   141→
+   142→  // Bulk selection
+   143→  const {
+   144→    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+   145→    clearSelection, resetSelection, isAllSelected,
+   146→  } = useBulkSelect({ getId: (t: Task) => t.id });
+   147→
+   148→  // Reset selection + page when client-side filters change
+   149→  useEffect(() => {
+   150→    resetSelection();
+   151→    resetPage();
+   152→  }, [search, statusFilter, resetSelection, resetPage]);
+   153→
+   154→  async function handleBulkDelete() {
+   155→    if (!confirm(`Hapus ${selectedCount} tugas terpilih?`)) return;
+   156→    let success = 0;
+   157→    let failed = 0;
+   158→    for (const id of selectedArray) {
+   159→      try {
+   160→        await api(`/api/tasks/${id}`, { method: "DELETE" });
+   161→        success++;
+   162→      } catch {
+   163→        failed++;
+   164→      }
+   165→    }
+   166→    clearSelection();
+   167→    setBulkMode(false);
+   168→    await loadTasks();
+   169→    if (failed === 0) {
+   170→      toast.success(`${success} tugas berhasil dihapus`);
+   171→    } else {
+   172→      toast.error(`${success} dihapus, ${failed} gagal`);
+   173→    }
+   174→  }
+   175→
+   176→  function openAdd() {
+   177→    setEditingId(null);
+   178→    setForm({ ...emptyForm, tanggal: dateFilter || todayStr() });
+   179→    setDialogOpen(true);
+   180→  }
+   181→
+   182→  function openEdit(task: Task) {
+   183→    setEditingId(task.id);
+   184→    setForm({
+   185→      taskHariIni: task.taskHariIni || "",
+   186→      progress: task.progress || "",
+   187→      persentaseSelesai: task.persentaseSelesai ?? 0,
+   188→      hambatan: task.hambatan || "",
+   189→      jamMulai: task.jamMulai || "",
+   190→      jamSelesai: task.jamSelesai || "",
+   191→      status: task.status || "BELUM",
+   192→      tanggal: task.tanggal ? new Date(task.tanggal).toISOString().split("T")[0] : todayStr(),
+   193→    });
+   194→    setDialogOpen(true);
+   195→  }
+   196→
+   197→  async function handleSave() {
+   198→    if (!form.taskHariIni.trim()) {
+   199→      toast.error("Task hari ini wajib diisi");
+   200→      return;
+   201→    }
+   202→    setSaving(true);
+   203→    try {
+   204→      const payload = {
+   205→        taskHariIni: form.taskHariIni,
+   206→        progress: form.progress,
+   207→        persentaseSelesai: Number(form.persentaseSelesai) || 0,
+   208→        hambatan: form.hambatan,
+   209→        jamMulai: form.jamMulai || null,
+   210→        jamSelesai: form.jamSelesai || null,
+   211→        status: form.status,
+   212→        tanggal: form.tanggal,
+   213→      };
+   214→      if (editingId) {
+   215→        await api(`/api/tasks/${editingId}`, { method: "PUT", body: JSON.stringify(payload) });
+   216→        toast.success("Tugas diperbarui");
+   217→      } else {
+   218→        await api("/api/tasks", { method: "POST", body: JSON.stringify(payload) });
+   219→        toast.success("Tugas ditambahkan");
+   220→      }
+   221→      setDialogOpen(false);
+   222→      loadTasks();
+   223→    } catch (e: any) {
+   224→      toast.error(e?.message || "Gagal menyimpan tugas");
+   225→    } finally {
+   226→      setSaving(false);
+   227→    }
+   228→  }
+   229→
+   230→  async function handleDelete(task: Task) {
+   231→    if (!confirm(`Hapus tugas "${task.taskHariIni.slice(0, 40)}${task.taskHariIni.length > 40 ? "..." : ""}"?`)) return;
+   232→    try {
+   233→      await api(`/api/tasks/${task.id}`, { method: "DELETE" });
+   234→      toast.success("Tugas dihapus");
+   235→      loadTasks();
+   236→    } catch (e: any) {
+   237→      toast.error(e?.message || "Gagal menghapus tugas");
+   238→    }
+   239→  }
+   240→
+   241→  function handleExportExcel() {
+   242→    if (!tasks.length) { toast.error("Tidak ada data untuk diekspor"); return; }
+   243→    const rows = tasks.map((t) => ({
+   244→      Tanggal: formatDate(t.tanggal),
+   245→      "Task Hari Ini": t.taskHariIni,
+   246→      User: t.user?.name || "-",
+   247→      Progress: t.progress || "-",
+   248→      "Persentase Selesai (%)": t.persentaseSelesai ?? 0,
+   249→      Hambatan: t.hambatan || "-",
+   250→      "Jam Mulai": t.jamMulai || "-",
+   251→      "Jam Selesai": t.jamSelesai || "-",
+   252→      Status: TASK_STATUS_LABELS[t.status] || t.status,
+   253→    }));
+   254→    exportToExcel(rows, `Tugas_Harian_${dateFilter || "all"}`, "Tugas Harian");
+   255→    toast.success("Excel diunduh");
+   256→  }
+   257→
+   258→  function handleExportPDF() {
+   259→    if (!tasks.length) { toast.error("Tidak ada data untuk diekspor"); return; }
+   260→    const columns = isOwner
+   261→      ? ["Tanggal", "Task", "User", "%", "Status", "Jam Mulai", "Jam Selesai"]
+   262→      : ["Tanggal", "Task", "%", "Status", "Jam Mulai", "Jam Selesai"];
+   263→    const rows = tasks.map((t) => {
+   264→      const base = [
+   265→        formatDate(t.tanggal),
+   266→        t.taskHariIni,
+   267→        ...(isOwner ? [t.user?.name || "-"] : []),
+   268→        `${t.persentaseSelesai ?? 0}%`,
+   269→        TASK_STATUS_LABELS[t.status] || t.status,
+   270→        t.jamMulai || "-",
+   271→        t.jamSelesai || "-",
+   272→      ];
+   273→      return base;
+   274→    });
+   275→    exportToPDF(
+   276→      "Laporan Tugas Harian",
+   277→      columns,
+   278→      rows as any,
+   279→      `Tugas_Harian_${dateFilter || "all"}`,
+   280→      `Tanggal: ${dateFilter || "Semua"}`
+   281→    );
+   282→    toast.success("PDF diunduh");
+   283→  }
+   284→
+   285→  return (
+   286→    <div className="space-y-5">
+   287→      <SectionHeader
+   288→        title="Tugas Harian"
+   289→        description="Catat dan pantau tugas harian tim. Owner melihat semua, tim melihat tugas sendiri."
+   290→        action={
+   291→          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
+   292→            <Plus className="w-4 h-4" /> Tambah Tugas
+   293→          </Button>
+   294→        }
+   295→      />
+   296→
+   297→      {/* Filters */}
+   298→      <Card className="border-slate-200">
+   299→        <CardContent className="p-4">
+   300→          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+   301→            <div className="flex-1 min-w-0">
+   302→              <Label className="text-xs text-slate-500 mb-1.5 flex items-center gap-1.5">
+   303→                <CalendarDays className="w-3.5 h-3.5" /> Tanggal
+   304→              </Label>
+   305→              <div className="flex gap-2">
+   306→                <Input
+   307→                  type="date"
+   308→                  value={dateFilter}
+   309→                  onChange={(e) => setDateFilter(e.target.value)}
+   310→                  className="h-9 flex-1"
+   311→                  disabled={!dateFilter}
+   312→                />
+   313→                <Button
+   314→                  variant={dateFilter ? "outline" : "default"}
+   315→                  size="sm"
+   316→                  className="h-9 whitespace-nowrap"
+   317→                  onClick={() => setDateFilter(dateFilter ? "" : todayStr())}
+   318→                >
+   319→                  {dateFilter ? "Semua Tanggal" : "Hari Ini"}
+   320→                </Button>
+   321→              </div>
+   322→            </div>
+   323→            {isOwner && (
+   324→              <div className="flex-1 min-w-0">
+   325→                <Label className="text-xs text-slate-500 mb-1.5 flex items-center gap-1.5">
+   326→                  <Filter className="w-3.5 h-3.5" /> Anggota Tim
+   327→                </Label>
+   328→                <Select value={userFilter} onValueChange={setUserFilter}>
+   329→                  <SelectTrigger className="h-9"><SelectValue placeholder="Semua Anggota" /></SelectTrigger>
+   330→                  <SelectContent>
+   331→                    <SelectItem value="all">Semua Anggota</SelectItem>
+   332→                    {teamMembers.map((m) => (
+   333→                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+   334→                    ))}
+   335→                  </SelectContent>
+   336→                </Select>
+   337→              </div>
+   338→            )}
+   339→            <div className="flex gap-2">
+   340→              <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9">
+   341→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   342→              </Button>
+   343→              <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9">
+   344→                <FileText className="w-4 h-4" /> PDF
+   345→              </Button>
+   346→            </div>
+   347→          </div>
+   348→
+   349→          {/* Search + Status filter + Bulk select toggle */}
+   350→          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+   351→            <div className="relative flex-1 min-w-[200px]">
+   352→              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   353→              <Input
+   354→                type="text"
+   355→                value={search}
+   356→                onChange={(e) => setSearch(e.target.value)}
+   357→                placeholder="Cari tugas atau progress..."
+   358→                className="pl-9 h-9 bg-white text-sm"
+   359→              />
+   360→              {search && (
+   361→                <button
+   362→                  onClick={() => setSearch("")}
+   363→                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   364→                >
+   365→                  <X className="w-4 h-4" />
+   366→                </button>
+   367→              )}
+   368→            </div>
+   369→            <div className="min-w-[180px]">
+   370→              <Select value={statusFilter} onValueChange={setStatusFilter}>
+   371→                <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+   372→                <SelectContent>
+   373→                  <SelectItem value="all">Semua Status</SelectItem>
+   374→                  {TASK_STATUS.map((s) => (
+   375→                    <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>
+   376→                  ))}
+   377→                </SelectContent>
+   378→              </Select>
+   379→            </div>
+   380→            <Button
+   381→              variant={bulkMode ? "default" : "outline"}
+   382→              size="sm"
+   383→              onClick={() => {
+   384→                setBulkMode(!bulkMode);
+   385→                if (bulkMode) clearSelection();
+   386→              }}
+   387→              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   388→            >
+   389→              <CheckSquare className="w-3.5 h-3.5" />
+   390→              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   391→            </Button>
+   392→          </div>
+   393→        </CardContent>
+   394→      </Card>
+   395→
+   396→      {/* Bulk Action Bar */}
+   397→      {bulkMode && selectedCount > 0 && (
+   398→        <BulkActionBar
+   399→          selectedCount={selectedCount}
+   400→          actions={[
+   401→            {
+   402→              label: "Hapus Terpilih",
+   403→              icon: Trash2,
+   404→              onClick: handleBulkDelete,
+   405→              variant: "destructive",
+   406→              confirmText: `Hapus ${selectedCount} tugas terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   407→            },
+   408→          ]}
+   409→          onClearSelection={clearSelection}
+   410→        />
+   411→      )}
+   412→
+   413→      {/* Stats */}
+   414→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   415→        <StatCard
+   416→          title="Total Hari Ini"
+   417→          value={formatNumber(stats.total)}
+   418→          icon={ListTodo}
+   419→          indicator="neutral"
+   420→          accent="bg-slate-100 text-slate-600"
+   421→          subtitle={formatDate(dateFilter)}
+   422→        />
+   423→        <StatCard
+   424→          title="Selesai"
+   425→          value={formatNumber(stats.selesai)}
+   426→          icon={CheckCircle2}
+   427→          indicator="green"
+   428→          accent="bg-blue-50 text-blue-600"
+   429→          subtitle={`${stats.total ? Math.round((stats.selesai / stats.total) * 100) : 0}% selesai`}
+   430→        />
+   431→        <StatCard
+   432→          title="Sedang Dikerjakan"
+   433→          value={formatNumber(stats.sedang)}
+   434→          icon={Clock}
+   435→          indicator="yellow"
+   436→          accent="bg-amber-50 text-amber-600"
+   437→        />
+   438→        <StatCard
+   439→          title="Belum Dikerjakan"
+   440→          value={formatNumber(stats.belum)}
+   441→          icon={CircleDashed}
+   442→          indicator="red"
+   443→          accent="bg-rose-50 text-rose-600"
+   444→        />
+   445→      </div>
+   446→
+   447→      {/* Table */}
+   448→      <Card className="border-slate-200">
+   449→        <CardContent className="p-0">
+   450→          {loading ? (
+   451→            <div className="flex items-center justify-center py-16">
+   452→              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+   453→            </div>
+   454→          ) : tasks.length === 0 ? (
+   455→            <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+   456→              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+   457→                <ListTodo className="w-7 h-7 text-slate-400" />
+   458→              </div>
+   459→              <p className="text-slate-700 font-medium">Belum ada tugas</p>
+   460→              <p className="text-sm text-slate-500 mt-1">
+   461→                Tidak ada tugas tercatat pada tanggal {formatDate(dateFilter)}.
+   462→              </p>
+   463→              <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
+   464→                <Plus className="w-4 h-4" /> Tambah Tugas
+   465→              </Button>
+   466→            </div>
+   467→          ) : filtered.length === 0 ? (
+   468→            <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+   469→              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+   470→                <Search className="w-7 h-7 text-slate-400" />
+   471→              </div>
+   472→              <p className="text-slate-700 font-medium">Tidak ada tugas yang cocok</p>
+   473→              <p className="text-sm text-slate-500 mt-1">
+   474→                Coba ubah kata kunci atau filter status.
+   475→              </p>
+   476→            </div>
+   477→          ) : (
+   478→            <>
+   479→            <div className="max-h-[600px] overflow-auto">
+   480→              <Table>
+   481→                <TableHeader className="sticky top-0 bg-slate-50 z-10">
+   482→                  <TableRow>
+   483→                    {bulkMode && (
+   484→                      <TableHead className="w-[40px]">
+   485→                        <SelectCheckbox
+   486→                          checked={isAllSelected(paginatedItems)}
+   487→                          onChange={() => toggleAll(paginatedItems)}
+   488→                        />
+   489→                      </TableHead>
+   490→                    )}
+   491→                    <TableHead className="min-w-[200px]">Tugas</TableHead>
+   492→                    {isOwner && <TableHead>User</TableHead>}
+   493→                    <TableHead>Progress</TableHead>
+   494→                    <TableHead className="min-w-[140px]">% Selesai</TableHead>
+   495→                    <TableHead className="min-w-[160px]">Hambatan</TableHead>
+   496→                    <TableHead>Mulai</TableHead>
+   497→                    <TableHead>Selesai</TableHead>
+   498→                    <TableHead>Status</TableHead>
+   499→                    <TableHead className="text-right">Aksi</TableHead>
+   500→                  </TableRow>
+   501→                </TableHeader>
+   502→                <TableBody>
+   503→                  {paginatedItems.map((t) => {
+   504→                    const canEdit = isOwner || t.userId === user.id;
+   505→                    return (
+   506→                      <TableRow key={t.id} className="hover:bg-slate-50">
+   507→                        {bulkMode && (
+   508→                          <TableCell>
+   509→                            <SelectCheckbox
+   510→                              checked={isSelected(t)}
+   511→                              onChange={() => toggle(t)}
+   512→                            />
+   513→                          </TableCell>
+   514→                        )}
+   515→                        <TableCell className="font-medium text-slate-900 align-top">
+   516→                          {t.taskHariIni}
+   517→                        </TableCell>
+   518→                        {isOwner && (
+   519→                          <TableCell className="align-top">
+   520→                            <span className="text-sm text-slate-700">{t.user?.name || "-"}</span>
+   521→                          </TableCell>
+   522→                        )}
+   523→                        <TableCell className="align-top text-sm text-slate-600 max-w-[200px]">
+   524→                          {t.progress || <span className="text-slate-400">-</span>}
+   525→                        </TableCell>
+   526→                        <TableCell className="align-top">
+   527→                          <div className="flex items-center gap-2 min-w-[120px]">
+   528→                            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+   529→                              <div
+   530→                                className={cn(
+   531→                                  "h-full rounded-full transition-all",
+   532→                                  t.persentaseSelesai >= 100 ? "bg-blue-500"
+   533→                                    : t.persentaseSelesai >= 60 ? "bg-amber-500" : "bg-rose-500"
+   534→                                )}
+   535→                                style={{ width: `${Math.min(t.persentaseSelesai ?? 0, 100)}%` }}
+   536→                              />
+   537→                            </div>
+   538→                            <span className="text-xs font-semibold text-slate-700 w-9 text-right">
+   539→                              {t.persentaseSelesai ?? 0}%
+   540→                            </span>
+   541→                          </div>
+   542→                        </TableCell>
+   543→                        <TableCell className="align-top text-sm text-slate-600 max-w-[220px]">
+   544→                          {t.hambatan || <span className="text-slate-400">-</span>}
+   545→                        </TableCell>
+   546→                        <TableCell className="align-top text-sm text-slate-600 tabular-nums">
+   547→                          {t.jamMulai || "-"}
+   548→                        </TableCell>
+   549→                        <TableCell className="align-top text-sm text-slate-600 tabular-nums">
+   550→                          {t.jamSelesai || "-"}
+   551→                        </TableCell>
+   552→                        <TableCell className="align-top">
+   553→                          <Badge variant="outline" className={TASK_STATUS_COLORS[t.status]}>
+   554→                            {TASK_STATUS_LABELS[t.status] || t.status}
+   555→                          </Badge>
+   556→                        </TableCell>
+   557→                        <TableCell className="align-top text-right">
+   558→                          <div className="flex justify-end gap-1">
+   559→                            <Button
+   560→                              size="icon" variant="ghost" className="h-8 w-8"
+   561→                              onClick={() => openEdit(t)}
+   562→                              disabled={!canEdit}
+   563→                              title={canEdit ? "Edit" : "Tidak dapat mengedit tugas orang lain"}
+   564→                            >
+   565→                              <Pencil className="w-3.5 h-3.5" />
+   566→                            </Button>
+   567→                            <Button
+   568→                              size="icon" variant="ghost"
+   569→                              className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+   570→                              onClick={() => handleDelete(t)}
+   571→                              disabled={!canEdit}
+   572→                            >
+   573→                              <Trash2 className="w-3.5 h-3.5" />
+   574→                            </Button>
+   575→                          </div>
+   576→                        </TableCell>
+   577→                      </TableRow>
+   578→                    );
+   579→                  })}
+   580→                </TableBody>
+   581→              </Table>
+   582→            </div>
+   583→            <Pagination
+   584→              currentPage={pageInfo.currentPage}
+   585→              totalPages={pageInfo.totalPages}
+   586→              totalItems={pageInfo.totalItems}
+   587→              startIndex={pageInfo.startIndex}
+   588→              endIndex={pageInfo.endIndex}
+   589→              hasNext={pageInfo.hasNext}
+   590→              hasPrev={pageInfo.hasPrev}
+   591→              onPageChange={goToPage}
+   592→              onNext={nextPage}
+   593→              onPrev={prevPage}
+   594→            />
+   595→            </>
+   596→          )}
+   597→        </CardContent>
+   598→      </Card>
+   599→
+   600→      {/* Add/Edit Dialog */}
+   601→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   602→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   603→          <DialogHeader>
+   604→            <DialogTitle>{editingId ? "Edit Tugas" : "Tambah Tugas"}</DialogTitle>
+   605→            <DialogDescription>
+   606→              {editingId ? "Perbarui informasi tugas harian." : "Catat tugas harian Anda."}
+   607→            </DialogDescription>
+   608→          </DialogHeader>
+   609→
+   610→          <div className="space-y-4 py-2">
+   611→            <div>
+   612→              <Label className="mb-1.5">Task Hari Ini <span className="text-rose-500">*</span></Label>
+   613→              <Textarea
+   614→                value={form.taskHariIni}
+   615→                onChange={(e) => setForm({ ...form, taskHariIni: e.target.value })}
+   616→                placeholder="Deskripsikan tugas yang dikerjakan hari ini..."
+   617→                rows={3}
+   618→              />
+   619→            </div>
+   620→
+   621→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   622→              <div>
+   623→                <Label className="mb-1.5">Progress</Label>
+   624→                <Input
+   625→                  value={form.progress}
+   626→                  onChange={(e) => setForm({ ...form, progress: e.target.value })}
+   627→                  placeholder="Mis: sedang menyusun draft..."
+   628→                />
+   629→              </div>
+   630→              <div>
+   631→                <Label className="mb-1.5">Status</Label>
+   632→                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   633→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   634→                  <SelectContent>
+   635→                    {TASK_STATUS.map((s) => (
+   636→                      <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>
+   637→                    ))}
+   638→                  </SelectContent>
+   639→                </Select>
+   640→              </div>
+   641→            </div>
+   642→
+   643→            <div>
+   644→              <div className="flex justify-between items-center mb-2">
+   645→                <Label>Persentase Selesai</Label>
+   646→                <span className="text-sm font-semibold text-blue-700">{form.persentaseSelesai}%</span>
+   647→              </div>
+   648→              <Slider
+   649→                value={[form.persentaseSelesai]}
+   650→                min={0}
+   651→                max={100}
+   652→                step={5}
+   653→                onValueChange={(v) => setForm({ ...form, persentaseSelesai: v[0] })}
+   654→                className="[&_[role=slider]]:bg-blue-600"
+   655→              />
+   656→            </div>
+   657→
+   658→            <div>
+   659→              <Label className="mb-1.5">Hambatan</Label>
+   660→              <Textarea
+   661→                value={form.hambatan}
+   662→                onChange={(e) => setForm({ ...form, hambatan: e.target.value })}
+   663→                placeholder="Kendala atau hambatan yang dihadapi (opsional)..."
+   664→                rows={2}
+   665→              />
+   666→            </div>
+   667→
+   668→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+   669→              <div>
+   670→                <Label className="mb-1.5">Jam Mulai</Label>
+   671→                <Input
+   672→                  type="time"
+   673→                  value={form.jamMulai}
+   674→                  onChange={(e) => setForm({ ...form, jamMulai: e.target.value })}
+   675→                />
+   676→              </div>
+   677→              <div>
+   678→                <Label className="mb-1.5">Jam Selesai</Label>
+   679→                <Input
+   680→                  type="time"
+   681→                  value={form.jamSelesai}
+   682→                  onChange={(e) => setForm({ ...form, jamSelesai: e.target.value })}
+   683→                />
+   684→              </div>
+   685→              <div>
+   686→                <Label className="mb-1.5">Tanggal</Label>
+   687→                <Input
+   688→                  type="date"
+   689→                  value={form.tanggal}
+   690→                  onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+   691→                />
+   692→              </div>
+   693→            </div>
+   694→          </div>
+   695→
+   696→          <DialogFooter>
+   697→            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
+   698→            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+   699→              {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   700→              {editingId ? "Simpan Perubahan" : "Tambah Tugas"}
+   701→            </Button>
+   702→          </DialogFooter>
+   703→        </DialogContent>
+   704→      </Dialog>
+   705→    </div>
+   706→  );
+   707→}
+   708→

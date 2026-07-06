@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Clock, LogIn, LogOut, Calendar, CheckCircle2, AlertCircle, Users,
   RefreshCw, FileText, Timer, CalendarDays, TrendingUp,
-  Trash2, Search, CheckSquare, X,
+  Trash2, Search, CheckSquare, X, Eye,
 } from "lucide-react";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -39,6 +39,7 @@ interface AttendanceRecord {
   workHours: number | null;
   note: string | null;
   user: { id: string; name: string; role: string; position: string };
+  createdAt?: string;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -73,6 +74,8 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [bulkMode, setBulkMode] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: AttendanceRecord | null }>({ open: false, item: null });
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -451,7 +454,7 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
                     <th className="py-2 px-2 font-medium">Check Out</th>
                     <th className="py-2 px-2 font-medium">Jam</th>
                     <th className="py-2 px-2 font-medium">Status</th>
-                    {isOwner && !bulkMode && <th className="py-2 pl-2 font-medium">Aksi</th>}
+                    {!bulkMode && <th className="py-2 pl-2 font-medium">Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -471,7 +474,23 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
                       <td className="py-2 px-2 text-slate-600">{r.checkOut ? new Date(r.checkOut).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
                       <td className="py-2 px-2 text-slate-600">{r.workHours ? `${r.workHours}j` : "-"}</td>
                       <td className="py-2 px-2"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[r.status])}>{STATUS_LABELS[r.status] || r.status}</Badge></td>
-                      {isOwner && !bulkMode && <td className="py-2 pl-2"><Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => handleEdit(r)}>Edit</Button></td>}
+                      {!bulkMode && (
+                        <td className="py-2 pl-2">
+                          <div className="flex items-center gap-0.5">
+                            <Button
+                              size="sm" variant="ghost"
+                              className="h-7 w-7 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                              onClick={() => setPreviewDialog({ open: true, item: r })}
+                              title="Preview Absensi"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </Button>
+                            {isOwner && (
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => handleEdit(r)}>Edit</Button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -519,6 +538,61 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialog({ open: false, record: null })}>Batal</Button>
             <Button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Absensi</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const r = previewDialog.item;
+            return (
+              <div className="space-y-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nama</p>
+                    <p className="text-sm text-slate-700 font-medium">{r.user?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal</p>
+                    <p className="text-sm text-slate-700">{formatDate(r.date)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jam Masuk</p>
+                    <p className="text-sm text-slate-700">{r.checkIn ? new Date(r.checkIn).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jam Keluar</p>
+                    <p className="text-sm text-slate-700">{r.checkOut ? new Date(r.checkOut).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Jam Kerja</p>
+                    <p className="text-sm text-slate-700">{r.workHours != null ? `${r.workHours} jam` : "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                    <Badge variant="outline" className={STATUS_COLORS[r.status]}>
+                      {STATUS_LABELS[r.status] || r.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{r.createdAt ? formatDateTime(r.createdAt) : "-"}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Catatan</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{r.note || "-"}</p>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

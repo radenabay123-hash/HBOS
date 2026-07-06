@@ -49,6 +49,7 @@ import {
   ROLES,
   DOCUMENT_TYPES,
   formatDate,
+  formatDateTime,
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { toast } from "sonner";
@@ -68,6 +69,7 @@ import {
   Search,
   CheckSquare,
   X,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePagination } from "@/lib/hooks/use-pagination";
@@ -161,6 +163,8 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; item: DocumentItem | null }>({ open: false, item: null });
 
   const loadDocuments = useCallback(async () => {
     setLoading(true);
@@ -629,7 +633,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                     <TableHead className="min-w-[200px]">Keterangan</TableHead>
                     <TableHead className="min-w-[140px]">Diunggah Oleh</TableHead>
                     <TableHead className="min-w-[120px]">Tanggal</TableHead>
-                    {canDelete && !bulkMode && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+                    {!bulkMode && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -685,8 +689,18 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                              onClick={() => setPreviewDialog({ open: true, item: d })}
+                              title="Preview Dokumen"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 text-slate-500 hover:text-blue-600"
                               onClick={() => openEdit(d)}
+                              title="Edit Dokumen"
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -695,8 +709,24 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                               size="icon"
                               className="h-8 w-8 text-slate-500 hover:text-rose-600"
                               onClick={() => setDeleteId(d.id)}
+                              title="Hapus Dokumen"
                             >
                               <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
+                      {!canDelete && !bulkMode && (
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                              onClick={() => setPreviewDialog({ open: true, item: d })}
+                              title="Preview Dokumen"
+                            >
+                              <Eye className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -882,6 +912,72 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, item: previewDialog.item })}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Eye className="w-5 h-5 text-blue-600" /> Preview Dokumen</DialogTitle>
+          </DialogHeader>
+          {previewDialog.item && (() => {
+            const d = previewDialog.item;
+            return (
+              <div className="space-y-3 py-2">
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Nama Dokumen</p>
+                  <p className="text-sm text-slate-700 font-medium">{d.documentName || "-"}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Tipe Dokumen</p>
+                    <Badge variant="outline" className={docTypeColor(d.documentType)}>
+                      {docTypeLabel(d.documentType)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nomor Dokumen</p>
+                    <p className="text-sm text-slate-700">{d.documentNumber || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Klien</p>
+                    <p className="text-sm text-slate-700">{d.client?.namaKlien || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Diunggah Oleh</p>
+                    <p className="text-sm text-slate-700">{d.uploadedBy?.name || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Pada</p>
+                    <p className="text-sm text-slate-700">{formatDateTime(d.createdAt)}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Link Dokumen</p>
+                  {d.link ? (
+                    <a
+                      href={d.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-blue-700 hover:text-blue-800 hover:underline break-all"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" /> {d.link}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-slate-700">-</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400 font-semibold uppercase">Keterangan</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{d.description || "-"}</p>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewDialog({ open: false, item: null })}>Tutup</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

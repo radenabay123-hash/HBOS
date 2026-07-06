@@ -2517,3 +2517,145 @@ Stage Summary:
 - ALL backend APIs handle year=0/month=0 (return all records, no filter)
 - Data syncs correctly: each module shows real data for the selected period
 - Modules with filters: CRM, Invoice, Surat, Articles, Documents, Content, Absensi, Payroll, KPI, Reports, Finance (11 modules total)
+
+---
+Task ID: PREVIEW-ALL-MODULES
+Agent: Z.ai Code (subagent for preview dialogs across 7 modules)
+Task: Add Eye-icon "Preview" button + detail Dialog to 7 modules (CRM, Events, Tasks, Articles, Documents, Absensi, Team Management) so owner can view full record details.
+
+Work Log:
+1. src/components/modules/crm-module.tsx (CRM Client)
+   - Imported `Eye` from lucide-react
+   - Added state: `previewDialog: { open, item: ClientItem | null }`
+   - Changed Aksi column header & cell: now ALWAYS visible (was gated by `canManage`)
+   - Aksi cell now shows Eye button (always) + Pencil/Trash2 (only when canManage)
+   - Preview dialog (max-w-lg, max-h-80vh) shows 2-col grid:
+     namaKlien, instansi, pic, nomorWA, email, jenisTraining, jumlahPeserta, budget
+     (formatCurrency), lokasi, tanggalEvent (formatDate), status (Badge),
+     assignedTo.name, reminderFollowUp (formatDateTime), createdAt (formatDateTime),
+     and full-width catatanFollowUp
+   - Tutup button in DialogFooter
+
+2. src/components/modules/events-module.tsx (Events - list view only)
+   - Imported `Eye` from lucide-react
+   - Added state: `previewDialog: { open, item: EventItem | null }`
+   - Changed Aksi column header to always show; cell splits via canManage — Eye always,
+     Edit/Delete only when canManage; non-managers get Eye-only cell
+   - Preview dialog shows: namaEvent (full-width), client.namaKlien, tanggal
+     (formatDateTime), lokasi, trainer, assistantTrainer.name, statusPersiapan (Badge),
+     checklist progress (done/total/pct), createdAt (formatDateTime)
+   - Bonus: shows full checklist list with CheckCircle2/Clock icons per item
+   - Tutup button in DialogFooter
+
+3. src/components/modules/tasks-module.tsx (Tugas Harian)
+   - Imported `Eye` from lucide-react; added `formatDateTime` to constants import
+   - Added `createdAt?: string` to Task interface
+   - Added state: `previewDialog: { open, item: Task | null }`
+   - Eye button added in Aksi cell BEFORE Pencil (Edit) — visible to all users
+   - Preview dialog shows: tanggal (formatDate), user.name, jamMulai, jamSelesai,
+     persentaseSelesai, status (Badge), createdAt (formatDateTime) in 2-col grid;
+     then full-width: taskHariIni, progress, hambatan
+   - Tutup button in DialogFooter
+
+4. src/components/modules/articles-module.tsx (Data Artikel)
+   - Imported `Eye` from lucide-react; added `formatDateTime` to constants import
+   - Added state: `previewDialog: { open, item: Article | null }`
+   - Eye button added in the second actions row, BEFORE Publish/Edit/Delete
+   - Preview dialog shows: judulArtikel (full-width), keyword, websiteTujuan (Badge),
+     tanggalPublish (formatDate), statusACC (Badge with ACC_LABELS/ACC_COLORS),
+     status (Badge), createdAt (formatDateTime) in 2-col grid;
+     then full-width linkArtikel (clickable with ExternalLink icon) and catatanRevisi (if any)
+   - Tutup button in DialogFooter
+
+5. src/components/modules/documents-module.tsx (Dokumen)
+   - Imported `Eye` from lucide-react; added `formatDateTime` to constants import
+   - Added state: `previewDialog: { open, item: DocumentItem | null }`
+   - Changed Aksi column header to always show when !bulkMode (was `canDelete && !bulkMode`);
+     cell now has two branches: (a) canDelete && !bulkMode → Eye+Edit+Delete;
+     (b) !canDelete && !bulkMode → Eye only
+   - Preview dialog shows: documentName (full-width), documentType (Badge),
+     documentNumber, client.namaKlien, uploadedBy.name, createdAt (formatDateTime) in 2-col grid;
+     then full-width link (clickable with ExternalLink) and description
+   - Tutup button in DialogFooter
+
+6. src/components/modules/absensi-module.tsx (Absensi)
+   - Imported `Eye` from lucide-react
+   - Added `createdAt?: string` to AttendanceRecord interface
+   - Added state: `previewDialog: { open, item: AttendanceRecord | null }`
+   - Changed Aksi column header to always show when !bulkMode (was `isOwner && !bulkMode`);
+     cell now shows Eye (always) + Edit button (only when isOwner)
+   - Preview dialog shows: user.name, tanggal (formatDate), jamMasuk (checkIn formatted),
+     jamKeluar (checkOut formatted), workHours ("X jam"), status (Badge),
+     createdAt (formatDateTime) in 2-col grid; then full-width note
+   - Tutup button in DialogFooter
+
+7. src/components/modules/team-management-module.tsx (Manajemen Tim)
+   - Imported `Eye` from lucide-react; added `formatDateTime` to constants import
+   - Added state: `previewDialog: { open, item: UserRow | null }`
+   - Eye button added at start of Aksi cell (before Pencil/Power/Trash2), visible when !bulkMode
+   - Preview dialog shows: name, email, role (Badge), position, phone, isActive
+     (Badge: Aktif/Nonaktif), createdAt (formatDateTime), biodata completion status
+     (computed from name+email+phone+position — Badge: Lengkap/Belum Lengkap) in 2-col grid;
+     plus a 3-col grid footer showing _count.tasks, _count.contentIdeas, _count.articles
+   - Tutup button in DialogFooter
+
+Rules respected:
+- Did NOT modify invoice-module, payroll-module, surat-module, content-module (already had preview)
+- Did NOT modify any existing buttons — only ADDED the Eye button + preview dialog
+- All existing functionality preserved (edit, delete, bulk-select, filters, pagination, exports)
+- In modules with canManage/canDelete gating, the Aksi column is now always visible
+  (Eye is read-only and useful for all roles); Edit/Delete remain gated as before.
+- Eye button hidden in bulk mode (consistent with how Edit/Delete are hidden in bulk mode
+  for invoice/documents/absensi)
+- Imported Dialog components where not already imported (already imported in all 7 modules)
+- Used formatCurrency (CRM budget), formatDate (tanggal fields), formatDateTime (createdAt, reminderFollowUp, absensi createdAt, team createdAt)
+- Used Badge for status fields, clickable link for articles/documents link fields
+- Used max-w-lg + max-h-[80vh] + overflow-y-auto for all preview dialogs
+- Title format: "Preview [Module Name]" with Eye icon
+- Tutup (Close) button in DialogFooter
+- Did NOT create test files
+
+Verification:
+- `bun run lint` → exit code 0, 0 errors, 0 warnings ✓
+
+Stage Summary:
+- All 7 target modules now have a working Preview (Eye icon) button + detail dialog.
+- Owner (and any role that can see the row) can click Eye on any row to view full record
+  details in a modal — no more need to open Edit form just to read data.
+- Existing modules with preview (invoice, payroll, surat, content) were not touched.
+- Pattern is consistent across all 7 new modules: same Eye icon, same dialog layout
+  (2-col grid + full-width for long fields), same Tutup button, same max-w-lg/max-h-80vh.
+
+---
+Task ID: PREVIEW-ALL-MODULES-SUMMARY
+Agent: Main (Z.ai Code)
+Task: Summary - Add Preview (Eye icon) to all modules for viewing user inputted data
+
+Work Log:
+- Task PREVIEW-ALL-MODULES (subagent): Added Eye preview button + dialog to 7 modules:
+  1. CRM Client: Preview shows namaKlien, instansi, pic, nomorWA, email, jenisTraining, jumlahPeserta, budget, lokasi, tanggalEvent, status, catatanFollowUp, reminderFollowUp, assignedTo, createdAt
+  2. Event Management: Preview shows namaEvent, client, tanggal, lokasi, trainer, assistantTrainer, statusPersiapan, checklist progress, createdAt
+  3. Tugas Harian: Preview shows tanggal, user, taskHariIni, progress, persentaseSelesai, hambatan, jamMulai, jamSelesai, status, createdAt
+  4. Data Artikel: Preview shows judulArtikel, keyword, websiteTujuan, tanggalPublish, linkArtikel, statusACC, status, createdAt
+  5. Dokumen: Preview shows documentName, documentType, documentNumber, link, description, client, uploadedBy, createdAt
+  6. Absensi: Preview shows user, tanggal, jamMasuk, jamKeluar, status, workHours, note, createdAt
+  7. Manajemen Tim: Preview shows name, email, role, position, phone, isActive, createdAt, biodata completion
+- Modules that ALREADY had preview (not modified): Invoice, Payroll, Surat, Content
+- Verified with Agent Browser:
+  * CRM: 15 preview buttons on page 1, dialog opens with all client details ✓
+  * Tugas Harian: 15 preview buttons, dialog shows task details with progress ✓
+  * Events: 15 preview buttons (in Daftar Event tab), dialog shows event details ✓
+  * Data Artikel: 15 preview buttons ✓
+  * Dokumen: 15 preview buttons ✓
+  * Absensi: 15 preview buttons ✓
+  * Manajemen Tim: 10 preview buttons ✓
+  * 0 errors, lint clean
+
+Stage Summary:
+- ALL modules now have Preview (Eye icon) functionality:
+  * CRM Client, Event Management, Tugas Harian, Data Artikel, Dokumen, Absensi, Manajemen Tim (NEW)
+  * Invoice, Payroll, Surat, Content (already had it)
+- Click Eye icon on any row → dialog opens with full details of that record
+- Dialog design: 2-column grid for short fields, full-width for long fields, Badge for status, formatCurrency for money, formatDate for dates
+- Eye button visible to ALL roles (read-only), Edit/Delete still gated by permissions
+- Eye button hidden in bulk-select mode (consistent with Edit/Delete)
