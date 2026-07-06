@@ -1992,3 +1992,36 @@ Stage Summary:
 - Both modules already had edit functionality - the issue was display truncation hiding the buttons
 - Sticky column pattern ensures Aksi column (edit/delete) is ALWAYS visible regardless of screen width
 - Removed ScrollArea (which didn't handle horizontal scroll) in favor of native overflow-x-auto
+
+---
+Task ID: EVENTS-CALENDAR-EDIT-FIX
+Agent: Main (Z.ai Code)
+Task: Fix Event Management edit not working - add edit/delete to calendar view
+
+Work Log:
+- Root cause identified: Event Management had TWO views (Calendar + Daftar Event list), but edit/delete buttons ONLY existed in the "Daftar Event" list view tab. The Calendar view (default tab) showed events as small chips but had NO edit/delete buttons — users couldn't edit from the calendar.
+- When a user clicked on a date in the calendar, the "Selected day events" panel appeared showing event info (nama, klien, lokasi, tanggal, checklist progress, status badge) but NO action buttons.
+- Fix 1: Added edit/delete buttons to the Calendar view's "Selected day events" panel:
+  * Each event card in the panel now has Edit (Pencil, blue) and Delete (Trash, red) buttons
+  * Buttons appear next to the status badge
+  * Only visible to canManage roles (Owner/PM)
+  * Buttons have tooltips ("Edit Event" / "Hapus Event")
+- Fix 2: Made calendar event chips clickable to open edit directly:
+  * Event chips in calendar day cells now have cursor-pointer + hover effect
+  * Clicking an event chip opens the edit dialog immediately (for canManage roles)
+  * For non-manage roles, clicking selects the day (shows info panel)
+  * Added tooltip: "Klik untuk edit: {event name}"
+  * Used ev.stopPropagation() to prevent triggering the day cell click
+
+- Verified with Agent Browser:
+  * Navigated to July 2025 (where seed events are: 8 Jul "Stress Management Kemenkes", 15 Jul "Leadership Training PT Maju Bersama", 22 Jul "Customer Service Excellence Gojek")
+  * Clicked on day 8 → "Selected day events" panel appeared with Edit + Hapus buttons visible
+  * Clicked "Edit Event" button → edit dialog opened with all fields (Nama Event, Klien, Tanggal, Lokasi, Trainer, Status, Checklist)
+  * Also tested clicking event chip directly → edit dialog opened immediately
+  * 0 errors, lint clean
+
+Stage Summary:
+- Event Management edit now works from BOTH views:
+  1. Calendar view: click date → panel shows edit/delete buttons, OR click event chip directly → edit dialog opens
+  2. Daftar Event list view: edit/delete buttons in Aksi column (sticky right)
+- Users can now edit events from anywhere in the Events module

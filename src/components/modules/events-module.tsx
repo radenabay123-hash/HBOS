@@ -743,8 +743,16 @@ export function EventsModule({ user }: EventsModuleProps) {
                             {dayEvents.slice(0, 3).map((e) => (
                               <div
                                 key={e.id}
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  if (canManage) {
+                                    openEdit(e);
+                                  } else {
+                                    setSelectedDay(isSelected ? null : cell.key);
+                                  }
+                                }}
                                 className={cn(
-                                  "text-[10px] truncate px-1 py-0.5 rounded",
+                                  "text-[10px] truncate px-1 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity",
                                   e.statusPersiapan === "COMPLETED"
                                     ? "bg-blue-100 text-blue-700"
                                     : e.statusPersiapan === "READY"
@@ -753,6 +761,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                                     ? "bg-amber-100 text-amber-700"
                                     : "bg-slate-100 text-slate-600"
                                 )}
+                                title={canManage ? `Klik untuk edit: ${e.namaEvent}` : e.namaEvent}
                               >
                                 {e.namaEvent}
                               </div>
@@ -811,12 +820,36 @@ export function EventsModule({ user }: EventsModuleProps) {
                                     </p>
                                   )}
                                 </div>
-                                <Badge
-                                  variant="outline"
-                                  className={EVENT_PREP_BADGE_COLORS[e.statusPersiapan] || "bg-slate-100 text-slate-700 border-slate-200"}
-                                >
-                                  {EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan}
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="outline"
+                                    className={EVENT_PREP_BADGE_COLORS[e.statusPersiapan] || "bg-slate-100 text-slate-700 border-slate-200"}
+                                  >
+                                    {EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan}
+                                  </Badge>
+                                  {canManage && (
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                                        onClick={() => openEdit(e)}
+                                        title="Edit Event"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+                                        onClick={() => setDeleteId(e.id)}
+                                        title="Hapus Event"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             );
                           })}
