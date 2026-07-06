@@ -485,6 +485,7 @@ function ArusKas({ year, month }: { year: number; month: number }) {
             <SelectItem value="EWALLET">Dompet Digital</SelectItem>
           </SelectContent>
         </Select>
+        <Button variant="outline" size="sm" onClick={() => window.open(`/api/finance/export-pdf?year=${year}&month=${month}`, "_blank")} className="bg-white"><Download className="w-4 h-4 mr-1" /> PDF</Button>
         <Button variant="outline" size="sm" onClick={handleExportExcel} className="bg-white"><FileSpreadsheet className="w-4 h-4 mr-1" /> Excel</Button>
         <Button
           variant={bulkMode ? "default" : "outline"}
@@ -1142,7 +1143,12 @@ function PajakModule({ year, month }: { year: number; month: number }) {
 
       {/* Tax table */}
       <Card className="shadow-sm">
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Daftar Pajak</CardTitle></CardHeader>
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm">Daftar Pajak</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => window.open(`/api/finance/tax/export-pdf?year=${year}`, "_blank")} className="bg-white text-xs">
+            <Download className="w-3.5 h-3.5 mr-1" /> Download PDF
+          </Button>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="max-h-[500px] overflow-y-auto">
             <table className="w-full text-sm">

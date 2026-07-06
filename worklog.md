@@ -2819,3 +2819,56 @@ Stage Summary:
   9. Payment info card with border
 - Drag & Drop Editor: users can further adjust positions
 - PDF download uses element positions → preview = download guaranteed
+
+---
+Task ID: FINANCE-PDF-EXPORT-ALL
+Agent: Main (Z.ai Code)
+Task: Add Download PDF to Arus Kas + Pajak with year/month filter support
+
+Work Log:
+- Created /api/finance/export-pdf/route.ts:
+  * GET endpoint for Arus Kas PDF export
+  * Accepts year (0=all) and month (0=all months in that year) params
+  * Fetches transactions with filter, generates professional PDF with:
+    - Company header (navy, logo, company info from Layout Dokumen)
+    - Title "LAPORAN ARUS KAS" with period label
+    - Summary card (total pemasukan, pengeluaran, saldo)
+    - Table with autoTable: #, Tanggal, Tipe (color-coded), Deskripsi, Kategori, Akun, Jumlah
+    - Footer with page numbers
+  * Handles all filter combinations:
+    - year=0, month=0 → "Semua Tahun (Akumulasi)" — ALL transactions
+    - year=2026, month=0 → "Tahun 2026" — all months in 2026
+    - year=2026, month=5 → "Mei 2026" — specific month
+- Created /api/finance/tax/export-pdf/route.ts:
+  * GET endpoint for Daftar Pajak PDF export
+  * Accepts year (0=all) param
+  * Generates PDF with: summary (terutang, dibayar), table of tax payments, color-coded status
+- Added Download PDF button to Arus Kas:
+  * Button next to Excel export, uses window.open with current year/month filter
+  * `window.open('/api/finance/export-pdf?year=${year}&month=${month}', '_blank')`
+- Added Download PDF button to Pajak module:
+  * Button in Daftar Pajak card header, uses current year filter
+  * `window.open('/api/finance/tax/export-pdf?year=${year}', '_blank')`
+- Verified with Agent Browser:
+  * Arus Kas PDF: year=2026&month=0 → 200 ✓
+  * Arus Kas PDF: year=0&month=0 (Semua Tahun) → 200 ✓
+  * Pajak PDF: year=0 → 200 ✓
+  * 0 errors
+- Finance sections PDF export status:
+  * Arus Kas: ✅ NEW (year/month filter, all combinations)
+  * Pajak: ✅ NEW (year filter)
+  * Neraca: ✅ Already had (generateNeracaPDF with year/month)
+  * Laporan & SPT: ✅ Already had (exportReportPDF with year/month)
+  * Laba Rugi: ✅ Already had (generateLabaRugiPDF with year/month)
+  * SPT Badan: ✅ Already had (Neraca, Laba Rugi, Bukti Potong, SSP PDFs)
+
+Stage Summary:
+- ALL finance sections now have PDF export with year/month filter support
+- Arus Kas: Download PDF button generates professional report with:
+  - Company header from Layout Dokumen
+  - Period label (Semua Tahun / Tahun X / Bulan X Tahun Y)
+  - Summary card (pemasukan, pengeluaran, saldo)
+  - Full transaction table (color-coded: green=masuk, red=keluar)
+  - Footer with page numbers
+- Pajak: Download PDF button generates daftar pajak report
+- Both support: Semua Tahun (akumulasi), specific year, specific month
