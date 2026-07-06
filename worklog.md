@@ -2244,3 +2244,41 @@ Stage Summary:
 - Setiap tahun (2022, 2023, 2024, 2025, 2026) menampilkan data real dengan chart bulanan
 - "Semua Bulan" menampilkan akumulasi semua bulan dalam tahun tersebut
 - Saldo selalu akumulasi dari SEMUA transaksi (tidak terpengaruh filter)
+
+---
+Task ID: DASHBOARD-MONTH-SYNC-FIX
+Agent: Main (Z.ai Code)
+Task: Fix dashboard month filter synchronization - empty months should show 0
+
+Work Log:
+- Root cause identified: 
+  1. Seed data (fake demo data) for May-June 2026 was showing in dashboard, not real Google Sheets data
+  2. CSV has NO May 2026 data and only 1 June 2026 transaction
+  3. Label showed "BULAN 0" when month=0 (Semua Bulan) due to monthNames[-1] = undefined
+  4. When "Semua Tahun" selected with a specific month, label was confusing ("BULAN JUNI (SEMUA TAHUN)")
+- Fix 1: Re-imported finance data from CSV (deleted all old transactions first)
+  * 1001 transactions imported (clean, no seed data mixed in)
+  * May 2026: 0 transactions (correct - CSV has no May 2026 data)
+  * June 2026: 1 transaction (Rp 15.000.000 - Event PT. Pertamina Surabaya)
+  * July 2026: 0 transactions (correct)
+- Fix 2: Dashboard label logic fixed:
+  * year=0: "SEMUA TAHUN (AKUMULASI)" (regardless of month)
+  * year>0, month=0: "Tahun {year}"
+  * year>0, month>0: "Bulan {monthName} {year}"
+- Fix 3: When "Semua Tahun" selected, month auto-resets to "Semua Bulan"
+  * Prevents confusing "Bulan Juni (Semua Tahun)" label
+  * Year selector onChange: if newYear === 0, setMonth(0)
+- Verified:
+  * May 2026: Pendapatan Rp 0, Pengeluaran Rp 0, Laba Rp 0 ✓ (empty as expected)
+  * June 2026: Pendapatan Rp 15.000.000, Laba Rp 15.000.000 ✓ (1 transaction)
+  * Tahun 2026 (Semua Bulan): Pendapatan Rp 333.000.000 ✓ (accumulated)
+  * Semua Tahun: Pendapatan Rp 2.180.501.500 ✓ (all years accumulated, chart shows 2022-2026)
+  * 0 errors
+
+Stage Summary:
+- Dashboard keuangan now SYNCHRONIZED with real Google Sheets data
+- Empty months (May, July 2026) correctly show Rp 0
+- Months with data (Jan-Apr, Jun 2026) show correct amounts
+- "Semua Tahun" shows year-to-year accumulation (2022-2026)
+- Labels are clear: "SEMUA TAHUN (AKUMULASI)", "Tahun 2026", "Bulan Mei 2026"
+- Selecting "Semua Tahun" auto-resets month to "Semua Bulan"

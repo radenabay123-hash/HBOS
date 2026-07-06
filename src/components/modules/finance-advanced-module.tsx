@@ -152,7 +152,11 @@ export function FinanceModule({ user }: { user: SafeUser }) {
             </select>
             <select
               value={String(year)}
-              onChange={(e) => setYear(Number(e.target.value))}
+              onChange={(e) => {
+                const newYear = Number(e.target.value);
+                setYear(newYear);
+                if (newYear === 0) setMonth(0); // Reset month to "Semua Bulan" when "Semua Tahun" selected
+              }}
               className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="0">Semua Tahun</option>
@@ -205,7 +209,9 @@ function FinanceDashboard({ year, month }: { year: number; month: number }) {
 
       {/* Bulan ini cards */}
       <div>
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Bulan {monthNames[month - 1]} {year}</h3>
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+          {year === 0 ? "Semua Tahun (Akumulasi)" : month === 0 ? `Tahun ${year}` : `Bulan ${monthNames[month - 1]} ${year}`}
+        </h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <FinanceCard icon={ArrowUpRight} label="Pendapatan" value={formatCurrency(data.monthPemasukan)} accent="green" />
           <FinanceCard icon={ArrowDownRight} label="Pengeluaran" value={formatCurrency(data.monthPengeluaran)} accent="rose" />
