@@ -12,11 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import {
   FileText, Receipt, Wallet, Save, RefreshCw, Palette,
-  Layout, Type, AlignLeft, Image as ImageIcon, Upload, Check, Eye,
+  Layout, Type, AlignLeft, Image as ImageIcon, Upload, Check, Eye, Move,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { DocumentCanvasEditor } from "@/components/shared/document-canvas-editor";
+import { getDefaultLayout, type DocumentLayoutData } from "@/lib/document-elements";
 
 const DOC_TYPES = [
   { key: "SURAT", label: "Surat Resmi", icon: FileText, color: "blue" },
@@ -111,6 +113,31 @@ export function DocumentLayoutModule() {
   const [appSettings, setAppSettings] = useState<any>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editorMode, setEditorMode] = useState<"form" | "canvas">("form");
+
+  // Get or create canvas layout data for active doc type
+  const getCanvasLayout = (): DocumentLayoutData => {
+    const current = layouts[activeDoc];
+    if (current?.elements && Array.isArray(current.elements)) {
+      return { paperSize: "A4", elements: current.elements };
+    }
+    return getDefaultLayout(activeDoc);
+  };
+
+  // Save canvas layout data
+  const saveCanvasLayout = async (data: DocumentLayoutData) => {
+    setSaving(true);
+    try {
+      const merged = { ...layouts[activeDoc], elements: data.elements, paperSize: data.paperSize };
+      await api("/api/doc-layout", { method: "PUT", body: JSON.stringify({ docType: activeDoc, settings: merged }) });
+      setLayouts({ ...layouts, [activeDoc]: merged });
+      toast.success(`Layout ${activeDoc} (Drag & Drop) disimpan!`);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -188,7 +215,63 @@ export function DocumentLayoutModule() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeDoc} onValueChange={setActiveDoc}>
+      {/* Mode Toggle: Form vs Drag & Drop */}
+      <div className="flex items-center gap-2">
+        <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
+          <button
+            onClick={() => setEditorMode("form")}
+            className={cn("px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors",
+              editorMode === "form" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600")}
+          >
+            <Palette className="w-3.5 h-3.5" /> Pengaturan Form
+          </button>
+          <button
+            onClick={() => setEditorMode("canvas")}
+            className={cn("px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors",
+              editorMode === "canvas" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600")}
+          >
+            <Move className="w-3.5 h-3.5" /> Drag & Drop Editor
+          </button>
+        </div>
+        <span className="text-xs text-slate-400">
+          {editorMode === "canvas" ? "🔒 Preview = Download, dijamin sama" : "Pengaturan manual via form input"}
+        </span>
+      </div>
+
+      {/* ===== CANVAS EDITOR MODE ===== */}
+      {editorMode === "canvas" && (
+        <div className="space-y-4">
+          {/* Doc type selector for canvas */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600">Edit layout:</span>
+            <div className="flex gap-1">
+              {DOC_TYPES.map((dt) => (
+                <button
+                  key={dt.key}
+                  onClick={() => setActiveDoc(dt.key)}
+                  className={cn("px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition-colors",
+                    activeDoc === dt.key ? "bg-blue-600 text-white" : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50")}
+                >
+                  <dt.icon className="w-3.5 h-3.5" /> {dt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Canvas Editor */}
+          <DocumentCanvasEditor
+            docType={activeDoc}
+            docLabel={DOC_TYPES.find((d) => d.key === activeDoc)?.label || activeDoc}
+            layoutData={getCanvasLayout()}
+            onSave={saveCanvasLayout}
+            logoUrl={appSettings.companyLogo}
+          />
+        </div>
+      )}
+
+      {/* ===== FORM SETTINGS MODE (existing) ===== */}
+      {editorMode === "form" && (
+        <Tabs value={activeDoc} onValueChange={setActiveDoc}>
         <TabsList className="flex-wrap h-auto gap-1">
           {DOC_TYPES.map((dt) => (
             <TabsTrigger key={dt.key} value={dt.key} className="text-xs"><dt.icon className="w-3.5 h-3.5 mr-1" /> {dt.label}</TabsTrigger>
@@ -333,6 +416,7 @@ export function DocumentLayoutModule() {
           );
         })}
       </Tabs>
+      )}
     </div>
   );
 }

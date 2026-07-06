@@ -2709,3 +2709,63 @@ Stage Summary:
   - footerText, footerSubText, footerHeight, footerShowText: applied
   - logoSize, logoColor, logoText: applied (with uploaded logo support)
   - companyInfoPosition (inside/above/below): applied
+
+---
+Task ID: DRAG-DROP-ELEMENTOR-EDITOR
+Agent: Main (Z.ai Code)
+Task: Build Elementor-style drag & drop document layout editor
+
+Work Log:
+- Installed react-draggable package
+- Created src/lib/document-elements.ts:
+  * LayoutElement interface: id, type (rect/logo/text/body/signature), x, y (mm), w, h (mm), content, fontSize, color, bold, align, bgColor, logoSize, logoColor, logoText, lineStyle, lineColor, z
+  * DocumentLayoutData interface: paperSize + elements array
+  * getDefaultLayout(docType) function: returns 14 default elements per doc type (header bg, logo, company name, address, contact, accent line, doc title, body, signature, footer bg, footer accent, footer text, footer subtext)
+  * MM_TO_PX / PX_TO_MM constants for coordinate conversion
+- Created src/components/shared/document-canvas-editor.tsx:
+  * A4 canvas (210×297mm, scaled to 72% for screen)
+  * Grid background (10mm grid)
+  * Draggable elements: click + drag to reposition
+  * Selection: click element → blue ring + toolbar (label, position, lock, delete)
+  * Style Panel (right sidebar): edit label, position (X/Y mm), size (W/H mm), content text, fontSize, color, bold, align, bgColor, logoSize, logoColor, logoText, lineStyle, lineColor
+  * Add element toolbar: Teks, Kotak, Logo
+  * Lock/unlock elements (prevent accidental drag)
+  * Delete elements
+  * Element list with position display
+  * Save button → saves elements array to API
+  * Reset button → restores default layout
+- Created src/lib/document-pdf.ts:
+  * generateDocumentPDF(layout, content, docType, logoImageData) — unified PDF generator
+  * Reads element positions (x, y in mm) and renders each at exact position
+  * renderElement(): rect (filled rectangle), logo (image or circle), text (with fontSize/color/bold/align), body (placeholder), signature (line + name)
+  * renderSuratContent(): nomor, perihal, kepada yth, isi surat, activity, payment, signature
+  * renderInvoiceContent(): invoice info, client card, items table, summary, payment, signature
+  * renderSlipGajiContent(): employee info, earnings/deductions cards, net salary, note, status
+  * GUARANTEES preview = download because both read same element data
+- Updated document-layout-module.tsx:
+  * Added toggle: "Pengaturan Form" vs "Drag & Drop Editor"
+  * When canvas mode: shows doc type selector + DocumentCanvasEditor
+  * saveCanvasLayout(): saves elements array to API (merged with existing settings)
+  * getCanvasLayout(): returns elements from DB or default layout
+- Updated 3 module callers (backward compatible):
+  * surat-module.tsx: if layout.elements exists → generateDocumentPDF, else → downloadSuratPDF
+  * invoice-module.tsx: if layout.elements exists → generateDocumentPDF, else → downloadInvoicePDF
+  * payroll-module.tsx: if layout.elements exists → generateDocumentPDF, else → downloadSlipGajiPDF
+- Verified with Agent Browser + VLM:
+  * Toggle works: "Pengaturan Form" ↔ "Drag & Drop Editor"
+  * Canvas shows A4 with header navy, logo, company name, body area, footer
+  * Style panel on right with element properties
+  * Add element toolbar (Teks, Kotak, Logo)
+  * VLM: "Layout terlihat seperti Elementor"
+  * 0 errors, lint clean
+
+Stage Summary:
+- Elementor-style drag & drop editor WORKING
+- Drag any element on A4 canvas to reposition
+- Style panel: edit fontSize, color, bold, align, bgColor, position, size per element
+- Add new elements (text, rect, logo)
+- Lock/unlock and delete elements
+- Save layout → elements array stored in DB
+- PDF generators read element positions → preview = download, GUARANTEED
+- Backward compatible: old form settings still work if no elements saved
+- 3 document types supported: Surat, Invoice, Slip Gaji

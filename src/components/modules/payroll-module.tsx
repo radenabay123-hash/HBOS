@@ -22,6 +22,7 @@ import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
 import { exportToExcel } from "@/lib/export-utils";
 import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
+import { generateDocumentPDF } from "@/lib/document-pdf";
 import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -198,7 +199,6 @@ export function PayrollModule({ user }: { user: SafeUser }) {
 
   async function handleDownloadSlip(p: Payroll) {
     const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
-    // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
     let logoUrl = "";
     try {
@@ -206,10 +206,9 @@ export function PayrollModule({ user }: { user: SafeUser }) {
       layoutSettings = ld.layout;
       logoUrl = ld.appSettings?.companyLogo || "";
     } catch {}
-    // Load logo image as data URL for jsPDF
     const logoImageData = await loadImageAsDataURL(logoUrl);
-    // CLEAN: only pass content data, all design comes from layout settings
-    const slipData: SlipGajiData = {
+
+    const contentData = {
       employeeName: u.name,
       nik: p.nik || p.userId.slice(-4).toUpperCase(),
       jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",
@@ -223,10 +222,20 @@ export function PayrollModule({ user }: { user: SafeUser }) {
       note: p.note || "",
       status: p.status,
       paidAt: p.paidAt ? formatDate(p.paidAt) : null,
-      logoImageData,
-      layout: layoutSettings,
     };
-    downloadSlipGajiPDF(slipData);
+
+    if (layoutSettings?.elements && Array.isArray(layoutSettings.elements)) {
+      const doc = generateDocumentPDF(
+        { paperSize: "A4", elements: layoutSettings.elements },
+        contentData,
+        "SLIP_GAJI",
+        logoImageData,
+      );
+      doc.save(`Slip-Gaji-${u.name.replace(/\s+/g, "-")}-${contentData.periode.replace(/\s+/g, "-")}.pdf`);
+    } else {
+      const slipData: SlipGajiData = { ...contentData, logoImageData, layout: layoutSettings };
+      downloadSlipGajiPDF(slipData);
+    }
     toast.success("Slip gaji PDF diunduh");
   }
 

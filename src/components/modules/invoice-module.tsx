@@ -18,6 +18,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+import { generateDocumentPDF } from "@/lib/document-pdf";
 import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { usePagination } from "@/lib/hooks/use-pagination";
 import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
@@ -193,7 +194,6 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
 
   async function handleDownloadPDF(inv: Invoice) {
     const items = JSON.parse(inv.items || "[]");
-    // Fetch layout settings - ALL design comes from here
     let layoutSettings: any = null;
     let logoUrl = "";
     try {
@@ -201,32 +201,34 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
       layoutSettings = ld.layout;
       logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
     } catch {}
-    // Load logo image as data URL for jsPDF
     const logoImageData = await loadImageAsDataURL(logoUrl);
-    // CLEAN: only pass content data, all design comes from layout settings
-    downloadInvoicePDF({
-      invoiceNumber: inv.invoiceNumber,
-      issueDate: formatDate(inv.issueDate),
-      clientName: inv.clientName,
-      clientAddress: inv.clientAddress || "",
-      city: inv.city || "",
-      description: inv.description || "",
-      items,
-      subtotal: inv.subtotal,
-      discount: inv.discount,
-      tax: inv.tax,
-      totalAmount: inv.totalAmount,
-      status: inv.status,
-      paymentInstruction: inv.paymentInstruction || "",
-      terms: inv.terms || "",
-      bankName: inv.bankName || "",
-      bankAccount: inv.bankAccount || "",
-      accountName: inv.accountName || "",
-      directorName: companySettings.director_name,
-      directorTitle: companySettings.director_title,
-      logoImageData,
-      layout: layoutSettings,
-    });
+
+    if (layoutSettings?.elements && Array.isArray(layoutSettings.elements)) {
+      const doc = generateDocumentPDF(
+        { paperSize: "A4", elements: layoutSettings.elements },
+        {
+          invoiceNumber: inv.invoiceNumber, issueDate: formatDate(inv.issueDate),
+          clientName: inv.clientName, clientAddress: inv.clientAddress || "",
+          items, subtotal: inv.subtotal, discount: inv.discount, tax: inv.tax,
+          totalAmount: inv.totalAmount, status: inv.status,
+          bankName: inv.bankName || "", bankAccount: inv.bankAccount || "", accountName: inv.accountName || "",
+          directorName: companySettings.director_name, directorTitle: companySettings.director_title,
+        },
+        "INVOICE",
+        logoImageData,
+      );
+      doc.save(`Invoice-${inv.invoiceNumber.replace(/\//g, "-")}.pdf`);
+    } else {
+      downloadInvoicePDF({
+        invoiceNumber: inv.invoiceNumber, issueDate: formatDate(inv.issueDate),
+        clientName: inv.clientName, clientAddress: inv.clientAddress || "",
+        items, subtotal: inv.subtotal, discount: inv.discount, tax: inv.tax,
+        totalAmount: inv.totalAmount, status: inv.status,
+        bankName: inv.bankName || "", bankAccount: inv.bankAccount || "", accountName: inv.accountName || "",
+        directorName: companySettings.director_name, directorTitle: companySettings.director_title,
+        logoImageData, layout: layoutSettings,
+      });
+    }
     toast.success("Invoice PDF diunduh");
   }
 

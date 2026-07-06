@@ -18,6 +18,7 @@ import {
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/constants";
 import { downloadSuratPDF } from "@/lib/surat-pdf";
+import { generateDocumentPDF } from "@/lib/document-pdf";
 import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
 import { usePagination } from "@/lib/hooks/use-pagination";
@@ -273,37 +274,42 @@ export function SuratModule({ user }: { user: SafeUser }) {
       lSettings = ld.layout;
       logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
     } catch {}
-    // Load logo image as data URL for jsPDF
     const logoImageData = await loadImageAsDataURL(logoUrl);
-    // CLEAN: only pass content data, all design comes from layout settings
-    downloadSuratPDF({
-      suratType: s.suratType,
-      suratNumber: s.suratNumber,
-      issueDate: formatDate(s.issueDate),
-      city: s.city,
-      perihal: s.perihal,
-      lampiran: s.lampiran,
-      recipientName: s.recipientName,
-      recipientInstansi: s.recipientInstansi,
-      recipientAddress: s.recipientAddress,
-      body: s.body,
-      includeActivity: s.includeActivity,
-      activityDate: s.activityDate,
-      activityLocation: s.activityLocation,
-      activityTime: s.activityTime,
-      includePayment: s.includePayment,
-      paymentAmount: Number(s.paymentAmount) || 0,
-      paymentAmountText: s.paymentAmountText,
-      bookingAmount: Number(s.bookingAmount) || 0,
-      bookingAmountText: s.bookingAmountText,
-      bankName: s.bankName,
-      bankAccount: s.bankAccount,
-      accountName: s.accountName,
-      signatoryName: s.signatoryName,
-      signatoryTitle: s.signatoryTitle,
-      logoImageData,
-      layout: lSettings,
-    });
+
+    // Check if element-based layout (Drag & Drop Editor) is available
+    if (lSettings?.elements && Array.isArray(lSettings.elements)) {
+      const doc = generateDocumentPDF(
+        { paperSize: "A4", elements: lSettings.elements },
+        {
+          suratType: s.suratType, suratNumber: s.suratNumber, issueDate: formatDate(s.issueDate), city: s.city,
+          perihal: s.perihal, lampiran: s.lampiran,
+          recipientName: s.recipientName, recipientInstansi: s.recipientInstansi, recipientAddress: s.recipientAddress,
+          body: s.body,
+          includeActivity: s.includeActivity, activityDate: s.activityDate, activityLocation: s.activityLocation, activityTime: s.activityTime,
+          includePayment: s.includePayment, paymentAmount: Number(s.paymentAmount) || 0, paymentAmountText: s.paymentAmountText,
+          bookingAmount: Number(s.bookingAmount) || 0, bookingAmountText: s.bookingAmountText,
+          bankName: s.bankName, bankAccount: s.bankAccount, accountName: s.accountName,
+          signatoryName: s.signatoryName, signatoryTitle: s.signatoryTitle,
+        },
+        "SURAT",
+        logoImageData,
+      );
+      doc.save(`Surat-${s.suratNumber.replace(/\//g, "-")}.pdf`);
+    } else {
+      // Fallback to old generator
+      downloadSuratPDF({
+        suratType: s.suratType, suratNumber: s.suratNumber, issueDate: formatDate(s.issueDate), city: s.city,
+        perihal: s.perihal, lampiran: s.lampiran,
+        recipientName: s.recipientName, recipientInstansi: s.recipientInstansi, recipientAddress: s.recipientAddress,
+        body: s.body,
+        includeActivity: s.includeActivity, activityDate: s.activityDate, activityLocation: s.activityLocation, activityTime: s.activityTime,
+        includePayment: s.includePayment, paymentAmount: Number(s.paymentAmount) || 0, paymentAmountText: s.paymentAmountText,
+        bookingAmount: Number(s.bookingAmount) || 0, bookingAmountText: s.bookingAmountText,
+        bankName: s.bankName, bankAccount: s.bankAccount, accountName: s.accountName,
+        signatoryName: s.signatoryName, signatoryTitle: s.signatoryTitle,
+        logoImageData, layout: lSettings,
+      });
+    }
     toast.success("Surat PDF diunduh");
   }
 
