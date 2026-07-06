@@ -1,0 +1,723 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import {
+    12→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+    13→} from "@/components/ui/dialog";
+    14→import {
+    15→  FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye,
+    16→  Building2, Calendar, User, CreditCard, FileCheck, AlertCircle, Search, CheckSquare,
+    17→} from "lucide-react";
+    18→import { api } from "@/lib/api-client";
+    19→import { formatCurrency, formatDate } from "@/lib/constants";
+    20→import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+    21→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    22→import { usePagination } from "@/lib/hooks/use-pagination";
+    23→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    24→import { Pagination } from "@/components/shared/pagination";
+    25→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    26→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    27→import { toast } from "sonner";
+    28→import { cn } from "@/lib/utils";
+    29→import type { SafeUser } from "@/lib/auth";
+    30→
+    31→const STATUS_LABELS: Record<string, string> = { PENDING: "Pending", PAID: "Lunas", CANCELLED: "Dibatalkan" };
+    32→const STATUS_COLORS: Record<string, string> = {
+    33→  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+    34→  PAID: "bg-green-100 text-green-700 border-green-200",
+    35→  CANCELLED: "bg-rose-100 text-rose-700 border-rose-200",
+    36→};
+    37→
+    38→interface InvoiceItem {
+    39→  description: string;
+    40→  qty: number;
+    41→  price: number;
+    42→  total: number;
+    43→}
+    44→
+    45→interface Invoice {
+    46→  id: string;
+    47→  invoiceNumber: string;
+    48→  issueDate: string;
+    49→  clientName: string;
+    50→  clientAddress?: string;
+    51→  city?: string;
+    52→  description?: string;
+    53→  items: string; // JSON
+    54→  subtotal: number;
+    55→  discount: number;
+    56→  tax: number;
+    57→  totalAmount: number;
+    58→  status: string;
+    59→  paymentInstruction?: string;
+    60→  terms?: string;
+    61→  note?: string;
+    62→  bankName?: string;
+    63→  bankAccount?: string;
+    64→  accountName?: string;
+    65→  createdAt: string;
+    66→}
+    67→
+    68→export function InvoiceModule({ user }: { user: SafeUser }) {
+    69→  const [invoices, setInvoices] = useState<Invoice[]>([]);
+    70→  const [loading, setLoading] = useState(true);
+    71→  const [dialog, setDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
+    72→  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
+    73→  const [filterStatus, setFilterStatus] = useState("all");
+    74→  const [search, setSearch] = useState("");
+    75→  const [bulkMode, setBulkMode] = useState(false);
+    76→  const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
+    77→  const [form, setForm] = useState({
+    78→    invoiceNumber: "", issueDate: new Date().toISOString().slice(0, 10),
+    79→    clientName: "", clientAddress: "", city: "Jombang", description: "",
+    80→    items: [{ description: "", qty: 1, price: 0, total: 0 }] as InvoiceItem[],
+    81→    discount: 0, tax: 0, status: "PENDING",
+    82→    paymentInstruction: "Transfer ke Bank Mandiri 1234567890 a.n PT Hafara Aqiba Nusantara",
+    83→    terms: "1. Pembayaran DP sebesar 50% sebelum kegiatan.\n2. Pelunasan maksimal H+3 setelah training selesai.",
+    84→    note: "", bankName: "Bank Mandiri", bankAccount: "1234567890", accountName: "PT Hafara Aqiba Nusantara",
+    85→  });
+    86→
+    87→  const load = useCallback(async () => {
+    88→    setLoading(true);
+    89→    try {
+    90→      const [d, settings] = await Promise.all([
+    91→        api<{ invoices: Invoice[] }>("/api/invoice"),
+    92→        api<{ settings: any[] }>("/api/settings").catch(() => ({ settings: [] })),
+    93→      ]);
+    94→      setInvoices(d.invoices || []);
+    95→      const sMap: Record<string, string> = {};
+    96→      for (const s of settings.settings || []) {
+    97→        sMap[s.key] = s.value;
+    98→      }
+    99→      setCompanySettings(sMap);
+   100→    } catch (e: any) { toast.error(e.message); }
+   101→    finally { setLoading(false); }
+   102→  }, []);
+   103→
+   104→  useEffect(() => { load(); }, [load]);
+   105→
+   106→  // Generate auto invoice number
+   107→  function generateInvoiceNumber() {
+   108→    const now = new Date();
+   109→    const month = now.getMonth() + 1;
+   110→    const romanMonth = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][month - 1];
+   111→    const seq = String(invoices.length + 1).padStart(3, "0");
+   112→    return `${seq}/INV/HAN/${romanMonth}/${now.getFullYear()}`;
+   113→  }
+   114→
+   115→  function handleAddItem() {
+   116→    setForm({ ...form, items: [...form.items, { description: "", qty: 1, price: 0, total: 0 }] });
+   117→  }
+   118→
+   119→  function handleRemoveItem(index: number) {
+   120→    setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+   121→  }
+   122→
+   123→  function handleItemChange(index: number, field: keyof InvoiceItem, value: any) {
+   124→    const newItems = [...form.items];
+   125→    newItems[index] = { ...newItems[index], [field]: value };
+   126→    newItems[index].total = newItems[index].qty * newItems[index].price;
+   127→    setForm({ ...form, items: newItems });
+   128→  }
+   129→
+   130→  const subtotal = form.items.reduce((s, i) => s + i.total, 0);
+   131→  const totalAmount = subtotal - (Number(form.discount) || 0) + (Number(form.tax) || 0);
+   132→
+   133→  async function handleSave() {
+   134→    if (!form.invoiceNumber || !form.clientName) {
+   135→      toast.error("Nomor invoice dan nama klien wajib diisi");
+   136→      return;
+   137→    }
+   138→    try {
+   139→      const payload = {
+   140→        ...form,
+   141→        items: form.items,
+   142→        subtotal,
+   143→        totalAmount,
+   144→      };
+   145→      if (dialog.invoice) {
+   146→        await api(`/api/invoice/${dialog.invoice.id}`, { method: "PUT", body: JSON.stringify(payload) });
+   147→        toast.success("Invoice diperbarui");
+   148→      } else {
+   149→        await api("/api/invoice", { method: "POST", body: JSON.stringify(payload) });
+   150→        toast.success("Invoice dibuat");
+   151→      }
+   152→      setDialog({ open: false, invoice: null });
+   153→      // Reset form
+   154→      setForm({
+   155→        ...form,
+   156→        invoiceNumber: "", clientName: "", clientAddress: "", description: "",
+   157→        items: [{ description: "", qty: 1, price: 0, total: 0 }],
+   158→        discount: 0, tax: 0, note: "",
+   159→      });
+   160→      load();
+   161→    } catch (e: any) { toast.error(e.message); }
+   162→  }
+   163→
+   164→  async function handleDelete(id: string) {
+   165→    if (!confirm("Hapus invoice ini?")) return;
+   166→    try { await api(`/api/invoice/${id}`, { method: "DELETE" }); toast.success("Dihapus"); load(); }
+   167→    catch (e: any) { toast.error(e.message); }
+   168→  }
+   169→
+   170→  async function handleBulkDelete() {
+   171→    if (!confirm(`Hapus ${selectedCount} invoice terpilih?`)) return;
+   172→    let success = 0;
+   173→    let failed = 0;
+   174→    for (const id of selectedArray) {
+   175→      try {
+   176→        await api(`/api/invoice/${id}`, { method: "DELETE" });
+   177→        success++;
+   178→      } catch {
+   179→        failed++;
+   180→      }
+   181→    }
+   182→    clearSelection();
+   183→    setBulkMode(false);
+   184→    await load();
+   185→    if (failed === 0) {
+   186→      toast.success(`${success} invoice berhasil dihapus`);
+   187→    } else {
+   188→      toast.error(`${success} dihapus, ${failed} gagal`);
+   189→    }
+   190→  }
+   191→
+   192→  async function handleDownloadPDF(inv: Invoice) {
+   193→    const items = JSON.parse(inv.items || "[]");
+   194→    // Fetch layout settings - ALL design comes from here
+   195→    let layoutSettings: any = null;
+   196→    let logoUrl = "";
+   197→    try {
+   198→      const ld = await fetchLayoutSettings("INVOICE");
+   199→      layoutSettings = ld.layout;
+   200→      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+   201→    } catch {}
+   202→    // Load logo image as data URL for jsPDF
+   203→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   204→    // CLEAN: only pass content data, all design comes from layout settings
+   205→    downloadInvoicePDF({
+   206→      invoiceNumber: inv.invoiceNumber,
+   207→      issueDate: formatDate(inv.issueDate),
+   208→      clientName: inv.clientName,
+   209→      clientAddress: inv.clientAddress || "",
+   210→      city: inv.city || "",
+   211→      description: inv.description || "",
+   212→      items,
+   213→      subtotal: inv.subtotal,
+   214→      discount: inv.discount,
+   215→      tax: inv.tax,
+   216→      totalAmount: inv.totalAmount,
+   217→      status: inv.status,
+   218→      paymentInstruction: inv.paymentInstruction || "",
+   219→      terms: inv.terms || "",
+   220→      bankName: inv.bankName || "",
+   221→      bankAccount: inv.bankAccount || "",
+   222→      accountName: inv.accountName || "",
+   223→      directorName: companySettings.director_name,
+   224→      directorTitle: companySettings.director_title,
+   225→      logoImageData,
+   226→      layout: layoutSettings,
+   227→    });
+   228→    toast.success("Invoice PDF diunduh");
+   229→  }
+   230→
+   231→  function openCreate() {
+   232→    setForm({
+   233→      invoiceNumber: generateInvoiceNumber(),
+   234→      issueDate: new Date().toISOString().slice(0, 10),
+   235→      clientName: "", clientAddress: "", city: "Jombang", description: "",
+   236→      items: [{ description: "", qty: 1, price: 0, total: 0 }],
+   237→      discount: 0, tax: 0, status: "PENDING",
+   238→      paymentInstruction: "Transfer ke Bank Mandiri 1234567890 a.n PT Hafara Aqiba Nusantara",
+   239→      terms: "1. Pembayaran DP sebesar 50% sebelum kegiatan.\n2. Pelunasan maksimal H+3 setelah training selesai.",
+   240→      note: "", bankName: "Bank Mandiri", bankAccount: "1234567890", accountName: "PT Hafara Aqiba Nusantara",
+   241→    });
+   242→    setDialog({ open: true, invoice: null });
+   243→  }
+   244→
+   245→  function openEdit(inv: Invoice) {
+   246→    const items = JSON.parse(inv.items || "[]");
+   247→    setForm({
+   248→      invoiceNumber: inv.invoiceNumber,
+   249→      issueDate: new Date(inv.issueDate).toISOString().slice(0, 10),
+   250→      clientName: inv.clientName,
+   251→      clientAddress: inv.clientAddress || "",
+   252→      city: inv.city || "Jombang",
+   253→      description: inv.description || "",
+   254→      items: items.length > 0 ? items : [{ description: "", qty: 1, price: 0, total: 0 }],
+   255→      discount: inv.discount,
+   256→      tax: inv.tax,
+   257→      status: inv.status,
+   258→      paymentInstruction: inv.paymentInstruction || "",
+   259→      terms: inv.terms || "",
+   260→      note: inv.note || "",
+   261→      bankName: inv.bankName || "",
+   262→      bankAccount: inv.bankAccount || "",
+   263→      accountName: inv.accountName || "",
+   264→    });
+   265→    setDialog({ open: true, invoice: inv });
+   266→  }
+   267→
+   268→  const filtered = useMemo(() => {
+   269→    return invoices.filter((i) => {
+   270→      if (filterStatus !== "all" && i.status !== filterStatus) return false;
+   271→      if (search.trim()) {
+   272→        const q = search.toLowerCase().trim();
+   273→        const text = [i.invoiceNumber, i.clientName, i.description, i.city]
+   274→          .filter(Boolean)
+   275→          .join(" ")
+   276→          .toLowerCase();
+   277→        if (!text.includes(q)) return false;
+   278→      }
+   279→      return true;
+   280→    });
+   281→  }, [invoices, filterStatus, search]);
+   282→
+   283→  // Pagination (max 15 per page)
+   284→  const {
+   285→    paginatedItems,
+   286→    goToPage,
+   287→    nextPage,
+   288→    prevPage,
+   289→    pageInfo,
+   290→    resetPage,
+   291→  } = usePagination(filtered, { pageSize: 15 });
+   292→
+   293→  // Bulk selection
+   294→  const {
+   295→    selectedArray,
+   296→    selectedCount,
+   297→    isSelected,
+   298→    toggle,
+   299→    toggleAll,
+   300→    clearSelection,
+   301→    resetSelection,
+   302→    isAllSelected,
+   303→  } = useBulkSelect({ getId: (i: Invoice) => i.id });
+   304→
+   305→  // Reset selection + go to page 1 when filters change
+   306→  useEffect(() => {
+   307→    resetSelection();
+   308→    resetPage();
+   309→  }, [search, filterStatus, resetSelection, resetPage]);
+   310→
+   311→  if (loading) {
+   312→    return (
+   313→      <div className="flex items-center justify-center py-20">
+   314→        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+   315→      </div>
+   316→    );
+   317→  }
+   318→
+   319→  return (
+   320→    <div className="space-y-5">
+   321→      {/* Header */}
+   322→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   323→        <div>
+   324→          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+   325→            <FileText className="w-6 h-6 text-blue-600" /> Invoice
+   326→          </h1>
+   327→          <p className="text-sm text-slate-500 mt-1">Buat dan kelola invoice profesional</p>
+   328→        </div>
+   329→        <div className="flex gap-2">
+   330→          <Select value={filterStatus} onValueChange={setFilterStatus}>
+   331→            <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   332→            <SelectContent>
+   333→              <SelectItem value="all">Semua Status</SelectItem>
+   334→              <SelectItem value="PENDING">Pending</SelectItem>
+   335→              <SelectItem value="PAID">Lunas</SelectItem>
+   336→              <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
+   337→            </SelectContent>
+   338→          </Select>
+   339→          <Button size="sm" onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+   340→            <Plus className="w-4 h-4 mr-1" /> Buat Invoice
+   341→          </Button>
+   342→        </div>
+   343→      </div>
+   344→
+   345→      {/* Stats */}
+   346→      <div className="grid grid-cols-3 gap-3">
+   347→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   348→          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center"><FileText className="w-5 h-5 text-blue-600" /></div>
+   349→          <div><p className="text-xs text-slate-500">Total Invoice</p><p className="text-lg font-bold text-slate-900">{invoices.length}</p></div>
+   350→        </CardContent></Card>
+   351→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   352→          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center"><AlertCircle className="w-5 h-5 text-amber-600" /></div>
+   353→          <div><p className="text-xs text-slate-500">Pending</p><p className="text-lg font-bold text-slate-900">{invoices.filter((i) => i.status === "PENDING").length}</p></div>
+   354→        </CardContent></Card>
+   355→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   356→          <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center"><FileCheck className="w-5 h-5 text-green-600" /></div>
+   357→          <div><p className="text-xs text-slate-500">Lunas</p><p className="text-lg font-bold text-slate-900">{invoices.filter((i) => i.status === "PAID").length}</p></div>
+   358→        </CardContent></Card>
+   359→      </div>
+   360→
+   361→      {/* Filter Bar (search + bulk-select toggle) */}
+   362→      <Card className="shadow-sm">
+   363→        <CardContent className="p-3">
+   364→          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+   365→            <div className="relative flex-1 min-w-[200px]">
+   366→              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   367→              <Input
+   368→                type="text"
+   369→                value={search}
+   370→                onChange={(e) => setSearch(e.target.value)}
+   371→                placeholder="Cari nomor invoice, klien, deskripsi..."
+   372→                className="pl-9 h-9 bg-white text-sm"
+   373→              />
+   374→              {search && (
+   375→                <button
+   376→                  onClick={() => setSearch("")}
+   377→                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   378→                >
+   379→                  <X className="w-4 h-4" />
+   380→                </button>
+   381→              )}
+   382→            </div>
+   383→            <Button
+   384→              variant={bulkMode ? "default" : "outline"}
+   385→              size="sm"
+   386→              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   387→              onClick={() => {
+   388→                setBulkMode(!bulkMode);
+   389→                if (bulkMode) clearSelection();
+   390→              }}
+   391→            >
+   392→              <CheckSquare className="w-3.5 h-3.5 mr-1" />
+   393→              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   394→            </Button>
+   395→          </div>
+   396→        </CardContent>
+   397→      </Card>
+   398→
+   399→      {/* Bulk Action Bar */}
+   400→      {bulkMode && selectedCount > 0 && (
+   401→        <BulkActionBar
+   402→          selectedCount={selectedCount}
+   403→          actions={[
+   404→            {
+   405→              label: "Hapus Terpilih",
+   406→              icon: Trash2,
+   407→              onClick: handleBulkDelete,
+   408→              variant: "destructive",
+   409→              confirmText: `Hapus ${selectedCount} invoice terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   410→            },
+   411→          ]}
+   412→          onClearSelection={clearSelection}
+   413→        />
+   414→      )}
+   415→
+   416→      {/* Invoice list */}
+   417→      <Card className="shadow-sm">
+   418→        <CardContent className="p-0">
+   419→          {filtered.length === 0 ? (
+   420→            <div className="py-16 text-center">
+   421→              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   422→              <p className="text-sm text-slate-400">Belum ada invoice</p>
+   423→              <p className="text-xs text-slate-400 mt-1">Klik "Buat Invoice" untuk membuat baru</p>
+   424→            </div>
+   425→          ) : (
+   426→            <>
+   427→            <div className="max-h-[500px] overflow-y-auto">
+   428→              <table className="w-full text-sm">
+   429→                <thead className="sticky top-0 bg-slate-50 z-10">
+   430→                  <tr className="border-b text-left text-xs text-slate-500">
+   431→                    {bulkMode && <th className="py-3 px-3 w-[40px]"><SelectCheckbox checked={isAllSelected(paginatedItems)} onChange={() => toggleAll(paginatedItems)} /></th>}
+   432→                    <th className="py-3 px-4 font-medium">Nomor Invoice</th>
+   433→                    <th className="py-3 px-3 font-medium">Klien</th>
+   434→                    <th className="py-3 px-3 font-medium">Tanggal</th>
+   435→                    <th className="py-3 px-3 font-medium text-right">Total</th>
+   436→                    <th className="py-3 px-3 font-medium text-center">Status</th>
+   437→                    {!bulkMode && <th className="py-3 px-3 font-medium text-center">Aksi</th>}
+   438→                  </tr>
+   439→                </thead>
+   440→                <tbody>
+   441→                  {paginatedItems.map((inv) => (
+   442→                    <tr key={inv.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+   443→                      {bulkMode && <td className="py-2.5 px-3"><SelectCheckbox checked={isSelected(inv)} onChange={() => toggle(inv)} /></td>}
+   444→                      <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{inv.invoiceNumber}</td>
+   445→                      <td className="py-2.5 px-3 text-slate-600 text-xs">{inv.clientName}</td>
+   446→                      <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(inv.issueDate)}</td>
+   447→                      <td className="py-2.5 px-3 text-right font-bold text-slate-900 text-xs">{formatCurrency(inv.totalAmount)}</td>
+   448→                      <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[inv.status])}>{STATUS_LABELS[inv.status]}</Badge></td>
+   449→                      {!bulkMode && (
+   450→                        <td className="py-2.5 px-3">
+   451→                          <div className="flex gap-0.5 justify-center">
+   452→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Preview" onClick={() => setPreviewDialog({ open: true, invoice: inv })}><Eye className="w-3.5 h-3.5" /></Button>
+   453→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(inv)}><Download className="w-3.5 h-3.5" /></Button>
+   454→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(inv)}><Edit3 className="w-3.5 h-3.5" /></Button>
+   455→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(inv.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+   456→                          </div>
+   457→                        </td>
+   458→                      )}
+   459→                    </tr>
+   460→                  ))}
+   461→                </tbody>
+   462→              </table>
+   463→            </div>
+   464→            <Pagination
+   465→              currentPage={pageInfo.currentPage}
+   466→              totalPages={pageInfo.totalPages}
+   467→              totalItems={pageInfo.totalItems}
+   468→              startIndex={pageInfo.startIndex}
+   469→              endIndex={pageInfo.endIndex}
+   470→              hasNext={pageInfo.hasNext}
+   471→              hasPrev={pageInfo.hasPrev}
+   472→              onPageChange={goToPage}
+   473→              onNext={nextPage}
+   474→              onPrev={prevPage}
+   475→            />
+   476→            </>
+   477→          )}
+   478→        </CardContent>
+   479→      </Card>
+   480→
+   481→      {/* Create/Edit Dialog */}
+   482→      <Dialog open={dialog.open} onOpenChange={(o) => setDialog({ open: o, invoice: dialog.invoice })}>
+   483→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   484→          <DialogHeader>
+   485→            <DialogTitle className="text-blue-900">Buat Invoice Baru</DialogTitle>
+   486→            <DialogDescription>Isi data uang masuk atau uang keluar</DialogDescription>
+   487→          </DialogHeader>
+   488→          <div className="space-y-3 py-1">
+   489→            {/* Invoice info */}
+   490→            <div className="grid grid-cols-2 gap-3">
+   491→              <div className="space-y-1.5">
+   492→                <Label className="text-xs font-semibold text-slate-600">Nomor Invoice</Label>
+   493→                <Input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} className="bg-white" placeholder="001/INV/HAN/VII/2026" />
+   494→              </div>
+   495→              <div className="space-y-1.5">
+   496→                <Label className="text-xs font-semibold text-slate-600">Tanggal Terbit</Label>
+   497→                <Input type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} className="bg-white" />
+   498→              </div>
+   499→            </div>
+   500→
+   501→            <div className="grid grid-cols-2 gap-3">
+   502→              <div className="space-y-1.5">
+   503→                <Label className="text-xs font-semibold text-slate-600">Ditagihkan Ke</Label>
+   504→                <Input value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="bg-white" placeholder="e.g. PT Maju Jaya" />
+   505→              </div>
+   506→              <div className="space-y-1.5">
+   507→                <Label className="text-xs font-semibold text-slate-600">Kota Penerbitan</Label>
+   508→                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="bg-white" placeholder="Jombang" />
+   509→              </div>
+   510→            </div>
+   511→
+   512→            <div className="space-y-1.5">
+   513→              <Label className="text-xs font-semibold text-slate-600">Alamat Klien</Label>
+   514→              <Textarea value={form.clientAddress} onChange={(e) => setForm({ ...form, clientAddress: e.target.value })} className="bg-white resize-none" rows={2} placeholder="Alamat lengkap klien..." />
+   515→            </div>
+   516→
+   517→            {/* Items */}
+   518→            <div>
+   519→              <p className="text-xs font-semibold text-blue-900 mb-1.5">RINCIAN PRODUK / JASA</p>
+   520→              <div className="space-y-1.5">
+   521→                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-white" placeholder="e.g. Leadership Training – Batch 1" />
+   522→              </div>
+   523→
+   524→              {/* Items table */}
+   525→              <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
+   526→                <table className="w-full text-sm">
+   527→                  <thead className="bg-blue-900 text-white">
+   528→                    <tr>
+   529→                      <th className="py-2 px-2 text-left text-[10px] font-bold">DESKRIPSI</th>
+   530→                      <th className="py-2 px-2 text-center text-[10px] font-bold w-16">JUMLAH</th>
+   531→                      <th className="py-2 px-2 text-right text-[10px] font-bold w-32">HARGA SATUAN</th>
+   532→                      <th className="py-2 px-2 text-right text-[10px] font-bold w-32">TOTAL</th>
+   533→                      <th className="py-2 px-1 w-8"></th>
+   534→                    </tr>
+   535→                  </thead>
+   536→                  <tbody>
+   537→                    {form.items.map((item, i) => (
+   538→                      <tr key={i} className="border-t border-slate-100">
+   539→                        <td className="p-1"><Input value={item.description} onChange={(e) => handleItemChange(i, "description", e.target.value)} className="h-8 bg-white border-0" placeholder="Deskripsi item" /></td>
+   540→                        <td className="p-1"><Input type="number" value={item.qty} onChange={(e) => handleItemChange(i, "qty", Number(e.target.value))} className="h-8 bg-white border-0 text-center" /></td>
+   541→                        <td className="p-1"><Input type="number" value={item.price} onChange={(e) => handleItemChange(i, "price", Number(e.target.value))} className="h-8 bg-white border-0 text-right" /></td>
+   542→                        <td className="p-1 text-right font-bold text-blue-900 text-xs px-2">{formatCurrency(item.total)}</td>
+   543→                        <td className="p-1 text-center">{form.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="text-rose-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>}</td>
+   544→                      </tr>
+   545→                    ))}
+   546→                  </tbody>
+   547→                </table>
+   548→              </div>
+   549→              <Button size="sm" variant="outline" onClick={handleAddItem} className="mt-1.5 bg-white text-xs">
+   550→                <Plus className="w-3 h-3 mr-1" /> Tambah Item
+   551→              </Button>
+   552→            </div>
+   553→
+   554→            {/* Summary */}
+   555→            <div className="grid grid-cols-2 gap-3">
+   556→              <div className="space-y-1.5">
+   557→                <Label className="text-xs font-semibold text-slate-600">Diskon (Rp)</Label>
+   558→                <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="bg-white" />
+   559→              </div>
+   560→              <div className="space-y-1.5">
+   561→                <Label className="text-xs font-semibold text-slate-600">Pajak (Rp)</Label>
+   562→                <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="bg-white" />
+   563→              </div>
+   564→            </div>
+   565→
+   566→            {/* Total preview */}
+   567→            <div className="bg-blue-50 rounded-lg p-3 flex justify-between items-center">
+   568→              <span className="text-sm font-semibold text-blue-900">TOTAL PEMBAYARAN</span>
+   569→              <span className="text-xl font-bold text-blue-700">{formatCurrency(totalAmount)}</span>
+   570→            </div>
+   571→
+   572→            {/* Status & Note */}
+   573→            <div className="grid grid-cols-2 gap-3">
+   574→              <div className="space-y-1.5">
+   575→                <Label className="text-xs font-semibold text-slate-600">Status Pembayaran</Label>
+   576→                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   577→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   578→                  <SelectContent>
+   579→                    <SelectItem value="PENDING">Pending</SelectItem>
+   580→                    <SelectItem value="PAID">Lunas</SelectItem>
+   581→                    <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
+   582→                  </SelectContent>
+   583→                </Select>
+   584→              </div>
+   585→              <div className="space-y-1.5">
+   586→                <Label className="text-xs font-semibold text-slate-600">Catatan Internal</Label>
+   587→                <Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className="bg-white" placeholder="e.g. Pembayaran DP masuk 50%" />
+   588→              </div>
+   589→            </div>
+   590→
+   591→            {/* Payment Instructions */}
+   592→            <div className="space-y-1.5">
+   593→              <Label className="text-xs font-semibold text-slate-600">Instruksi Pembayaran</Label>
+   594→              <Textarea value={form.paymentInstruction} onChange={(e) => setForm({ ...form, paymentInstruction: e.target.value })} className="bg-white resize-none" rows={2} />
+   595→            </div>
+   596→
+   597→            {/* Bank info */}
+   598→            <div className="grid grid-cols-3 gap-2">
+   599→              <div className="space-y-1.5"><Label className="text-xs">Bank</Label><Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} className="bg-white" /></div>
+   600→              <div className="space-y-1.5"><Label className="text-xs">No. Rekening</Label><Input value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} className="bg-white" /></div>
+   601→              <div className="space-y-1.5"><Label className="text-xs">Atas Nama</Label><Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} className="bg-white" /></div>
+   602→            </div>
+   603→
+   604→            {/* Terms */}
+   605→            <div className="space-y-1.5">
+   606→              <Label className="text-xs font-semibold text-slate-600">Syarat & Ketentuan</Label>
+   607→              <Textarea value={form.terms} onChange={(e) => setForm({ ...form, terms: e.target.value })} className="bg-white resize-none" rows={3} />
+   608→            </div>
+   609→          </div>
+   610→          <DialogFooter>
+   611→            <Button variant="outline" onClick={() => setDialog({ open: false, invoice: null })}>Batal</Button>
+   612→            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">{dialog.invoice ? "Update" : "Simpan"} Invoice</Button>
+   613→          </DialogFooter>
+   614→        </DialogContent>
+   615→      </Dialog>
+   616→
+   617→      {/* Preview Dialog */}
+   618→      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, invoice: previewDialog.invoice })}>
+   619→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   620→          <DialogHeader>
+   621→            <DialogTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-blue-600" /> Preview Invoice</DialogTitle>
+   622→          </DialogHeader>
+   623→          {previewDialog.invoice && (() => {
+   624→            const inv = previewDialog.invoice;
+   625→            const items = JSON.parse(inv.items || "[]");
+   626→            return (
+   627→              <div className="space-y-3">
+   628→                {/* Company header */}
+   629→                <div className="border-b-2 border-blue-600 pb-3 flex items-start justify-between">
+   630→                  <div className="flex items-center gap-3">
+   631→                    <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg relative">
+   632→                      H
+   633→                      <div className="absolute inset-0 rounded-full bg-blue-600 opacity-50" style={{ clipPath: "circle(60% at 60% 60%)" }} />
+   634→                    </div>
+   635→                    <div>
+   636→                      <p className="font-bold text-blue-900">PT. HAFARA AQIBA NUSANTARA</p>
+   637→                      <p className="text-[10px] text-slate-500">{`Email: info@hafaragroup.com | Web: www.HafaraGroup.com | Telp: 081324511570`}</p>
+   638→                      <p className="text-[10px] text-slate-500">New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur</p>
+   639→                    </div>
+   640→                  </div>
+   641→                </div>
+   642→
+   643→                {/* Invoice title */}
+   644→                <p className="text-center font-bold text-blue-900 text-2xl">INVOICE</p>
+   645→
+   646→                {/* Invoice info */}
+   647→                <div className="flex justify-end text-xs text-slate-500 space-y-0.5">
+   648→                  <div className="text-right">
+   649→                    <p>Nomor Invoice: {inv.invoiceNumber}</p>
+   650→                    <p>Tanggal: {formatDate(inv.issueDate)}</p>
+   651→                  </div>
+   652→                </div>
+   653→
+   654→                {/* Client */}
+   655→                <div>
+   656→                  <p className="text-xs font-bold text-blue-900">DITAGIHKAN KEPADA:</p>
+   657→                  <p className="font-bold text-blue-900">{inv.clientName}</p>
+   658→                  <p className="text-xs text-slate-500">{inv.clientAddress}</p>
+   659→                </div>
+   660→
+   661→                {/* Items table */}
+   662→                <div className="border border-slate-200 rounded-lg overflow-hidden">
+   663→                  <table className="w-full text-xs">
+   664→                    <thead className="bg-blue-900 text-white">
+   665→                      <tr>
+   666→                        <th className="py-2 px-2 text-left">DESKRIPSI PRODUK / LAYANAN</th>
+   667→                        <th className="py-2 px-2 text-center w-16">JUMLAH</th>
+   668→                        <th className="py-2 px-2 text-center w-32">HARGA SATUAN</th>
+   669→                        <th className="py-2 px-2 text-right w-32">TOTAL</th>
+   670→                      </tr>
+   671→                    </thead>
+   672→                    <tbody>
+   673→                      {items.map((item: InvoiceItem, i: number) => (
+   674→                        <tr key={i} className="border-t border-slate-100">
+   675→                          <td className="py-2 px-2">{item.description}</td>
+   676→                          <td className="py-2 px-2 text-center">{item.qty}</td>
+   677→                          <td className="py-2 px-2 text-center">{formatCurrency(item.price)}</td>
+   678→                          <td className="py-2 px-2 text-right font-medium">{formatCurrency(item.total)}</td>
+   679→                        </tr>
+   680→                      ))}
+   681→                    </tbody>
+   682→                  </table>
+   683→                </div>
+   684→
+   685→                {/* Summary */}
+   686→                <div className="flex justify-end">
+   687→                  <div className="w-64 space-y-1 text-xs">
+   688→                    <div className="flex justify-between"><span className="text-slate-500">Subtotal:</span><span>{formatCurrency(inv.subtotal)}</span></div>
+   689→                    {inv.discount > 0 && <div className="flex justify-between"><span className="text-slate-500">Diskon:</span><span>- {formatCurrency(inv.discount)}</span></div>}
+   690→                    {inv.tax > 0 && <div className="flex justify-between"><span className="text-slate-500">Pajak:</span><span>{formatCurrency(inv.tax)}</span></div>}
+   691→                    <div className="flex justify-between font-bold text-blue-900 border-t border-slate-200 pt-1"><span>TOTAL PEMBAYARAN:</span><span>{formatCurrency(inv.totalAmount)}</span></div>
+   692→                    <div className={cn("rounded px-2 py-1 text-center font-bold", STATUS_COLORS[inv.status])}>STATUS: {STATUS_LABELS[inv.status]}</div>
+   693→                  </div>
+   694→                </div>
+   695→
+   696→                {/* Payment instructions */}
+   697→                {inv.paymentInstruction && (
+   698→                  <div>
+   699→                    <p className="text-xs font-bold text-blue-900">INSTRUKSI PEMBAYARAN:</p>
+   700→                    <p className="text-xs text-slate-600">{inv.paymentInstruction}</p>
+   701→                  </div>
+   702→                )}
+   703→
+   704→                {/* Terms */}
+   705→                {inv.terms && (
+   706→                  <div>
+   707→                    <p className="text-xs font-bold text-blue-900">SYARAT & KETENTUAN:</p>
+   708→                    <p className="text-xs text-slate-500 whitespace-pre-wrap">{inv.terms}</p>
+   709→                  </div>
+   710→                )}
+   711→
+   712→                <Button onClick={() => handleDownloadPDF(inv)} className="w-full bg-blue-600 hover:bg-blue-700">
+   713→                  <Download className="w-4 h-4 mr-2" /> Download PDF
+   714→                </Button>
+   715→              </div>
+   716→            );
+   717→          })()}
+   718→        </DialogContent>
+   719→      </Dialog>
+   720→    </div>
+   721→  );
+   722→}
+   723→

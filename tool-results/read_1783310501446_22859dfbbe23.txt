@@ -1,0 +1,902 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import {
+     5→  Film, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
+     6→  Loader2, CheckCircle2, Clock, AlertCircle, Globe, Link2,
+     7→  Check, X, MessageSquare, Eye, BarChart3, Calendar,
+     8→  Search, CheckSquare,
+     9→} from "lucide-react";
+    10→import { Button } from "@/components/ui/button";
+    11→import { Badge } from "@/components/ui/badge";
+    12→import { Card, CardContent } from "@/components/ui/card";
+    13→import { Input } from "@/components/ui/input";
+    14→import { Textarea } from "@/components/ui/textarea";
+    15→import { Label } from "@/components/ui/label";
+    16→import { Checkbox } from "@/components/ui/checkbox";
+    17→import {
+    18→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    19→} from "@/components/ui/select";
+    20→import {
+    21→  Dialog, DialogContent, DialogDescription, DialogFooter,
+    22→  DialogHeader, DialogTitle,
+    23→} from "@/components/ui/dialog";
+    24→import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    25→import { toast } from "sonner";
+    26→import { api } from "@/lib/api-client";
+    27→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    28→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    29→import {
+    30→  ROLES, CONTENT_CATEGORIES, PRODUCTION_STATUS, PRODUCTION_STATUS_LABELS,
+    31→  EDITING_STATUS, PUBLISH_STATUS, ACC_STATUS, ACC_STATUS_LABELS, ACC_STATUS_COLORS,
+    32→  formatDate, formatNumber,
+    33→} from "@/lib/constants";
+    34→import type { SafeUser } from "@/lib/auth";
+    35→import { cn } from "@/lib/utils";
+    36→import { usePagination } from "@/lib/hooks/use-pagination";
+    37→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    38→import { Pagination } from "@/components/shared/pagination";
+    39→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    40→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    41→
+    42→interface ContentUser { id: string; name: string; role: string; }
+    43→interface MetrikKonten {
+    44→  reach?: number; views?: number; watchTime?: number;
+    45→  share?: number; save?: number; comment?: number; followerGrowth?: number;
+    46→}
+    47→interface ContentIdea {
+    48→  id: string;
+    49→  userId: string;
+    50→  kategori: string;
+    51→  judul: string;
+    52→  link: string | null;
+    53→  ideKonten: string | null;
+    54→  script: string | null;
+    55→  caption: string | null;
+    56→  statusProduksi: string;
+    57→  statusEditing: string;
+    58→  statusPublish: string;
+    59→  linkKonten: string | null;
+    60→  metrikKonten: string | null;
+    61→  statusACC: string;
+    62→  catatanRevisi: string | null;
+    63→  accAt: string | null;
+    64→  accById: string | null;
+    65→  tanggal: string;
+    66→  user: ContentUser;
+    67→}
+    68→
+    69→const emptyMetrik: MetrikKonten = {
+    70→  reach: 0, views: 0, watchTime: 0, share: 0, save: 0, comment: 0, followerGrowth: 0,
+    71→};
+    72→
+    73→const emptyForm = {
+    74→  kategori: CONTENT_CATEGORIES[0] as string,
+    75→  judul: "",
+    76→  link: "",
+    77→  ideKonten: "",
+    78→  script: "",
+    79→  caption: "",
+    80→  statusProduksi: "IDE",
+    81→  statusEditing: "PENDING",
+    82→  statusPublish: "PENDING",
+    83→  linkKonten: "",
+    84→  metrik: { ...emptyMetrik },
+    85→};
+    86→
+    87→function parseMetrik(s: string | null): MetrikKonten {
+    88→  if (!s) return { ...emptyMetrik };
+    89→  try {
+    90→    const parsed = JSON.parse(s);
+    91→    return { ...emptyMetrik, ...parsed };
+    92→  } catch {
+    93→    return { ...emptyMetrik };
+    94→  }
+    95→}
+    96→
+    97→export function ContentModule({ user }: { user: SafeUser }) {
+    98→  const isOwner = user.role === ROLES.OWNER;
+    99→
+   100→  const [ideas, setIdeas] = useState<ContentIdea[]>([]);
+   101→  const [loading, setLoading] = useState(true);
+   102→  const [kategoriFilter, setKategoriFilter] = useState<string>("all");
+   103→  const [accFilter, setAccFilter] = useState<string>("all");
+   104→  const [tab, setTab] = useState<string>("all");
+   105→  const [search, setSearch] = useState("");
+   106→  const [bulkMode, setBulkMode] = useState(false);
+   107→
+   108→  const [dialogOpen, setDialogOpen] = useState(false);
+   109→  const [editingId, setEditingId] = useState<string | null>(null);
+   110→  const [form, setForm] = useState({ ...emptyForm });
+   111→  const [saving, setSaving] = useState(false);
+   112→
+   113→  // Revisi dialog
+   114→  const [revisiOpen, setRevisiOpen] = useState(false);
+   115→  const [revisiTarget, setRevisiTarget] = useState<ContentIdea | null>(null);
+   116→  const [catatanRevisi, setCatatanRevisi] = useState("");
+   117→  const [accLoading, setAccLoading] = useState(false);
+   118→
+   119→  const loadIdeas = useCallback(async () => {
+   120→    setLoading(true);
+   121→    try {
+   122→      const params = new URLSearchParams();
+   123→      if (kategoriFilter !== "all") params.set("kategori", kategoriFilter);
+   124→      if (accFilter !== "all") params.set("statusACC", accFilter);
+   125→      const data = await api<{ ideas: ContentIdea[] }>(`/api/content-ideas?${params.toString()}`);
+   126→      setIdeas(data.ideas || []);
+   127→    } catch (e: any) {
+   128→      toast.error(e?.message || "Gagal memuat konten");
+   129→    } finally {
+   130→      setLoading(false);
+   131→    }
+   132→  }, [kategoriFilter, accFilter]);
+   133→
+   134→  useEffect(() => { loadIdeas(); }, [loadIdeas]);
+   135→
+   136→  const filtered = useMemo(() => {
+   137→    let r = ideas;
+   138→    if (tab !== "all") r = r.filter((i) => i.statusACC === tab);
+   139→    if (search.trim()) {
+   140→      const q = search.toLowerCase().trim();
+   141→      r = r.filter((i) =>
+   142→        (i.judul || "").toLowerCase().includes(q) ||
+   143→        (i.kategori || "").toLowerCase().includes(q)
+   144→      );
+   145→    }
+   146→    return r;
+   147→  }, [ideas, tab, search]);
+   148→
+   149→  // Pagination (max 15 per page)
+   150→  const {
+   151→    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+   152→  } = usePagination(filtered, { pageSize: 15 });
+   153→
+   154→  // Bulk selection
+   155→  const {
+   156→    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+   157→    clearSelection, resetSelection, isAllSelected,
+   158→  } = useBulkSelect({ getId: (i: ContentIdea) => i.id });
+   159→
+   160→  // Reset selection + page when client-side filters change
+   161→  useEffect(() => {
+   162→    resetSelection();
+   163→    resetPage();
+   164→  }, [search, tab, resetSelection, resetPage]);
+   165→
+   166→  async function handleBulkDelete() {
+   167→    if (!confirm(`Hapus ${selectedCount} ide konten terpilih?`)) return;
+   168→    let success = 0;
+   169→    let failed = 0;
+   170→    for (const id of selectedArray) {
+   171→      try {
+   172→        await api(`/api/content-ideas/${id}`, { method: "DELETE" });
+   173→        success++;
+   174→      } catch {
+   175→        failed++;
+   176→      }
+   177→    }
+   178→    clearSelection();
+   179→    setBulkMode(false);
+   180→    await loadIdeas();
+   181→    if (failed === 0) {
+   182→      toast.success(`${success} ide konten berhasil dihapus`);
+   183→    } else {
+   184→      toast.error(`${success} dihapus, ${failed} gagal`);
+   185→    }
+   186→  }
+   187→
+   188→  const stats = useMemo(() => {
+   189→    const total = ideas.length;
+   190→    const pending = ideas.filter((i) => i.statusACC === "PENDING").length;
+   191→    const acc = ideas.filter((i) => i.statusACC === "ACC").length;
+   192→    const revisi = ideas.filter((i) => i.statusACC === "REVISI").length;
+   193→    const published = ideas.filter((i) => i.statusPublish === "PUBLISHED").length;
+   194→    return { total, pending, acc, revisi, published };
+   195→  }, [ideas]);
+   196→
+   197→  function openAdd() {
+   198→    setEditingId(null);
+   199→    setForm({ ...emptyForm, metrik: { ...emptyMetrik } });
+   200→    setDialogOpen(true);
+   201→  }
+   202→
+   203→  function openEdit(idea: ContentIdea) {
+   204→    const m = parseMetrik(idea.metrikKonten);
+   205→    setEditingId(idea.id);
+   206→    setForm({
+   207→      kategori: idea.kategori,
+   208→      judul: idea.judul || "",
+   209→      link: idea.link || "",
+   210→      ideKonten: idea.ideKonten || "",
+   211→      script: idea.script || "",
+   212→      caption: idea.caption || "",
+   213→      statusProduksi: idea.statusProduksi || "IDE",
+   214→      statusEditing: idea.statusEditing || "PENDING",
+   215→      statusPublish: idea.statusPublish || "PENDING",
+   216→      linkKonten: idea.linkKonten || "",
+   217→      metrik: m,
+   218→    });
+   219→    setDialogOpen(true);
+   220→  }
+   221→
+   222→  async function handleSave() {
+   223→    if (!form.judul.trim()) { toast.error("Judul wajib diisi"); return; }
+   224→    if (!form.kategori) { toast.error("Kategori wajib dipilih"); return; }
+   225→    setSaving(true);
+   226→    try {
+   227→      const payload = {
+   228→        kategori: form.kategori,
+   229→        judul: form.judul,
+   230→        link: form.link || null,
+   231→        ideKonten: form.ideKonten || null,
+   232→        script: form.script || null,
+   233→        caption: form.caption || null,
+   234→        statusProduksi: form.statusProduksi,
+   235→        statusEditing: form.statusEditing,
+   236→        statusPublish: form.statusPublish,
+   237→        linkKonten: form.linkKonten || null,
+   238→        metrikKonten: JSON.stringify(form.metrik),
+   239→      };
+   240→      if (editingId) {
+   241→        await api(`/api/content-ideas/${editingId}`, { method: "PUT", body: JSON.stringify(payload) });
+   242→        toast.success("Ide konten diperbarui");
+   243→      } else {
+   244→        await api("/api/content-ideas", { method: "POST", body: JSON.stringify(payload) });
+   245→        toast.success("Ide konten ditambahkan");
+   246→      }
+   247→      setDialogOpen(false);
+   248→      loadIdeas();
+   249→    } catch (e: any) {
+   250→      toast.error(e?.message || "Gagal menyimpan");
+   251→    } finally {
+   252→      setSaving(false);
+   253→    }
+   254→  }
+   255→
+   256→  async function handleDelete(idea: ContentIdea) {
+   257→    if (!confirm(`Hapus ide konten "${idea.judul}"?`)) return;
+   258→    try {
+   259→      await api(`/api/content-ideas/${idea.id}`, { method: "DELETE" });
+   260→      toast.success("Ide konten dihapus");
+   261→      loadIdeas();
+   262→    } catch (e: any) {
+   263→      toast.error(e?.message || "Gagal menghapus");
+   264→    }
+   265→  }
+   266→
+   267→  async function handleAcc(idea: ContentIdea) {
+   268→    setAccLoading(true);
+   269→    try {
+   270→      await api(`/api/content-ideas/${idea.id}/acc`, {
+   271→        method: "POST",
+   272→        body: JSON.stringify({ statusACC: "ACC" }),
+   273→      });
+   274→      toast.success(`Konten "${idea.judul}" di-ACC`);
+   275→      loadIdeas();
+   276→    } catch (e: any) {
+   277→      toast.error(e?.message || "Gagal ACC");
+   278→    } finally {
+   279→      setAccLoading(false);
+   280→    }
+   281→  }
+   282→
+   283→  function openRevisi(idea: ContentIdea) {
+   284→    setRevisiTarget(idea);
+   285→    setCatatanRevisi("");
+   286→    setRevisiOpen(true);
+   287→  }
+   288→
+   289→  async function handleRevisiSubmit() {
+   290→    if (!revisiTarget) return;
+   291→    if (!catatanRevisi.trim()) { toast.error("Catatan revisi wajib diisi"); return; }
+   292→    setAccLoading(true);
+   293→    try {
+   294→      await api(`/api/content-ideas/${revisiTarget.id}/acc`, {
+   295→        method: "POST",
+   296→        body: JSON.stringify({ statusACC: "REVISI", catatanRevisi }),
+   297→      });
+   298→      toast.success("Catatan revisi terkirim");
+   299→      setRevisiOpen(false);
+   300→      loadIdeas();
+   301→    } catch (e: any) {
+   302→      toast.error(e?.message || "Gagal mengirim revisi");
+   303→    } finally {
+   304→      setAccLoading(false);
+   305→    }
+   306→  }
+   307→
+   308→  async function handlePublishToggle(idea: ContentIdea, publish: boolean) {
+   309→    try {
+   310→      await api(`/api/content-ideas/${idea.id}`, {
+   311→        method: "PUT",
+   312→        body: JSON.stringify({
+   313→          statusPublish: publish ? "PUBLISHED" : "PENDING",
+   314→          statusProduksi: publish ? "PUBLISHED" : "SIAP_PUBLISH",
+   315→        }),
+   316→      });
+   317→      toast.success(publish ? "Konten dipublikasikan" : "Konten dibatalkan publish");
+   318→      loadIdeas();
+   319→    } catch (e: any) {
+   320→      toast.error(e?.message || "Gagal mengubah status publish");
+   321→    }
+   322→  }
+   323→
+   324→  function handleExportExcel() {
+   325→    if (!ideas.length) { toast.error("Tidak ada data"); return; }
+   326→    const rows = ideas.map((i) => {
+   327→      const m = parseMetrik(i.metrikKonten);
+   328→      return {
+   329→        Judul: i.judul,
+   330→        Kategori: i.kategori,
+   331→        "Diajukan Oleh": i.user?.name || "-",
+   332→        Tanggal: formatDate(i.tanggal),
+   333→        Produksi: PRODUCTION_STATUS_LABELS[i.statusProduksi] || i.statusProduksi,
+   334→        Editing: i.statusEditing,
+   335→        Publish: i.statusPublish,
+   336→        "Status ACC": ACC_STATUS_LABELS[i.statusACC] || i.statusACC,
+   337→        "Catatan Revisi": i.catatanRevisi || "-",
+   338→        Reach: m.reach || 0,
+   339→        Views: m.views || 0,
+   340→        "Watch Time": m.watchTime || 0,
+   341→        Share: m.share || 0,
+   342→        Save: m.save || 0,
+   343→        Comment: m.comment || 0,
+   344→        "Follower Growth": m.followerGrowth || 0,
+   345→        "Link Konten": i.linkKonten || "-",
+   346→      };
+   347→    });
+   348→    exportToExcel(rows, "Tugas_Konten", "Tugas Konten");
+   349→    toast.success("Excel diunduh");
+   350→  }
+   351→
+   352→  function handleExportPDF() {
+   353→    if (!ideas.length) { toast.error("Tidak ada data"); return; }
+   354→    const columns = ["Judul", "Kategori", "Pengaju", "ACC", "Publish", "Reach", "Views"];
+   355→    const rows = ideas.map((i) => {
+   356→      const m = parseMetrik(i.metrikKonten);
+   357→      return [
+   358→        i.judul,
+   359→        i.kategori,
+   360→        i.user?.name || "-",
+   361→        ACC_STATUS_LABELS[i.statusACC] || i.statusACC,
+   362→        i.statusPublish,
+   363→        formatNumber(m.reach || 0),
+   364→        formatNumber(m.views || 0),
+   365→      ];
+   366→    });
+   367→    exportToPDF("Laporan Tugas Konten", columns, rows as any, "Tugas_Konten");
+   368→    toast.success("PDF diunduh");
+   369→  }
+   370→
+   371→  return (
+   372→    <div className="space-y-5">
+   373→      <SectionHeader
+   374→        title="Tugas Konten"
+   375→        description="Ajukan ide konten & judul. Owner akan ACC atau memberi catatan revisi. Jika ACC, akan muncul checklist publish di dashboard Anda."
+   376→        action={
+   377→          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
+   378→            <Plus className="w-4 h-4" /> Tambah Ide Konten
+   379→          </Button>
+   380→        }
+   381→      />
+   382→
+   383→      {/* Stats */}
+   384→      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+   385→        <StatCard title="Total Ide" value={formatNumber(stats.total)} icon={Film} indicator="neutral" accent="bg-slate-100 text-slate-600" />
+   386→        <StatCard title="Pending ACC" value={formatNumber(stats.pending)} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
+   387→        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
+   388→        <StatCard title="Revisi" value={formatNumber(stats.revisi)} icon={AlertCircle} indicator="red" accent="bg-rose-50 text-rose-600" />
+   389→        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-sky-50 text-sky-600" />
+   390→      </div>
+   391→
+   392→      {/* Filters + Export */}
+   393→      <Card className="border-slate-200">
+   394→        <CardContent className="p-4">
+   395→          <div className="flex flex-col lg:flex-row gap-3 lg:items-end">
+   396→            <div className="flex-1 min-w-0">
+   397→              <Label className="text-xs text-slate-500 mb-1.5 block">Kategori</Label>
+   398→              <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+   399→                <SelectTrigger className="h-9"><SelectValue placeholder="Semua Kategori" /></SelectTrigger>
+   400→                <SelectContent>
+   401→                  <SelectItem value="all">Semua Kategori</SelectItem>
+   402→                  {CONTENT_CATEGORIES.map((c) => (
+   403→                    <SelectItem key={c} value={c}>{c}</SelectItem>
+   404→                  ))}
+   405→                </SelectContent>
+   406→              </Select>
+   407→            </div>
+   408→            <div className="flex-1 min-w-0">
+   409→              <Label className="text-xs text-slate-500 mb-1.5 block">Status ACC</Label>
+   410→              <Select value={accFilter} onValueChange={setAccFilter}>
+   411→                <SelectTrigger className="h-9"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+   412→                <SelectContent>
+   413→                  <SelectItem value="all">Semua</SelectItem>
+   414→                  <SelectItem value="PENDING">Menunggu ACC</SelectItem>
+   415→                  <SelectItem value="ACC">ACC</SelectItem>
+   416→                  <SelectItem value="REVISI">Revisi</SelectItem>
+   417→                </SelectContent>
+   418→              </Select>
+   419→            </div>
+   420→            <div className="flex gap-2">
+   421→              <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9">
+   422→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   423→              </Button>
+   424→              <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9">
+   425→                <FileText className="w-4 h-4" /> PDF
+   426→              </Button>
+   427→            </div>
+   428→          </div>
+   429→
+   430→          <Tabs value={tab} onValueChange={setTab} className="mt-4">
+   431→            <TabsList className="grid w-full grid-cols-4 max-w-md h-9">
+   432→              <TabsTrigger value="all" className="text-xs">Semua</TabsTrigger>
+   433→              <TabsTrigger value="PENDING" className="text-xs">Menunggu</TabsTrigger>
+   434→              <TabsTrigger value="ACC" className="text-xs">ACC</TabsTrigger>
+   435→              <TabsTrigger value="REVISI" className="text-xs">Revisi</TabsTrigger>
+   436→            </TabsList>
+   437→          </Tabs>
+   438→
+   439→          {/* Search + Bulk select toggle */}
+   440→          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+   441→            <div className="relative flex-1 min-w-[200px]">
+   442→              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   443→              <Input
+   444→                type="text"
+   445→                value={search}
+   446→                onChange={(e) => setSearch(e.target.value)}
+   447→                placeholder="Cari judul atau kategori..."
+   448→                className="pl-9 h-9 bg-white text-sm"
+   449→              />
+   450→              {search && (
+   451→                <button
+   452→                  onClick={() => setSearch("")}
+   453→                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   454→                >
+   455→                  <X className="w-4 h-4" />
+   456→                </button>
+   457→              )}
+   458→            </div>
+   459→            <Button
+   460→              variant={bulkMode ? "default" : "outline"}
+   461→              size="sm"
+   462→              onClick={() => {
+   463→                setBulkMode(!bulkMode);
+   464→                if (bulkMode) clearSelection();
+   465→              }}
+   466→              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   467→            >
+   468→              <CheckSquare className="w-3.5 h-3.5" />
+   469→              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   470→            </Button>
+   471→          </div>
+   472→        </CardContent>
+   473→      </Card>
+   474→
+   475→      {/* Bulk Action Bar */}
+   476→      {bulkMode && selectedCount > 0 && (
+   477→        <BulkActionBar
+   478→          selectedCount={selectedCount}
+   479→          actions={[
+   480→            {
+   481→              label: "Hapus Terpilih",
+   482→              icon: Trash2,
+   483→              onClick: handleBulkDelete,
+   484→              variant: "destructive",
+   485→              confirmText: `Hapus ${selectedCount} ide konten terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   486→            },
+   487→          ]}
+   488→          onClearSelection={clearSelection}
+   489→        />
+   490→      )}
+   491→
+   492→      {/* Cards Grid */}
+   493→      {loading ? (
+   494→        <div className="flex items-center justify-center py-16">
+   495→          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+   496→        </div>
+   497→      ) : filtered.length === 0 ? (
+   498→        <Card className="border-dashed border-slate-300">
+   499→          <CardContent className="flex flex-col items-center justify-center py-16 text-center px-4">
+   500→            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+   501→              <Search className="w-7 h-7 text-slate-400" />
+   502→            </div>
+   503→            <p className="text-slate-700 font-medium">Tidak ada konten yang cocok</p>
+   504→            <p className="text-sm text-slate-500 mt-1">
+   505→              Coba ubah kata kunci pencarian atau filter.
+   506→            </p>
+   507→          </CardContent>
+   508→        </Card>
+   509→      ) : (
+   510→        <>
+   511→        <div className="max-h-[700px] overflow-y-auto pr-1 -mr-1">
+   512→          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+   513→            {paginatedItems.map((idea) => {
+   514→              const m = parseMetrik(idea.metrikKonten);
+   515→              const canEdit = isOwner || idea.userId === user.id;
+   516→              const isPublished = idea.statusPublish === "PUBLISHED";
+   517→              return (
+   518→                <Card key={idea.id} className="border-slate-200 hover:shadow-md transition-shadow flex flex-col">
+   519→                  <CardContent className="p-4 flex flex-col gap-3 flex-1">
+   520→                    {/* Bulk checkbox (when in bulk mode) */}
+   521→                    {bulkMode && (
+   522→                      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+   523→                        <SelectCheckbox
+   524→                          checked={isSelected(idea)}
+   525→                          onChange={() => toggle(idea)}
+   526→                        />
+   527→                        <span className="text-xs text-slate-500">Pilih konten ini</span>
+   528→                      </div>
+   529→                    )}
+   530→                    {/* Header */}
+   531→                    <div className="flex items-start justify-between gap-2">
+   532→                      <div className="flex flex-wrap gap-1.5">
+   533→                        <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
+   534→                          {idea.kategori}
+   535→                        </Badge>
+   536→                        <Badge variant="outline" className={ACC_STATUS_COLORS[idea.statusACC]}>
+   537→                          {ACC_STATUS_LABELS[idea.statusACC] || idea.statusACC}
+   538→                        </Badge>
+   539→                      </div>
+   540→                      <Badge variant="outline" className={cn(
+   541→                        "text-[10px]",
+   542→                        idea.statusProduksi === "PUBLISHED"
+   543→                          ? "bg-sky-50 text-sky-700 border-sky-200"
+   544→                          : "bg-slate-50 text-slate-600 border-slate-200"
+   545→                      )}>
+   546→                        {PRODUCTION_STATUS_LABELS[idea.statusProduksi] || idea.statusProduksi}
+   547→                      </Badge>
+   548→                    </div>
+   549→
+   550→                    {/* Title */}
+   551→                    <div>
+   552→                      <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2">{idea.judul}</h3>
+   553→                      {idea.ideKonten && (
+   554→                        <p className="text-sm text-slate-500 mt-1 line-clamp-2">{idea.ideKonten}</p>
+   555→                      )}
+   556→                    </div>
+   557→
+   558→                    {/* Meta */}
+   559→                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+   560→                      <span className="flex items-center gap-1">
+   561→                        <Calendar className="w-3 h-3" /> {formatDate(idea.tanggal)}
+   562→                      </span>
+   563→                      <span>•</span>
+   564→                      <span>oleh <span className="font-medium text-slate-700">{idea.user?.name || "-"}</span></span>
+   565→                    </div>
+   566→
+   567→                    {/* Link */}
+   568→                    {(idea.link || idea.linkKonten) && (
+   569→                      <div className="flex flex-wrap gap-2">
+   570→                        {idea.link && (
+   571→                          <a
+   572→                            href={idea.link} target="_blank" rel="noreferrer"
+   573→                            className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 hover:underline"
+   574→                          >
+   575→                            <Link2 className="w-3 h-3" /> Referensi
+   576→                          </a>
+   577→                        )}
+   578→                        {idea.linkKonten && (
+   579→                          <a
+   580→                            href={idea.linkKonten} target="_blank" rel="noreferrer"
+   581→                            className="inline-flex items-center gap-1 text-xs text-sky-700 hover:text-sky-800 hover:underline"
+   582→                          >
+   583→                            <Globe className="w-3 h-3" /> Konten Published
+   584→                          </a>
+   585→                        )}
+   586→                      </div>
+   587→                    )}
+   588→
+   589→                    {/* Script/Caption preview */}
+   590→                    {(idea.script || idea.caption) && (
+   591→                      <div className="text-xs text-slate-500 bg-slate-50 rounded-md p-2 space-y-1">
+   592→                        {idea.script && (
+   593→                          <p><span className="font-medium text-slate-600">Script:</span> <span className="line-clamp-2">{idea.script}</span></p>
+   594→                        )}
+   595→                        {idea.caption && (
+   596→                          <p><span className="font-medium text-slate-600">Caption:</span> <span className="line-clamp-2">{idea.caption}</span></p>
+   597→                        )}
+   598→                      </div>
+   599→                    )}
+   600→
+   601→                    {/* Catatan Revisi */}
+   602→                    {idea.statusACC === "REVISI" && idea.catatanRevisi && (
+   603→                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5">
+   604→                        <p className="text-xs font-semibold text-rose-700 flex items-center gap-1.5 mb-1">
+   605→                          <MessageSquare className="w-3.5 h-3.5" /> Catatan Revisi Owner
+   606→                        </p>
+   607→                        <p className="text-xs text-rose-800">{idea.catatanRevisi}</p>
+   608→                      </div>
+   609→                    )}
+   610→
+   611→                    {/* Metrik */}
+   612→                    {isPublished && (
+   613→                      <div className="rounded-md border border-blue-200 bg-blue-50/50 p-2.5">
+   614→                        <p className="text-xs font-semibold text-blue-700 flex items-center gap-1.5 mb-1.5">
+   615→                          <BarChart3 className="w-3.5 h-3.5" /> Metrik Konten
+   616→                        </p>
+   617→                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+   618→                          <div className="flex justify-between"><span className="text-slate-500">Reach</span><span className="font-medium text-slate-700">{formatNumber(m.reach || 0)}</span></div>
+   619→                          <div className="flex justify-between"><span className="text-slate-500">Views</span><span className="font-medium text-slate-700">{formatNumber(m.views || 0)}</span></div>
+   620→                          <div className="flex justify-between"><span className="text-slate-500">Watch</span><span className="font-medium text-slate-700">{formatNumber(m.watchTime || 0)}</span></div>
+   621→                          <div className="flex justify-between"><span className="text-slate-500">Share</span><span className="font-medium text-slate-700">{formatNumber(m.share || 0)}</span></div>
+   622→                          <div className="flex justify-between"><span className="text-slate-500">Save</span><span className="font-medium text-slate-700">{formatNumber(m.save || 0)}</span></div>
+   623→                          <div className="flex justify-between"><span className="text-slate-500">Comment</span><span className="font-medium text-slate-700">{formatNumber(m.comment || 0)}</span></div>
+   624→                          <div className="flex justify-between col-span-2"><span className="text-slate-500">Follower Growth</span><span className="font-medium text-blue-700">+{formatNumber(m.followerGrowth || 0)}</span></div>
+   625→                        </div>
+   626→                      </div>
+   627→                    )}
+   628→
+   629→                    {/* Spacer */}
+   630→                    <div className="flex-1" />
+   631→
+   632→                    {/* Owner ACC actions */}
+   633→                    {isOwner && idea.statusACC === "PENDING" && (
+   634→                      <div className="flex gap-2 pt-1 border-t border-slate-100">
+   635→                        <Button
+   636→                          size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700"
+   637→                          onClick={() => handleAcc(idea)} disabled={accLoading}
+   638→                        >
+   639→                          <Check className="w-3.5 h-3.5" /> ACC
+   640→                        </Button>
+   641→                        <Button
+   642→                          size="sm" variant="outline"
+   643→                          className="flex-1 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+   644→                          onClick={() => openRevisi(idea)} disabled={accLoading}
+   645→                        >
+   646→                          <X className="w-3.5 h-3.5" /> Revisi
+   647→                        </Button>
+   648→                      </div>
+   649→                    )}
+   650→
+   651→                    {/* Publish toggle (when ACC) */}
+   652→                    {idea.statusACC === "ACC" && canEdit && (
+   653→                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+   654→                        <Label htmlFor={`pub-${idea.id}`} className="text-xs font-medium text-slate-700 flex items-center gap-1.5 cursor-pointer">
+   655→                          <Globe className="w-3.5 h-3.5" /> Publish Konten
+   656→                        </Label>
+   657→                        <Checkbox
+   658→                          id={`pub-${idea.id}`}
+   659→                          checked={isPublished}
+   660→                          onCheckedChange={(v) => handlePublishToggle(idea, !!v)}
+   661→                        />
+   662→                      </div>
+   663→                    )}
+   664→
+   665→                    {/* Edit/Delete */}
+   666→                    {canEdit && (
+   667→                      <div className="flex justify-end gap-1 pt-1 border-t border-slate-100">
+   668→                        <Button size="sm" variant="ghost" className="h-8" onClick={() => openEdit(idea)}>
+   669→                          <Pencil className="w-3.5 h-3.5" /> Edit
+   670→                        </Button>
+   671→                        <Button size="sm" variant="ghost" className="h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={() => handleDelete(idea)}>
+   672→                          <Trash2 className="w-3.5 h-3.5" /> Hapus
+   673→                        </Button>
+   674→                      </div>
+   675→                    )}
+   676→                  </CardContent>
+   677→                </Card>
+   678→              );
+   679→            })}
+   680→          </div>
+   681→        </div>
+   682→        <Card className="border-slate-200">
+   683→          <CardContent className="p-0">
+   684→            <Pagination
+   685→              currentPage={pageInfo.currentPage}
+   686→              totalPages={pageInfo.totalPages}
+   687→              totalItems={pageInfo.totalItems}
+   688→              startIndex={pageInfo.startIndex}
+   689→              endIndex={pageInfo.endIndex}
+   690→              hasNext={pageInfo.hasNext}
+   691→              hasPrev={pageInfo.hasPrev}
+   692→              onPageChange={goToPage}
+   693→              onNext={nextPage}
+   694→              onPrev={prevPage}
+   695→            />
+   696→          </CardContent>
+   697→        </Card>
+   698→        </>
+   699→      )}
+   700→
+   701→      {/* Add/Edit Dialog */}
+   702→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   703→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   704→          <DialogHeader>
+   705→            <DialogTitle>{editingId ? "Edit Ide Konten" : "Tambah Ide Konten"}</DialogTitle>
+   706→            <DialogDescription>
+   707→              {editingId ? "Perbarui detail ide konten." : "Ajukan ide konten baru untuk di-ACC owner."}
+   708→            </DialogDescription>
+   709→          </DialogHeader>
+   710→
+   711→          <div className="space-y-4 py-2">
+   712→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   713→              <div>
+   714→                <Label className="mb-1.5">Kategori <span className="text-rose-500">*</span></Label>
+   715→                <Select value={form.kategori} onValueChange={(v) => setForm({ ...form, kategori: v })}>
+   716→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   717→                  <SelectContent>
+   718→                    {CONTENT_CATEGORIES.map((c) => (
+   719→                      <SelectItem key={c} value={c}>{c}</SelectItem>
+   720→                    ))}
+   721→                  </SelectContent>
+   722→                </Select>
+   723→              </div>
+   724→              <div>
+   725→                <Label className="mb-1.5">Judul <span className="text-rose-500">*</span></Label>
+   726→                <Input
+   727→                  value={form.judul}
+   728→                  onChange={(e) => setForm({ ...form, judul: e.target.value })}
+   729→                  placeholder="Judul konten..."
+   730→                />
+   731→              </div>
+   732→            </div>
+   733→
+   734→            <div>
+   735→              <Label className="mb-1.5">Link Referensi</Label>
+   736→              <Input
+   737→                value={form.link}
+   738→                onChange={(e) => setForm({ ...form, link: e.target.value })}
+   739→                placeholder="https://..."
+   740→                type="url"
+   741→              />
+   742→            </div>
+   743→
+   744→            <div>
+   745→              <Label className="mb-1.5">Ide Konten</Label>
+   746→              <Textarea
+   747→                value={form.ideKonten}
+   748→                onChange={(e) => setForm({ ...form, ideKonten: e.target.value })}
+   749→                placeholder="Deskripsikan ide konten..."
+   750→                rows={3}
+   751→              />
+   752→            </div>
+   753→
+   754→            <div>
+   755→              <Label className="mb-1.5">Script</Label>
+   756→              <Textarea
+   757→                value={form.script}
+   758→                onChange={(e) => setForm({ ...form, script: e.target.value })}
+   759→                placeholder="Script video/konten..."
+   760→                rows={3}
+   761→              />
+   762→            </div>
+   763→
+   764→            <div>
+   765→              <Label className="mb-1.5">Caption</Label>
+   766→              <Textarea
+   767→                value={form.caption}
+   768→                onChange={(e) => setForm({ ...form, caption: e.target.value })}
+   769→                placeholder="Caption posting..."
+   770→                rows={2}
+   771→              />
+   772→            </div>
+   773→
+   774→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+   775→              <div>
+   776→                <Label className="mb-1.5">Status Produksi</Label>
+   777→                <Select value={form.statusProduksi} onValueChange={(v) => setForm({ ...form, statusProduksi: v })}>
+   778→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   779→                  <SelectContent>
+   780→                    {PRODUCTION_STATUS.map((s) => (
+   781→                      <SelectItem key={s} value={s}>{PRODUCTION_STATUS_LABELS[s]}</SelectItem>
+   782→                    ))}
+   783→                  </SelectContent>
+   784→                </Select>
+   785→              </div>
+   786→              <div>
+   787→                <Label className="mb-1.5">Status Editing</Label>
+   788→                <Select value={form.statusEditing} onValueChange={(v) => setForm({ ...form, statusEditing: v })}>
+   789→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   790→                  <SelectContent>
+   791→                    {EDITING_STATUS.map((s) => (
+   792→                      <SelectItem key={s} value={s}>{s}</SelectItem>
+   793→                    ))}
+   794→                  </SelectContent>
+   795→                </Select>
+   796→              </div>
+   797→              <div>
+   798→                <Label className="mb-1.5">Status Publish</Label>
+   799→                <Select value={form.statusPublish} onValueChange={(v) => setForm({ ...form, statusPublish: v })}>
+   800→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   801→                  <SelectContent>
+   802→                    {PUBLISH_STATUS.map((s) => (
+   803→                      <SelectItem key={s} value={s}>{s}</SelectItem>
+   804→                    ))}
+   805→                  </SelectContent>
+   806→                </Select>
+   807→              </div>
+   808→            </div>
+   809→
+   810→            <div>
+   811→              <Label className="mb-1.5">Link Konten (Published)</Label>
+   812→              <Input
+   813→                value={form.linkKonten}
+   814→                onChange={(e) => setForm({ ...form, linkKonten: e.target.value })}
+   815→                placeholder="https://... (URL konten yang sudah publish)"
+   816→                type="url"
+   817→              />
+   818→            </div>
+   819→
+   820→            {/* Metrik */}
+   821→            <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+   822→              <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+   823→                <BarChart3 className="w-4 h-4 text-blue-600" /> Metrik Konten
+   824→              </p>
+   825→              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+   826→                {[
+   827→                  { key: "reach", label: "Reach" },
+   828→                  { key: "views", label: "Views" },
+   829→                  { key: "watchTime", label: "Watch Time" },
+   830→                  { key: "share", label: "Share" },
+   831→                  { key: "save", label: "Save" },
+   832→                  { key: "comment", label: "Comment" },
+   833→                  { key: "followerGrowth", label: "Follower Growth" },
+   834→                ].map((f) => (
+   835→                  <div key={f.key}>
+   836→                    <Label className="text-xs text-slate-500 mb-1 block">{f.label}</Label>
+   837→                    <Input
+   838→                      type="number"
+   839→                      min={0}
+   840→                      value={(form.metrik as any)[f.key] ?? 0}
+   841→                      onChange={(e) => setForm({
+   842→                        ...form,
+   843→                        metrik: { ...form.metrik, [f.key]: Number(e.target.value) || 0 },
+   844→                      })}
+   845→                      className="h-8"
+   846→                    />
+   847→                  </div>
+   848→                ))}
+   849→              </div>
+   850→            </div>
+   851→          </div>
+   852→
+   853→          <DialogFooter>
+   854→            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
+   855→            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+   856→              {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   857→              {editingId ? "Simpan Perubahan" : "Ajukan Ide"}
+   858→            </Button>
+   859→          </DialogFooter>
+   860→        </DialogContent>
+   861→      </Dialog>
+   862→
+   863→      {/* Revisi Dialog */}
+   864→      <Dialog open={revisiOpen} onOpenChange={setRevisiOpen}>
+   865→        <DialogContent className="max-w-md">
+   866→          <DialogHeader>
+   867→            <DialogTitle className="flex items-center gap-2">
+   868→              <AlertCircle className="w-5 h-5 text-rose-600" /> Minta Revisi Konten
+   869→            </DialogTitle>
+   870→            <DialogDescription>
+   871→              {revisiTarget && (
+   872→                <>Berikan catatan revisi untuk <span className="font-medium text-slate-700">"{revisiTarget.judul}"</span>.</>
+   873→              )}
+   874→            </DialogDescription>
+   875→          </DialogHeader>
+   876→          <div className="py-2">
+   877→            <Label className="mb-1.5">Catatan Revisi <span className="text-rose-500">*</span></Label>
+   878→            <Textarea
+   879→              value={catatanRevisi}
+   880→              onChange={(e) => setCatatanRevisi(e.target.value)}
+   881→              placeholder="Tuliskan catatan revisi untuk anggota tim..."
+   882→              rows={4}
+   883→              autoFocus
+   884→            />
+   885→          </div>
+   886→          <DialogFooter>
+   887→            <Button variant="outline" onClick={() => setRevisiOpen(false)} disabled={accLoading}>Batal</Button>
+   888→            <Button
+   889→              onClick={handleRevisiSubmit}
+   890→              disabled={accLoading}
+   891→              className="bg-rose-600 hover:bg-rose-700"
+   892→            >
+   893→              {accLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   894→              Kirim Revisi
+   895→            </Button>
+   896→          </DialogFooter>
+   897→        </DialogContent>
+   898→      </Dialog>
+   899→    </div>
+   900→  );
+   901→}
+   902→

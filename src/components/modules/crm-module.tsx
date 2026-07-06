@@ -167,6 +167,8 @@ export function CrmModule({ user }: CrmModuleProps) {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
+  const [monthFilter, setMonthFilter] = useState("0"); // "0" = Semua Bulan
+  const [yearFilter, setYearFilter] = useState("0"); // "0" = Semua Tahun
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ClientItem | null>(null);
@@ -214,9 +216,24 @@ export function CrmModule({ user }: CrmModuleProps) {
           .toLowerCase();
         if (!text.includes(q)) return false;
       }
+      // Year/Month filter — use tanggalEvent, fall back to createdAt
+      const dateField = c.tanggalEvent || c.createdAt;
+      if (dateField) {
+        const d = new Date(dateField);
+        if (!isNaN(d.getTime())) {
+          if (yearFilter !== "0" && d.getFullYear() !== Number(yearFilter)) return false;
+          if (monthFilter !== "0" && (d.getMonth() + 1) !== Number(monthFilter)) return false;
+        } else if (yearFilter !== "0" || monthFilter !== "0") {
+          // Date is invalid but a filter is set — exclude
+          return false;
+        }
+      } else if (yearFilter !== "0" || monthFilter !== "0") {
+        // No date available but a filter is set — exclude
+        return false;
+      }
       return true;
     });
-  }, [clients, statusFilter, search]);
+  }, [clients, statusFilter, search, yearFilter, monthFilter]);
 
   // Pagination (max 15 per page)
   const {
@@ -245,7 +262,7 @@ export function CrmModule({ user }: CrmModuleProps) {
   useEffect(() => {
     resetSelection();
     resetPage();
-  }, [search, statusFilter, resetSelection, resetPage]);
+  }, [search, statusFilter, yearFilter, monthFilter, resetSelection, resetPage]);
 
   async function handleBulkDelete() {
     if (!confirm(`Hapus ${selectedCount} klien terpilih?`)) return;
@@ -504,6 +521,22 @@ export function CrmModule({ user }: CrmModuleProps) {
                 ))}
               </SelectContent>
             </Select>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((m, i) => <option key={i} value={String(i+1)}>{m}</option>)}
+            </select>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             <div className="flex gap-2">
               {canManage && (
                 <Button

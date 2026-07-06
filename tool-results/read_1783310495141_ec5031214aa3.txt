@@ -1,0 +1,858 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Button } from "@/components/ui/button";
+     5→import { Card, CardContent } from "@/components/ui/card";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import {
+    11→  Dialog,
+    12→  DialogContent,
+    13→  DialogDescription,
+    14→  DialogFooter,
+    15→  DialogHeader,
+    16→  DialogTitle,
+    17→} from "@/components/ui/dialog";
+    18→import {
+    19→  AlertDialog,
+    20→  AlertDialogAction,
+    21→  AlertDialogCancel,
+    22→  AlertDialogContent,
+    23→  AlertDialogDescription,
+    24→  AlertDialogFooter,
+    25→  AlertDialogHeader,
+    26→  AlertDialogTitle,
+    27→} from "@/components/ui/alert-dialog";
+    28→import {
+    29→  Select,
+    30→  SelectContent,
+    31→  SelectItem,
+    32→  SelectTrigger,
+    33→  SelectValue,
+    34→} from "@/components/ui/select";
+    35→import {
+    36→  Table,
+    37→  TableBody,
+    38→  TableCell,
+    39→  TableHead,
+    40→  TableHeader,
+    41→  TableRow,
+    42→} from "@/components/ui/table";
+    43→import { ScrollArea } from "@/components/ui/scroll-area";
+    44→import { Skeleton } from "@/components/ui/skeleton";
+    45→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    46→import { api } from "@/lib/api-client";
+    47→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    48→import {
+    49→  ROLES,
+    50→  DOCUMENT_TYPES,
+    51→  formatDate,
+    52→} from "@/lib/constants";
+    53→import type { SafeUser } from "@/lib/auth";
+    54→import { toast } from "sonner";
+    55→import {
+    56→  FileStack,
+    57→  Plus,
+    58→  FileText,
+    59→  FileSpreadsheet,
+    60→  Pencil,
+    61→  Trash2,
+    62→  ExternalLink,
+    63→  Inbox,
+    64→  Loader2,
+    65→  Receipt,
+    66→  FileSignature,
+    67→  ScrollText,
+    68→  Search,
+    69→  CheckSquare,
+    70→  X,
+    71→} from "lucide-react";
+    72→import { cn } from "@/lib/utils";
+    73→import { usePagination } from "@/lib/hooks/use-pagination";
+    74→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    75→import { Pagination } from "@/components/shared/pagination";
+    76→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    77→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    78→
+    79→interface DocumentItem {
+    80→  id: string;
+    81→  clientId?: string | null;
+    82→  documentType: string;
+    83→  documentName: string;
+    84→  documentNumber?: string | null;
+    85→  link: string;
+    86→  description?: string | null;
+    87→  uploadedById: string;
+    88→  client?: { id: string; namaKlien: string } | null;
+    89→  uploadedBy?: { id: string; name: string } | null;
+    90→  createdAt: string;
+    91→}
+    92→
+    93→interface ClientOption {
+    94→  id: string;
+    95→  namaKlien: string;
+    96→  instansi?: string | null;
+    97→}
+    98→
+    99→interface DocumentsModuleProps {
+   100→  user: SafeUser;
+   101→}
+   102→
+   103→const DOC_TYPE_COLORS: Record<string, string> = {
+   104→  INVOICE: "bg-blue-100 text-blue-700 border-blue-200",
+   105→  SPK: "bg-violet-100 text-violet-700 border-violet-200",
+   106→  SURAT: "bg-amber-100 text-amber-700 border-amber-200",
+   107→  KONTRAK: "bg-cyan-100 text-cyan-700 border-cyan-200",
+   108→  KWITANSI: "bg-pink-100 text-pink-700 border-pink-200",
+   109→  LAINNYA: "bg-slate-100 text-slate-700 border-slate-200",
+   110→};
+   111→
+   112→const DOC_TYPE_LABELS: Record<string, string> = {
+   113→  SURAT: "Surat",
+   114→  INVOICE: "Invoice",
+   115→  SPK: "SPK",
+   116→  KONTRAK: "Kontrak",
+   117→  KWITANSI: "Kwitansi",
+   118→  LAINNYA: "Lainnya",
+   119→};
+   120→
+   121→function docTypeLabel(t: string): string {
+   122→  return DOC_TYPE_LABELS[t] || t;
+   123→}
+   124→
+   125→function docTypeColor(t: string): string {
+   126→  return DOC_TYPE_COLORS[t] || DOC_TYPE_COLORS.LAINNYA;
+   127→}
+   128→
+   129→const EMPTY_FORM = {
+   130→  documentType: "SURAT",
+   131→  customType: "",
+   132→  documentName: "",
+   133→  documentNumber: "",
+   134→  clientId: "",
+   135→  link: "",
+   136→  description: "",
+   137→};
+   138→
+   139→export function DocumentsModule({ user }: DocumentsModuleProps) {
+   140→  const canManage =
+   141→    user.role === ROLES.OWNER ||
+   142→    user.role === ROLES.PROJECT_MANAGER ||
+   143→    user.role === ROLES.FINANCE;
+   144→  const canDelete =
+   145→    user.role === ROLES.OWNER || user.role === ROLES.PROJECT_MANAGER;
+   146→
+   147→  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+   148→  const [clients, setClients] = useState<ClientOption[]>([]);
+   149→  const [loading, setLoading] = useState(true);
+   150→  const [typeFilter, setTypeFilter] = useState<string>("ALL");
+   151→  const [clientFilter, setClientFilter] = useState<string>("ALL");
+   152→  const [search, setSearch] = useState("");
+   153→  const [bulkMode, setBulkMode] = useState(false);
+   154→
+   155→  const [dialogOpen, setDialogOpen] = useState(false);
+   156→  const [editing, setEditing] = useState<DocumentItem | null>(null);
+   157→  const [form, setForm] = useState({ ...EMPTY_FORM });
+   158→  const [submitting, setSubmitting] = useState(false);
+   159→
+   160→  const [deleteId, setDeleteId] = useState<string | null>(null);
+   161→  const [deleting, setDeleting] = useState(false);
+   162→
+   163→  const loadDocuments = useCallback(async () => {
+   164→    setLoading(true);
+   165→    try {
+   166→      const data = await api<{ documents: DocumentItem[] }>("/api/documents");
+   167→      setDocuments(data.documents || []);
+   168→    } catch (e: any) {
+   169→      toast.error(e?.message || "Gagal memuat dokumen");
+   170→    } finally {
+   171→      setLoading(false);
+   172→    }
+   173→  }, []);
+   174→
+   175→  const loadClients = useCallback(async () => {
+   176→    try {
+   177→      const data = await api<{ clients: ClientOption[] }>("/api/clients");
+   178→      setClients(data.clients || []);
+   179→    } catch {
+   180→      // ignore
+   181→    }
+   182→  }, []);
+   183→
+   184→  useEffect(() => {
+   185→    loadDocuments();
+   186→    loadClients();
+   187→  }, [loadDocuments, loadClients]);
+   188→
+   189→  const filtered = useMemo(() => {
+   190→    return documents.filter((d) => {
+   191→      if (typeFilter !== "ALL" && d.documentType !== typeFilter) return false;
+   192→      if (clientFilter !== "ALL") {
+   193→        if (clientFilter === "__none__") {
+   194→          if (d.clientId) return false;
+   195→        } else if (d.clientId !== clientFilter) return false;
+   196→      }
+   197→      if (search.trim()) {
+   198→        const q = search.toLowerCase().trim();
+   199→        if (
+   200→          !(d.documentName || "").toLowerCase().includes(q) &&
+   201→          !(d.documentType || "").toLowerCase().includes(q) &&
+   202→          !(docTypeLabel(d.documentType) || "").toLowerCase().includes(q) &&
+   203→          !(d.documentNumber || "").toLowerCase().includes(q)
+   204→        ) {
+   205→          return false;
+   206→        }
+   207→      }
+   208→      return true;
+   209→    });
+   210→  }, [documents, typeFilter, clientFilter, search]);
+   211→
+   212→  // Pagination (max 15 per page)
+   213→  const {
+   214→    paginatedItems: paginatedDocs,
+   215→    goToPage: goToDocPage,
+   216→    nextPage: nextDocPage,
+   217→    prevPage: prevDocPage,
+   218→    pageInfo: docPageInfo,
+   219→    resetPage: resetDocPage,
+   220→  } = usePagination(filtered, { pageSize: 15 });
+   221→
+   222→  // Bulk selection (only users with delete permission can use bulk mode)
+   223→  const {
+   224→    selectedArray: selectedDocArray,
+   225→    selectedCount: selectedDocCount,
+   226→    isSelected: isDocSelected,
+   227→    toggle: toggleDoc,
+   228→    toggleAll: toggleAllDocs,
+   229→    clearSelection: clearDocSelection,
+   230→    resetSelection: resetDocSelection,
+   231→    isAllSelected: isAllDocsSelected,
+   232→  } = useBulkSelect({ getId: (d: DocumentItem) => d.id });
+   233→
+   234→  // Reset selection + page when client-side filters change
+   235→  useEffect(() => {
+   236→    resetDocSelection();
+   237→    resetDocPage();
+   238→  }, [search, typeFilter, clientFilter, resetDocSelection, resetDocPage]);
+   239→
+   240→  async function handleBulkDelete() {
+   241→    if (!confirm(`Hapus ${selectedDocCount} dokumen terpilih?`)) return;
+   242→    let success = 0;
+   243→    let failed = 0;
+   244→    for (const id of selectedDocArray) {
+   245→      try {
+   246→        await api(`/api/documents/${id}`, { method: "DELETE" });
+   247→        success++;
+   248→      } catch {
+   249→        failed++;
+   250→      }
+   251→    }
+   252→    clearDocSelection();
+   253→    setBulkMode(false);
+   254→    await loadDocuments();
+   255→    if (failed === 0) {
+   256→      toast.success(`${success} dokumen berhasil dihapus`);
+   257→    } else {
+   258→      toast.error(`${success} dihapus, ${failed} gagal`);
+   259→    }
+   260→  }
+   261→
+   262→  const stats = useMemo(() => {
+   263→    const total = documents.length;
+   264→    const invoice = documents.filter((d) => d.documentType === "INVOICE").length;
+   265→    const spk = documents.filter((d) => d.documentType === "SPK").length;
+   266→    const surat = documents.filter((d) => d.documentType === "SURAT").length;
+   267→    return { total, invoice, spk, surat };
+   268→  }, [documents]);
+   269→
+   270→  function openCreate() {
+   271→    setEditing(null);
+   272→    setForm({ ...EMPTY_FORM });
+   273→    setDialogOpen(true);
+   274→  }
+   275→
+   276→  function openEdit(d: DocumentItem) {
+   277→    setEditing(d);
+   278→    const isCustom = !DOCUMENT_TYPES.includes(d.documentType as any);
+   279→    setForm({
+   280→      documentType: isCustom ? "LAINNYA" : d.documentType,
+   281→      customType: isCustom ? d.documentType : "",
+   282→      documentName: d.documentName || "",
+   283→      documentNumber: d.documentNumber || "",
+   284→      clientId: d.clientId || "",
+   285→      link: d.link || "",
+   286→      description: d.description || "",
+   287→    });
+   288→    setDialogOpen(true);
+   289→  }
+   290→
+   291→  async function handleSubmit(e: React.FormEvent) {
+   292→    e.preventDefault();
+   293→    if (!form.documentName.trim()) {
+   294→      toast.error("Nama dokumen wajib diisi");
+   295→      return;
+   296→    }
+   297→    if (!form.link.trim()) {
+   298→      toast.error("Link dokumen wajib diisi");
+   299→      return;
+   300→    }
+   301→    const finalType =
+   302→      form.documentType === "LAINNYA" && form.customType.trim()
+   303→        ? form.customType.trim().toUpperCase().replace(/\s+/g, "_")
+   304→        : form.documentType;
+   305→    if (!finalType) {
+   306→      toast.error("Tipe dokumen wajib diisi");
+   307→      return;
+   308→    }
+   309→    setSubmitting(true);
+   310→    try {
+   311→      const payload = {
+   312→        documentType: finalType,
+   313→        documentName: form.documentName.trim(),
+   314→        documentNumber: form.documentNumber.trim() || null,
+   315→        clientId: form.clientId || null,
+   316→        link: form.link.trim(),
+   317→        description: form.description.trim() || null,
+   318→      };
+   319→      if (editing) {
+   320→        await api(`/api/documents/${editing.id}`, {
+   321→          method: "PUT",
+   322→          body: JSON.stringify(payload),
+   323→        });
+   324→        toast.success("Dokumen berhasil diperbarui");
+   325→      } else {
+   326→        await api("/api/documents", {
+   327→          method: "POST",
+   328→          body: JSON.stringify(payload),
+   329→        });
+   330→        toast.success("Dokumen baru ditambahkan");
+   331→      }
+   332→      setDialogOpen(false);
+   333→      await loadDocuments();
+   334→    } catch (e: any) {
+   335→      toast.error(e?.message || "Gagal menyimpan dokumen");
+   336→    } finally {
+   337→      setSubmitting(false);
+   338→    }
+   339→  }
+   340→
+   341→  async function handleDelete() {
+   342→    if (!deleteId) return;
+   343→    setDeleting(true);
+   344→    try {
+   345→      await api(`/api/documents/${deleteId}`, { method: "DELETE" });
+   346→      toast.success("Dokumen berhasil dihapus");
+   347→      setDeleteId(null);
+   348→      await loadDocuments();
+   349→    } catch (e: any) {
+   350→      toast.error(e?.message || "Gagal menghapus dokumen");
+   351→    } finally {
+   352→      setDeleting(false);
+   353→    }
+   354→  }
+   355→
+   356→  function handleExportExcel() {
+   357→    if (filtered.length === 0) {
+   358→      toast.error("Tidak ada data untuk diekspor");
+   359→      return;
+   360→    }
+   361→    const rows = filtered.map((d) => ({
+   362→      "Nama Dokumen": d.documentName || "",
+   363→      Tipe: docTypeLabel(d.documentType),
+   364→      "Nomor": d.documentNumber || "",
+   365→      "Klien": d.client?.namaKlien || "-",
+   366→      "Link": d.link || "",
+   367→      "Keterangan": d.description || "",
+   368→      "Diunggah Oleh": d.uploadedBy?.name || "-",
+   369→      "Tanggal": formatDate(d.createdAt),
+   370→    }));
+   371→    exportToExcel(rows, `Dokumen-${new Date().toISOString().slice(0, 10)}`, "Dokumen");
+   372→    toast.success("Excel berhasil diekspor");
+   373→  }
+   374→
+   375→  function handleExportPDF() {
+   376→    if (filtered.length === 0) {
+   377→      toast.error("Tidak ada data untuk diekspor");
+   378→      return;
+   379→    }
+   380→    const columns = [
+   381→      "Nama Dokumen", "Tipe", "Nomor", "Klien", "Keterangan", "Diunggah Oleh", "Tanggal",
+   382→    ];
+   383→    const rows = filtered.map((d) => [
+   384→      d.documentName || "-",
+   385→      docTypeLabel(d.documentType),
+   386→      d.documentNumber || "-",
+   387→      d.client?.namaKlien || "-",
+   388→      d.description || "-",
+   389→      d.uploadedBy?.name || "-",
+   390→      formatDate(d.createdAt),
+   391→    ]);
+   392→    exportToPDF(
+   393→      "Dokumen & Administrasi",
+   394→      columns,
+   395→      rows,
+   396→      `Dokumen-${new Date().toISOString().slice(0, 10)}.pdf`,
+   397→      `Total: ${filtered.length} dokumen`
+   398→    );
+   399→    toast.success("PDF berhasil diekspor");
+   400→  }
+   401→
+   402→  return (
+   403→    <div className="space-y-6">
+   404→      <SectionHeader
+   405→        title="Dokumen & Administrasi"
+   406→        description="Kelola surat, invoice, SPK, dan dokumen administrasi lainnya beserta link dan keterangan."
+   407→        action={
+   408→          canManage ? (
+   409→            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+   410→              <Plus className="w-4 h-4" /> Tambah Dokumen
+   411→            </Button>
+   412→          ) : undefined
+   413→        }
+   414→      />
+   415→
+   416→      {/* Stat Cards */}
+   417→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   418→        <StatCard
+   419→          title="Total Dokumen"
+   420→          value={stats.total}
+   421→          icon={FileStack}
+   422→          indicator="neutral"
+   423→          subtitle="Seluruh dokumen"
+   424→          accent="bg-slate-100 text-slate-600"
+   425→        />
+   426→        <StatCard
+   427→          title="Total Invoice"
+   428→          value={stats.invoice}
+   429→          icon={Receipt}
+   430→          indicator="green"
+   431→          subtitle="Dokumen tagihan"
+   432→          accent="bg-blue-50 text-blue-600"
+   433→        />
+   434→        <StatCard
+   435→          title="Total SPK"
+   436→          value={stats.spk}
+   437→          icon={FileSignature}
+   438→          indicator="neutral"
+   439→          subtitle="Surat Perintah Kerja"
+   440→          accent="bg-violet-50 text-violet-600"
+   441→        />
+   442→        <StatCard
+   443→          title="Total Surat"
+   444→          value={stats.surat}
+   445→          icon={ScrollText}
+   446→          indicator="yellow"
+   447→          subtitle="Dokumen surat"
+   448→          accent="bg-amber-50 text-amber-600"
+   449→        />
+   450→      </div>
+   451→
+   452→      {/* Filter Bar */}
+   453→      <Card>
+   454→        <CardContent className="p-4">
+   455→          <div className="flex flex-col sm:flex-row gap-3">
+   456→            <Select value={typeFilter} onValueChange={setTypeFilter}>
+   457→              <SelectTrigger className="w-full sm:w-48">
+   458→                <SelectValue placeholder="Semua Tipe" />
+   459→              </SelectTrigger>
+   460→              <SelectContent>
+   461→                <SelectItem value="ALL">Semua Tipe</SelectItem>
+   462→                {DOCUMENT_TYPES.map((t) => (
+   463→                  <SelectItem key={t} value={t}>
+   464→                    {docTypeLabel(t)}
+   465→                  </SelectItem>
+   466→                ))}
+   467→              </SelectContent>
+   468→            </Select>
+   469→            <Select value={clientFilter} onValueChange={setClientFilter}>
+   470→              <SelectTrigger className="w-full sm:w-56">
+   471→                <SelectValue placeholder="Semua Klien" />
+   472→              </SelectTrigger>
+   473→              <SelectContent>
+   474→                <SelectItem value="ALL">Semua Klien</SelectItem>
+   475→                <SelectItem value="__none__">— Tanpa Klien —</SelectItem>
+   476→                {clients.map((c) => (
+   477→                  <SelectItem key={c.id} value={c.id}>
+   478→                    {c.namaKlien}
+   479→                  </SelectItem>
+   480→                ))}
+   481→              </SelectContent>
+   482→            </Select>
+   483→            <div className="flex gap-2 sm:ml-auto">
+   484→              <Button variant="outline" onClick={handleExportPDF} className="flex-1 sm:flex-none">
+   485→                <FileText className="w-4 h-4" /> PDF
+   486→              </Button>
+   487→              <Button variant="outline" onClick={handleExportExcel} className="flex-1 sm:flex-none">
+   488→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   489→              </Button>
+   490→            </div>
+   491→          </div>
+   492→
+   493→          {/* Search + bulk-select toggle */}
+   494→          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+   495→            <div className="relative flex-1 min-w-[200px]">
+   496→              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   497→              <Input
+   498→                type="text"
+   499→                value={search}
+   500→                onChange={(e) => setSearch(e.target.value)}
+   501→                placeholder="Cari nama, tipe, atau nomor dokumen..."
+   502→                className="pl-9 h-9 bg-white text-sm"
+   503→              />
+   504→              {search && (
+   505→                <button
+   506→                  onClick={() => setSearch("")}
+   507→                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   508→                >
+   509→                  <X className="w-4 h-4" />
+   510→                </button>
+   511→              )}
+   512→            </div>
+   513→            {canDelete && (
+   514→              <Button
+   515→                variant={bulkMode ? "default" : "outline"}
+   516→                size="sm"
+   517→                onClick={() => {
+   518→                  setBulkMode(!bulkMode);
+   519→                  if (bulkMode) clearDocSelection();
+   520→                }}
+   521→                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   522→              >
+   523→                <CheckSquare className="w-3.5 h-3.5" />
+   524→                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   525→              </Button>
+   526→            )}
+   527→          </div>
+   528→        </CardContent>
+   529→      </Card>
+   530→
+   531→      {/* Bulk Action Bar */}
+   532→      {bulkMode && selectedDocCount > 0 && (
+   533→        <BulkActionBar
+   534→          selectedCount={selectedDocCount}
+   535→          actions={[
+   536→            {
+   537→              label: "Hapus Terpilih",
+   538→              icon: Trash2,
+   539→              onClick: handleBulkDelete,
+   540→              variant: "destructive",
+   541→              confirmText: `Hapus ${selectedDocCount} dokumen terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   542→            },
+   543→          ]}
+   544→          onClearSelection={clearDocSelection}
+   545→        />
+   546→      )}
+   547→
+   548→      {/* Data Table */}
+   549→      <Card>
+   550→        <CardContent className="p-0">
+   551→          {loading ? (
+   552→            <div className="p-4 space-y-3">
+   553→              <Skeleton className="h-10 w-full" />
+   554→              {Array.from({ length: 5 }).map((_, i) => (
+   555→                <Skeleton key={i} className="h-12 w-full" />
+   556→              ))}
+   557→            </div>
+   558→          ) : documents.length === 0 ? (
+   559→            <div className="flex flex-col items-center justify-center py-16 text-center">
+   560→              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+   561→                <Inbox className="w-8 h-8 text-slate-400" />
+   562→              </div>
+   563→              <p className="text-slate-600 font-medium">Belum ada dokumen</p>
+   564→              <p className="text-sm text-slate-400 mt-1">
+   565→                {canManage
+   566→                  ? "Klik tombol Tambah Dokumen untuk menambah dokumen baru."
+   567→                  : "Belum ada dokumen yang tersedia."}
+   568→              </p>
+   569→            </div>
+   570→          ) : filtered.length === 0 ? (
+   571→            <div className="flex flex-col items-center justify-center py-16 text-center">
+   572→              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+   573→                <Search className="w-8 h-8 text-slate-400" />
+   574→              </div>
+   575→              <p className="text-slate-600 font-medium">Tidak ada dokumen yang cocok</p>
+   576→              <p className="text-sm text-slate-400 mt-1">
+   577→                Coba ubah kata kunci, tipe, atau klien.
+   578→              </p>
+   579→            </div>
+   580→          ) : (
+   581→            <>
+   582→            <ScrollArea className="max-h-[600px]">
+   583→              <Table>
+   584→                <TableHeader>
+   585→                  <TableRow className="bg-slate-50/50">
+   586→                    {bulkMode && (
+   587→                      <TableHead className="w-[40px]">
+   588→                        <SelectCheckbox
+   589→                          checked={isAllDocsSelected(paginatedDocs)}
+   590→                          onChange={() => toggleAllDocs(paginatedDocs)}
+   591→                        />
+   592→                      </TableHead>
+   593→                    )}
+   594→                    <TableHead className="min-w-[200px]">Nama Dokumen</TableHead>
+   595→                    <TableHead className="min-w-[120px]">Tipe</TableHead>
+   596→                    <TableHead className="min-w-[140px]">Nomor</TableHead>
+   597→                    <TableHead className="min-w-[160px]">Klien</TableHead>
+   598→                    <TableHead className="text-center min-w-[80px]">Link</TableHead>
+   599→                    <TableHead className="min-w-[200px]">Keterangan</TableHead>
+   600→                    <TableHead className="min-w-[140px]">Diunggah Oleh</TableHead>
+   601→                    <TableHead className="min-w-[120px]">Tanggal</TableHead>
+   602→                    {canDelete && !bulkMode && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+   603→                  </TableRow>
+   604→                </TableHeader>
+   605→                <TableBody>
+   606→                  {paginatedDocs.map((d) => (
+   607→                    <TableRow key={d.id} className="hover:bg-slate-50/50">
+   608→                      {bulkMode && (
+   609→                        <TableCell>
+   610→                          <SelectCheckbox
+   611→                            checked={isDocSelected(d)}
+   612→                            onChange={() => toggleDoc(d)}
+   613→                          />
+   614→                        </TableCell>
+   615→                      )}
+   616→                      <TableCell>
+   617→                        <div className="font-medium text-slate-900">{d.documentName}</div>
+   618→                      </TableCell>
+   619→                      <TableCell>
+   620→                        <Badge variant="outline" className={docTypeColor(d.documentType)}>
+   621→                          {docTypeLabel(d.documentType)}
+   622→                        </Badge>
+   623→                      </TableCell>
+   624→                      <TableCell className="text-slate-700">{d.documentNumber || "-"}</TableCell>
+   625→                      <TableCell className="text-slate-700">
+   626→                        {d.client?.namaKlien || "-"}
+   627→                      </TableCell>
+   628→                      <TableCell>
+   629→                        <div className="flex justify-center">
+   630→                          <a
+   631→                            href={d.link}
+   632→                            target="_blank"
+   633→                            rel="noopener noreferrer"
+   634→                            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
+   635→                            title="Buka dokumen"
+   636→                          >
+   637→                            <ExternalLink className="w-4 h-4" />
+   638→                          </a>
+   639→                        </div>
+   640→                      </TableCell>
+   641→                      <TableCell className="text-slate-600 max-w-[240px]">
+   642→                        <div className="truncate" title={d.description || ""}>
+   643→                          {d.description || "-"}
+   644→                        </div>
+   645→                      </TableCell>
+   646→                      <TableCell className="text-slate-700">
+   647→                        {d.uploadedBy?.name || "-"}
+   648→                      </TableCell>
+   649→                      <TableCell className="text-slate-700">
+   650→                        {formatDate(d.createdAt)}
+   651→                      </TableCell>
+   652→                      {canDelete && !bulkMode && (
+   653→                        <TableCell>
+   654→                          <div className="flex items-center justify-center gap-1">
+   655→                            <Button
+   656→                              variant="ghost"
+   657→                              size="icon"
+   658→                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
+   659→                              onClick={() => openEdit(d)}
+   660→                            >
+   661→                              <Pencil className="w-4 h-4" />
+   662→                            </Button>
+   663→                            <Button
+   664→                              variant="ghost"
+   665→                              size="icon"
+   666→                              className="h-8 w-8 text-slate-500 hover:text-rose-600"
+   667→                              onClick={() => setDeleteId(d.id)}
+   668→                            >
+   669→                              <Trash2 className="w-4 h-4" />
+   670→                            </Button>
+   671→                          </div>
+   672→                        </TableCell>
+   673→                      )}
+   674→                    </TableRow>
+   675→                  ))}
+   676→                </TableBody>
+   677→              </Table>
+   678→            </ScrollArea>
+   679→            <Pagination
+   680→              currentPage={docPageInfo.currentPage}
+   681→              totalPages={docPageInfo.totalPages}
+   682→              totalItems={docPageInfo.totalItems}
+   683→              startIndex={docPageInfo.startIndex}
+   684→              endIndex={docPageInfo.endIndex}
+   685→              hasNext={docPageInfo.hasNext}
+   686→              hasPrev={docPageInfo.hasPrev}
+   687→              onPageChange={goToDocPage}
+   688→              onNext={nextDocPage}
+   689→              onPrev={prevDocPage}
+   690→            />
+   691→            </>
+   692→          )}
+   693→        </CardContent>
+   694→      </Card>
+   695→
+   696→      {/* Add/Edit Dialog */}
+   697→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   698→        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+   699→          <DialogHeader>
+   700→            <DialogTitle>{editing ? "Edit Dokumen" : "Tambah Dokumen Baru"}</DialogTitle>
+   701→            <DialogDescription>
+   702→              {editing
+   703→                ? "Perbarui informasi dokumen administrasi."
+   704→                : "Lengkapi data dokumen dan tautan aksesnya."}
+   705→            </DialogDescription>
+   706→          </DialogHeader>
+   707→          <form onSubmit={handleSubmit} className="space-y-4">
+   708→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   709→              <div className="space-y-1.5">
+   710→                <Label htmlFor="documentType">Tipe Dokumen *</Label>
+   711→                <Select
+   712→                  value={form.documentType}
+   713→                  onValueChange={(v) => setForm({ ...form, documentType: v })}
+   714→                >
+   715→                  <SelectTrigger id="documentType" className="w-full">
+   716→                    <SelectValue placeholder="Pilih tipe dokumen" />
+   717→                  </SelectTrigger>
+   718→                  <SelectContent>
+   719→                    {DOCUMENT_TYPES.map((t) => (
+   720→                      <SelectItem key={t} value={t}>
+   721→                        {docTypeLabel(t)}
+   722→                      </SelectItem>
+   723→                    ))}
+   724→                  </SelectContent>
+   725→                </Select>
+   726→              </div>
+   727→              {form.documentType === "LAINNYA" && (
+   728→                <div className="space-y-1.5">
+   729→                  <Label htmlFor="customType">Tipe Kustom</Label>
+   730→                  <Input
+   731→                    id="customType"
+   732→                    value={form.customType}
+   733→                    onChange={(e) => setForm({ ...form, customType: e.target.value })}
+   734→                    placeholder="Contoh: MOU, NDA, dll."
+   735→                  />
+   736→                </div>
+   737→              )}
+   738→              <div className="space-y-1.5 sm:col-span-2">
+   739→                <Label htmlFor="documentName">Nama Dokumen *</Label>
+   740→                <Input
+   741→                  id="documentName"
+   742→                  value={form.documentName}
+   743→                  onChange={(e) => setForm({ ...form, documentName: e.target.value })}
+   744→                  required
+   745→                  placeholder="Invoice Pelatihan Leadership Batch 1"
+   746→                />
+   747→              </div>
+   748→              <div className="space-y-1.5">
+   749→                <Label htmlFor="documentNumber">Nomor Dokumen</Label>
+   750→                <Input
+   751→                  id="documentNumber"
+   752→                  value={form.documentNumber}
+   753→                  onChange={(e) => setForm({ ...form, documentNumber: e.target.value })}
+   754→                  placeholder="INV/2025/001"
+   755→                />
+   756→              </div>
+   757→              <div className="space-y-1.5">
+   758→                <Label htmlFor="clientId">Klien</Label>
+   759→                <Select
+   760→                  value={form.clientId}
+   761→                  onValueChange={(v) => setForm({ ...form, clientId: v === "__none__" ? "" : v })}
+   762→                >
+   763→                  <SelectTrigger id="clientId" className="w-full">
+   764→                    <SelectValue placeholder="Pilih klien (opsional)" />
+   765→                  </SelectTrigger>
+   766→                  <SelectContent>
+   767→                    <SelectItem value="__none__">— Tanpa klien —</SelectItem>
+   768→                    {clients.map((c) => (
+   769→                      <SelectItem key={c.id} value={c.id}>
+   770→                        {c.namaKlien}
+   771→                      </SelectItem>
+   772→                    ))}
+   773→                  </SelectContent>
+   774→                </Select>
+   775→              </div>
+   776→              <div className="space-y-1.5 sm:col-span-2">
+   777→                <Label htmlFor="link">Link Dokumen *</Label>
+   778→                <Input
+   779→                  id="link"
+   780→                  type="url"
+   781→                  value={form.link}
+   782→                  onChange={(e) => setForm({ ...form, link: e.target.value })}
+   783→                  required
+   784→                  placeholder="https://drive.google.com/..."
+   785→                />
+   786→              </div>
+   787→              <div className="space-y-1.5 sm:col-span-2">
+   788→                <Label htmlFor="description">Keterangan</Label>
+   789→                <Textarea
+   790→                  id="description"
+   791→                  value={form.description}
+   792→                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+   793→                  placeholder="Catatan tambahan terkait dokumen..."
+   794→                  rows={3}
+   795→                />
+   796→              </div>
+   797→            </div>
+   798→            <DialogFooter>
+   799→              <Button
+   800→                type="button"
+   801→                variant="outline"
+   802→                onClick={() => setDialogOpen(false)}
+   803→                disabled={submitting}
+   804→              >
+   805→                Batal
+   806→              </Button>
+   807→              <Button
+   808→                type="submit"
+   809→                disabled={submitting}
+   810→                className="bg-blue-600 hover:bg-blue-700"
+   811→              >
+   812→                {submitting ? (
+   813→                  <>
+   814→                    <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
+   815→                  </>
+   816→                ) : editing ? (
+   817→                  "Simpan Perubahan"
+   818→                ) : (
+   819→                  "Tambah Dokumen"
+   820→                )}
+   821→              </Button>
+   822→            </DialogFooter>
+   823→          </form>
+   824→        </DialogContent>
+   825→      </Dialog>
+   826→
+   827→      {/* Delete Confirmation */}
+   828→      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+   829→        <AlertDialogContent>
+   830→          <AlertDialogHeader>
+   831→            <AlertDialogTitle>Hapus Dokumen?</AlertDialogTitle>
+   832→            <AlertDialogDescription>
+   833→              Tindakan ini tidak dapat dibatalkan. Data dokumen akan dihapus permanen.
+   834→              Pastikan tautan asli dokumen tidak hilang.
+   835→            </AlertDialogDescription>
+   836→          </AlertDialogHeader>
+   837→          <AlertDialogFooter>
+   838→            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+   839→            <AlertDialogAction
+   840→              onClick={handleDelete}
+   841→              disabled={deleting}
+   842→              className="bg-rose-600 hover:bg-rose-700"
+   843→            >
+   844→              {deleting ? (
+   845→                <>
+   846→                  <Loader2 className="w-4 h-4 animate-spin" /> Menghapus...
+   847→                </>
+   848→              ) : (
+   849→                "Ya, Hapus"
+   850→              )}
+   851→            </AlertDialogAction>
+   852→          </AlertDialogFooter>
+   853→        </AlertDialogContent>
+   854→      </AlertDialog>
+   855→    </div>
+   856→  );
+   857→}
+   858→

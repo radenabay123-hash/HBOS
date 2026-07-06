@@ -63,6 +63,7 @@ interface ContentIdea {
   accAt: string | null;
   accById: string | null;
   tanggal: string;
+  createdAt?: string;
   user: ContentUser;
 }
 
@@ -104,6 +105,8 @@ export function ContentModule({ user }: { user: SafeUser }) {
   const [tab, setTab] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
+  const [monthFilter, setMonthFilter] = useState("0"); // "0" = Semua Bulan
+  const [yearFilter, setYearFilter] = useState("0"); // "0" = Semua Tahun
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -143,8 +146,20 @@ export function ContentModule({ user }: { user: SafeUser }) {
         (i.kategori || "").toLowerCase().includes(q)
       );
     }
+    // Year/Month filter — use tanggal, fall back to createdAt
+    if (yearFilter !== "0" || monthFilter !== "0") {
+      r = r.filter((i) => {
+        const dateField = i.tanggal || i.createdAt;
+        if (!dateField) return false;
+        const d = new Date(dateField);
+        if (isNaN(d.getTime())) return false;
+        if (yearFilter !== "0" && d.getFullYear() !== Number(yearFilter)) return false;
+        if (monthFilter !== "0" && (d.getMonth() + 1) !== Number(monthFilter)) return false;
+        return true;
+      });
+    }
     return r;
-  }, [ideas, tab, search]);
+  }, [ideas, tab, search, yearFilter, monthFilter]);
 
   // Pagination (max 15 per page)
   const {
@@ -161,7 +176,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
   useEffect(() => {
     resetSelection();
     resetPage();
-  }, [search, tab, resetSelection, resetPage]);
+  }, [search, tab, yearFilter, monthFilter, resetSelection, resetPage]);
 
   async function handleBulkDelete() {
     if (!confirm(`Hapus ${selectedCount} ide konten terpilih?`)) return;
@@ -436,7 +451,7 @@ export function ContentModule({ user }: { user: SafeUser }) {
             </TabsList>
           </Tabs>
 
-          {/* Search + Bulk select toggle */}
+          {/* Search + Year/Month + Bulk select toggle */}
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -456,6 +471,22 @@ export function ContentModule({ user }: { user: SafeUser }) {
                 </button>
               )}
             </div>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((m, i) => <option key={i} value={String(i+1)}>{m}</option>)}
+            </select>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             <Button
               variant={bulkMode ? "default" : "outline"}
               size="sm"

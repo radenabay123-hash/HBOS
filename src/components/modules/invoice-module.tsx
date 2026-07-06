@@ -73,6 +73,8 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
   const [filterStatus, setFilterStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
+  const [monthFilter, setMonthFilter] = useState("0"); // "0" = Semua Bulan
+  const [yearFilter, setYearFilter] = useState("0"); // "0" = Semua Tahun
   const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     invoiceNumber: "", issueDate: new Date().toISOString().slice(0, 10),
@@ -276,9 +278,21 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
           .toLowerCase();
         if (!text.includes(q)) return false;
       }
+      // Year/Month filter by issueDate
+      if (i.issueDate) {
+        const d = new Date(i.issueDate);
+        if (!isNaN(d.getTime())) {
+          if (yearFilter !== "0" && d.getFullYear() !== Number(yearFilter)) return false;
+          if (monthFilter !== "0" && (d.getMonth() + 1) !== Number(monthFilter)) return false;
+        } else if (yearFilter !== "0" || monthFilter !== "0") {
+          return false;
+        }
+      } else if (yearFilter !== "0" || monthFilter !== "0") {
+        return false;
+      }
       return true;
     });
-  }, [invoices, filterStatus, search]);
+  }, [invoices, filterStatus, search, yearFilter, monthFilter]);
 
   // Pagination (max 15 per page)
   const {
@@ -306,7 +320,7 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
   useEffect(() => {
     resetSelection();
     resetPage();
-  }, [search, filterStatus, resetSelection, resetPage]);
+  }, [search, filterStatus, yearFilter, monthFilter, resetSelection, resetPage]);
 
   if (loading) {
     return (
@@ -380,6 +394,22 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
                 </button>
               )}
             </div>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((m, i) => <option key={i} value={String(i+1)}>{m}</option>)}
+            </select>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             <Button
               variant={bulkMode ? "default" : "outline"}
               size="sm"

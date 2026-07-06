@@ -1,0 +1,910 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Button } from "@/components/ui/button";
+     5→import { Card, CardContent } from "@/components/ui/card";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import {
+    11→  Dialog,
+    12→  DialogContent,
+    13→  DialogDescription,
+    14→  DialogFooter,
+    15→  DialogHeader,
+    16→  DialogTitle,
+    17→} from "@/components/ui/dialog";
+    18→import {
+    19→  AlertDialog,
+    20→  AlertDialogAction,
+    21→  AlertDialogCancel,
+    22→  AlertDialogContent,
+    23→  AlertDialogDescription,
+    24→  AlertDialogFooter,
+    25→  AlertDialogHeader,
+    26→  AlertDialogTitle,
+    27→} from "@/components/ui/alert-dialog";
+    28→import {
+    29→  Select,
+    30→  SelectContent,
+    31→  SelectItem,
+    32→  SelectTrigger,
+    33→  SelectValue,
+    34→} from "@/components/ui/select";
+    35→import {
+    36→  Table,
+    37→  TableBody,
+    38→  TableCell,
+    39→  TableHead,
+    40→  TableHeader,
+    41→  TableRow,
+    42→} from "@/components/ui/table";
+    43→import { Skeleton } from "@/components/ui/skeleton";
+    44→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    45→import { api } from "@/lib/api-client";
+    46→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    47→import { usePagination } from "@/lib/hooks/use-pagination";
+    48→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    49→import { Pagination } from "@/components/shared/pagination";
+    50→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    51→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    52→import {
+    53→  ROLES,
+    54→  CLIENT_STATUS,
+    55→  CLIENT_STATUS_LABELS,
+    56→  CLIENT_STATUS_COLORS,
+    57→  ROLE_LABELS,
+    58→  formatCurrency,
+    59→  formatDate,
+    60→  formatDateTime,
+    61→} from "@/lib/constants";
+    62→import type { SafeUser } from "@/lib/auth";
+    63→import { toast } from "sonner";
+    64→import {
+    65→  Users,
+    66→  Plus,
+    67→  Search,
+    68→  FileText,
+    69→  FileSpreadsheet,
+    70→  Pencil,
+    71→  Trash2,
+    72→  Target,
+    73→  TrendingUp,
+    74→  Handshake,
+    75→  XCircle,
+    76→  Inbox,
+    77→  Loader2,
+    78→  CheckSquare,
+    79→} from "lucide-react";
+    80→
+    81→interface ClientItem {
+    82→  id: string;
+    83→  namaKlien: string;
+    84→  instansi?: string | null;
+    85→  pic?: string | null;
+    86→  nomorWA?: string | null;
+    87→  email?: string | null;
+    88→  jenisTraining?: string | null;
+    89→  jumlahPeserta?: number | null;
+    90→  budget?: number | null;
+    91→  lokasi?: string | null;
+    92→  tanggalEvent?: string | null;
+    93→  status: string;
+    94→  catatanFollowUp?: string | null;
+    95→  reminderFollowUp?: string | null;
+    96→  assignedToId?: string | null;
+    97→  assignedTo?: { id: string; name: string; role: string } | null;
+    98→  _count?: { events: number; documents: number; financeTxns: number };
+    99→  createdAt: string;
+   100→  updatedAt: string;
+   101→}
+   102→
+   103→interface UserOption {
+   104→  id: string;
+   105→  name: string;
+   106→  role: string;
+   107→}
+   108→
+   109→interface CrmModuleProps {
+   110→  user: SafeUser;
+   111→}
+   112→
+   113→const EMPTY_FORM = {
+   114→  namaKlien: "",
+   115→  instansi: "",
+   116→  pic: "",
+   117→  nomorWA: "",
+   118→  email: "",
+   119→  jenisTraining: "",
+   120→  jumlahPeserta: "",
+   121→  budget: "",
+   122→  lokasi: "",
+   123→  tanggalEvent: "",
+   124→  status: "LEAD",
+   125→  catatanFollowUp: "",
+   126→  reminderFollowUp: "",
+   127→  assignedToId: "",
+   128→};
+   129→
+   130→// Convert ISO date to YYYY-MM-DD for date input
+   131→function toDateInput(d?: string | null): string {
+   132→  if (!d) return "";
+   133→  try {
+   134→    const date = new Date(d);
+   135→    if (isNaN(date.getTime())) return "";
+   136→    const y = date.getFullYear();
+   137→    const m = String(date.getMonth() + 1).padStart(2, "0");
+   138→    const day = String(date.getDate()).padStart(2, "0");
+   139→    return `${y}-${m}-${day}`;
+   140→  } catch {
+   141→    return "";
+   142→  }
+   143→}
+   144→
+   145→function toDateTimeInput(d?: string | null): string {
+   146→  if (!d) return "";
+   147→  try {
+   148→    const date = new Date(d);
+   149→    if (isNaN(date.getTime())) return "";
+   150→    const y = date.getFullYear();
+   151→    const m = String(date.getMonth() + 1).padStart(2, "0");
+   152→    const day = String(date.getDate()).padStart(2, "0");
+   153→    const hh = String(date.getHours()).padStart(2, "0");
+   154→    const mm = String(date.getMinutes()).padStart(2, "0");
+   155→    return `${y}-${m}-${day}T${hh}:${mm}`;
+   156→  } catch {
+   157→    return "";
+   158→  }
+   159→}
+   160→
+   161→export function CrmModule({ user }: CrmModuleProps) {
+   162→  const canManage = user.role === ROLES.OWNER || user.role === ROLES.PROJECT_MANAGER;
+   163→  const isOwner = user.role === ROLES.OWNER;
+   164→
+   165→  const [clients, setClients] = useState<ClientItem[]>([]);
+   166→  const [users, setUsers] = useState<UserOption[]>([]);
+   167→  const [loading, setLoading] = useState(true);
+   168→  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+   169→  const [search, setSearch] = useState("");
+   170→
+   171→  const [dialogOpen, setDialogOpen] = useState(false);
+   172→  const [editing, setEditing] = useState<ClientItem | null>(null);
+   173→  const [form, setForm] = useState({ ...EMPTY_FORM });
+   174→  const [submitting, setSubmitting] = useState(false);
+   175→
+   176→  const [deleteId, setDeleteId] = useState<string | null>(null);
+   177→  const [deleting, setDeleting] = useState(false);
+   178→
+   179→  const loadClients = useCallback(async () => {
+   180→    setLoading(true);
+   181→    try {
+   182→      const data = await api<{ clients: ClientItem[] }>("/api/clients");
+   183→      setClients(data.clients || []);
+   184→    } catch (e: any) {
+   185→      toast.error(e?.message || "Gagal memuat data klien");
+   186→    } finally {
+   187→      setLoading(false);
+   188→    }
+   189→  }, []);
+   190→
+   191→  const loadUsers = useCallback(async () => {
+   192→    if (!isOwner) return;
+   193→    try {
+   194→      const data = await api<{ users: UserOption[] }>("/api/users");
+   195→      setUsers(data.users || []);
+   196→    } catch {
+   197→      // Owner-only endpoint; silently ignore
+   198→    }
+   199→  }, [isOwner]);
+   200→
+   201→  useEffect(() => {
+   202→    loadClients();
+   203→    loadUsers();
+   204→  }, [loadClients, loadUsers]);
+   205→
+   206→  const filtered = useMemo(() => {
+   207→    return clients.filter((c) => {
+   208→      if (statusFilter !== "ALL" && c.status !== statusFilter) return false;
+   209→      if (search.trim()) {
+   210→        const q = search.toLowerCase();
+   211→        const text = [c.namaKlien, c.instansi, c.pic, c.email, c.jenisTraining]
+   212→          .filter(Boolean)
+   213→          .join(" ")
+   214→          .toLowerCase();
+   215→        if (!text.includes(q)) return false;
+   216→      }
+   217→      return true;
+   218→    });
+   219→  }, [clients, statusFilter, search]);
+   220→
+   221→  // Pagination (max 15 per page)
+   222→  const {
+   223→    paginatedItems,
+   224→    goToPage,
+   225→    nextPage,
+   226→    prevPage,
+   227→    pageInfo,
+   228→    resetPage,
+   229→  } = usePagination(filtered, { pageSize: 15 });
+   230→
+   231→  // Bulk selection
+   232→  const {
+   233→    selectedArray,
+   234→    selectedCount,
+   235→    isSelected,
+   236→    toggle,
+   237→    toggleAll,
+   238→    clearSelection,
+   239→    resetSelection,
+   240→    isAllSelected,
+   241→  } = useBulkSelect({ getId: (c: ClientItem) => c.id });
+   242→  const [bulkMode, setBulkMode] = useState(false);
+   243→
+   244→  // Reset selection + go back to page 1 when filter changes
+   245→  useEffect(() => {
+   246→    resetSelection();
+   247→    resetPage();
+   248→  }, [search, statusFilter, resetSelection, resetPage]);
+   249→
+   250→  async function handleBulkDelete() {
+   251→    if (!confirm(`Hapus ${selectedCount} klien terpilih?`)) return;
+   252→    let success = 0;
+   253→    let failed = 0;
+   254→    for (const id of selectedArray) {
+   255→      try {
+   256→        await api(`/api/clients/${id}`, { method: "DELETE" });
+   257→        success++;
+   258→      } catch {
+   259→        failed++;
+   260→      }
+   261→    }
+   262→    clearSelection();
+   263→    setBulkMode(false);
+   264→    await loadClients();
+   265→    if (failed === 0) {
+   266→      toast.success(`${success} klien berhasil dihapus`);
+   267→    } else {
+   268→      toast.error(`${success} dihapus, ${failed} gagal`);
+   269→    }
+   270→  }
+   271→
+   272→  const stats = useMemo(() => {
+   273→    const total = clients.length;
+   274→    const lead = clients.filter((c) => c.status === "LEAD").length;
+   275→    const proposal = clients.filter((c) => c.status === "PROPOSAL").length;
+   276→    const deal = clients.filter((c) => c.status === "DEAL").length;
+   277→    const lost = clients.filter((c) => c.status === "LOST").length;
+   278→    return { total, lead, proposal, deal, lost };
+   279→  }, [clients]);
+   280→
+   281→  function openCreate() {
+   282→    setEditing(null);
+   283→    setForm({
+   284→      ...EMPTY_FORM,
+   285→      assignedToId: isOwner ? "" : user.id,
+   286→    });
+   287→    setDialogOpen(true);
+   288→  }
+   289→
+   290→  function openEdit(c: ClientItem) {
+   291→    setEditing(c);
+   292→    setForm({
+   293→      namaKlien: c.namaKlien || "",
+   294→      instansi: c.instansi || "",
+   295→      pic: c.pic || "",
+   296→      nomorWA: c.nomorWA || "",
+   297→      email: c.email || "",
+   298→      jenisTraining: c.jenisTraining || "",
+   299→      jumlahPeserta: c.jumlahPeserta != null ? String(c.jumlahPeserta) : "",
+   300→      budget: c.budget != null ? String(c.budget) : "",
+   301→      lokasi: c.lokasi || "",
+   302→      tanggalEvent: toDateInput(c.tanggalEvent),
+   303→      status: c.status || "LEAD",
+   304→      catatanFollowUp: c.catatanFollowUp || "",
+   305→      reminderFollowUp: toDateTimeInput(c.reminderFollowUp),
+   306→      assignedToId: c.assignedToId || (isOwner ? "" : user.id),
+   307→    });
+   308→    setDialogOpen(true);
+   309→  }
+   310→
+   311→  async function handleSubmit(e: React.FormEvent) {
+   312→    e.preventDefault();
+   313→    if (!form.namaKlien.trim()) {
+   314→      toast.error("Nama klien wajib diisi");
+   315→      return;
+   316→    }
+   317→    setSubmitting(true);
+   318→    try {
+   319→      const payload: any = {
+   320→        namaKlien: form.namaKlien.trim(),
+   321→        instansi: form.instansi.trim() || null,
+   322→        pic: form.pic.trim() || null,
+   323→        nomorWA: form.nomorWA.trim() || null,
+   324→        email: form.email.trim() || null,
+   325→        jenisTraining: form.jenisTraining.trim() || null,
+   326→        jumlahPeserta: form.jumlahPeserta ? Number(form.jumlahPeserta) : null,
+   327→        budget: form.budget ? Number(form.budget) : null,
+   328→        lokasi: form.lokasi.trim() || null,
+   329→        tanggalEvent: form.tanggalEvent ? form.tanggalEvent : null,
+   330→        status: form.status,
+   331→        catatanFollowUp: form.catatanFollowUp.trim() || null,
+   332→        reminderFollowUp: form.reminderFollowUp ? form.reminderFollowUp : null,
+   333→        assignedToId: form.assignedToId || null,
+   334→      };
+   335→
+   336→      if (editing) {
+   337→        await api(`/api/clients/${editing.id}`, {
+   338→          method: "PUT",
+   339→          body: JSON.stringify(payload),
+   340→        });
+   341→        toast.success("Klien berhasil diperbarui");
+   342→      } else {
+   343→        await api("/api/clients", {
+   344→          method: "POST",
+   345→          body: JSON.stringify(payload),
+   346→        });
+   347→        toast.success("Klien baru ditambahkan");
+   348→      }
+   349→      setDialogOpen(false);
+   350→      await loadClients();
+   351→    } catch (e: any) {
+   352→      toast.error(e?.message || "Gagal menyimpan klien");
+   353→    } finally {
+   354→      setSubmitting(false);
+   355→    }
+   356→  }
+   357→
+   358→  async function handleDelete() {
+   359→    if (!deleteId) return;
+   360→    setDeleting(true);
+   361→    try {
+   362→      await api(`/api/clients/${deleteId}`, { method: "DELETE" });
+   363→      toast.success("Klien berhasil dihapus");
+   364→      setDeleteId(null);
+   365→      await loadClients();
+   366→    } catch (e: any) {
+   367→      toast.error(e?.message || "Gagal menghapus klien");
+   368→    } finally {
+   369→      setDeleting(false);
+   370→    }
+   371→  }
+   372→
+   373→  function handleExportExcel() {
+   374→    if (filtered.length === 0) {
+   375→      toast.error("Tidak ada data untuk diekspor");
+   376→      return;
+   377→    }
+   378→    const rows = filtered.map((c) => ({
+   379→      "Nama Klien": c.namaKlien || "",
+   380→      Instansi: c.instansi || "",
+   381→      PIC: c.pic || "",
+   382→      "No. WA": c.nomorWA || "",
+   383→      Email: c.email || "",
+   384→      "Jenis Training": c.jenisTraining || "",
+   385→      Peserta: c.jumlahPeserta ?? 0,
+   386→      Budget: c.budget ?? 0,
+   387→      Lokasi: c.lokasi || "",
+   388→      "Tanggal Event": c.tanggalEvent ? formatDate(c.tanggalEvent) : "",
+   389→      Status: CLIENT_STATUS_LABELS[c.status] || c.status,
+   390→      "Catatan Follow Up": c.catatanFollowUp || "",
+   391→      "Reminder Follow Up": c.reminderFollowUp ? formatDateTime(c.reminderFollowUp) : "",
+   392→      "Ditugaskan Kepada": c.assignedTo?.name || "-",
+   393→      "Dibuat Pada": formatDate(c.createdAt),
+   394→    }));
+   395→    exportToExcel(rows, `CRM-Clients-${new Date().toISOString().slice(0, 10)}`, "CRM Clients");
+   396→    toast.success("Excel berhasil diekspor");
+   397→  }
+   398→
+   399→  function handleExportPDF() {
+   400→    if (filtered.length === 0) {
+   401→      toast.error("Tidak ada data untuk diekspor");
+   402→      return;
+   403→    }
+   404→    const columns = [
+   405→      "Nama Klien", "Instansi", "PIC", "Jenis Training", "Peserta",
+   406→      "Budget", "Status", "Tanggal Event", "PIC Internal",
+   407→    ];
+   408→    const rows = filtered.map((c) => [
+   409→      c.namaKlien || "-",
+   410→      c.instansi || "-",
+   411→      c.pic || "-",
+   412→      c.jenisTraining || "-",
+   413→      c.jumlahPeserta ?? 0,
+   414→      c.budget ? formatCurrency(c.budget) : "-",
+   415→      CLIENT_STATUS_LABELS[c.status] || c.status,
+   416→      c.tanggalEvent ? formatDate(c.tanggalEvent) : "-",
+   417→      c.assignedTo?.name || "-",
+   418→    ]);
+   419→    exportToPDF(
+   420→      "CRM - Client Management",
+   421→      columns,
+   422→      rows,
+   423→      `CRM-Clients-${new Date().toISOString().slice(0, 10)}.pdf`,
+   424→      `Total: ${filtered.length} klien`
+   425→    );
+   426→    toast.success("PDF berhasil diekspor");
+   427→  }
+   428→
+   429→  return (
+   430→    <div className="space-y-6">
+   431→      <SectionHeader
+   432→        title="CRM Client Management"
+   433→        description="Kelola prospek klien, follow up, dan status deal dari seluruh pipeline penjualan."
+   434→        action={
+   435→          canManage ? (
+   436→            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+   437→              <Plus className="w-4 h-4" /> Tambah Klien
+   438→            </Button>
+   439→          ) : undefined
+   440→        }
+   441→      />
+   442→
+   443→      {/* Stat Cards */}
+   444→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   445→        <StatCard
+   446→          title="Total Lead"
+   447→          value={stats.lead}
+   448→          icon={Target}
+   449→          indicator="neutral"
+   450→          subtitle={`dari ${stats.total} klien`}
+   451→          accent="bg-slate-100 text-slate-600"
+   452→        />
+   453→        <StatCard
+   454→          title="Total Proposal"
+   455→          value={stats.proposal}
+   456→          icon={FileText}
+   457→          indicator="yellow"
+   458→          subtitle="Menunggu respon klien"
+   459→          accent="bg-amber-50 text-amber-600"
+   460→        />
+   461→        <StatCard
+   462→          title="Total Deal"
+   463→          value={stats.deal}
+   464→          icon={Handshake}
+   465→          indicator="green"
+   466→          subtitle="Klien yang deal"
+   467→          accent="bg-blue-50 text-blue-600"
+   468→        />
+   469→        <StatCard
+   470→          title="Total Lost"
+   471→          value={stats.lost}
+   472→          icon={XCircle}
+   473→          indicator="red"
+   474→          subtitle="Klien yang gagal"
+   475→          accent="bg-rose-50 text-rose-600"
+   476→        />
+   477→      </div>
+   478→
+   479→      {/* Filter Bar */}
+   480→      <Card>
+   481→        <CardContent className="p-4">
+   482→          <div className="flex flex-col sm:flex-row gap-3">
+   483→            <div className="flex-1">
+   484→              <div className="relative">
+   485→                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   486→                <Input
+   487→                  placeholder="Cari nama klien, instansi, PIC, email..."
+   488→                  value={search}
+   489→                  onChange={(e) => setSearch(e.target.value)}
+   490→                  className="pl-9"
+   491→                />
+   492→              </div>
+   493→            </div>
+   494→            <Select value={statusFilter} onValueChange={setStatusFilter}>
+   495→              <SelectTrigger className="w-full sm:w-48">
+   496→                <SelectValue placeholder="Semua Status" />
+   497→              </SelectTrigger>
+   498→              <SelectContent>
+   499→                <SelectItem value="ALL">Semua Status</SelectItem>
+   500→                {CLIENT_STATUS.map((s) => (
+   501→                  <SelectItem key={s} value={s}>
+   502→                    {CLIENT_STATUS_LABELS[s]}
+   503→                  </SelectItem>
+   504→                ))}
+   505→              </SelectContent>
+   506→            </Select>
+   507→            <div className="flex gap-2">
+   508→              {canManage && (
+   509→                <Button
+   510→                  variant={bulkMode ? "default" : "outline"}
+   511→                  onClick={() => {
+   512→                    setBulkMode(!bulkMode);
+   513→                    if (bulkMode) clearSelection();
+   514→                  }}
+   515→                  className={bulkMode ? "bg-blue-600 hover:bg-blue-700" : ""}
+   516→                >
+   517→                  <CheckSquare className="w-4 h-4" /> {bulkMode ? "Selesai" : "Pilih Beberapa"}
+   518→                </Button>
+   519→              )}
+   520→              <Button variant="outline" onClick={handleExportPDF} className="flex-1 sm:flex-none">
+   521→                <FileText className="w-4 h-4" /> PDF
+   522→              </Button>
+   523→              <Button variant="outline" onClick={handleExportExcel} className="flex-1 sm:flex-none">
+   524→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   525→              </Button>
+   526→            </div>
+   527→          </div>
+   528→        </CardContent>
+   529→      </Card>
+   530→
+   531→      {/* Bulk Action Bar */}
+   532→      {bulkMode && selectedCount > 0 && (
+   533→        <BulkActionBar
+   534→          selectedCount={selectedCount}
+   535→          actions={[
+   536→            {
+   537→              label: "Hapus Terpilih",
+   538→              icon: Trash2,
+   539→              onClick: handleBulkDelete,
+   540→              variant: "destructive",
+   541→              confirmText: `Hapus ${selectedCount} klien terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   542→            },
+   543→          ]}
+   544→          onClearSelection={clearSelection}
+   545→        />
+   546→      )}
+   547→
+   548→      {/* Data Table */}
+   549→      <Card>
+   550→        <CardContent className="p-0">
+   551→          {loading ? (
+   552→            <div className="p-4 space-y-3">
+   553→              <Skeleton className="h-10 w-full" />
+   554→              {Array.from({ length: 5 }).map((_, i) => (
+   555→                <Skeleton key={i} className="h-12 w-full" />
+   556→              ))}
+   557→            </div>
+   558→          ) : filtered.length === 0 ? (
+   559→            <div className="flex flex-col items-center justify-center py-16 text-center">
+   560→              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+   561→                <Inbox className="w-8 h-8 text-slate-400" />
+   562→              </div>
+   563→              <p className="text-slate-600 font-medium">Belum ada data klien</p>
+   564→              <p className="text-sm text-slate-400 mt-1">
+   565→                {canManage ? "Klik tombol Tambah Klien untuk menambah data baru." : "Data klien belum tersedia."}
+   566→              </p>
+   567→            </div>
+   568→          ) : (
+   569→            <>
+   570→            <div className="overflow-x-auto">
+   571→              <Table>
+   572→                <TableHeader>
+   573→                  <TableRow className="bg-slate-50/50">
+   574→                    {bulkMode && (
+   575→                      <TableHead className="w-[40px] sticky left-0 bg-slate-50/50 z-10">
+   576→                        <SelectCheckbox
+   577→                          checked={isAllSelected(paginatedItems)}
+   578→                          onChange={() => toggleAll(paginatedItems)}
+   579→                        />
+   580→                      </TableHead>
+   581→                    )}
+   582→                    <TableHead className="min-w-[160px]">Klien</TableHead>
+   583→                    <TableHead className="min-w-[140px]">PIC & Kontak</TableHead>
+   584→                    <TableHead className="min-w-[140px]">Training</TableHead>
+   585→                    <TableHead className="text-center min-w-[70px]">Peserta</TableHead>
+   586→                    <TableHead className="text-right min-w-[110px]">Budget</TableHead>
+   587→                    <TableHead className="min-w-[100px]">Status</TableHead>
+   588→                    <TableHead className="min-w-[90px]">Tgl Event</TableHead>
+   589→                    {canManage && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
+   590→                  </TableRow>
+   591→                </TableHeader>
+   592→                <TableBody>
+   593→                  {paginatedItems.map((c) => (
+   594→                    <TableRow key={c.id} className="hover:bg-slate-50/50">
+   595→                      {bulkMode && (
+   596→                        <TableCell className="sticky left-0 bg-white z-10">
+   597→                          <SelectCheckbox
+   598→                            checked={isSelected(c)}
+   599→                            onChange={() => toggle(c)}
+   600→                          />
+   601→                        </TableCell>
+   602→                      )}
+   603→                      <TableCell>
+   604→                        <div className="font-medium text-slate-900">{c.namaKlien}</div>
+   605→                        {c.instansi && <div className="text-xs text-slate-500">{c.instansi}</div>}
+   606→                        {c.email && <div className="text-xs text-blue-600">{c.email}</div>}
+   607→                      </TableCell>
+   608→                      <TableCell>
+   609→                        <div className="text-slate-700">{c.pic || "-"}</div>
+   610→                        {c.nomorWA && <div className="text-xs text-slate-500">{c.nomorWA}</div>}
+   611→                      </TableCell>
+   612→                      <TableCell className="text-slate-700">{c.jenisTraining || "-"}</TableCell>
+   613→                      <TableCell className="text-center text-slate-700">
+   614→                        {c.jumlahPeserta ?? "-"}
+   615→                      </TableCell>
+   616→                      <TableCell className="text-right font-medium text-slate-900 whitespace-nowrap">
+   617→                        {c.budget != null ? formatCurrency(c.budget) : "-"}
+   618→                      </TableCell>
+   619→                      <TableCell>
+   620→                        <Badge
+   621→                          variant="outline"
+   622→                          className={CLIENT_STATUS_COLORS[c.status] || "bg-slate-100 text-slate-700 border-slate-200"}
+   623→                        >
+   624→                          {CLIENT_STATUS_LABELS[c.status] || c.status}
+   625→                        </Badge>
+   626→                      </TableCell>
+   627→                      <TableCell className="text-slate-700 text-xs whitespace-nowrap">
+   628→                        {c.tanggalEvent ? formatDate(c.tanggalEvent) : "-"}
+   629→                      </TableCell>
+   630→                      {canManage && (
+   631→                        <TableCell className="sticky right-0 bg-white z-10">
+   632→                          <div className="flex items-center justify-center gap-0.5">
+   633→                            <Button
+   634→                              variant="ghost"
+   635→                              size="icon"
+   636→                              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+   637→                              onClick={() => openEdit(c)}
+   638→                              title="Edit Klien"
+   639→                            >
+   640→                              <Pencil className="w-4 h-4" />
+   641→                            </Button>
+   642→                            <Button
+   643→                              variant="ghost"
+   644→                              size="icon"
+   645→                              className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+   646→                              onClick={() => setDeleteId(c.id)}
+   647→                              title="Hapus Klien"
+   648→                            >
+   649→                              <Trash2 className="w-4 h-4" />
+   650→                            </Button>
+   651→                          </div>
+   652→                        </TableCell>
+   653→                      )}
+   654→                    </TableRow>
+   655→                  ))}
+   656→                </TableBody>
+   657→              </Table>
+   658→            </div>
+   659→            <Pagination
+   660→              currentPage={pageInfo.currentPage}
+   661→              totalPages={pageInfo.totalPages}
+   662→              totalItems={pageInfo.totalItems}
+   663→              startIndex={pageInfo.startIndex}
+   664→              endIndex={pageInfo.endIndex}
+   665→              hasNext={pageInfo.hasNext}
+   666→              hasPrev={pageInfo.hasPrev}
+   667→              onPageChange={goToPage}
+   668→              onNext={nextPage}
+   669→              onPrev={prevPage}
+   670→            />
+   671→            </>
+   672→          )}
+   673→        </CardContent>
+   674→      </Card>
+   675→
+   676→      {/* Add/Edit Dialog */}
+   677→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   678→        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+   679→          <DialogHeader>
+   680→            <DialogTitle>{editing ? "Edit Klien" : "Tambah Klien Baru"}</DialogTitle>
+   681→            <DialogDescription>
+   682→              {editing
+   683→                ? "Perbarui informasi klien dan status follow up."
+   684→                : "Lengkapi data klien untuk pipeline CRM."}
+   685→            </DialogDescription>
+   686→          </DialogHeader>
+   687→          <form onSubmit={handleSubmit} className="space-y-4">
+   688→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   689→              <div className="space-y-1.5 sm:col-span-2">
+   690→                <Label htmlFor="namaKlien">Nama Klien *</Label>
+   691→                <Input
+   692→                  id="namaKlien"
+   693→                  value={form.namaKlien}
+   694→                  onChange={(e) => setForm({ ...form, namaKlien: e.target.value })}
+   695→                  required
+   696→                  placeholder="PT Maju Bersama"
+   697→                />
+   698→              </div>
+   699→              <div className="space-y-1.5">
+   700→                <Label htmlFor="instansi">Instansi</Label>
+   701→                <Input
+   702→                  id="instansi"
+   703→                  value={form.instansi}
+   704→                  onChange={(e) => setForm({ ...form, instansi: e.target.value })}
+   705→                  placeholder="Nama perusahaan / instansi"
+   706→                />
+   707→              </div>
+   708→              <div className="space-y-1.5">
+   709→                <Label htmlFor="pic">PIC</Label>
+   710→                <Input
+   711→                  id="pic"
+   712→                  value={form.pic}
+   713→                  onChange={(e) => setForm({ ...form, pic: e.target.value })}
+   714→                  placeholder="Nama contact person"
+   715→                />
+   716→              </div>
+   717→              <div className="space-y-1.5">
+   718→                <Label htmlFor="nomorWA">Nomor WA</Label>
+   719→                <Input
+   720→                  id="nomorWA"
+   721→                  value={form.nomorWA}
+   722→                  onChange={(e) => setForm({ ...form, nomorWA: e.target.value })}
+   723→                  placeholder="08xxxxxxxxxx"
+   724→                />
+   725→              </div>
+   726→              <div className="space-y-1.5">
+   727→                <Label htmlFor="email">Email</Label>
+   728→                <Input
+   729→                  id="email"
+   730→                  type="email"
+   731→                  value={form.email}
+   732→                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+   733→                  placeholder="pic@instansi.com"
+   734→                />
+   735→              </div>
+   736→              <div className="space-y-1.5">
+   737→                <Label htmlFor="jenisTraining">Jenis Training</Label>
+   738→                <Input
+   739→                  id="jenisTraining"
+   740→                  value={form.jenisTraining}
+   741→                  onChange={(e) => setForm({ ...form, jenisTraining: e.target.value })}
+   742→                  placeholder="Leadership Training"
+   743→                />
+   744→              </div>
+   745→              <div className="space-y-1.5">
+   746→                <Label htmlFor="jumlahPeserta">Jumlah Peserta</Label>
+   747→                <Input
+   748→                  id="jumlahPeserta"
+   749→                  type="number"
+   750→                  min="0"
+   751→                  value={form.jumlahPeserta}
+   752→                  onChange={(e) => setForm({ ...form, jumlahPeserta: e.target.value })}
+   753→                  placeholder="30"
+   754→                />
+   755→              </div>
+   756→              <div className="space-y-1.5">
+   757→                <Label htmlFor="budget">Budget (Rp)</Label>
+   758→                <Input
+   759→                  id="budget"
+   760→                  type="number"
+   761→                  min="0"
+   762→                  value={form.budget}
+   763→                  onChange={(e) => setForm({ ...form, budget: e.target.value })}
+   764→                  placeholder="25000000"
+   765→                />
+   766→              </div>
+   767→              <div className="space-y-1.5">
+   768→                <Label htmlFor="lokasi">Lokasi</Label>
+   769→                <Input
+   770→                  id="lokasi"
+   771→                  value={form.lokasi}
+   772→                  onChange={(e) => setForm({ ...form, lokasi: e.target.value })}
+   773→                  placeholder="Jakarta"
+   774→                />
+   775→              </div>
+   776→              <div className="space-y-1.5">
+   777→                <Label htmlFor="tanggalEvent">Tanggal Event</Label>
+   778→                <Input
+   779→                  id="tanggalEvent"
+   780→                  type="date"
+   781→                  value={form.tanggalEvent}
+   782→                  onChange={(e) => setForm({ ...form, tanggalEvent: e.target.value })}
+   783→                />
+   784→              </div>
+   785→              <div className="space-y-1.5">
+   786→                <Label htmlFor="status">Status</Label>
+   787→                <Select
+   788→                  value={form.status}
+   789→                  onValueChange={(v) => setForm({ ...form, status: v })}
+   790→                >
+   791→                  <SelectTrigger id="status" className="w-full">
+   792→                    <SelectValue placeholder="Pilih status" />
+   793→                  </SelectTrigger>
+   794→                  <SelectContent>
+   795→                    {CLIENT_STATUS.map((s) => (
+   796→                      <SelectItem key={s} value={s}>
+   797→                        {CLIENT_STATUS_LABELS[s]}
+   798→                      </SelectItem>
+   799→                    ))}
+   800→                  </SelectContent>
+   801→                </Select>
+   802→              </div>
+   803→              <div className="space-y-1.5">
+   804→                <Label htmlFor="assignedToId">Ditugaskan Kepada</Label>
+   805→                {isOwner ? (
+   806→                  <Select
+   807→                    value={form.assignedToId}
+   808→                    onValueChange={(v) => setForm({ ...form, assignedToId: v })}
+   809→                  >
+   810→                    <SelectTrigger id="assignedToId" className="w-full">
+   811→                      <SelectValue placeholder="Pilih anggota tim" />
+   812→                    </SelectTrigger>
+   813→                    <SelectContent>
+   814→                      {users.map((u) => (
+   815→                        <SelectItem key={u.id} value={u.id}>
+   816→                          {u.name} ({ROLE_LABELS[u.role] || u.role})
+   817→                        </SelectItem>
+   818→                      ))}
+   819→                    </SelectContent>
+   820→                  </Select>
+   821→                ) : (
+   822→                  <Input
+   823→                    id="assignedToId"
+   824→                    value={`${user.name} (Anda)`}
+   825→                    disabled
+   826→                    className="bg-slate-50"
+   827→                  />
+   828→                )}
+   829→              </div>
+   830→              <div className="space-y-1.5">
+   831→                <Label htmlFor="reminderFollowUp">Reminder Follow Up</Label>
+   832→                <Input
+   833→                  id="reminderFollowUp"
+   834→                  type="datetime-local"
+   835→                  value={form.reminderFollowUp}
+   836→                  onChange={(e) => setForm({ ...form, reminderFollowUp: e.target.value })}
+   837→                />
+   838→              </div>
+   839→            </div>
+   840→            <div className="space-y-1.5">
+   841→              <Label htmlFor="catatanFollowUp">Catatan Follow Up</Label>
+   842→              <Textarea
+   843→                id="catatanFollowUp"
+   844→                value={form.catatanFollowUp}
+   845→                onChange={(e) => setForm({ ...form, catatanFollowUp: e.target.value })}
+   846→                placeholder="Catatan hasil komunikasi dengan klien..."
+   847→                rows={3}
+   848→              />
+   849→            </div>
+   850→            <DialogFooter>
+   851→              <Button
+   852→                type="button"
+   853→                variant="outline"
+   854→                onClick={() => setDialogOpen(false)}
+   855→                disabled={submitting}
+   856→              >
+   857→                Batal
+   858→              </Button>
+   859→              <Button
+   860→                type="submit"
+   861→                disabled={submitting}
+   862→                className="bg-blue-600 hover:bg-blue-700"
+   863→              >
+   864→                {submitting ? (
+   865→                  <>
+   866→                    <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
+   867→                  </>
+   868→                ) : editing ? (
+   869→                  "Simpan Perubahan"
+   870→                ) : (
+   871→                  "Tambah Klien"
+   872→                )}
+   873→              </Button>
+   874→            </DialogFooter>
+   875→          </form>
+   876→        </DialogContent>
+   877→      </Dialog>
+   878→
+   879→      {/* Delete Confirmation */}
+   880→      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+   881→        <AlertDialogContent>
+   882→          <AlertDialogHeader>
+   883→            <AlertDialogTitle>Hapus Klien?</AlertDialogTitle>
+   884→            <AlertDialogDescription>
+   885→              Tindakan ini tidak dapat dibatalkan. Data klien, event, dokumen, dan transaksi terkait
+   886→              akan ikut terpengaruh.
+   887→            </AlertDialogDescription>
+   888→          </AlertDialogHeader>
+   889→          <AlertDialogFooter>
+   890→            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+   891→            <AlertDialogAction
+   892→              onClick={handleDelete}
+   893→              disabled={deleting}
+   894→              className="bg-rose-600 hover:bg-rose-700"
+   895→            >
+   896→              {deleting ? (
+   897→                <>
+   898→                  <Loader2 className="w-4 h-4 animate-spin" /> Menghapus...
+   899→                </>
+   900→              ) : (
+   901→                "Ya, Hapus"
+   902→              )}
+   903→            </AlertDialogAction>
+   904→          </AlertDialogFooter>
+   905→        </AlertDialogContent>
+   906→      </AlertDialog>
+   907→    </div>
+   908→  );
+   909→}
+   910→

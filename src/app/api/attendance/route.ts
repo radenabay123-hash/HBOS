@@ -17,6 +17,9 @@ export async function GET(req: Request) {
     const date = searchParams.get("date");
     const month = searchParams.get("month");
     const year = searchParams.get("year");
+    // Treat absent / "0" as "no filter" (Semua Bulan / Semua Tahun)
+    const m = month ? Number(month) : 0;
+    const y = year ? Number(year) : 0;
 
     const where: any = {};
     if (user.role === ROLES.OWNER) {
@@ -30,15 +33,14 @@ export async function GET(req: Request) {
       const next = new Date(d);
       next.setDate(next.getDate() + 1);
       where.date = { gte: d, lt: next };
-    } else if (year) {
-      const y = Number(year);
-      if (month) {
-        const m = Number(month);
+    } else if (y > 0) {
+      if (m > 0) {
         where.date = { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) };
       } else {
         where.date = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) };
       }
     }
+    // else (y == 0): no date filter — return ALL records (Semua Tahun)
 
     const records = await db.attendance.findMany({
       where,

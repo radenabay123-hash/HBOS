@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { ok, err, handleApi, getMonthRange } from "@/lib/api";
+import { ok, err, handleApi } from "@/lib/api";
 import { ROLES } from "@/lib/constants";
 
 export const runtime = "nodejs";
@@ -14,11 +14,25 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const now = new Date();
+    // year=0 = "Semua Tahun" (aggregate all years); month=0 = "Semua Bulan" (whole year)
     const year = Number(searchParams.get("year") || now.getFullYear());
-    const month = Number(searchParams.get("month") || (now.getMonth() + 1));
+    const month = Number(searchParams.get("month") || 0);
 
-    const monthRange = getMonthRange(year, month);
-    const yearRange = getMonthRange(year);
+    // Determine the period range for "this period" stats
+    let periodStart: Date, periodEnd: Date;
+    if (year === 0) {
+      // All years: full range
+      periodStart = new Date(2000, 0, 1);
+      periodEnd = new Date(2100, 11, 31, 23, 59, 59, 999);
+    } else if (month === 0) {
+      // All months in year
+      periodStart = new Date(year, 0, 1);
+      periodEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      // Specific month
+      periodStart = new Date(year, month - 1, 1);
+      periodEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    }
 
     // ===== CRM Stats =====
     const totalLead = await db.client.count({ where: { status: "LEAD" } });
@@ -37,34 +51,39 @@ export async function GET(req: Request) {
     });
     const dealRevenue = dealClients.reduce((s, c) => s + (c.budget || 0), 0);
 
-    // ===== Events this month =====
+    // ===== Events this period =====
     const eventsThisMonth = await db.event.count({
-      where: { tanggal: { gte: monthRange.start, lte: monthRange.end } },
+      where: { tanggal: { gte: periodStart, lte: periodEnd } },
     });
     const eventsThisMonthList = await db.event.findMany({
-      where: { tanggal: { gte: monthRange.start, lte: monthRange.end } },
+      where: { tanggal: { gte: periodStart, lte: periodEnd } },
       include: { client: { select: { namaKlien: true } }, assistantTrainer: { select: { name: true } } },
       orderBy: { tanggal: "asc" },
     });
 
-    // ===== Finance this month =====
+    // ===== Finance this period =====
     const pemasukanThisMonth = await db.financeTransaction.aggregate({
-      where: { type: "PEMASUKAN", date: { gte: monthRange.start, lte: monthRange.end } },
+      where: { type: "PEMASUKAN", date: { gte: periodStart, lte: periodEnd } },
       _sum: { amount: true },
     });
     const pengeluaranThisMonth = await db.financeTransaction.aggregate({
-      where: { type: "PENGELUARAN", date: { gte: monthRange.start, lte: monthRange.end } },
+      where: { type: "PENGELUARAN", date: { gte: periodStart, lte: periodEnd } },
       _sum: { amount: true },
     });
     const revenueThisMonth = pemasukanThisMonth._sum.amount || 0;
     const expenseThisMonth = pengeluaranThisMonth._sum.amount || 0;
     const profitThisMonth = revenueThisMonth - expenseThisMonth;
 
-    const finSetting = await db.financeSetting.findUnique({
-      where: { month_year: { month, year } },
-    });
-    const targetRevenue = finSetting?.targetRevenue || 500000000;
-    const targetProfit = finSetting?.targetProfit || 150000000;
+    // Finance setting: lookup by specific year+month if both > 0, else fall back to defaults
+    let targetRevenue = 500000000;
+    let targetProfit = 150000000;
+    if (year > 0 && month > 0) {
+      const finSetting = await db.financeSetting.findUnique({
+        where: { month_year: { month, year } },
+      });
+      targetRevenue = finSetting?.targetRevenue || targetRevenue;
+      targetProfit = finSetting?.targetProfit || targetProfit;
+    }
 
     // ===== Content Stats =====
     const totalContentPublished = await db.contentIdea.count({ where: { statusPublish: "PUBLISHED" } });
@@ -96,12 +115,19 @@ export async function GET(req: Request) {
     }
     const engagementRate = totalViews > 0 ? Math.round(((totalShare + totalSave + totalComment) / totalViews) * 100) : 0;
 
-    // ===== Monthly Charts (12 months) =====
+    // ===== Monthly Charts (12 months of selected year, or 12 months aggregated across all years if year=0) =====
     const monthlyData = [];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    // When year=0 (Semua Tahun), aggregate each month across all years in DB.
+    // We use a wide year range (2022-2030) — adjust if older data exists.
+    const monthYearStart = year > 0 ? year : 2022;
+    const monthYearEnd = year > 0 ? year : 2030;
     for (let m = 0; m < 12; m++) {
-      const mStart = new Date(year, m, 1);
-      const mEnd = new Date(year, m + 1, 0, 23, 59, 59, 999);
+      // For specific year: mStart = first day of that month, mEnd = last day of that month.
+      // For "all years" (year=0): mStart = first day of that month in 2022,
+      // mEnd = last day of that month in 2030 (so it captures all January 2022-2030, etc.)
+      const mStart = new Date(monthYearStart, m, 1);
+      const mEnd = new Date(monthYearEnd, m + 1, 0, 23, 59, 59, 999);
       const [pemasukan, pengeluaran, deals, contents, articles, events, leads] = await Promise.all([
         db.financeTransaction.aggregate({ where: { type: "PEMASUKAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
         db.financeTransaction.aggregate({ where: { type: "PENGELUARAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
@@ -120,9 +146,10 @@ export async function GET(req: Request) {
       });
     }
 
-    // ===== Yearly Charts (last 5 years) =====
+    // ===== Yearly Charts (last 5 years from current year — independent of selected year) =====
     const yearlyData = [];
-    for (let y = year - 4; y <= year; y++) {
+    const yearlyAnchor = now.getFullYear();
+    for (let y = yearlyAnchor - 4; y <= yearlyAnchor; y++) {
       const yStart = new Date(y, 0, 1);
       const yEnd = new Date(y, 11, 31, 23, 59, 59, 999);
       const [pemasukan, pengeluaran, deals, contents, articles] = await Promise.all([
@@ -184,10 +211,10 @@ export async function GET(req: Request) {
     });
     const teamProductivity = await Promise.all(
       teamMembers.map(async (t) => {
-        const tasksDone = await db.dailyTask.count({ where: { userId: t.id, status: "SELESAI", tanggal: { gte: monthRange.start, lte: monthRange.end } } });
-        const tasksTotal = await db.dailyTask.count({ where: { userId: t.id, tanggal: { gte: monthRange.start, lte: monthRange.end } } });
-        const contents = await db.contentIdea.count({ where: { userId: t.id, statusPublish: "PUBLISHED", tanggal: { gte: monthRange.start, lte: monthRange.end } } });
-        const articles = await db.article.count({ where: { userId: t.id, status: "PUBLISHED", createdAt: { gte: monthRange.start, lte: monthRange.end } } });
+        const tasksDone = await db.dailyTask.count({ where: { userId: t.id, status: "SELESAI", tanggal: { gte: periodStart, lte: periodEnd } } });
+        const tasksTotal = await db.dailyTask.count({ where: { userId: t.id, tanggal: { gte: periodStart, lte: periodEnd } } });
+        const contents = await db.contentIdea.count({ where: { userId: t.id, statusPublish: "PUBLISHED", tanggal: { gte: periodStart, lte: periodEnd } } });
+        const articles = await db.article.count({ where: { userId: t.id, status: "PUBLISHED", createdAt: { gte: periodStart, lte: periodEnd } } });
         return {
           ...t,
           tasksDone, tasksTotal, contents, articles,

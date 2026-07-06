@@ -23,9 +23,6 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import {
@@ -164,7 +161,6 @@ const ACC_LABELS: Record<string, string> = {
 };
 
 const currentYear = new Date().getFullYear();
-const YEAR_OPTIONS = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
 
 // ============================ Main ============================
 
@@ -185,11 +181,9 @@ export function ReportsModule() {
   const loadData = useCallback(async (y: number, m: number) => {
     setLoading(true);
     try {
-      // Always pass a valid month (1-12) to the API. If "Semua Bulan" (m=0),
-      // we use current month as the API's "this month" placeholder; the UI
-      // computes annual aggregates from monthlyData instead.
-      const apiMonth = m === 0 ? new Date().getMonth() + 1 : m;
-      const d = await api<DashboardData>(`/api/dashboard/owner?year=${y}&month=${apiMonth}`);
+      // Pass year & month as-is. API handles year=0 (Semua Tahun) and month=0
+      // (Semua Bulan) by aggregating across all years / whole year respectively.
+      const d = await api<DashboardData>(`/api/dashboard/owner?year=${y}&month=${m}`);
       setData(d);
     } catch (e: any) {
       toast.error(e?.message || "Gagal memuat data laporan");
@@ -206,9 +200,11 @@ export function ReportsModule() {
   const loadFinance = useCallback(async () => {
     setFinanceLoading(true);
     try {
-      const url = month === 0
-        ? `/api/finance?year=${year}`
-        : `/api/finance?year=${year}&month=${month}`;
+      // Build query — only send month/year when > 0 (0 means "no filter / all")
+      const qs = new URLSearchParams();
+      if (month > 0) qs.set("month", String(month));
+      if (year > 0) qs.set("year", String(year));
+      const url = `/api/finance${qs.toString() ? `?${qs.toString()}` : ""}`;
       const d = await api<{ transactions: FinanceTxn[] }>(url);
       setFinanceTxns(d.transactions);
     } catch (e: any) {
@@ -239,9 +235,11 @@ export function ReportsModule() {
     if (activeTab === "content" && !contentIdeas && !contentLoading) loadContentArticles();
   }, [activeTab, financeTxns, contentIdeas, financeLoading, contentLoading, loadFinance, loadContentArticles]);
 
-  const periodLabel = month === 0
-    ? `Tahun ${year}`
-    : `${MONTH_NAMES[month - 1]} ${year}`;
+  const periodLabel = year === 0
+    ? "Semua Tahun (Akumulasi)"
+    : month === 0
+      ? `Tahun ${year}`
+      : `${MONTH_NAMES[month - 1]} ${year}`;
 
   // Aggregates for "Semua Bulan"
   const annualAgg = useMemo(() => {
@@ -266,7 +264,8 @@ export function ReportsModule() {
   // "Effective" KPIs based on selection
   const eff = useMemo(() => {
     if (!data) return null;
-    const isAll = month === 0;
+    // Use annual aggregate when month=0 (Semua Bulan) OR year=0 (Semua Tahun)
+    const isAll = month === 0 || year === 0;
     return {
       revenue: isAll ? annualAgg!.revenue : data.finance.revenueThisMonth,
       expense: isAll ? annualAgg!.expense : data.finance.expenseThisMonth,
@@ -277,7 +276,7 @@ export function ReportsModule() {
       events: isAll ? annualAgg!.events : data.events.eventsThisMonth,
       leads: isAll ? annualAgg!.leads : data.crm.totalClients,
     };
-  }, [data, month, annualAgg]);
+  }, [data, month, year, annualAgg]);
 
   function handleDownloadFullPDF() {
     if (!data || !eff) return;
@@ -382,30 +381,29 @@ export function ReportsModule() {
         <CardContent className="p-4 flex flex-col sm:flex-row sm:items-end gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tahun</label>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-full sm:w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {YEAR_OPTIONS.map((y) => (
-                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={String(year)}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-9 w-full sm:w-32 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bulan</label>
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-full sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Semua Bulan</SelectItem>
-                {MONTH_NAMES.map((m, i) => (
-                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              value={String(month)}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="h-9 w-full sm:w-44 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {MONTH_NAMES.map((m, i) => (
+                <option key={i} value={String(i + 1)}>{m}</option>
+              ))}
+            </select>
           </div>
           <div className="sm:ml-auto text-sm text-slate-500">
             Menampilkan data: <span className="font-semibold text-blue-700">{periodLabel}</span>
@@ -434,7 +432,7 @@ export function ReportsModule() {
           </div>
 
           <TabsContent value="summary" className="mt-4">
-            <SummaryTab data={data} eff={eff!} periodLabel={periodLabel} month={month} />
+            <SummaryTab data={data} eff={eff!} periodLabel={periodLabel} month={month} year={year} />
           </TabsContent>
           <TabsContent value="crm" className="mt-4">
             <CrmTab data={data} periodLabel={periodLabel} />
@@ -455,6 +453,7 @@ export function ReportsModule() {
               loading={financeLoading}
               periodLabel={periodLabel}
               month={month}
+              year={year}
             />
           </TabsContent>
           <TabsContent value="team" className="mt-4">
@@ -469,12 +468,13 @@ export function ReportsModule() {
 // ============================ Summary Tab ============================
 
 function SummaryTab({
-  data, eff, periodLabel, month,
+  data, eff, periodLabel, month, year,
 }: {
   data: DashboardData;
   eff: { revenue: number; expense: number; profit: number; deals: number; contents: number; articles: number; events: number; leads: number };
   periodLabel: string;
   month: number;
+  year: number;
 }) {
   function exportSummaryPDF() {
     const sections = [
@@ -551,7 +551,7 @@ function SummaryTab({
           indicator={data.finance.revenueAchievement >= 100 ? "green" : data.finance.revenueAchievement >= 60 ? "yellow" : "red"}
           accent="bg-blue-50 text-blue-600"
           subtitle={`Target: ${formatCurrency(data.finance.targetRevenue)}`}
-          progress={month === 0 ? undefined : data.finance.revenueAchievement}
+          progress={month === 0 || year === 0 ? undefined : data.finance.revenueAchievement}
         />
         <StatCard
           title="Profit"
@@ -1093,15 +1093,16 @@ function ContentTab({
 // ============================ Finance Tab ============================
 
 function FinanceTab({
-  data, txns, loading, periodLabel, month,
+  data, txns, loading, periodLabel, month, year,
 }: {
   data: DashboardData;
   txns: FinanceTxn[] | null;
   loading: boolean;
   periodLabel: string;
   month: number;
+  year: number;
 }) {
-  const isAll = month === 0;
+  const isAll = month === 0 || year === 0;
 
   // Expense by category (from txns if available, fallback to monthly)
   const expenseByCategory = useMemo(() => {

@@ -151,6 +151,8 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
   const [clientFilter, setClientFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
+  const [monthFilter, setMonthFilter] = useState("0"); // "0" = Semua Bulan
+  const [yearFilter, setYearFilter] = useState("0"); // "0" = Semua Tahun
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DocumentItem | null>(null);
@@ -205,9 +207,21 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
           return false;
         }
       }
+      // Year/Month filter by createdAt
+      if (d.createdAt) {
+        const dt = new Date(d.createdAt);
+        if (!isNaN(dt.getTime())) {
+          if (yearFilter !== "0" && dt.getFullYear() !== Number(yearFilter)) return false;
+          if (monthFilter !== "0" && (dt.getMonth() + 1) !== Number(monthFilter)) return false;
+        } else if (yearFilter !== "0" || monthFilter !== "0") {
+          return false;
+        }
+      } else if (yearFilter !== "0" || monthFilter !== "0") {
+        return false;
+      }
       return true;
     });
-  }, [documents, typeFilter, clientFilter, search]);
+  }, [documents, typeFilter, clientFilter, search, yearFilter, monthFilter]);
 
   // Pagination (max 15 per page)
   const {
@@ -235,7 +249,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
   useEffect(() => {
     resetDocSelection();
     resetDocPage();
-  }, [search, typeFilter, clientFilter, resetDocSelection, resetDocPage]);
+  }, [search, typeFilter, clientFilter, yearFilter, monthFilter, resetDocSelection, resetDocPage]);
 
   async function handleBulkDelete() {
     if (!confirm(`Hapus ${selectedDocCount} dokumen terpilih?`)) return;
@@ -490,7 +504,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
             </div>
           </div>
 
-          {/* Search + bulk-select toggle */}
+          {/* Search + Year/Month + bulk-select toggle */}
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -510,6 +524,22 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                 </button>
               )}
             </div>
+            <select
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"].map((m, i) => <option key={i} value={String(i+1)}>{m}</option>)}
+            </select>
+            <select
+              value={yearFilter}
+              onChange={(e) => setYearFilter(e.target.value)}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             {canDelete && (
               <Button
                 variant={bulkMode ? "default" : "outline"}

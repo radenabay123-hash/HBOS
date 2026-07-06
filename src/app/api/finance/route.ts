@@ -21,19 +21,22 @@ export async function GET(req: Request) {
     const category = searchParams.get("category");
     const accountType = searchParams.get("accountType");
 
+    // Treat absent / "0" as "no filter" (Semua Bulan / Semua Tahun)
+    const y = year ? Number(year) : 0;
+    const m = month ? Number(month) : 0;
+
     const where: any = {};
     if (type) where.type = type;
     if (category) where.category = category;
     if (accountType) where.accountType = accountType;
-    if (year) {
-      const y = Number(year);
-      if (month) {
-        const m = Number(month);
+    if (y > 0) {
+      if (m > 0) {
         where.date = { gte: new Date(y, m - 1, 1), lt: new Date(y, m, 1) };
       } else {
         where.date = { gte: new Date(y, 0, 1), lt: new Date(y + 1, 0, 1) };
       }
     }
+    // else (y == 0): no date filter — return ALL transactions (Semua Tahun)
 
     const txns = await db.financeTransaction.findMany({
       where,

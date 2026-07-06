@@ -1,0 +1,874 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import { Separator } from "@/components/ui/separator";
+    12→import {
+    13→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+    14→} from "@/components/ui/dialog";
+    15→import {
+    16→  Receipt, Wallet, TrendingUp, TrendingDown, Clock, Award, FileText,
+    17→  RefreshCw, Download, CheckCircle2, DollarSign, Settings, Zap, Printer,
+    18→  Trash2, Eye, Building2, User, Calendar, Banknote, FileSpreadsheet,
+    19→  ChevronRight, Sparkles, Plus, Search, CheckSquare, X,
+    20→} from "lucide-react";
+    21→import { api } from "@/lib/api-client";
+    22→import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
+    23→import { exportToExcel } from "@/lib/export-utils";
+    24→import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
+    25→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    26→import { toast } from "sonner";
+    27→import { cn } from "@/lib/utils";
+    28→import type { SafeUser } from "@/lib/auth";
+    29→import { usePagination } from "@/lib/hooks/use-pagination";
+    30→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    31→import { Pagination } from "@/components/shared/pagination";
+    32→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    33→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    34→
+    35→const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    36→
+    37→interface Payroll {
+    38→  id?: string;
+    39→  userId: string;
+    40→  userName?: string;
+    41→  role?: string;
+    42→  user?: { id: string; name: string; role: string; position: string; phone: string };
+    43→  month: number;
+    44→  year: number;
+    45→  baseSalary: number;
+    46→  mealAllowance: number;
+    47→  transportAllowance: number;
+    48→  workingDays: number;
+    49→  presentDays: number;
+    50→  absentDays: number;
+    51→  lateDays: number;
+    52→  leaveDays: number;
+    53→  kpiScore: number;
+    54→  kpiBonus: number;
+    55→  attendanceDeduction: number;
+    56→  bpjs: number;
+    57→  tax: number;
+    58→  otherDeduction: number;
+    59→  grossSalary: number;
+    60→  totalDeduction: number;
+    61→  netSalary: number;
+    62→  status: string;
+    63→  paidAt: string | null;
+    64→  note?: string;
+    65→  isManual?: boolean;
+    66→  nik?: string;
+    67→  jabatan?: string;
+    68→  bankName?: string;
+    69→  bankAccount?: string;
+    70→  accountName?: string;
+    71→  periodeLabel?: string;
+    72→  companyName?: string;
+    73→}
+    74→
+    75→const STATUS_LABELS: Record<string, string> = { DRAFT: "Draft", APPROVED: "Disetujui", PAID: "Dibayar" };
+    76→const STATUS_COLORS: Record<string, string> = {
+    77→  DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
+    78→  APPROVED: "bg-amber-100 text-amber-700 border-amber-200",
+    79→  PAID: "bg-blue-100 text-blue-700 border-blue-200",
+    80→};
+    81→
+    82→export function PayrollModule({ user }: { user: SafeUser }) {
+    83→  const isOwner = user.role === ROLES.OWNER;
+    84→  const now = new Date();
+    85→  const [year, setYear] = useState(now.getFullYear());
+    86→  const [month, setMonth] = useState(now.getMonth() + 1);
+    87→  const [archive, setArchive] = useState<Payroll[]>([]);
+    88→  const [myPayroll, setMyPayroll] = useState<Payroll | null>(null);
+    89→  const [saved, setSaved] = useState(false);
+    90→  const [loading, setLoading] = useState(true);
+    91→  const [payslipDialog, setPayslipDialog] = useState<{ open: boolean; payroll: Payroll | null }>({ open: false, payroll: null });
+    92→  const [users, setUsers] = useState<{ id: string; name: string; role: string; position: string }[]>([]);
+    93→  const [search, setSearch] = useState("");
+    94→  const [statusFilter, setStatusFilter] = useState<string>("all");
+    95→  const [bulkMode, setBulkMode] = useState(false);
+    96→
+    97→  // Manual generator form state
+    98→  const [genForm, setGenForm] = useState({
+    99→    userId: "",
+   100→    month: String(now.getMonth() + 1),
+   101→    year: String(now.getFullYear()),
+   102→    baseSalary: "",
+   103→    tunjangan: "",
+   104→    potongan: "",
+   105→    note: "",
+   106→    bankName: "Bank Syariah Indonesia (BSI)",
+   107→    bankAccount: "",
+   108→    accountName: "",
+   109→    nik: "",
+   110→    jabatan: "",
+   111→  });
+   112→  const [generating, setGenerating] = useState(false);
+   113→
+   114→  const loadData = useCallback(async () => {
+   115→    setLoading(true);
+   116→    try {
+   117→      if (isOwner) {
+   118→        const [archData, previewData] = await Promise.all([
+   119→          api<{ payrolls: Payroll[] }>("/api/payroll/manual").catch(() => ({ payrolls: [] })),
+   120→          api<any>(`/api/payroll?month=${month}&year=${year}`).catch(() => ({ payrolls: [], saved: false })),
+   121→        ]);
+   122→        setArchive(archData.payrolls || []);
+   123→        setSaved(previewData.saved || false);
+   124→        const u = await api<{ users: any[] }>("/api/users").catch(() => ({ users: [] }));
+   125→        setUsers(u.users.filter((x: any) => x.role !== "OWNER"));
+   126→      } else {
+   127→        const data = await api<any>(`/api/payroll?month=${month}&year=${year}`);
+   128→        setMyPayroll(data.payroll || null);
+   129→        setSaved(data.saved || false);
+   130→      }
+   131→    } catch (e: any) {
+   132→      toast.error(e.message || "Gagal memuat payroll");
+   133→    } finally {
+   134→      setLoading(false);
+   135→    }
+   136→  }, [month, year, isOwner]);
+   137→
+   138→  useEffect(() => { loadData(); }, [loadData]);
+   139→
+   140→  async function handleGenerateManual() {
+   141→    if (!genForm.userId) { toast.error("Pilih karyawan dulu"); return; }
+   142→    setGenerating(true);
+   143→    try {
+   144→      await api("/api/payroll/manual", {
+   145→        method: "POST",
+   146→        body: JSON.stringify({
+   147→          userId: genForm.userId,
+   148→          month: Number(genForm.month),
+   149→          year: Number(genForm.year),
+   150→          baseSalary: Number(genForm.baseSalary) || 0,
+   151→          tunjangan: Number(genForm.tunjangan) || 0,
+   152→          potongan: Number(genForm.potongan) || 0,
+   153→          note: genForm.note,
+   154→          bankName: genForm.bankName,
+   155→          bankAccount: genForm.bankAccount,
+   156→          accountName: genForm.accountName,
+   157→          nik: genForm.nik,
+   158→          jabatan: genForm.jabatan,
+   159→          status: "DRAFT",
+   160→        }),
+   161→      });
+   162→      toast.success("Slip gaji berhasil dibuat!");
+   163→      setGenForm({ ...genForm, baseSalary: "", tunjangan: "", potongan: "", note: "", bankAccount: "", accountName: "", nik: "" });
+   164→      loadData();
+   165→    } catch (e: any) {
+   166→      toast.error(e.message || "Gagal generate");
+   167→    } finally {
+   168→      setGenerating(false);
+   169→    }
+   170→  }
+   171→
+   172→  async function handleUpdateStatus(payrollId: string, status: string) {
+   173→    try {
+   174→      await api(`/api/payroll/${payrollId}`, { method: "PUT", body: JSON.stringify({ status }) });
+   175→      toast.success(status === "PAID" ? "Gaji ditandai LUNAS" : status === "APPROVED" ? "Payroll disetujui" : "Status diperbarui");
+   176→      loadData();
+   177→    } catch (e: any) {
+   178→      toast.error(e.message || "Gagal update status");
+   179→    }
+   180→  }
+   181→
+   182→  async function handleDelete(payrollId: string) {
+   183→    if (!confirm("Hapus slip gaji ini?")) return;
+   184→    try {
+   185→      await api(`/api/payroll/${payrollId}`, { method: "DELETE" });
+   186→      toast.success("Slip gaji dihapus");
+   187→      loadData();
+   188→    } catch (e: any) {
+   189→      toast.error(e.message || "Gagal hapus");
+   190→    }
+   191→  }
+   192→
+   193→  async function handleDownloadSlip(p: Payroll) {
+   194→    const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
+   195→    // Fetch layout settings - ALL design comes from here
+   196→    let layoutSettings: any = null;
+   197→    let logoUrl = "";
+   198→    try {
+   199→      const ld = await fetchLayoutSettings("SLIP_GAJI");
+   200→      layoutSettings = ld.layout;
+   201→      logoUrl = ld.appSettings?.companyLogo || "";
+   202→    } catch {}
+   203→    // Load logo image as data URL for jsPDF
+   204→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   205→    // CLEAN: only pass content data, all design comes from layout settings
+   206→    const slipData: SlipGajiData = {
+   207→      employeeName: u.name,
+   208→      nik: p.nik || p.userId.slice(-4).toUpperCase(),
+   209→      jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",
+   210→      periode: p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`,
+   211→      bankName: p.bankName || "Bank Syariah Indonesia (BSI)",
+   212→      bankAccount: p.bankAccount || "-",
+   213→      accountName: p.accountName || u.name,
+   214→      gajiPokok: p.baseSalary,
+   215→      tunjanganBonus: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+   216→      potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction),
+   217→      note: p.note || "",
+   218→      status: p.status,
+   219→      paidAt: p.paidAt ? formatDate(p.paidAt) : null,
+   220→      logoImageData,
+   221→      layout: layoutSettings,
+   222→    };
+   223→    downloadSlipGajiPDF(slipData);
+   224→    toast.success("Slip gaji PDF diunduh");
+   225→  }
+   226→
+   227→  function handleExportExcel() {
+   228→    const rows = archive.map((p, i) => ({
+   229→      No: i + 1,
+   230→      Nama: p.user?.name || p.userName,
+   231→      "Bulan/Tahun": `${monthNames[p.month - 1]} ${p.year}`,
+   232→      "Gaji Pokok": p.baseSalary,
+   233→      Tunjangan: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+   234→      Potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax),
+   235→      "Gaji Bersih": p.netSalary,
+   236→      Status: STATUS_LABELS[p.status] || p.status,
+   237→    }));
+   238→    exportToExcel(rows, "Arsip-Slip-Gaji", "Slip Gaji");
+   239→    toast.success("Excel diunduh");
+   240→  }
+   241→
+   242→  const previewNet = (Number(genForm.baseSalary) || 0) + (Number(genForm.tunjangan) || 0) - (Number(genForm.potongan) || 0);
+   243→
+   244→  // Client-side search + status filter on archive (owner view)
+   245→  const filtered = useMemo(() => {
+   246→    let r = archive;
+   247→    if (statusFilter !== "all") r = r.filter((p) => p.status === statusFilter);
+   248→    if (search.trim()) {
+   249→      const q = search.toLowerCase().trim();
+   250→      r = r.filter((p) =>
+   251→        (p.user?.name || p.userName || "").toLowerCase().includes(q) ||
+   252→        (p.jabatan || "").toLowerCase().includes(q)
+   253→      );
+   254→    }
+   255→    return r;
+   256→  }, [archive, search, statusFilter]);
+   257→
+   258→  // Pagination (max 15 per page)
+   259→  const {
+   260→    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+   261→  } = usePagination(filtered, { pageSize: 15 });
+   262→
+   263→  // Bulk selection
+   264→  const {
+   265→    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+   266→    clearSelection, resetSelection, isAllSelected,
+   267→  } = useBulkSelect<Payroll>({ getId: (p) => p.id || "" });
+   268→
+   269→  // Reset selection + page when client-side filters change
+   270→  useEffect(() => {
+   271→    resetSelection();
+   272→    resetPage();
+   273→  }, [search, statusFilter, resetSelection, resetPage]);
+   274→
+   275→  async function handleBulkDelete() {
+   276→    if (!confirm(`Hapus ${selectedCount} slip gaji terpilih?`)) return;
+   277→    let success = 0;
+   278→    let failed = 0;
+   279→    for (const id of selectedArray) {
+   280→      try {
+   281→        await api(`/api/payroll/${id}`, { method: "DELETE" });
+   282→        success++;
+   283→      } catch {
+   284→        failed++;
+   285→      }
+   286→    }
+   287→    clearSelection();
+   288→    setBulkMode(false);
+   289→    await loadData();
+   290→    if (failed === 0) {
+   291→      toast.success(`${success} slip gaji berhasil dihapus`);
+   292→    } else {
+   293→      toast.error(`${success} dihapus, ${failed} gagal`);
+   294→    }
+   295→  }
+   296→
+   297→  if (loading) {
+   298→    return (
+   299→      <div className="flex items-center justify-center py-20">
+   300→        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+   301→      </div>
+   302→    );
+   303→  }
+   304→
+   305→  // ===== TEAM VIEW =====
+   306→  if (!isOwner) {
+   307→    const p = myPayroll;
+   308→    return (
+   309→      <div className="space-y-6">
+   310→        <div>
+   311→          <h1 className="text-2xl font-bold text-slate-900">Slip Gaji Saya</h1>
+   312→          <p className="text-sm text-slate-500 mt-1">Rincian gaji bulanan Anda</p>
+   313→        </div>
+   314→
+   315→        <div className="flex flex-wrap items-center gap-2">
+   316→          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+   317→            <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   318→            <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+   319→          </Select>
+   320→          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+   321→            <SelectTrigger className="w-[100px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   322→            <SelectContent>{[now.getFullYear(), now.getFullYear() - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+   323→          </Select>
+   324→        </div>
+   325→
+   326→        {!p ? (
+   327→          <Card className="border-dashed">
+   328→            <CardContent className="py-16 text-center">
+   329→              <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   330→              <p className="text-slate-400">Belum ada slip gaji untuk periode {monthNames[month - 1]} {year}</p>
+   331→            </CardContent>
+   332→          </Card>
+   333→        ) : (
+   334→          <>
+   335→            {/* Status banner */}
+   336→            <Card className={cn("border-2", p.status === "PAID" ? "border-blue-300 bg-blue-50/50" : "border-amber-200 bg-amber-50/50")}>
+   337→              <CardContent className="p-5 flex items-center justify-between">
+   338→                <div className="flex items-center gap-3">
+   339→                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center", p.status === "PAID" ? "bg-blue-600 text-white" : "bg-amber-500 text-white")}>
+   340→                    {p.status === "PAID" ? <CheckCircle2 className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+   341→                  </div>
+   342→                  <div>
+   343→                    <p className="font-semibold text-slate-900">Periode: {monthNames[p.month - 1]} {p.year}</p>
+   344→                    <p className="text-sm text-slate-600">{p.status === "PAID" ? `Dibayar pada ${p.paidAt ? formatDate(p.paidAt) : "-"}` : "Draft - belum disetujui"}</p>
+   345→                  </div>
+   346→                </div>
+   347→                <Badge className={cn("text-sm px-3 py-1", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge>
+   348→              </CardContent>
+   349→            </Card>
+   350→
+   351→            {/* Net salary hero card */}
+   352→            <Card className="border-0 shadow-lg shadow-blue-600/20 overflow-hidden">
+   353→              <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
+   354→                <div className="flex items-center justify-between mb-4">
+   355→                  <div className="flex items-center gap-2">
+   356→                    <div className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur flex items-center justify-center">
+   357→                      <Wallet className="w-5 h-5" />
+   358→                    </div>
+   359→                    <span className="text-blue-100 text-sm font-medium">Gaji Bersih Diterima</span>
+   360→                  </div>
+   361→                  <Sparkles className="w-5 h-5 text-blue-200" />
+   362→                </div>
+   363→                <p className="text-4xl font-bold tracking-tight">{formatCurrency(p.netSalary)}</p>
+   364→                <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-white/20">
+   365→                  <div>
+   366→                    <p className="text-blue-200 text-xs mb-0.5">Gross</p>
+   367→                    <p className="font-semibold text-sm">{formatCurrency(p.grossSalary)}</p>
+   368→                  </div>
+   369→                  <div>
+   370→                    <p className="text-blue-200 text-xs mb-0.5">Potongan</p>
+   371→                    <p className="font-semibold text-sm">{formatCurrency(p.totalDeduction)}</p>
+   372→                  </div>
+   373→                  <div>
+   374→                    <p className="text-blue-200 text-xs mb-0.5">KPI Score</p>
+   375→                    <p className="font-semibold text-sm">{p.kpiScore || "-"}</p>
+   376→                  </div>
+   377→                </div>
+   378→              </div>
+   379→            </Card>
+   380→
+   381→            {/* Breakdown cards */}
+   382→            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   383→              <Card className="shadow-sm">
+   384→                <CardHeader className="pb-3">
+   385→                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+   386→                    <span className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center"><TrendingUp className="w-4 h-4 text-green-600" /></span>
+   387→                    Pendapatan
+   388→                  </CardTitle>
+   389→                </CardHeader>
+   390→                <CardContent className="space-y-2.5 text-sm pt-0">
+   391→                  <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
+   392→                  {p.isManual ? (
+   393→                    <Row label="Tunjangan & Bonus" value={formatCurrency(p.transportAllowance)} />
+   394→                  ) : (
+   395→                    <>
+   396→                      <Row label="Tunjangan Makan" value={formatCurrency(p.mealAllowance)} />
+   397→                      <Row label="Tunjangan Transport" value={formatCurrency(p.transportAllowance)} />
+   398→                      <Row label="Bonus KPI" value={formatCurrency(p.kpiBonus)} />
+   399→                    </>
+   400→                  )}
+   401→                  <Separator className="my-1" />
+   402→                  <Row label="Total Gross" value={formatCurrency(p.grossSalary)} bold />
+   403→                </CardContent>
+   404→              </Card>
+   405→              <Card className="shadow-sm">
+   406→                <CardHeader className="pb-3">
+   407→                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+   408→                    <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center"><TrendingDown className="w-4 h-4 text-rose-600" /></span>
+   409→                    Potongan
+   410→                  </CardTitle>
+   411→                </CardHeader>
+   412→                <CardContent className="space-y-2.5 text-sm pt-0">
+   413→                  {p.isManual ? (
+   414→                    <Row label="Potongan" value={formatCurrency(p.otherDeduction)} negative />
+   415→                  ) : (
+   416→                    <>
+   417→                      <Row label="Potongan Kehadiran" value={formatCurrency(p.attendanceDeduction)} negative />
+   418→                      <Row label="BPJS" value={formatCurrency(p.bpjs)} negative />
+   419→                      <Row label="Pajak (PPh)" value={formatCurrency(p.tax)} negative />
+   420→                    </>
+   421→                  )}
+   422→                  <Separator className="my-1" />
+   423→                  <Row label="Total Potongan" value={formatCurrency(p.totalDeduction)} bold negative />
+   424→                </CardContent>
+   425→              </Card>
+   426→            </div>
+   427→
+   428→            <Button onClick={() => handleDownloadSlip(p)} className="w-full bg-blue-600 hover:bg-blue-700 h-11">
+   429→              <Download className="w-4 h-4 mr-2" /> Download Slip Gaji (PDF)
+   430→            </Button>
+   431→          </>
+   432→        )}
+   433→      </div>
+   434→    );
+   435→  }
+   436→
+   437→  // ===== OWNER VIEW =====
+   438→  const totalGross = archive.reduce((s, p) => s + p.grossSalary, 0);
+   439→  const totalNet = archive.reduce((s, p) => s + p.netSalary, 0);
+   440→  const paidCount = archive.filter((p) => p.status === "PAID").length;
+   441→  const draftCount = archive.filter((p) => p.status === "DRAFT").length;
+   442→
+   443→  return (
+   444→    <div className="space-y-6">
+   445→      {/* Page header */}
+   446→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   447→        <div>
+   448→          <h1 className="text-2xl font-bold text-slate-900">Payroll & Gaji</h1>
+   449→          <p className="text-sm text-slate-500 mt-1">Generator slip gaji manual & arsip penggajian tim</p>
+   450→        </div>
+   451→        <Button variant="outline" size="sm" onClick={handleExportExcel} className="bg-white">
+   452→          <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
+   453→        </Button>
+   454→      </div>
+   455→
+   456→      {/* Summary stat cards */}
+   457→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   458→        <SummaryCard icon={Receipt} label="Total Slip" value={String(archive.length)} accent="blue" />
+   459→        <SummaryCard icon={CheckCircle2} label="Sudah Dibayar" value={String(paidCount)} accent="green" />
+   460→        <SummaryCard icon={DollarSign} label="Total Gaji Bruto" value={formatCurrency(totalGross)} accent="violet" />
+   461→        <SummaryCard icon={Wallet} label="Total Gaji Bersih" value={formatCurrency(totalNet)} accent="blue" />
+   462→      </div>
+   463→
+   464→      {/* Main content: Generator + Arsip */}
+   465→      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+   466→        {/* ===== GENERATOR (left, 2 cols) ===== */}
+   467→        <Card className="lg:col-span-2 shadow-sm border-slate-200 self-start sticky top-20">
+   468→          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 rounded-t-lg">
+   469→            <div className="flex items-center gap-2.5">
+   470→              <div className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur flex items-center justify-center">
+   471→                <Zap className="w-5 h-5 text-white" />
+   472→              </div>
+   473→              <div>
+   474→                <h3 className="font-semibold text-white text-sm">Generator Gaji Bulanan</h3>
+   475→                <p className="text-blue-100 text-xs">Buat slip gaji manual</p>
+   476→              </div>
+   477→            </div>
+   478→          </div>
+   479→          <CardContent className="p-5 space-y-4">
+   480→            {/* Karyawan */}
+   481→            <div className="space-y-1.5">
+   482→              <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+   483→                <User className="w-3 h-3" /> PILIH KARYAWAN
+   484→              </Label>
+   485→              <Select value={genForm.userId} onValueChange={(v) => {
+   486→                const u = users.find((x) => x.id === v);
+   487→                setGenForm({ ...genForm, userId: v, jabatan: u?.position || ROLE_LABELS[u?.role || ""] || "", accountName: u?.name || "" });
+   488→              }}>
+   489→                <SelectTrigger className="bg-white"><SelectValue placeholder="-- Pilih Karyawan --" /></SelectTrigger>
+   490→                <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name} ({ROLE_LABELS[u.role]})</SelectItem>)}</SelectContent>
+   491→              </Select>
+   492→            </div>
+   493→
+   494→            {/* Periode */}
+   495→            <div className="grid grid-cols-2 gap-3">
+   496→              <div className="space-y-1.5">
+   497→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> BULAN</Label>
+   498→                <Select value={genForm.month} onValueChange={(v) => setGenForm({ ...genForm, month: v })}>
+   499→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   500→                  <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+   501→                </Select>
+   502→              </div>
+   503→              <div className="space-y-1.5">
+   504→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> TAHUN</Label>
+   505→                <Input value={genForm.year} onChange={(e) => setGenForm({ ...genForm, year: e.target.value })} className="bg-white" />
+   506→              </div>
+   507→            </div>
+   508→
+   509→            <Separator />
+   510→
+   511→            {/* Nominal inputs */}
+   512→            <div className="space-y-3">
+   513→              <div className="space-y-1.5">
+   514→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><DollarSign className="w-3 h-3" /> GAJI POKOK (IDR)</Label>
+   515→                <Input type="number" value={genForm.baseSalary} onChange={(e) => setGenForm({ ...genForm, baseSalary: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   516→              </div>
+   517→              <div className="space-y-1.5">
+   518→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><TrendingUp className="w-3 h-3" /> TOTAL TUNJANGAN (IDR)</Label>
+   519→                <Input type="number" value={genForm.tunjangan} onChange={(e) => setGenForm({ ...genForm, tunjangan: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   520→              </div>
+   521→              <div className="space-y-1.5">
+   522→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><TrendingDown className="w-3 h-3" /> TOTAL POTONGAN (IDR)</Label>
+   523→                <Input type="number" value={genForm.potongan} onChange={(e) => setGenForm({ ...genForm, potongan: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   524→              </div>
+   525→            </div>
+   526→
+   527→            {/* Preview net */}
+   528→            <div className="bg-gradient-to-r from-blue-50 to-sky-50 border border-blue-100 rounded-xl p-3.5">
+   529→              <div className="flex items-center justify-between">
+   530→                <span className="text-sm text-slate-600">Preview Gaji Bersih</span>
+   531→                <span className="text-xl font-bold text-blue-700">{formatCurrency(previewNet)}</span>
+   532→              </div>
+   533→            </div>
+   534→
+   535→            <Separator />
+   536→
+   537→            {/* Info Transfer (collapsible feel) */}
+   538→            <div className="space-y-2.5">
+   539→              <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5"><Banknote className="w-3 h-3" /> INFO TRANSFER (opsional)</p>
+   540→              <Input placeholder="Nama Bank (BCA/BNI/BSI/Mandiri)" value={genForm.bankName} onChange={(e) => setGenForm({ ...genForm, bankName: e.target.value })} className="bg-white text-sm h-9" />
+   541→              <div className="grid grid-cols-2 gap-2">
+   542→                <Input placeholder="No. Rekening" value={genForm.bankAccount} onChange={(e) => setGenForm({ ...genForm, bankAccount: e.target.value })} className="bg-white text-sm h-9" />
+   543→                <Input placeholder="NIK Karyawan" value={genForm.nik} onChange={(e) => setGenForm({ ...genForm, nik: e.target.value })} className="bg-white text-sm h-9" />
+   544→              </div>
+   545→            </div>
+   546→
+   547→            {/* Keterangan */}
+   548→            <div className="space-y-1.5">
+   549→              <Label className="text-xs font-semibold text-slate-600">KETERANGAN / NOTES</Label>
+   550→              <Textarea value={genForm.note} onChange={(e) => setGenForm({ ...genForm, note: e.target.value })} placeholder="e.g. Gaji bulanan terstruktur" rows={2} className="bg-white text-sm resize-none" />
+   551→            </div>
+   552→
+   553→            <Button onClick={handleGenerateManual} disabled={generating || !genForm.userId} className="w-full bg-blue-600 hover:bg-blue-700 h-11 font-medium">
+   554→              {generating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+   555→              {generating ? "Memproses..." : "GENERATE SLIP GAJI"}
+   556→            </Button>
+   557→          </CardContent>
+   558→        </Card>
+   559→
+   560→        {/* ===== ARSIP (right, 3 cols) ===== */}
+   561→        <div className="lg:col-span-3 space-y-4">
+   562→          {bulkMode && selectedCount > 0 && (
+   563→            <BulkActionBar
+   564→              selectedCount={selectedCount}
+   565→              actions={[
+   566→                {
+   567→                  label: "Hapus Terpilih",
+   568→                  icon: Trash2,
+   569→                  onClick: handleBulkDelete,
+   570→                  variant: "destructive",
+   571→                  confirmText: `Hapus ${selectedCount} slip gaji terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   572→                },
+   573→              ]}
+   574→              onClearSelection={clearSelection}
+   575→            />
+   576→          )}
+   577→          <Card className="shadow-sm border-slate-200">
+   578→            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+   579→              <div className="flex items-center gap-2.5">
+   580→                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+   581→                  <Receipt className="w-5 h-5 text-slate-600" />
+   582→                </div>
+   583→                <div>
+   584→                  <h3 className="font-semibold text-slate-900 text-sm">Arsip Slip Gaji</h3>
+   585→                  <p className="text-slate-500 text-xs">Daftar penggajian bulanan seluruh staf</p>
+   586→                </div>
+   587→              </div>
+   588→              <Badge variant="outline" className="text-xs bg-slate-50">{archive.length} data</Badge>
+   589→            </div>
+   590→            {/* Search + Status filter + Bulk select toggle */}
+   591→            <div className="px-5 py-3 border-b border-slate-100 flex flex-col sm:flex-row gap-3 sm:items-center bg-slate-50/40">
+   592→              <div className="relative flex-1 min-w-[200px]">
+   593→                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   594→                <Input
+   595→                  type="text"
+   596→                  value={search}
+   597→                  onChange={(e) => setSearch(e.target.value)}
+   598→                  placeholder="Cari nama karyawan atau jabatan..."
+   599→                  className="pl-9 h-9 bg-white text-sm"
+   600→                />
+   601→                {search && (
+   602→                  <button
+   603→                    onClick={() => setSearch("")}
+   604→                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   605→                  >
+   606→                    <X className="w-4 h-4" />
+   607→                  </button>
+   608→                )}
+   609→              </div>
+   610→              <div className="min-w-[170px]">
+   611→                <Select value={statusFilter} onValueChange={setStatusFilter}>
+   612→                  <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+   613→                  <SelectContent>
+   614→                    <SelectItem value="all">Semua Status</SelectItem>
+   615→                    <SelectItem value="DRAFT">Draft</SelectItem>
+   616→                    <SelectItem value="APPROVED">Disetujui</SelectItem>
+   617→                    <SelectItem value="PAID">Dibayar</SelectItem>
+   618→                  </SelectContent>
+   619→                </Select>
+   620→              </div>
+   621→              <Button
+   622→                variant={bulkMode ? "default" : "outline"}
+   623→                size="sm"
+   624→                onClick={() => {
+   625→                  setBulkMode(!bulkMode);
+   626→                  if (bulkMode) clearSelection();
+   627→                }}
+   628→                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   629→              >
+   630→                <CheckSquare className="w-3.5 h-3.5" />
+   631→                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   632→              </Button>
+   633→            </div>
+   634→            <CardContent className="p-0">
+   635→              {archive.length === 0 ? (
+   636→                <div className="py-16 text-center">
+   637→                  <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   638→                  <p className="text-sm text-slate-400">Belum ada slip gaji</p>
+   639→                  <p className="text-xs text-slate-400 mt-1">Generate slip gaji di form sebelah kiri</p>
+   640→                </div>
+   641→              ) : filtered.length === 0 ? (
+   642→                <div className="py-16 text-center">
+   643→                  <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   644→                  <p className="text-sm text-slate-400">Tidak ada slip gaji yang cocok</p>
+   645→                  <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter status</p>
+   646→                </div>
+   647→              ) : (
+   648→                <>
+   649→                <div className="max-h-[600px] overflow-y-auto">
+   650→                  <table className="w-full text-sm">
+   651→                    <thead className="sticky top-0 bg-slate-50 z-10">
+   652→                      <tr className="border-b border-slate-200 text-left">
+   653→                        {bulkMode && (
+   654→                          <th className="py-3 px-3 w-10">
+   655→                            <SelectCheckbox
+   656→                              checked={isAllSelected(paginatedItems)}
+   657→                              onChange={() => toggleAll(paginatedItems)}
+   658→                            />
+   659→                          </th>
+   660→                        )}
+   661→                        <th className="py-3 px-4 font-semibold text-xs text-slate-500 uppercase tracking-wide w-10">#</th>
+   662→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide">Karyawan</th>
+   663→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-medium">Periode</th>
+   664→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-right">Gaji Bersih</th>
+   665→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-center">Status</th>
+   666→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-center w-24">Aksi</th>
+   667→                      </tr>
+   668→                    </thead>
+   669→                    <tbody>
+   670→                      {paginatedItems.map((p, i) => {
+   671→                        const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+   672→                        const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+   673→                        return (
+   674→                          <tr key={p.id || i} className="border-b border-slate-50 hover:bg-blue-50/30 transition-colors">
+   675→                            {bulkMode && (
+   676→                              <td className="py-3 px-3">
+   677→                                <SelectCheckbox
+   678→                                  checked={isSelected(p)}
+   679→                                  onChange={() => toggle(p)}
+   680→                                />
+   681→                              </td>
+   682→                            )}
+   683→                            <td className="py-3 px-4 text-slate-400 text-xs font-medium">{(pageInfo.currentPage - 1) * 15 + i + 1}</td>
+   684→                            <td className="py-3 px-3">
+   685→                              <p className="font-medium text-slate-900 text-sm">{p.user?.name || p.userName}</p>
+   686→                              <p className="text-[10px] text-slate-400">{ROLE_LABELS[p.user?.role || p.role || ""]}</p>
+   687→                            </td>
+   688→                            <td className="py-3 px-3 text-slate-600 text-xs">{monthNames[p.month - 1].slice(0, 3)} {p.year}</td>
+   689→                            <td className="py-3 px-3 text-right">
+   690→                              <p className="font-bold text-slate-900">{formatCurrency(p.netSalary)}</p>
+   691→                              <p className="text-[10px] text-slate-400">{formatCurrency(p.baseSalary)} + {formatCurrency(tunj)} - {formatCurrency(pot)}</p>
+   692→                            </td>
+   693→                            <td className="py-3 px-3 text-center"><Badge variant="outline" className={cn("text-[10px] font-medium", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge></td>
+   694→                            <td className="py-3 px-3">
+   695→                              <div className="flex gap-0.5 justify-center">
+   696→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Preview" onClick={() => setPayslipDialog({ open: true, payroll: p })}>
+   697→                                  <Eye className="w-3.5 h-3.5" />
+   698→                                </Button>
+   699→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Download PDF" onClick={() => handleDownloadSlip(p)}>
+   700→                                  <Download className="w-3.5 h-3.5" />
+   701→                                </Button>
+   702→                                {p.status === "DRAFT" && (
+   703→                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-amber-600 hover:bg-amber-50" title="Setujui" onClick={() => handleUpdateStatus(p.id!, "APPROVED")}>
+   704→                                    <CheckCircle2 className="w-3.5 h-3.5" />
+   705→                                  </Button>
+   706→                                )}
+   707→                                {p.status === "APPROVED" && (
+   708→                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Tandai Lunas" onClick={() => handleUpdateStatus(p.id!, "PAID")}>
+   709→                                    <DollarSign className="w-3.5 h-3.5" />
+   710→                                  </Button>
+   711→                                )}
+   712→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Hapus" onClick={() => handleDelete(p.id!)}>
+   713→                                  <Trash2 className="w-3.5 h-3.5" />
+   714→                                </Button>
+   715→                              </div>
+   716→                            </td>
+   717→                          </tr>
+   718→                        );
+   719→                      })}
+   720→                    </tbody>
+   721→                  </table>
+   722→                </div>
+   723→                <Pagination
+   724→                  currentPage={pageInfo.currentPage}
+   725→                  totalPages={pageInfo.totalPages}
+   726→                  totalItems={pageInfo.totalItems}
+   727→                  startIndex={pageInfo.startIndex}
+   728→                  endIndex={pageInfo.endIndex}
+   729→                  hasNext={pageInfo.hasNext}
+   730→                  hasPrev={pageInfo.hasPrev}
+   731→                  onPageChange={goToPage}
+   732→                  onNext={nextPage}
+   733→                  onPrev={prevPage}
+   734→                />
+   735→                </>
+   736→              )}
+   737→            </CardContent>
+   738→            {archive.length > 0 && (
+   739→              <div className="border-t border-slate-100 px-5 py-3 bg-slate-50/50 flex items-center justify-between text-xs">
+   740→                <span className="text-slate-500">Total {archive.length} slip gaji (filter: {filtered.length})</span>
+   741→                <span className="text-slate-500">Total Net: <span className="font-bold text-blue-700">{formatCurrency(totalNet)}</span></span>
+   742→              </div>
+   743→            )}
+   744→          </Card>
+   745→        </div>
+   746→      </div>
+   747→
+   748→      {/* ===== Payslip Detail Dialog ===== */}
+   749→      <Dialog open={payslipDialog.open} onOpenChange={(o) => setPayslipDialog({ open: o, payroll: payslipDialog.payroll })}>
+   750→        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+   751→          {payslipDialog.payroll && (() => {
+   752→            const p = payslipDialog.payroll;
+   753→            const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+   754→            const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+   755→            return (
+   756→              <>
+   757→                <DialogHeader className="sr-only">
+   758→                  <DialogTitle>Detail Slip Gaji</DialogTitle>
+   759→                </DialogHeader>
+   760→                {/* Company header */}
+   761→                <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-5 text-white">
+   762→                  <div className="flex items-start justify-between">
+   763→                    <div>
+   764→                      <p className="font-bold text-lg">PT. HAFARA AIQBA NUSANTARA</p>
+   765→                      <p className="text-xs text-blue-100 mt-1">Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur</p>
+   766→                      <p className="text-xs text-blue-100">Info@hafaragroup.com | www.HafaraGroup.com | 081324511570</p>
+   767→                    </div>
+   768→                    <Badge className="bg-white/15 text-white border-white/20 text-xs">SLIP GAJI</Badge>
+   769→                  </div>
+   770→                </div>
+   771→
+   772→                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+   773→                  {/* Employee & periode */}
+   774→                  <div className="grid grid-cols-2 gap-3">
+   775→                    <div className="bg-slate-50 rounded-xl p-4">
+   776→                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-2">Karyawan</p>
+   777→                      <p className="text-sm"><span className="text-slate-400">Nama</span><br /><span className="font-semibold text-slate-900">{p.user?.name}</span></p>
+   778→                      <p className="text-sm mt-1.5"><span className="text-slate-400">NIK</span> <span className="text-slate-700">{p.nik || p.userId.slice(-4).toUpperCase()}</span></p>
+   779→                      <p className="text-sm"><span className="text-slate-400">Jabatan</span> <span className="text-slate-700">{p.jabatan || p.user?.position || "-"}</span></p>
+   780→                    </div>
+   781→                    <div className="bg-slate-50 rounded-xl p-4">
+   782→                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-2">Periode & Transfer</p>
+   783→                      <p className="text-sm"><span className="text-slate-400">Periode</span><br /><span className="font-semibold text-slate-900">{p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`}</span></p>
+   784→                      <p className="text-sm mt-1.5"><span className="text-slate-400">Bank</span> <span className="text-slate-700">{p.bankName || "-"}</span></p>
+   785→                      <p className="text-sm"><span className="text-slate-400">No. Rek</span> <span className="text-slate-700">{p.bankAccount || "-"}</span></p>
+   786→                    </div>
+   787→                  </div>
+   788→
+   789→                  {/* Earnings & Deductions */}
+   790→                  <div className="grid grid-cols-2 gap-3">
+   791→                    <div className="border border-slate-200 rounded-xl p-4">
+   792→                      <p className="text-xs font-semibold text-green-700 mb-2.5 flex items-center gap-1.5">
+   793→                        <span className="w-2 h-2 rounded-full bg-green-500" /> PENDAPATAN
+   794→                      </p>
+   795→                      <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
+   796→                      <Row label="Tunjangan & Bonus" value={formatCurrency(tunj)} />
+   797→                      <Separator className="my-1.5" />
+   798→                      <Row label="Total Pendapatan" value={formatCurrency(p.grossSalary)} bold />
+   799→                    </div>
+   800→                    <div className="border border-slate-200 rounded-xl p-4">
+   801→                      <p className="text-xs font-semibold text-rose-700 mb-2.5 flex items-center gap-1.5">
+   802→                        <span className="w-2 h-2 rounded-full bg-rose-500" /> POTONGAN
+   803→                      </p>
+   804→                      <Row label="Potongan" value={formatCurrency(pot)} negative />
+   805→                      <Separator className="my-1.5" />
+   806→                      <Row label="Total Potongan" value={formatCurrency(pot)} bold negative />
+   807→                    </div>
+   808→                  </div>
+   809→
+   810→                  {/* Note */}
+   811→                  {p.note && (
+   812→                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+   813→                      <p className="text-[10px] font-semibold text-amber-600 uppercase mb-1">Catatan</p>
+   814→                      <p className="text-xs text-slate-600">{p.note}</p>
+   815→                    </div>
+   816→                  )}
+   817→                </div>
+   818→
+   819→                {/* Net + action footer */}
+   820→                <div className="border-t border-slate-100">
+   821→                  <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-4 flex items-center justify-between">
+   822→                    <div>
+   823→                      <p className="text-blue-100 text-xs">TAKE HOME PAY (GAJI BERSIH)</p>
+   824→                      <p className="text-2xl font-bold text-white">{formatCurrency(p.netSalary)}</p>
+   825→                    </div>
+   826→                    <Badge className={cn("text-sm px-3 py-1.5", STATUS_COLORS[p.status])}>{p.status === "PAID" ? "LUNAS / PAID" : STATUS_LABELS[p.status]}</Badge>
+   827→                  </div>
+   828→                  <div className="p-4 flex gap-2">
+   829→                    <Button onClick={() => handleDownloadSlip(p)} className="flex-1 bg-blue-600 hover:bg-blue-700">
+   830→                      <Download className="w-4 h-4 mr-2" /> Download PDF
+   831→                    </Button>
+   832→                    <Button variant="outline" onClick={() => setPayslipDialog({ open: false, payroll: null })}>Tutup</Button>
+   833→                  </div>
+   834→                </div>
+   835→              </>
+   836→            );
+   837→          })()}
+   838→        </DialogContent>
+   839→      </Dialog>
+   840→    </div>
+   841→  );
+   842→}
+   843→
+   844→// ===== Helper components =====
+   845→function Row({ label, value, bold, negative }: { label: string; value: string; bold?: boolean; negative?: boolean }) {
+   846→  return (
+   847→    <div className="flex items-center justify-between py-1">
+   848→      <span className={cn("text-slate-600", bold && "font-semibold text-slate-900")}>{label}</span>
+   849→      <span className={cn(bold ? "font-bold" : "font-medium", negative ? "text-rose-600" : "text-slate-800")}>{value}</span>
+   850→    </div>
+   851→  );
+   852→}
+   853→
+   854→function SummaryCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: "blue" | "green" | "violet" }) {
+   855→  const accentMap = {
+   856→    blue: "bg-blue-50 text-blue-600",
+   857→    green: "bg-green-50 text-green-600",
+   858→    violet: "bg-violet-50 text-violet-600",
+   859→  };
+   860→  return (
+   861→    <Card className="shadow-sm border-slate-200">
+   862→      <CardContent className="p-4 flex items-center gap-3">
+   863→        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", accentMap[accent])}>
+   864→          <Icon className="w-5 h-5" />
+   865→        </div>
+   866→        <div className="min-w-0">
+   867→          <p className="text-xs text-slate-500">{label}</p>
+   868→          <p className="text-lg font-bold text-slate-900 truncate">{value}</p>
+   869→        </div>
+   870→      </CardContent>
+   871→    </Card>
+   872→  );
+   873→}
+   874→

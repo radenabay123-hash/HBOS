@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,7 @@ interface KpiScoreData {
 
 const PERIOD_LABELS = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
 const PERIOD_ICONS = { daily: Clock, weekly: Calendar, monthly: Target };
+const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 function getCategoryColor(score: number) {
   if (score >= 90) return { bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", label: "Excellent", indicator: "green" as const };
@@ -68,18 +69,37 @@ function getCategoryColor(score: number) {
 
 export function KpiModule({ user }: { user: SafeUser }) {
   const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+  // year=0 = "Semua Tahun" (use today); month=0 = "Semua Bulan" (use mid-year date)
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [month, setMonth] = useState<number>(0);
   const [data, setData] = useState<KpiData | null>(null);
   const [score, setScore] = useState<KpiScoreData | null>(null);
   const [loading, setLoading] = useState(true);
   const [logDialog, setLogDialog] = useState<{ open: boolean; item: KpiItem | null }>({ open: false, item: null });
   const [logValue, setLogValue] = useState("");
 
+  // Build a date reference for the KPI API from year + month.
+  // The KPI logs/score API uses `date` to compute the period range:
+  //   - daily → that specific day
+  //   - weekly → that ISO week (Mon-Sun)
+  //   - monthly → that calendar month
+  // Mapping rules:
+  //   - year=0                  → no date param (API uses today)
+  //   - year>0, month=0         → mid-year (June 15) of that year
+  //   - year>0, month>0         → first day of that month/year
+  const dateRef = useMemo(() => {
+    if (year === 0) return null;
+    if (month === 0) return `${year}-06-15`;
+    return `${year}-${String(month).padStart(2, "0")}-01`;
+  }, [year, month]);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      const dateQs = dateRef ? `&date=${dateRef}` : "";
       const [kpiData, scoreData] = await Promise.all([
-        api<KpiData>(`/api/kpi/logs?period=${period}`),
-        api<{ score: KpiScoreData }>("/api/kpi/score"),
+        api<KpiData>(`/api/kpi/logs?period=${period}${dateQs}`),
+        api<{ score: KpiScoreData }>(`/api/kpi/score${dateRef ? `?date=${dateRef}` : ""}`),
       ]);
       setData(kpiData);
       setScore(scoreData.score);
@@ -88,7 +108,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, dateRef]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -100,8 +120,9 @@ export function KpiModule({ user }: { user: SafeUser }) {
       return;
     }
     try {
-      // Determine the date for the log based on period
-      let logDate = new Date();
+      // Determine the date for the log based on period + selected year/month
+      // If a dateRef is set (year > 0), use it; otherwise fall back to today.
+      let logDate = dateRef ? new Date(dateRef) : new Date();
       if (period === "weekly") {
         const day = logDate.getDay() || 7;
         logDate.setDate(logDate.getDate() - day + 1);
@@ -160,7 +181,23 @@ export function KpiModule({ user }: { user: SafeUser }) {
         title="Dashboard KPI"
         description="Target Harian → Mingguan → Bulanan & Productivity Score"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={String(month)}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {MONTH_NAMES.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
+            </select>
+            <select
+              value={String(year)}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             <Button variant="outline" size="sm" onClick={handleExportExcel}><FileText className="w-4 h-4 mr-1" /> Excel</Button>
             <Button variant="outline" size="sm" onClick={handleExportPDF}><FileText className="w-4 h-4 mr-1" /> PDF</Button>
           </div>
@@ -237,6 +274,9 @@ export function KpiModule({ user }: { user: SafeUser }) {
               <CardTitle className="text-base flex items-center gap-2">
                 <Target className="w-4 h-4 text-blue-600" />
                 Target {PERIOD_LABELS[period]} - {ROLE_LABELS[user.role]}
+                <span className="text-xs font-normal text-slate-400">
+                  ({year === 0 ? "Semua Tahun" : month === 0 ? `Tahun ${year}` : `${MONTH_NAMES[month - 1]} ${year}`})
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>

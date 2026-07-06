@@ -58,8 +58,9 @@ const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Jul
 export function AbsensiModule({ user }: { user: SafeUser }) {
   const isOwner = user.role === ROLES.OWNER;
   const now = new Date();
+  // year=0 = "Semua Tahun"; month=0 = "Semua Bulan" (default = show all)
   const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [month, setMonth] = useState(0);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [todayRecord, setTodayRecord] = useState<AttendanceRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,8 +77,13 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      // Build query — only send month/year when > 0 (so 0 means "no filter / all")
+      const qs = new URLSearchParams();
+      if (month > 0) qs.set("month", String(month));
+      if (year > 0) qs.set("year", String(year));
+      const attendanceUrl = `/api/attendance${qs.toString() ? `?${qs.toString()}` : ""}`;
       const [monthData, todayData] = await Promise.all([
-        api<{ attendance: AttendanceRecord[] }>(`/api/attendance?month=${month}&year=${year}`),
+        api<{ attendance: AttendanceRecord[] }>(attendanceUrl),
         api<{ attendance: AttendanceRecord[] }>(`/api/attendance?date=${now.toISOString().split("T")[0]}`),
       ]);
       setRecords(monthData.attendance || []);
@@ -144,6 +150,7 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
 
   function handleExportExcel() {
     const filtered = filterUserId === "all" ? records : records.filter((r) => r.userId === filterUserId);
+    const periodLabel = month > 0 ? `${monthNames[month - 1]}-${year}` : `Tahun-${year}`;
     const rows = filtered.map((r) => ({
       Tanggal: formatDate(r.date),
       Nama: r.user.name,
@@ -154,14 +161,15 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
       Status: STATUS_LABELS[r.status] || r.status,
       Catatan: r.note || "-",
     }));
-    exportToExcel(rows, `Absensi-${monthNames[month - 1]}-${year}`, "Absensi");
+    exportToExcel(rows, `Absensi-${periodLabel}`, "Absensi");
     toast.success("Excel diunduh");
   }
 
   function handleExportPDF() {
     const filtered = filterUserId === "all" ? records : records.filter((r) => r.userId === filterUserId);
+    const periodLabel = month > 0 ? `${monthNames[month - 1]} ${year}` : `Tahun ${year}`;
     exportToPDF(
-      `Laporan Absensi - ${monthNames[month - 1]} ${year}`,
+      `Laporan Absensi - ${periodLabel}`,
       ["Tanggal", "Nama", "Jabatan", "Check In", "Check Out", "Jam Kerja", "Status", "Catatan"],
       filtered.map((r) => [
         formatDate(r.date), r.user.name, ROLE_LABELS[r.user.role] || r.user.role,
@@ -169,7 +177,7 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
         r.checkOut ? new Date(r.checkOut).toLocaleTimeString("id-ID") : "-",
         r.workHours || 0, STATUS_LABELS[r.status] || r.status, r.note || "-",
       ]),
-      `Absensi-${monthNames[month - 1]}-${year}`
+      `Absensi-${month > 0 ? `${monthNames[month - 1]}-${year}` : `Tahun-${year}`}`
     );
     toast.success("PDF diunduh");
   }
@@ -250,14 +258,22 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
         description={isOwner ? "Pantau kehadiran seluruh tim" : "Catat kehadiran harian Anda"}
         action={
           <div className="flex flex-wrap gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-[130px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-[90px] h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>{[now.getFullYear(), now.getFullYear() - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-            </Select>
+            <select
+              value={String(month)}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {monthNames.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
+            </select>
+            <select
+              value={String(year)}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Tahun</option>
+              {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
             <Button variant="outline" size="sm" onClick={handleExportExcel}><FileText className="w-4 h-4 mr-1" /> Excel</Button>
             <Button variant="outline" size="sm" onClick={handleExportPDF}><FileText className="w-4 h-4 mr-1" /> PDF</Button>
           </div>
@@ -411,7 +427,7 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
       {/* Attendance history table */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-600" /> Riwayat Absensi {monthNames[month - 1]} {year}</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-600" /> Riwayat Absensi {month > 0 ? `${monthNames[month - 1]} ${year}` : `Tahun ${year}`}</CardTitle>
         </CardHeader>
         <CardContent>
           {records.length === 0 ? (

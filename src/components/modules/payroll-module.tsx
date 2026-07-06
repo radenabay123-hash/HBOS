@@ -82,8 +82,9 @@ const STATUS_COLORS: Record<string, string> = {
 export function PayrollModule({ user }: { user: SafeUser }) {
   const isOwner = user.role === ROLES.OWNER;
   const now = new Date();
+  // year=0 = "Semua Tahun"; month=0 = "Semua Bulan" (default = show all saved payrolls)
   const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [month, setMonth] = useState(0);
   const [archive, setArchive] = useState<Payroll[]>([]);
   const [myPayroll, setMyPayroll] = useState<Payroll | null>(null);
   const [saved, setSaved] = useState(false);
@@ -114,17 +115,22 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      // Build query — only send month/year when > 0 (0 means "no filter / all")
+      const qs = new URLSearchParams();
+      if (month > 0) qs.set("month", String(month));
+      if (year > 0) qs.set("year", String(year));
+      const payrollUrl = `/api/payroll${qs.toString() ? `?${qs.toString()}` : ""}`;
       if (isOwner) {
         const [archData, previewData] = await Promise.all([
           api<{ payrolls: Payroll[] }>("/api/payroll/manual").catch(() => ({ payrolls: [] })),
-          api<any>(`/api/payroll?month=${month}&year=${year}`).catch(() => ({ payrolls: [], saved: false })),
+          api<any>(payrollUrl).catch(() => ({ payrolls: [], saved: false })),
         ]);
         setArchive(archData.payrolls || []);
         setSaved(previewData.saved || false);
         const u = await api<{ users: any[] }>("/api/users").catch(() => ({ users: [] }));
         setUsers(u.users.filter((x: any) => x.role !== "OWNER"));
       } else {
-        const data = await api<any>(`/api/payroll?month=${month}&year=${year}`);
+        const data = await api<any>(payrollUrl);
         setMyPayroll(data.payroll || null);
         setSaved(data.saved || false);
       }
@@ -313,21 +319,33 @@ export function PayrollModule({ user }: { user: SafeUser }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-            <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
-            <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
-          </Select>
-          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-            <SelectTrigger className="w-[100px] h-9 bg-white"><SelectValue /></SelectTrigger>
-            <SelectContent>{[now.getFullYear(), now.getFullYear() - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
-          </Select>
+          <select
+            value={String(month)}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="0">Semua Bulan</option>
+            {monthNames.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
+          </select>
+          <select
+            value={String(year)}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="0">Semua Tahun</option>
+            {[2026, 2025, 2024, 2023, 2022].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
         </div>
 
         {!p ? (
           <Card className="border-dashed">
             <CardContent className="py-16 text-center">
               <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-400">Belum ada slip gaji untuk periode {monthNames[month - 1]} {year}</p>
+              <p className="text-slate-400">
+                {month === 0 || year === 0
+                  ? "Pilih bulan & tahun spesifik untuk melihat slip gaji"
+                  : `Belum ada slip gaji untuk periode ${monthNames[month - 1]} ${year}`}
+              </p>
             </CardContent>
           </Card>
         ) : (

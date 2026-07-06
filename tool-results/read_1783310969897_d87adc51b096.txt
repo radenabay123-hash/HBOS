@@ -1,0 +1,1478 @@
+     1→"use client";
+     2→
+     3→import { useEffect, useState, useCallback, useMemo } from "react";
+     4→import { toast } from "sonner";
+     5→import {
+     6→  FileBarChart, FileDown, FileSpreadsheet, Loader2, DollarSign, TrendingUp,
+     7→  TrendingDown, Target, Users, FileText, Film, Activity, CheckCircle2,
+     8→  Clock, CalendarDays, Award, FileCheck, FileWarning,
+     9→} from "lucide-react";
+    10→
+    11→import { api } from "@/lib/api-client";
+    12→import {
+    13→  ROLE_LABELS, ROLE_COLORS, formatCurrency, formatNumber, formatDate,
+    14→} from "@/lib/constants";
+    15→import { exportToExcel, exportReportPDF } from "@/lib/export-utils";
+    16→
+    17→import { Button } from "@/components/ui/button";
+    18→import { Card, CardContent } from "@/components/ui/card";
+    19→import { Skeleton } from "@/components/ui/skeleton";
+    20→import { Badge } from "@/components/ui/badge";
+    21→import { Progress } from "@/components/ui/progress";
+    22→import {
+    23→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    24→} from "@/components/ui/table";
+    25→import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    26→import {
+    27→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    28→} from "@/components/ui/select";
+    29→
+    30→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    31→import {
+    32→  BarChartCard, LineChartCard, PieChartCard,
+    33→} from "@/components/shared/charts";
+    34→
+    35→// ============================ Types ============================
+    36→
+    37→interface MonthlyData {
+    38→  month: string;
+    39→  revenue: number;
+    40→  expense: number;
+    41→  profit: number;
+    42→  deals: number;
+    43→  contents: number;
+    44→  articles: number;
+    45→  events: number;
+    46→  leads: number;
+    47→}
+    48→interface YearlyData {
+    49→  year: string;
+    50→  revenue: number;
+    51→  expense: number;
+    52→  profit: number;
+    53→  deals: number;
+    54→  contents: number;
+    55→  articles: number;
+    56→}
+    57→interface DealClientWithDocs {
+    58→  id: string;
+    59→  namaKlien: string;
+    60→  instansi: string;
+    61→  budget: number;
+    62→  tanggalEvent: string;
+    63→  documents: { documentType: string; documentName: string; documentNumber: string; link: string }[];
+    64→  hasInvoice: boolean;
+    65→  hasSpk: boolean;
+    66→  hasSurat: boolean;
+    67→}
+    68→interface TeamProductivity {
+    69→  id: string;
+    70→  name: string;
+    71→  role: string;
+    72→  position?: string;
+    73→  tasksDone: number;
+    74→  tasksTotal: number;
+    75→  contents: number;
+    76→  articles: number;
+    77→  completionRate: number;
+    78→}
+    79→
+    80→interface DashboardData {
+    81→  year: number;
+    82→  month: number;
+    83→  crm: {
+    84→    totalLead: number; totalFollowUp: number; totalProposal: number;
+    85→    totalNegotiation: number; totalDeal: number; totalLost: number;
+    86→    totalClients: number; conversionRate: number; dealRevenue: number;
+    87→    crmPipeline: { name: string; value: number }[];
+    88→  };
+    89→  events: { eventsThisMonth: number; eventsThisMonthList: any[] };
+    90→  finance: {
+    91→    revenueThisMonth: number; expenseThisMonth: number; profitThisMonth: number;
+    92→    targetRevenue: number; targetProfit: number;
+    93→    revenueAchievement: number; profitAchievement: number;
+    94→    profitEstimation: number;
+    95→  };
+    96→  content: {
+    97→    totalContentPublished: number; totalContentProduced: number; totalReels: number;
+    98→    totalReach: number; totalViews: number; totalShare: number; totalSave: number;
+    99→    totalComment: number; totalFollowerGrowth: number;
+   100→    engagementRate: number;
+   101→    contentByCategory: { name: string; value: number }[];
+   102→    pendingAccContents: number;
+   103→  };
+   104→  articles: {
+   105→    totalArticles: number; totalArticlesPublished: number; pendingAccArticles: number;
+   106→  };
+   107→  monthlyData: MonthlyData[];
+   108→  yearlyData: YearlyData[];
+   109→  dealClientsWithDocs: DealClientWithDocs[];
+   110→  teamProductivity: TeamProductivity[];
+   111→}
+   112→
+   113→interface FinanceTxn {
+   114→  id: string;
+   115→  type: string;
+   116→  amount: number;
+   117→  description?: string | null;
+   118→  category?: string | null;
+   119→  date: string;
+   120→  user?: { id: string; name: string } | null;
+   121→  client?: { id: string; namaKlien: string } | null;
+   122→}
+   123→
+   124→interface ContentIdea {
+   125→  id: string;
+   126→  kategori: string;
+   127→  judul: string;
+   128→  statusACC: string;
+   129→  statusPublish: string;
+   130→  statusProduksi: string;
+   131→  tanggal: string;
+   132→  user?: { id: string; name: string; role: string } | null;
+   133→}
+   134→
+   135→interface Article {
+   136→  id: string;
+   137→  judulArtikel: string;
+   138→  keyword?: string | null;
+   139→  websiteTujuan?: string | null;
+   140→  statusACC: string;
+   141→  status: string;
+   142→  tanggalPublish?: string | null;
+   143→  createdAt: string;
+   144→  user?: { id: string; name: string; role: string } | null;
+   145→}
+   146→
+   147→// ============================ Constants ============================
+   148→
+   149→const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+   150→const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+   151→
+   152→const ACC_COLORS: Record<string, string> = {
+   153→  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+   154→  ACC: "bg-blue-100 text-blue-700 border-blue-200",
+   155→  REVISI: "bg-rose-100 text-rose-700 border-rose-200",
+   156→  REVISI_ADMIN: "bg-rose-100 text-rose-700 border-rose-200",
+   157→};
+   158→
+   159→const ACC_LABELS: Record<string, string> = {
+   160→  PENDING: "Menunggu ACC",
+   161→  ACC: "ACC",
+   162→  REVISI: "Revisi",
+   163→  REVISI_ADMIN: "Revisi Admin",
+   164→};
+   165→
+   166→const currentYear = new Date().getFullYear();
+   167→const YEAR_OPTIONS = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+   168→
+   169→// ============================ Main ============================
+   170→
+   171→export function ReportsModule() {
+   172→  const [year, setYear] = useState<number>(currentYear);
+   173→  const [month, setMonth] = useState<number>(new Date().getMonth() + 1); // 1-12, or 0 = all
+   174→  const [data, setData] = useState<DashboardData | null>(null);
+   175→  const [loading, setLoading] = useState(true);
+   176→  const [activeTab, setActiveTab] = useState("summary");
+   177→
+   178→  // Side data per tab (lazy loaded)
+   179→  const [financeTxns, setFinanceTxns] = useState<FinanceTxn[] | null>(null);
+   180→  const [financeLoading, setFinanceLoading] = useState(false);
+   181→  const [contentIdeas, setContentIdeas] = useState<ContentIdea[] | null>(null);
+   182→  const [articles, setArticles] = useState<Article[] | null>(null);
+   183→  const [contentLoading, setContentLoading] = useState(false);
+   184→
+   185→  const loadData = useCallback(async (y: number, m: number) => {
+   186→    setLoading(true);
+   187→    try {
+   188→      // Always pass a valid month (1-12) to the API. If "Semua Bulan" (m=0),
+   189→      // we use current month as the API's "this month" placeholder; the UI
+   190→      // computes annual aggregates from monthlyData instead.
+   191→      const apiMonth = m === 0 ? new Date().getMonth() + 1 : m;
+   192→      const d = await api<DashboardData>(`/api/dashboard/owner?year=${y}&month=${apiMonth}`);
+   193→      setData(d);
+   194→    } catch (e: any) {
+   195→      toast.error(e?.message || "Gagal memuat data laporan");
+   196→    } finally {
+   197→      setLoading(false);
+   198→    }
+   199→  }, []);
+   200→
+   201→  useEffect(() => {
+   202→    loadData(year, month);
+   203→  }, [year, month, loadData]);
+   204→
+   205→  // Lazy loaders
+   206→  const loadFinance = useCallback(async () => {
+   207→    setFinanceLoading(true);
+   208→    try {
+   209→      const url = month === 0
+   210→        ? `/api/finance?year=${year}`
+   211→        : `/api/finance?year=${year}&month=${month}`;
+   212→      const d = await api<{ transactions: FinanceTxn[] }>(url);
+   213→      setFinanceTxns(d.transactions);
+   214→    } catch (e: any) {
+   215→      toast.error(e?.message || "Gagal memuat transaksi keuangan");
+   216→    } finally {
+   217→      setFinanceLoading(false);
+   218→    }
+   219→  }, [year, month]);
+   220→
+   221→  const loadContentArticles = useCallback(async () => {
+   222→    setContentLoading(true);
+   223→    try {
+   224→      const [c, a] = await Promise.all([
+   225→        api<{ ideas: ContentIdea[] }>("/api/content-ideas"),
+   226→        api<{ articles: Article[] }>("/api/articles"),
+   227→      ]);
+   228→      setContentIdeas(c.ideas);
+   229→      setArticles(a.articles);
+   230→    } catch (e: any) {
+   231→      toast.error(e?.message || "Gagal memuat data konten/artikel");
+   232→    } finally {
+   233→      setContentLoading(false);
+   234→    }
+   235→  }, []);
+   236→
+   237→  useEffect(() => {
+   238→    if (activeTab === "finance" && !financeTxns && !financeLoading) loadFinance();
+   239→    if (activeTab === "content" && !contentIdeas && !contentLoading) loadContentArticles();
+   240→  }, [activeTab, financeTxns, contentIdeas, financeLoading, contentLoading, loadFinance, loadContentArticles]);
+   241→
+   242→  const periodLabel = month === 0
+   243→    ? `Tahun ${year}`
+   244→    : `${MONTH_NAMES[month - 1]} ${year}`;
+   245→
+   246→  // Aggregates for "Semua Bulan"
+   247→  const annualAgg = useMemo(() => {
+   248→    if (!data) return null;
+   249→    const sum = data.monthlyData.reduce(
+   250→      (acc, m) => {
+   251→        acc.revenue += m.revenue;
+   252→        acc.expense += m.expense;
+   253→        acc.profit += m.profit;
+   254→        acc.deals += m.deals;
+   255→        acc.contents += m.contents;
+   256→        acc.articles += m.articles;
+   257→        acc.events += m.events;
+   258→        acc.leads += m.leads;
+   259→        return acc;
+   260→      },
+   261→      { revenue: 0, expense: 0, profit: 0, deals: 0, contents: 0, articles: 0, events: 0, leads: 0 }
+   262→    );
+   263→    return sum;
+   264→  }, [data]);
+   265→
+   266→  // "Effective" KPIs based on selection
+   267→  const eff = useMemo(() => {
+   268→    if (!data) return null;
+   269→    const isAll = month === 0;
+   270→    return {
+   271→      revenue: isAll ? annualAgg!.revenue : data.finance.revenueThisMonth,
+   272→      expense: isAll ? annualAgg!.expense : data.finance.expenseThisMonth,
+   273→      profit: isAll ? annualAgg!.profit : data.finance.profitThisMonth,
+   274→      deals: isAll ? annualAgg!.deals : data.crm.totalDeal, // CRM deal count is total, not month-specific; OK to show
+   275→      contents: isAll ? annualAgg!.contents : data.content.totalContentPublished,
+   276→      articles: isAll ? annualAgg!.articles : data.articles.totalArticlesPublished,
+   277→      events: isAll ? annualAgg!.events : data.events.eventsThisMonth,
+   278→      leads: isAll ? annualAgg!.leads : data.crm.totalClients,
+   279→    };
+   280→  }, [data, month, annualAgg]);
+   281→
+   282→  function handleDownloadFullPDF() {
+   283→    if (!data || !eff) return;
+   284→    const sections: { heading: string; columns: string[]; rows: (string | number)[][] }[] = [];
+   285→
+   286→    // Section 1: KPI Summary
+   287→    sections.push({
+   288→      heading: "1. Ringkasan KPI Bisnis",
+   289→      columns: ["Metrik", "Nilai"],
+   290→      rows: [
+   291→        ["Periode", periodLabel],
+   292→        ["Pendapatan", formatCurrency(eff.revenue)],
+   293→        ["Pengeluaran", formatCurrency(eff.expense)],
+   294→        ["Profit", formatCurrency(eff.profit)],
+   295→        ["Target Pendapatan", formatCurrency(data.finance.targetRevenue)],
+   296→        ["Capaian Pendapatan", `${data.finance.revenueAchievement}%`],
+   297→        ["Total Deal", eff.deals],
+   298→        ["Total Klien", data.crm.totalClients],
+   299→        ["Conversion Rate", `${data.crm.conversionRate}%`],
+   300→        ["Revenue Deal", formatCurrency(data.crm.dealRevenue)],
+   301→        ["Konten Published", eff.contents],
+   302→        ["Artikel Published", eff.articles],
+   303→        ["Engagement Rate", `${data.content.engagementRate}%`],
+   304→        ["Estimasi Profit (avg/bln)", formatCurrency(data.finance.profitEstimation)],
+   305→      ],
+   306→    });
+   307→
+   308→    // Section 2: CRM Pipeline
+   309→    sections.push({
+   310→      heading: "2. CRM Pipeline",
+   311→      columns: ["Stage", "Jumlah"],
+   312→      rows: data.crm.crmPipeline.map((p) => [p.name, p.value]),
+   313→    });
+   314→
+   315→    // Section 3: Deal Clients
+   316→    sections.push({
+   317→      heading: "3. Klien Deal & Dokumen",
+   318→      columns: ["Klien", "Instansi", "Budget", "Tgl Event", "Invoice", "SPK", "Surat"],
+   319→      rows: data.dealClientsWithDocs.map((c) => [
+   320→        c.namaKlien,
+   321→        c.instansi || "-",
+   322→        formatCurrency(c.budget),
+   323→        formatDate(c.tanggalEvent),
+   324→        c.hasInvoice ? "Ada" : "Tidak",
+   325→        c.hasSpk ? "Ada" : "Tidak",
+   326→        c.hasSurat ? "Ada" : "Tidak",
+   327→      ]),
+   328→    });
+   329→
+   330→    // Section 4: Monthly Data
+   331→    sections.push({
+   332→      heading: "4. Data Bulanan",
+   333→      columns: ["Bulan", "Pendapatan", "Pengeluaran", "Profit", "Deal", "Konten", "Artikel", "Event", "Lead"],
+   334→      rows: data.monthlyData.map((m) => [
+   335→        m.month, formatCurrency(m.revenue), formatCurrency(m.expense), formatCurrency(m.profit),
+   336→        m.deals, m.contents, m.articles, m.events, m.leads,
+   337→      ]),
+   338→    });
+   339→
+   340→    // Section 5: Yearly
+   341→    sections.push({
+   342→      heading: "5. Data Tahunan (5 Tahun)",
+   343→      columns: ["Tahun", "Pendapatan", "Pengeluaran", "Profit", "Deal", "Konten", "Artikel"],
+   344→      rows: data.yearlyData.map((y) => [
+   345→        y.year, formatCurrency(y.revenue), formatCurrency(y.expense), formatCurrency(y.profit),
+   346→        y.deals, y.contents, y.articles,
+   347→      ]),
+   348→    });
+   349→
+   350→    // Section 6: Team Productivity
+   351→    sections.push({
+   352→      heading: "6. Produktivitas Tim",
+   353→      columns: ["Nama", "Role", "Tugas Selesai", "Total Tugas", "Completion", "Konten", "Artikel"],
+   354→      rows: data.teamProductivity.map((t) => [
+   355→        t.name, ROLE_LABELS[t.role] || t.role,
+   356→        t.tasksDone, t.tasksTotal, `${t.completionRate}%`, t.contents, t.articles,
+   357→      ]),
+   358→    });
+   359→
+   360→    exportReportPDF(`Laporan Lengkap - ${periodLabel}`, sections, `laporan-lengkap-${periodLabel.replace(/\s+/g, "-")}`);
+   361→    toast.success("Laporan lengkap diunduh");
+   362→  }
+   363→
+   364→  return (
+   365→    <div className="space-y-5">
+   366→      <SectionHeader
+   367→        title="Laporan & Reporting"
+   368→        description="Generate laporan otomatis dan export ke PDF/Excel."
+   369→        action={
+   370→          <Button
+   371→            className="bg-blue-600 hover:bg-blue-700"
+   372→            onClick={handleDownloadFullPDF}
+   373→            disabled={loading || !data}
+   374→          >
+   375→            <FileBarChart className="w-4 h-4" /> Download Laporan Lengkap (PDF)
+   376→          </Button>
+   377→        }
+   378→      />
+   379→
+   380→      {/* Period selector */}
+   381→      <Card>
+   382→        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-end gap-3">
+   383→          <div className="space-y-1.5">
+   384→            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tahun</label>
+   385→            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+   386→              <SelectTrigger className="w-full sm:w-32">
+   387→                <SelectValue />
+   388→              </SelectTrigger>
+   389→              <SelectContent>
+   390→                {YEAR_OPTIONS.map((y) => (
+   391→                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+   392→                ))}
+   393→              </SelectContent>
+   394→            </Select>
+   395→          </div>
+   396→          <div className="space-y-1.5">
+   397→            <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bulan</label>
+   398→            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+   399→              <SelectTrigger className="w-full sm:w-44">
+   400→                <SelectValue />
+   401→              </SelectTrigger>
+   402→              <SelectContent>
+   403→                <SelectItem value="0">Semua Bulan</SelectItem>
+   404→                {MONTH_NAMES.map((m, i) => (
+   405→                  <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
+   406→                ))}
+   407→              </SelectContent>
+   408→            </Select>
+   409→          </div>
+   410→          <div className="sm:ml-auto text-sm text-slate-500">
+   411→            Menampilkan data: <span className="font-semibold text-blue-700">{periodLabel}</span>
+   412→          </div>
+   413→        </CardContent>
+   414→      </Card>
+   415→
+   416→      {loading ? (
+   417→        <ReportSkeleton />
+   418→      ) : !data ? (
+   419→        <Card>
+   420→          <CardContent className="p-8 text-center text-slate-500">
+   421→            Gagal memuat data. Coba refresh halaman.
+   422→          </CardContent>
+   423→        </Card>
+   424→      ) : (
+   425→        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+   426→          <div className="overflow-x-auto">
+   427→            <TabsList className="w-full sm:w-auto">
+   428→              <TabsTrigger value="summary">Ringkasan Bisnis</TabsTrigger>
+   429→              <TabsTrigger value="crm">CRM & Penjualan</TabsTrigger>
+   430→              <TabsTrigger value="content">Konten & Artikel</TabsTrigger>
+   431→              <TabsTrigger value="finance">Keuangan</TabsTrigger>
+   432→              <TabsTrigger value="team">Tim</TabsTrigger>
+   433→            </TabsList>
+   434→          </div>
+   435→
+   436→          <TabsContent value="summary" className="mt-4">
+   437→            <SummaryTab data={data} eff={eff!} periodLabel={periodLabel} month={month} />
+   438→          </TabsContent>
+   439→          <TabsContent value="crm" className="mt-4">
+   440→            <CrmTab data={data} periodLabel={periodLabel} />
+   441→          </TabsContent>
+   442→          <TabsContent value="content" className="mt-4">
+   443→            <ContentTab
+   444→              data={data}
+   445→              ideas={contentIdeas}
+   446→              articles={articles}
+   447→              loading={contentLoading}
+   448→              periodLabel={periodLabel}
+   449→            />
+   450→          </TabsContent>
+   451→          <TabsContent value="finance" className="mt-4">
+   452→            <FinanceTab
+   453→              data={data}
+   454→              txns={financeTxns}
+   455→              loading={financeLoading}
+   456→              periodLabel={periodLabel}
+   457→              month={month}
+   458→            />
+   459→          </TabsContent>
+   460→          <TabsContent value="team" className="mt-4">
+   461→            <TeamTab data={data} periodLabel={periodLabel} />
+   462→          </TabsContent>
+   463→        </Tabs>
+   464→      )}
+   465→    </div>
+   466→  );
+   467→}
+   468→
+   469→// ============================ Summary Tab ============================
+   470→
+   471→function SummaryTab({
+   472→  data, eff, periodLabel, month,
+   473→}: {
+   474→  data: DashboardData;
+   475→  eff: { revenue: number; expense: number; profit: number; deals: number; contents: number; articles: number; events: number; leads: number };
+   476→  periodLabel: string;
+   477→  month: number;
+   478→}) {
+   479→  function exportSummaryPDF() {
+   480→    const sections = [
+   481→      {
+   482→        heading: "Ringkasan KPI",
+   483→        columns: ["Metrik", "Nilai"],
+   484→        rows: [
+   485→          ["Periode", periodLabel],
+   486→          ["Pendapatan", formatCurrency(eff.revenue)],
+   487→          ["Pengeluaran", formatCurrency(eff.expense)],
+   488→          ["Profit", formatCurrency(eff.profit)],
+   489→          ["Total Deal", eff.deals],
+   490→          ["Total Klien", eff.leads],
+   491→          ["Konten Published", eff.contents],
+   492→          ["Artikel Published", eff.articles],
+   493→          ["Conversion Rate", `${data.crm.conversionRate}%`],
+   494→          ["Engagement Rate", `${data.content.engagementRate}%`],
+   495→        ],
+   496→      },
+   497→      {
+   498→        heading: "Data Bulanan",
+   499→        columns: ["Bulan", "Pendapatan", "Pengeluaran", "Profit", "Deal", "Konten", "Artikel"],
+   500→        rows: data.monthlyData.map((m) => [
+   501→          m.month, formatCurrency(m.revenue), formatCurrency(m.expense), formatCurrency(m.profit),
+   502→          m.deals, m.contents, m.articles,
+   503→        ]),
+   504→      },
+   505→      {
+   506→        heading: "Data Tahunan",
+   507→        columns: ["Tahun", "Pendapatan", "Pengeluaran", "Profit", "Deal", "Konten", "Artikel"],
+   508→        rows: data.yearlyData.map((y) => [
+   509→          y.year, formatCurrency(y.revenue), formatCurrency(y.expense), formatCurrency(y.profit),
+   510→          y.deals, y.contents, y.articles,
+   511→        ]),
+   512→      },
+   513→    ];
+   514→    exportReportPDF(`Ringkasan Bisnis - ${periodLabel}`, sections, `ringkasan-bisnis-${periodLabel.replace(/\s+/g, "-")}`);
+   515→    toast.success("PDF Ringkasan diunduh");
+   516→  }
+   517→
+   518→  function exportSummaryExcel() {
+   519→    const rows = data.monthlyData.map((m) => ({
+   520→      Bulan: m.month,
+   521→      Pendapatan: m.revenue,
+   522→      Pengeluaran: m.expense,
+   523→      Profit: m.profit,
+   524→      Deal: m.deals,
+   525→      Konten: m.contents,
+   526→      Artikel: m.articles,
+   527→      Event: m.events,
+   528→      Lead: m.leads,
+   529→    }));
+   530→    exportToExcel(rows, `ringkasan-bulanan-${data.year}`, "Bulanan");
+   531→    toast.success("Excel Ringkasan diunduh");
+   532→  }
+   533→
+   534→  return (
+   535→    <div className="space-y-4">
+   536→      <div className="flex flex-wrap items-center justify-end gap-2">
+   537→        <Button variant="outline" size="sm" onClick={exportSummaryPDF}>
+   538→          <FileDown className="w-4 h-4" /> Export PDF
+   539→        </Button>
+   540→        <Button variant="outline" size="sm" onClick={exportSummaryExcel}>
+   541→          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+   542→        </Button>
+   543→      </div>
+   544→
+   545→      {/* KPI cards */}
+   546→      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+   547→        <StatCard
+   548→          title="Pendapatan"
+   549→          value={formatCurrency(eff.revenue)}
+   550→          icon={DollarSign}
+   551→          indicator={data.finance.revenueAchievement >= 100 ? "green" : data.finance.revenueAchievement >= 60 ? "yellow" : "red"}
+   552→          accent="bg-blue-50 text-blue-600"
+   553→          subtitle={`Target: ${formatCurrency(data.finance.targetRevenue)}`}
+   554→          progress={month === 0 ? undefined : data.finance.revenueAchievement}
+   555→        />
+   556→        <StatCard
+   557→          title="Profit"
+   558→          value={formatCurrency(eff.profit)}
+   559→          icon={eff.profit >= 0 ? TrendingUp : TrendingDown}
+   560→          indicator={eff.profit >= 0 ? "green" : "red"}
+   561→          accent={eff.profit >= 0 ? "bg-blue-50 text-blue-600" : "bg-rose-50 text-rose-600"}
+   562→          subtitle={`Estimasi/bln: ${formatCurrency(data.finance.profitEstimation)}`}
+   563→        />
+   564→        <StatCard
+   565→          title="Total Deal"
+   566→          value={eff.deals}
+   567→          icon={Award}
+   568→          indicator="green"
+   569→          accent="bg-blue-50 text-blue-600"
+   570→          subtitle={`Revenue: ${formatCurrency(data.crm.dealRevenue)}`}
+   571→        />
+   572→        <StatCard
+   573→          title="Conversion Rate"
+   574→          value={`${data.crm.conversionRate}%`}
+   575→          icon={Target}
+   576→          indicator={data.crm.conversionRate >= 30 ? "green" : data.crm.conversionRate >= 15 ? "yellow" : "red"}
+   577→          accent="bg-blue-50 text-blue-600"
+   578→          subtitle={`${data.crm.totalDeal} dari ${data.crm.totalClients} klien`}
+   579→        />
+   580→        <StatCard
+   581→          title="Konten Published"
+   582→          value={eff.contents}
+   583→          icon={Film}
+   584→          accent="bg-blue-50 text-blue-600"
+   585→          subtitle={`Engagement: ${data.content.engagementRate}%`}
+   586→        />
+   587→        <StatCard
+   588→          title="Artikel Published"
+   589→          value={eff.articles}
+   590→          icon={FileText}
+   591→          accent="bg-blue-50 text-blue-600"
+   592→          subtitle={`Total: ${data.articles.totalArticles} artikel`}
+   593→        />
+   594→        <StatCard
+   595→          title="Event"
+   596→          value={eff.events}
+   597→          icon={CalendarDays}
+   598→          accent="bg-blue-50 text-blue-600"
+   599→          subtitle={periodLabel}
+   600→        />
+   601→        <StatCard
+   602→          title="Reach Konten"
+   603→          value={formatNumber(data.content.totalReach)}
+   604→          icon={Activity}
+   605→          accent="bg-blue-50 text-blue-600"
+   606→          subtitle={`${formatNumber(data.content.totalViews)} views`}
+   607→        />
+   608→      </div>
+   609→
+   610→      {/* Charts */}
+   611→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   612→        <BarChartCard
+   613→          title="Pendapatan vs Pengeluaran (Bulanan)"
+   614→          data={data.monthlyData}
+   615→          keys={[
+   616→            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
+   617→            { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
+   618→          ]}
+   619→          height={280}
+   620→          formatY={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : String(v)}
+   621→        />
+   622→        <BarChartCard
+   623→          title="Profit per Bulan"
+   624→          data={data.monthlyData}
+   625→          keys={[{ key: "profit", label: "Profit", color: "#0d9488" }]}
+   626→          height={280}
+   627→          formatY={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : String(v)}
+   628→        />
+   629→      </div>
+   630→
+   631→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   632→        <LineChartCard
+   633→          title="Tren Aktivitas (Deal, Konten, Artikel)"
+   634→          data={data.monthlyData}
+   635→          keys={[
+   636→            { key: "deals", label: "Deal", color: "#2563eb" },
+   637→            { key: "contents", label: "Konten", color: "#7c3aed" },
+   638→            { key: "articles", label: "Artikel", color: "#ea580c" },
+   639→          ]}
+   640→          height={280}
+   641→        />
+   642→        <BarChartCard
+   643→          title="Pendapatan per Tahun (5 Tahun)"
+   644→          data={data.yearlyData}
+   645→          keys={[
+   646→            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
+   647→            { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
+   648→            { key: "profit", label: "Profit", color: "#0d9488" },
+   649→          ]}
+   650→          height={280}
+   651→          formatY={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : String(v)}
+   652→        />
+   653→      </div>
+   654→
+   655→      {/* Monthly table */}
+   656→      <Card>
+   657→        <CardContent className="p-4">
+   658→          <h3 className="text-sm font-semibold text-slate-700 mb-3">Detail Bulanan {data.year}</h3>
+   659→          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+   660→            <Table>
+   661→              <TableHeader className="sticky top-0 bg-slate-50">
+   662→                <TableRow>
+   663→                  <TableHead>Bulan</TableHead>
+   664→                  <TableHead className="text-right">Pendapatan</TableHead>
+   665→                  <TableHead className="text-right">Pengeluaran</TableHead>
+   666→                  <TableHead className="text-right">Profit</TableHead>
+   667→                  <TableHead className="text-center">Deal</TableHead>
+   668→                  <TableHead className="text-center">Konten</TableHead>
+   669→                  <TableHead className="text-center">Artikel</TableHead>
+   670→                  <TableHead className="text-center">Event</TableHead>
+   671→                </TableRow>
+   672→              </TableHeader>
+   673→              <TableBody>
+   674→                {data.monthlyData.map((m) => (
+   675→                  <TableRow key={m.month}>
+   676→                    <TableCell className="font-medium">{m.month}</TableCell>
+   677→                    <TableCell className="text-right text-blue-700">{formatCurrency(m.revenue)}</TableCell>
+   678→                    <TableCell className="text-right text-rose-700">{formatCurrency(m.expense)}</TableCell>
+   679→                    <TableCell className="text-right font-semibold">{formatCurrency(m.profit)}</TableCell>
+   680→                    <TableCell className="text-center">{m.deals}</TableCell>
+   681→                    <TableCell className="text-center">{m.contents}</TableCell>
+   682→                    <TableCell className="text-center">{m.articles}</TableCell>
+   683→                    <TableCell className="text-center">{m.events}</TableCell>
+   684→                  </TableRow>
+   685→                ))}
+   686→              </TableBody>
+   687→            </Table>
+   688→          </div>
+   689→        </CardContent>
+   690→      </Card>
+   691→    </div>
+   692→  );
+   693→}
+   694→
+   695→// ============================ CRM Tab ============================
+   696→
+   697→function CrmTab({ data, periodLabel }: { data: DashboardData; periodLabel: string }) {
+   698→  function exportPDF() {
+   699→    const sections = [
+   700→      {
+   701→        heading: "Pipeline CRM",
+   702→        columns: ["Stage", "Jumlah"],
+   703→        rows: data.crm.crmPipeline.map((p) => [p.name, p.value]),
+   704→      },
+   705→      {
+   706→        heading: "Klien Deal & Dokumen",
+   707→        columns: ["Klien", "Instansi", "Budget", "Tgl Event", "Invoice", "SPK", "Surat"],
+   708→        rows: data.dealClientsWithDocs.map((c) => [
+   709→          c.namaKlien, c.instansi || "-", formatCurrency(c.budget), formatDate(c.tanggalEvent),
+   710→          c.hasInvoice ? "Ada" : "Tidak", c.hasSpk ? "Ada" : "Tidak", c.hasSurat ? "Ada" : "Tidak",
+   711→        ]),
+   712→      },
+   713→    ];
+   714→    exportReportPDF(`Laporan CRM & Penjualan - ${periodLabel}`, sections, `crm-penjualan-${periodLabel.replace(/\s+/g, "-")}`);
+   715→    toast.success("PDF CRM diunduh");
+   716→  }
+   717→
+   718→  function exportExcel() {
+   719→    const rows = data.dealClientsWithDocs.map((c) => ({
+   720→      Klien: c.namaKlien,
+   721→      Instansi: c.instansi || "-",
+   722→      Budget: c.budget,
+   723→      TanggalEvent: formatDate(c.tanggalEvent),
+   724→      Invoice: c.hasInvoice ? "Ada" : "Tidak",
+   725→      SPK: c.hasSpk ? "Ada" : "Tidak",
+   726→      Surat: c.hasSurat ? "Ada" : "Tidak",
+   727→    }));
+   728→    exportToExcel(rows, `crm-deal-${periodLabel.replace(/\s+/g, "-")}`, "CRM Deal");
+   729→    toast.success("Excel CRM diunduh");
+   730→  }
+   731→
+   732→  return (
+   733→    <div className="space-y-4">
+   734→      <div className="flex flex-wrap items-center justify-end gap-2">
+   735→        <Button variant="outline" size="sm" onClick={exportPDF}>
+   736→          <FileDown className="w-4 h-4" /> Export PDF
+   737→        </Button>
+   738→        <Button variant="outline" size="sm" onClick={exportExcel}>
+   739→          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+   740→        </Button>
+   741→      </div>
+   742→
+   743→      {/* CRM Stat cards */}
+   744→      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+   745→        <StatCard title="Lead" value={data.crm.totalLead} icon={Users} accent="bg-slate-100 text-slate-700" />
+   746→        <StatCard title="Follow Up" value={data.crm.totalFollowUp} icon={Users} accent="bg-blue-50 text-blue-600" />
+   747→        <StatCard title="Proposal" value={data.crm.totalProposal} icon={FileText} accent="bg-amber-50 text-amber-600" />
+   748→        <StatCard title="Negotiation" value={data.crm.totalNegotiation} icon={Activity} accent="bg-violet-50 text-violet-600" />
+   749→        <StatCard title="Deal" value={data.crm.totalDeal} icon={Award} indicator="green" accent="bg-blue-50 text-blue-600" />
+   750→        <StatCard title="Lost" value={data.crm.totalLost} icon={TrendingDown} indicator="red" accent="bg-rose-50 text-rose-600" />
+   751→      </div>
+   752→
+   753→      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+   754→        <StatCard
+   755→          title="Total Klien"
+   756→          value={data.crm.totalClients}
+   757→          icon={Users}
+   758→          accent="bg-blue-50 text-blue-600"
+   759→        />
+   760→        <StatCard
+   761→          title="Conversion Rate"
+   762→          value={`${data.crm.conversionRate}%`}
+   763→          icon={Target}
+   764→          indicator={data.crm.conversionRate >= 30 ? "green" : data.crm.conversionRate >= 15 ? "yellow" : "red"}
+   765→          accent="bg-blue-50 text-blue-600"
+   766→        />
+   767→        <StatCard
+   768→          title="Total Revenue Deal"
+   769→          value={formatCurrency(data.crm.dealRevenue)}
+   770→          icon={DollarSign}
+   771→          indicator="green"
+   772→          accent="bg-blue-50 text-blue-600"
+   773→        />
+   774→      </div>
+   775→
+   776→      {/* Pipeline chart */}
+   777→      <BarChartCard
+   778→        title="Distribusi Pipeline CRM"
+   779→        data={data.crm.crmPipeline}
+   780→        keys={[{ key: "value", label: "Jumlah Klien", color: "#2563eb" }]}
+   781→        height={260}
+   782→      />
+   783→
+   784→      {/* Deal clients with docs */}
+   785→      <Card>
+   786→        <CardContent className="p-4">
+   787→          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+   788→            Klien Deal & Status Dokumen
+   789→          </h3>
+   790→          {data.dealClientsWithDocs.length === 0 ? (
+   791→            <p className="text-sm text-slate-500 text-center py-6">Belum ada klien dengan status deal.</p>
+   792→          ) : (
+   793→            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+   794→              <Table>
+   795→                <TableHeader className="sticky top-0 bg-slate-50">
+   796→                  <TableRow>
+   797→                    <TableHead className="min-w-[160px]">Klien</TableHead>
+   798→                    <TableHead className="min-w-[140px]">Instansi</TableHead>
+   799→                    <TableHead className="text-right min-w-[130px]">Budget</TableHead>
+   800→                    <TableHead className="min-w-[110px]">Tgl Event</TableHead>
+   801→                    <TableHead className="text-center min-w-[80px]">Invoice</TableHead>
+   802→                    <TableHead className="text-center min-w-[80px]">SPK</TableHead>
+   803→                    <TableHead className="text-center min-w-[80px]">Surat</TableHead>
+   804→                    <TableHead className="text-center min-w-[80px]">Dokumen</TableHead>
+   805→                  </TableRow>
+   806→                </TableHeader>
+   807→                <TableBody>
+   808→                  {data.dealClientsWithDocs.map((c) => (
+   809→                    <TableRow key={c.id}>
+   810→                      <TableCell className="font-medium">{c.namaKlien}</TableCell>
+   811→                      <TableCell className="text-slate-600 text-sm">{c.instansi || "-"}</TableCell>
+   812→                      <TableCell className="text-right text-blue-700 font-medium">{formatCurrency(c.budget)}</TableCell>
+   813→                      <TableCell className="text-slate-600 text-xs">{formatDate(c.tanggalEvent)}</TableCell>
+   814→                      <TableCell className="text-center">
+   815→                        <DocBadge has={c.hasInvoice} />
+   816→                      </TableCell>
+   817→                      <TableCell className="text-center">
+   818→                        <DocBadge has={c.hasSpk} />
+   819→                      </TableCell>
+   820→                      <TableCell className="text-center">
+   821→                        <DocBadge has={c.hasSurat} />
+   822→                      </TableCell>
+   823→                      <TableCell className="text-center">
+   824→                        <Badge variant="outline" className="text-[10px]">
+   825→                          {c.documents.length}
+   826→                        </Badge>
+   827→                      </TableCell>
+   828→                    </TableRow>
+   829→                  ))}
+   830→                </TableBody>
+   831→              </Table>
+   832→            </div>
+   833→          )}
+   834→        </CardContent>
+   835→      </Card>
+   836→    </div>
+   837→  );
+   838→}
+   839→
+   840→function DocBadge({ has }: { has: boolean }) {
+   841→  return has ? (
+   842→    <CheckCircle2 className="w-4 h-4 text-blue-600 inline" />
+   843→  ) : (
+   844→    <span className="text-xs text-slate-400">-</span>
+   845→  );
+   846→}
+   847→
+   848→// ============================ Content Tab ============================
+   849→
+   850→function ContentTab({
+   851→  data, ideas, articles, loading, periodLabel,
+   852→}: {
+   853→  data: DashboardData;
+   854→  ideas: ContentIdea[] | null;
+   855→  articles: Article[] | null;
+   856→  loading: boolean;
+   857→  periodLabel: string;
+   858→}) {
+   859→  const pendingContents = ideas?.filter((i) => i.statusACC === "PENDING") || [];
+   860→  const publishedContents = ideas?.filter((i) => i.statusPublish === "PUBLISHED") || [];
+   861→  const pendingArticles = articles?.filter((a) => a.statusACC === "PENDING") || [];
+   862→  const publishedArticles = articles?.filter((a) => a.status === "PUBLISHED") || [];
+   863→
+   864→  // Articles by website
+   865→  const articlesByWebsite = useMemo(() => {
+   866→    if (!articles) return [];
+   867→    const map = new Map<string, number>();
+   868→    for (const a of articles) {
+   869→      const w = a.websiteTujuan || "Lainnya";
+   870→      map.set(w, (map.get(w) || 0) + 1);
+   871→    }
+   872→    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+   873→  }, [articles]);
+   874→
+   875→  function exportPDF() {
+   876→    const sections = [
+   877→      {
+   878→        heading: "Statistik Konten",
+   879→        columns: ["Metrik", "Nilai"],
+   880→        rows: [
+   881→          ["Konten Published", data.content.totalContentPublished],
+   882→          ["Konten Produced", data.content.totalContentProduced],
+   883→          ["Total Reach", formatNumber(data.content.totalReach)],
+   884→          ["Total Views", formatNumber(data.content.totalViews)],
+   885→          ["Total Share", formatNumber(data.content.totalShare)],
+   886→          ["Total Save", formatNumber(data.content.totalSave)],
+   887→          ["Total Comment", formatNumber(data.content.totalComment)],
+   888→          ["Follower Growth", formatNumber(data.content.totalFollowerGrowth)],
+   889→          ["Engagement Rate", `${data.content.engagementRate}%`],
+   890→        ],
+   891→      },
+   892→      {
+   893→        heading: "Konten per Kategori",
+   894→        columns: ["Kategori", "Jumlah"],
+   895→        rows: data.content.contentByCategory.map((c) => [c.name, c.value]),
+   896→      },
+   897→      {
+   898→        heading: "Artikel per Website",
+   899→        columns: ["Website", "Jumlah"],
+   900→        rows: articlesByWebsite.map((w) => [w.name, w.value]),
+   901→      },
+   902→      {
+   903→        heading: "Konten Pending ACC",
+   904→        columns: ["Judul", "Kategori", "Status ACC", "Tanggal"],
+   905→        rows: pendingContents.map((c) => [c.judul, c.kategori, ACC_LABELS[c.statusACC] || c.statusACC, formatDate(c.tanggal)]),
+   906→      },
+   907→      {
+   908→        heading: "Artikel Pending ACC",
+   909→        columns: ["Judul", "Website", "Keyword", "Status ACC"],
+   910→        rows: pendingArticles.map((a) => [a.judulArtikel, a.websiteTujuan || "-", a.keyword || "-", ACC_LABELS[a.statusACC] || a.statusACC]),
+   911→      },
+   912→    ];
+   913→    exportReportPDF(`Laporan Konten & Artikel - ${periodLabel}`, sections, `konten-artikel-${periodLabel.replace(/\s+/g, "-")}`);
+   914→    toast.success("PDF Konten & Artikel diunduh");
+   915→  }
+   916→
+   917→  function exportExcel() {
+   918→    if (!ideas || !articles) return;
+   919→    const rows = [
+   920→      ...ideas.map((c) => ({
+   921→        Tipe: "Konten",
+   922→        Judul: c.judul,
+   923→        Kategori: c.kategori,
+   924→        StatusACC: ACC_LABELS[c.statusACC] || c.statusACC,
+   925→        StatusPublish: c.statusPublish,
+   926→        Tanggal: formatDate(c.tanggal),
+   927→      })),
+   928→      ...articles.map((a) => ({
+   929→        Tipe: "Artikel",
+   930→        Judul: a.judulArtikel,
+   931→        Kategori: a.websiteTujuan || "-",
+   932→        StatusACC: ACC_LABELS[a.statusACC] || a.statusACC,
+   933→        StatusPublish: a.status,
+   934→        Tanggal: formatDate(a.createdAt),
+   935→      })),
+   936→    ];
+   937→    exportToExcel(rows, `konten-artikel-${periodLabel.replace(/\s+/g, "-")}`, "Konten & Artikel");
+   938→    toast.success("Excel Konten & Artikel diunduh");
+   939→  }
+   940→
+   941→  return (
+   942→    <div className="space-y-4">
+   943→      <div className="flex flex-wrap items-center justify-end gap-2">
+   944→        <Button variant="outline" size="sm" onClick={exportPDF}>
+   945→          <FileDown className="w-4 h-4" /> Export PDF
+   946→        </Button>
+   947→        <Button variant="outline" size="sm" onClick={exportExcel} disabled={!ideas || !articles}>
+   948→          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+   949→        </Button>
+   950→      </div>
+   951→
+   952→      {/* Content KPI */}
+   953→      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+   954→        <StatCard title="Konten Published" value={data.content.totalContentPublished} icon={Film} accent="bg-blue-50 text-blue-600" />
+   955→        <StatCard title="Konten Produced" value={data.content.totalContentProduced} icon={CheckCircle2} accent="bg-blue-50 text-blue-600" />
+   956→        <StatCard title="Artikel Published" value={data.articles.totalArticlesPublished} icon={FileText} accent="bg-blue-50 text-blue-600" />
+   957→        <StatCard title="Engagement Rate" value={`${data.content.engagementRate}%`} icon={Activity} accent="bg-blue-50 text-blue-600" />
+   958→        <StatCard title="Total Reach" value={formatNumber(data.content.totalReach)} icon={Users} accent="bg-blue-50 text-blue-600" />
+   959→        <StatCard title="Total Views" value={formatNumber(data.content.totalViews)} icon={Activity} accent="bg-blue-50 text-blue-600" />
+   960→        <StatCard title="Follower Growth" value={formatNumber(data.content.totalFollowerGrowth)} icon={TrendingUp} indicator="green" accent="bg-blue-50 text-blue-600" />
+   961→        <StatCard title="Pending ACC" value={data.content.pendingAccContents + data.articles.pendingAccArticles} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
+   962→      </div>
+   963→
+   964→      {/* Charts */}
+   965→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   966→        <PieChartCard title="Konten per Kategori" data={data.content.contentByCategory} height={280} />
+   967→        <PieChartCard title="Artikel per Website" data={articlesByWebsite} height={280} />
+   968→      </div>
+   969→
+   970→      {loading ? (
+   971→        <Card><CardContent className="p-4 space-y-2">
+   972→          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+   973→        </CardContent></Card>
+   974→      ) : (
+   975→        <>
+   976→          {/* Pending ACC lists */}
+   977→          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   978→            <Card>
+   979→              <CardContent className="p-4">
+   980→                <div className="flex items-center justify-between mb-3">
+   981→                  <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+   982→                    <FileWarning className="w-4 h-4 text-amber-600" />
+   983→                    Konten Pending ACC
+   984→                  </h3>
+   985→                  <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">{pendingContents.length}</Badge>
+   986→                </div>
+   987→                {pendingContents.length === 0 ? (
+   988→                  <p className="text-sm text-slate-500 text-center py-4">Tidak ada konten pending.</p>
+   989→                ) : (
+   990→                  <div className="max-h-72 overflow-y-auto space-y-2">
+   991→                    {pendingContents.slice(0, 20).map((c) => (
+   992→                      <div key={c.id} className="border border-slate-200 rounded-md p-2.5">
+   993→                        <div className="flex items-start justify-between gap-2">
+   994→                          <p className="text-sm font-medium text-slate-800 line-clamp-1">{c.judul}</p>
+   995→                          <Badge variant="outline" className={`text-[10px] shrink-0 ${ACC_COLORS[c.statusACC]}`}>
+   996→                            {ACC_LABELS[c.statusACC] || c.statusACC}
+   997→                          </Badge>
+   998→                        </div>
+   999→                        <p className="text-xs text-slate-500 mt-0.5">{c.kategori}</p>
+  1000→                      </div>
+  1001→                    ))}
+  1002→                  </div>
+  1003→                )}
+  1004→              </CardContent>
+  1005→            </Card>
+  1006→
+  1007→            <Card>
+  1008→              <CardContent className="p-4">
+  1009→                <div className="flex items-center justify-between mb-3">
+  1010→                  <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+  1011→                    <FileWarning className="w-4 h-4 text-amber-600" />
+  1012→                    Artikel Pending ACC
+  1013→                  </h3>
+  1014→                  <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">{pendingArticles.length}</Badge>
+  1015→                </div>
+  1016→                {pendingArticles.length === 0 ? (
+  1017→                  <p className="text-sm text-slate-500 text-center py-4">Tidak ada artikel pending.</p>
+  1018→                ) : (
+  1019→                  <div className="max-h-72 overflow-y-auto space-y-2">
+  1020→                    {pendingArticles.slice(0, 20).map((a) => (
+  1021→                      <div key={a.id} className="border border-slate-200 rounded-md p-2.5">
+  1022→                        <div className="flex items-start justify-between gap-2">
+  1023→                          <p className="text-sm font-medium text-slate-800 line-clamp-1">{a.judulArtikel}</p>
+  1024→                          <Badge variant="outline" className={`text-[10px] shrink-0 ${ACC_COLORS[a.statusACC]}`}>
+  1025→                            {ACC_LABELS[a.statusACC] || a.statusACC}
+  1026→                          </Badge>
+  1027→                        </div>
+  1028→                        <p className="text-xs text-slate-500 mt-0.5">{a.websiteTujuan || "-"} • {a.keyword || "-"}</p>
+  1029→                      </div>
+  1030→                    ))}
+  1031→                  </div>
+  1032→                )}
+  1033→              </CardContent>
+  1034→            </Card>
+  1035→          </div>
+  1036→
+  1037→          {/* Published lists */}
+  1038→          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  1039→            <Card>
+  1040→              <CardContent className="p-4">
+  1041→                <div className="flex items-center justify-between mb-3">
+  1042→                  <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+  1043→                    <FileCheck className="w-4 h-4 text-blue-600" />
+  1044→                    Konten Published
+  1045→                  </h3>
+  1046→                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">{publishedContents.length}</Badge>
+  1047→                </div>
+  1048→                {publishedContents.length === 0 ? (
+  1049→                  <p className="text-sm text-slate-500 text-center py-4">Belum ada konten published.</p>
+  1050→                ) : (
+  1051→                  <div className="max-h-72 overflow-y-auto space-y-2">
+  1052→                    {publishedContents.slice(0, 20).map((c) => (
+  1053→                      <div key={c.id} className="border border-slate-200 rounded-md p-2.5">
+  1054→                        <p className="text-sm font-medium text-slate-800 line-clamp-1">{c.judul}</p>
+  1055→                        <p className="text-xs text-slate-500 mt-0.5">{c.kategori} • {formatDate(c.tanggal)}</p>
+  1056→                      </div>
+  1057→                    ))}
+  1058→                  </div>
+  1059→                )}
+  1060→              </CardContent>
+  1061→            </Card>
+  1062→
+  1063→            <Card>
+  1064→              <CardContent className="p-4">
+  1065→                <div className="flex items-center justify-between mb-3">
+  1066→                  <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+  1067→                    <FileCheck className="w-4 h-4 text-blue-600" />
+  1068→                    Artikel Published
+  1069→                  </h3>
+  1070→                  <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200">{publishedArticles.length}</Badge>
+  1071→                </div>
+  1072→                {publishedArticles.length === 0 ? (
+  1073→                  <p className="text-sm text-slate-500 text-center py-4">Belum ada artikel published.</p>
+  1074→                ) : (
+  1075→                  <div className="max-h-72 overflow-y-auto space-y-2">
+  1076→                    {publishedArticles.slice(0, 20).map((a) => (
+  1077→                      <div key={a.id} className="border border-slate-200 rounded-md p-2.5">
+  1078→                        <p className="text-sm font-medium text-slate-800 line-clamp-1">{a.judulArtikel}</p>
+  1079→                        <p className="text-xs text-slate-500 mt-0.5">{a.websiteTujuan || "-"} • {formatDate(a.tanggalPublish)}</p>
+  1080→                      </div>
+  1081→                    ))}
+  1082→                  </div>
+  1083→                )}
+  1084→              </CardContent>
+  1085→            </Card>
+  1086→          </div>
+  1087→        </>
+  1088→      )}
+  1089→    </div>
+  1090→  );
+  1091→}
+  1092→
+  1093→// ============================ Finance Tab ============================
+  1094→
+  1095→function FinanceTab({
+  1096→  data, txns, loading, periodLabel, month,
+  1097→}: {
+  1098→  data: DashboardData;
+  1099→  txns: FinanceTxn[] | null;
+  1100→  loading: boolean;
+  1101→  periodLabel: string;
+  1102→  month: number;
+  1103→}) {
+  1104→  const isAll = month === 0;
+  1105→
+  1106→  // Expense by category (from txns if available, fallback to monthly)
+  1107→  const expenseByCategory = useMemo(() => {
+  1108→    if (!txns) return [];
+  1109→    const map = new Map<string, number>();
+  1110→    for (const t of txns) {
+  1111→      if (t.type !== "PENGELUARAN") continue;
+  1112→      const cat = t.category || "Lainnya";
+  1113→      map.set(cat, (map.get(cat) || 0) + t.amount);
+  1114→    }
+  1115→    return Array.from(map.entries())
+  1116→      .map(([name, value]) => ({ name, value }))
+  1117→      .sort((a, b) => b.value - a.value);
+  1118→  }, [txns]);
+  1119→
+  1120→  function exportPDF() {
+  1121→    const sections = [
+  1122→      {
+  1123→        heading: "Ringkasan Keuangan",
+  1124→        columns: ["Metrik", "Nilai"],
+  1125→        rows: [
+  1126→          ["Periode", periodLabel],
+  1127→          ["Pendapatan", formatCurrency(data.finance.revenueThisMonth)],
+  1128→          ["Pengeluaran", formatCurrency(data.finance.expenseThisMonth)],
+  1129→          ["Profit", formatCurrency(data.finance.profitThisMonth)],
+  1130→          ["Target Pendapatan", formatCurrency(data.finance.targetRevenue)],
+  1131→          ["Target Profit", formatCurrency(data.finance.targetProfit)],
+  1132→          ["Capaian Pendapatan", `${data.finance.revenueAchievement}%`],
+  1133→          ["Capaian Profit", `${data.finance.profitAchievement}%`],
+  1134→          ["Estimasi Profit/Bulan", formatCurrency(data.finance.profitEstimation)],
+  1135→        ],
+  1136→      },
+  1137→      {
+  1138→        heading: "Data Bulanan",
+  1139→        columns: ["Bulan", "Pendapatan", "Pengeluaran", "Profit"],
+  1140→        rows: data.monthlyData.map((m) => [
+  1141→          m.month, formatCurrency(m.revenue), formatCurrency(m.expense), formatCurrency(m.profit),
+  1142→        ]),
+  1143→      },
+  1144→    ];
+  1145→    if (expenseByCategory.length > 0) {
+  1146→      sections.push({
+  1147→        heading: "Pengeluaran per Kategori",
+  1148→        columns: ["Kategori", "Jumlah"],
+  1149→        rows: expenseByCategory.map((c) => [c.name, formatCurrency(c.value)]),
+  1150→      });
+  1151→    }
+  1152→    if (txns && txns.length > 0) {
+  1153→      sections.push({
+  1154→        heading: "Detail Transaksi",
+  1155→        columns: ["Tanggal", "Tipe", "Kategori", "Deskripsi", "Jumlah"],
+  1156→        rows: txns.slice(0, 100).map((t) => [
+  1157→          formatDate(t.date), t.type, t.category || "-", t.description || "-", formatCurrency(t.amount),
+  1158→        ]),
+  1159→      });
+  1160→    }
+  1161→    exportReportPDF(`Laporan Keuangan - ${periodLabel}`, sections, `keuangan-${periodLabel.replace(/\s+/g, "-")}`);
+  1162→    toast.success("PDF Keuangan diunduh");
+  1163→  }
+  1164→
+  1165→  function exportExcel() {
+  1166→    if (!txns) return;
+  1167→    const rows = txns.map((t) => ({
+  1168→      Tanggal: formatDate(t.date),
+  1169→      Tipe: t.type,
+  1170→      Kategori: t.category || "-",
+  1171→      Deskripsi: t.description || "-",
+  1172→      Jumlah: t.amount,
+  1173→      Klien: t.client?.namaKlien || "-",
+  1174→      User: t.user?.name || "-",
+  1175→    }));
+  1176→    exportToExcel(rows, `transaksi-${periodLabel.replace(/\s+/g, "-")}`, "Transaksi");
+  1177→    toast.success("Excel Keuangan diunduh");
+  1178→  }
+  1179→
+  1180→  return (
+  1181→    <div className="space-y-4">
+  1182→      <div className="flex flex-wrap items-center justify-end gap-2">
+  1183→        <Button variant="outline" size="sm" onClick={exportPDF}>
+  1184→          <FileDown className="w-4 h-4" /> Export PDF
+  1185→        </Button>
+  1186→        <Button variant="outline" size="sm" onClick={exportExcel} disabled={!txns || txns.length === 0}>
+  1187→          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+  1188→        </Button>
+  1189→      </div>
+  1190→
+  1191→      {/* KPI */}
+  1192→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1193→        <StatCard
+  1194→          title="Pendapatan"
+  1195→          value={formatCurrency(isAll ? data.monthlyData.reduce((s, m) => s + m.revenue, 0) : data.finance.revenueThisMonth)}
+  1196→          icon={TrendingUp}
+  1197→          indicator={data.finance.revenueAchievement >= 100 ? "green" : data.finance.revenueAchievement >= 60 ? "yellow" : "red"}
+  1198→          accent="bg-blue-50 text-blue-600"
+  1199→          subtitle={`Capaian: ${data.finance.revenueAchievement}%`}
+  1200→          progress={isAll ? undefined : data.finance.revenueAchievement}
+  1201→        />
+  1202→        <StatCard
+  1203→          title="Pengeluaran"
+  1204→          value={formatCurrency(isAll ? data.monthlyData.reduce((s, m) => s + m.expense, 0) : data.finance.expenseThisMonth)}
+  1205→          icon={TrendingDown}
+  1206→          indicator="red"
+  1207→          accent="bg-rose-50 text-rose-600"
+  1208→        />
+  1209→        <StatCard
+  1210→          title="Profit"
+  1211→          value={formatCurrency(isAll ? data.monthlyData.reduce((s, m) => s + m.profit, 0) : data.finance.profitThisMonth)}
+  1212→          icon={DollarSign}
+  1213→          indicator={(isAll ? data.monthlyData.reduce((s, m) => s + m.profit, 0) : data.finance.profitThisMonth) >= 0 ? "green" : "red"}
+  1214→          accent="bg-blue-50 text-blue-600"
+  1215→          subtitle={`Capaian: ${data.finance.profitAchievement}%`}
+  1216→        />
+  1217→        <StatCard
+  1218→          title="Estimasi Profit/Bln"
+  1219→          value={formatCurrency(data.finance.profitEstimation)}
+  1220→          icon={Target}
+  1221→          accent="bg-blue-50 text-blue-600"
+  1222→          subtitle="Rata-rata tahun berjalan"
+  1223→        />
+  1224→      </div>
+  1225→
+  1226→      {/* Charts */}
+  1227→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  1228→        <BarChartCard
+  1229→          title="Pendapatan vs Pengeluaran (Bulanan)"
+  1230→          data={data.monthlyData}
+  1231→          keys={[
+  1232→            { key: "revenue", label: "Pendapatan", color: "#2563eb" },
+  1233→            { key: "expense", label: "Pengeluaran", color: "#f43f5e" },
+  1234→          ]}
+  1235→          height={280}
+  1236→          formatY={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : String(v)}
+  1237→        />
+  1238→        {expenseByCategory.length > 0 ? (
+  1239→          <PieChartCard title="Pengeluaran per Kategori" data={expenseByCategory} height={280} />
+  1240→        ) : (
+  1241→          <BarChartCard
+  1242→            title="Profit per Bulan"
+  1243→            data={data.monthlyData}
+  1244→            keys={[{ key: "profit", label: "Profit", color: "#0d9488" }]}
+  1245→            height={280}
+  1246→            formatY={(v) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}jt` : v >= 1000 ? `${(v / 1000).toFixed(0)}rb` : String(v)}
+  1247→          />
+  1248→        )}
+  1249→      </div>
+  1250→
+  1251→      {/* Monthly finance table */}
+  1252→      <Card>
+  1253→        <CardContent className="p-4">
+  1254→          <h3 className="text-sm font-semibold text-slate-700 mb-3">Detail Keuangan Bulanan {data.year}</h3>
+  1255→          <div className="overflow-x-auto max-h-72 overflow-y-auto">
+  1256→            <Table>
+  1257→              <TableHeader className="sticky top-0 bg-slate-50">
+  1258→                <TableRow>
+  1259→                  <TableHead>Bulan</TableHead>
+  1260→                  <TableHead className="text-right">Pendapatan</TableHead>
+  1261→                  <TableHead className="text-right">Pengeluaran</TableHead>
+  1262→                  <TableHead className="text-right">Profit</TableHead>
+  1263→                  <TableHead className="text-right">Margin</TableHead>
+  1264→                </TableRow>
+  1265→              </TableHeader>
+  1266→              <TableBody>
+  1267→                {data.monthlyData.map((m) => {
+  1268→                  const margin = m.revenue > 0 ? Math.round((m.profit / m.revenue) * 100) : 0;
+  1269→                  return (
+  1270→                    <TableRow key={m.month}>
+  1271→                      <TableCell className="font-medium">{m.month}</TableCell>
+  1272→                      <TableCell className="text-right text-blue-700">{formatCurrency(m.revenue)}</TableCell>
+  1273→                      <TableCell className="text-right text-rose-700">{formatCurrency(m.expense)}</TableCell>
+  1274→                      <TableCell className={`text-right font-semibold ${m.profit >= 0 ? "text-blue-700" : "text-rose-700"}`}>
+  1275→                        {formatCurrency(m.profit)}
+  1276→                      </TableCell>
+  1277→                      <TableCell className="text-right">
+  1278→                        <Badge variant="outline" className={margin >= 30 ? "bg-blue-100 text-blue-700 border-blue-200" : margin >= 10 ? "bg-amber-100 text-amber-700 border-amber-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
+  1279→                          {margin}%
+  1280→                        </Badge>
+  1281→                      </TableCell>
+  1282→                    </TableRow>
+  1283→                  );
+  1284→                })}
+  1285→              </TableBody>
+  1286→            </Table>
+  1287→          </div>
+  1288→        </CardContent>
+  1289→      </Card>
+  1290→
+  1291→      {/* Transactions table */}
+  1292→      <Card>
+  1293→        <CardContent className="p-4">
+  1294→          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+  1295→            Detail Transaksi - {periodLabel}
+  1296→          </h3>
+  1297→          {loading ? (
+  1298→            <div className="space-y-2">
+  1299→              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+  1300→            </div>
+  1301→          ) : !txns || txns.length === 0 ? (
+  1302→            <p className="text-sm text-slate-500 text-center py-6">Tidak ada transaksi pada periode ini.</p>
+  1303→          ) : (
+  1304→            <div className="overflow-x-auto max-h-96 overflow-y-auto">
+  1305→              <Table>
+  1306→                <TableHeader className="sticky top-0 bg-slate-50">
+  1307→                  <TableRow>
+  1308→                    <TableHead className="min-w-[110px]">Tanggal</TableHead>
+  1309→                    <TableHead className="min-w-[100px]">Tipe</TableHead>
+  1310→                    <TableHead className="min-w-[120px]">Kategori</TableHead>
+  1311→                    <TableHead className="min-w-[200px]">Deskripsi</TableHead>
+  1312→                    <TableHead className="min-w-[140px]">Klien</TableHead>
+  1313→                    <TableHead className="text-right min-w-[130px]">Jumlah</TableHead>
+  1314→                  </TableRow>
+  1315→                </TableHeader>
+  1316→                <TableBody>
+  1317→                  {txns.slice(0, 200).map((t) => (
+  1318→                    <TableRow key={t.id}>
+  1319→                      <TableCell className="text-xs text-slate-600">{formatDate(t.date)}</TableCell>
+  1320→                      <TableCell>
+  1321→                        <Badge variant="outline" className={t.type === "PEMASUKAN" ? "bg-blue-100 text-blue-700 border-blue-200" : "bg-rose-100 text-rose-700 border-rose-200"}>
+  1322→                          {t.type === "PEMASUKAN" ? "Masuk" : "Keluar"}
+  1323→                        </Badge>
+  1324→                      </TableCell>
+  1325→                      <TableCell className="text-sm text-slate-600">{t.category || "-"}</TableCell>
+  1326→                      <TableCell className="text-sm text-slate-700">{t.description || "-"}</TableCell>
+  1327→                      <TableCell className="text-sm text-slate-600">{t.client?.namaKlien || "-"}</TableCell>
+  1328→                      <TableCell className={`text-right font-medium ${t.type === "PEMASUKAN" ? "text-blue-700" : "text-rose-700"}`}>
+  1329→                        {formatCurrency(t.amount)}
+  1330→                      </TableCell>
+  1331→                    </TableRow>
+  1332→                  ))}
+  1333→                </TableBody>
+  1334→              </Table>
+  1335→            </div>
+  1336→          )}
+  1337→        </CardContent>
+  1338→      </Card>
+  1339→    </div>
+  1340→  );
+  1341→}
+  1342→
+  1343→// ============================ Team Tab ============================
+  1344→
+  1345→function TeamTab({ data, periodLabel }: { data: DashboardData; periodLabel: string }) {
+  1346→  function exportPDF() {
+  1347→    const sections = [
+  1348→      {
+  1349→        heading: "Produktivitas Tim",
+  1350→        columns: ["Nama", "Role", "Posisi", "Tugas Selesai", "Total Tugas", "Completion", "Konten", "Artikel"],
+  1351→        rows: data.teamProductivity.map((t) => [
+  1352→          t.name, ROLE_LABELS[t.role] || t.role, t.position || "-",
+  1353→          t.tasksDone, t.tasksTotal, `${t.completionRate}%`, t.contents, t.articles,
+  1354→        ]),
+  1355→      },
+  1356→    ];
+  1357→    exportReportPDF(`Laporan Produktivitas Tim - ${periodLabel}`, sections, `tim-${periodLabel.replace(/\s+/g, "-")}`);
+  1358→    toast.success("PDF Tim diunduh");
+  1359→  }
+  1360→
+  1361→  function exportExcel() {
+  1362→    const rows = data.teamProductivity.map((t) => ({
+  1363→      Nama: t.name,
+  1364→      Role: ROLE_LABELS[t.role] || t.role,
+  1365→      Posisi: t.position || "-",
+  1366→      TugasSelesai: t.tasksDone,
+  1367→      TotalTugas: t.tasksTotal,
+  1368→      CompletionRate: t.completionRate,
+  1369→      Konten: t.contents,
+  1370→      Artikel: t.articles,
+  1371→    }));
+  1372→    exportToExcel(rows, `produktivitas-tim-${periodLabel.replace(/\s+/g, "-")}`, "Tim");
+  1373→    toast.success("Excel Tim diunduh");
+  1374→  }
+  1375→
+  1376→  const avgCompletion = data.teamProductivity.length > 0
+  1377→    ? Math.round(data.teamProductivity.reduce((s, t) => s + t.completionRate, 0) / data.teamProductivity.length)
+  1378→    : 0;
+  1379→  const totalTasksDone = data.teamProductivity.reduce((s, t) => s + t.tasksDone, 0);
+  1380→  const totalTasksTotal = data.teamProductivity.reduce((s, t) => s + t.tasksTotal, 0);
+  1381→  const totalContents = data.teamProductivity.reduce((s, t) => s + t.contents, 0);
+  1382→  const totalArticles = data.teamProductivity.reduce((s, t) => s + t.articles, 0);
+  1383→
+  1384→  return (
+  1385→    <div className="space-y-4">
+  1386→      <div className="flex flex-wrap items-center justify-end gap-2">
+  1387→        <Button variant="outline" size="sm" onClick={exportPDF}>
+  1388→          <FileDown className="w-4 h-4" /> Export PDF
+  1389→        </Button>
+  1390→        <Button variant="outline" size="sm" onClick={exportExcel}>
+  1391→          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+  1392→        </Button>
+  1393→      </div>
+  1394→
+  1395→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1396→        <StatCard title="Anggota Aktif" value={data.teamProductivity.length} icon={Users} accent="bg-blue-50 text-blue-600" />
+  1397→        <StatCard title="Total Tugas Selesai" value={totalTasksDone} icon={CheckCircle2} subtitle={`dari ${totalTasksTotal} tugas`} accent="bg-blue-50 text-blue-600" />
+  1398→        <StatCard title="Rata-rata Completion" value={`${avgCompletion}%`} icon={Target} indicator={avgCompletion >= 70 ? "green" : avgCompletion >= 40 ? "yellow" : "red"} accent="bg-blue-50 text-blue-600" />
+  1399→        <StatCard title="Konten + Artikel" value={totalContents + totalArticles} icon={FileText} subtitle={`${totalContents} konten • ${totalArticles} artikel`} accent="bg-blue-50 text-blue-600" />
+  1400→      </div>
+  1401→
+  1402→      <Card>
+  1403→        <CardContent className="p-4">
+  1404→          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+  1405→            Tabel Produktivitas Tim - {periodLabel}
+  1406→          </h3>
+  1407→          {data.teamProductivity.length === 0 ? (
+  1408→            <p className="text-sm text-slate-500 text-center py-6">Tidak ada data produktivitas pada periode ini.</p>
+  1409→          ) : (
+  1410→            <div className="overflow-x-auto">
+  1411→              <Table>
+  1412→                <TableHeader>
+  1413→                  <TableRow>
+  1414→                    <TableHead className="min-w-[160px]">Nama</TableHead>
+  1415→                    <TableHead className="min-w-[140px]">Role</TableHead>
+  1416→                    <TableHead className="min-w-[140px]">Posisi</TableHead>
+  1417→                    <TableHead className="text-center min-w-[100px]">Tugas Selesai</TableHead>
+  1418→                    <TableHead className="text-center min-w-[100px]">Total Tugas</TableHead>
+  1419→                    <TableHead className="min-w-[180px]">Completion</TableHead>
+  1420→                    <TableHead className="text-center min-w-[80px]">Konten</TableHead>
+  1421→                    <TableHead className="text-center min-w-[80px]">Artikel</TableHead>
+  1422→                  </TableRow>
+  1423→                </TableHeader>
+  1424→                <TableBody>
+  1425→                  {data.teamProductivity.map((t) => (
+  1426→                    <TableRow key={t.id}>
+  1427→                      <TableCell className="font-medium text-slate-900">{t.name}</TableCell>
+  1428→                      <TableCell>
+  1429→                        <Badge variant="outline" className={`text-[10px] ${ROLE_COLORS[t.role] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+  1430→                          {ROLE_LABELS[t.role] || t.role}
+  1431→                        </Badge>
+  1432→                      </TableCell>
+  1433→                      <TableCell className="text-sm text-slate-600">{t.position || "-"}</TableCell>
+  1434→                      <TableCell className="text-center text-blue-700 font-medium">{t.tasksDone}</TableCell>
+  1435→                      <TableCell className="text-center">{t.tasksTotal}</TableCell>
+  1436→                      <TableCell>
+  1437→                        <div className="flex items-center gap-2">
+  1438→                          <Progress value={t.completionRate} className="h-2 flex-1" />
+  1439→                          <span className={`text-xs font-semibold w-9 text-right ${
+  1440→                            t.completionRate >= 70 ? "text-blue-700" : t.completionRate >= 40 ? "text-amber-700" : "text-rose-700"
+  1441→                          }`}>
+  1442→                            {t.completionRate}%
+  1443→                          </span>
+  1444→                        </div>
+  1445→                      </TableCell>
+  1446→                      <TableCell className="text-center">{t.contents}</TableCell>
+  1447→                      <TableCell className="text-center">{t.articles}</TableCell>
+  1448→                    </TableRow>
+  1449→                  ))}
+  1450→                </TableBody>
+  1451→              </Table>
+  1452→            </div>
+  1453→          )}
+  1454→        </CardContent>
+  1455→      </Card>
+  1456→    </div>
+  1457→  );
+  1458→}
+  1459→
+  1460→// ============================ Skeleton ============================
+  1461→
+  1462→function ReportSkeleton() {
+  1463→  return (
+  1464→    <div className="space-y-4">
+  1465→      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  1466→        {Array.from({ length: 8 }).map((_, i) => (
+  1467→          <Card key={i}><CardContent className="p-4"><Skeleton className="h-16 w-full" /></CardContent></Card>
+  1468→        ))}
+  1469→      </div>
+  1470→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  1471→        {Array.from({ length: 4 }).map((_, i) => (
+  1472→          <Card key={i}><CardContent className="p-4"><Skeleton className="h-64 w-full" /></CardContent></Card>
+  1473→        ))}
+  1474→      </div>
+  1475→    </div>
+  1476→  );
+  1477→}
+  1478→

@@ -2329,3 +2329,191 @@ Stage Summary:
   * 10 users, 454 clients, 73 events, 84 daily tasks, 65 content ideas
   * 35 articles, 34 documents, 1001 finance transactions, 17 invoices, 14 payrolls
 - All modules synchronized with real data, 0 errors
+
+---
+Task ID: FILTER-ALL-MODULES
+Agent: Sub-agent (FILTER-ALL-MODULES)
+Task: Add year/month filters (Semua Tahun, Semua Bulan, 2022-2026) to 6 modules
+
+Work Log:
+- Read all 6 module files to understand each filter-bar structure and `filtered` useMemo pattern.
+- Applied a consistent reusable pattern (NATIVE `<select>`, NOT Radix Select) to all 6 modules:
+  1. State: `monthFilter` ("0" = Semua Bulan) + `yearFilter` ("0" = Semua Tahun), both default "0"
+  2. JSX: two native `<select>` dropdowns with Januari-Desember months + 2026/2025/2024/2023/2022 years, placed next to existing search/status filters
+  3. Client-side filter: extended the existing `filtered` useMemo to filter by date field
+  4. Reset effect: added `yearFilter, monthFilter` to the existing `useEffect` deps that calls `resetSelection() + resetPage()`
+
+Files modified:
+- src/components/modules/crm-module.tsx — Date field: `tanggalEvent || createdAt` (fallback). Filters placed next to status Select in the filter bar.
+- src/components/modules/invoice-module.tsx — Date field: `issueDate`. Filters placed in the search/bulk-toggle row.
+- src/components/modules/surat-module.tsx — Date field: `issueDate`. Filters placed in the search/status/bulk-toggle row (LIST VIEW only — form view untouched).
+- src/components/modules/articles-module.tsx — Date field: `tanggalPublish || createdAt` (added `createdAt?: string` to Article interface). Filters placed in the search/bulk-toggle row (below website/acc/status grid).
+- src/components/modules/documents-module.tsx — Date field: `createdAt`. Filters placed in the search/bulk-toggle row (below type/client/PDF/Excel row).
+- src/components/modules/content-module.tsx — Date field: `tanggal || createdAt` (added `createdAt?: string` to ContentIdea interface). Filters placed in the search/bulk-toggle row (below kategori/acc/Excel/PDF + tabs).
+
+Rules respected:
+- Native `<select>` used everywhere (Radix Select avoided due to update bugs)
+- Years: 2026, 2025, 2024, 2023, 2022 (+ "Semua Tahun" value="0")
+- Months: Januari-Desember (+ "Semua Bulan" value="0")
+- Defaults: both "0" so all data shows by default
+- Client-side filter in existing `filtered` useMemo — NO API changes
+- All existing functionality preserved (search, status filter, pagination, bulk-select, edit, delete, export)
+- Reset effect deps updated to include yearFilter + monthFilter so pagination snaps back to page 1 on filter change
+- Date fallback handling: if item has no usable date but a filter is set, item is excluded (only when filter is "0"/"0" do missing dates pass through)
+
+Verification:
+- `bun run lint` → exit code 0, 0 errors ✓
+- `bun run tsc --noEmit` → no errors in any of the 6 modified files (pre-existing TS errors in unrelated files like page.tsx, kpi-module.tsx, kanban-module.tsx, reports-module.tsx, payroll-calc.ts remain but are out of scope)
+
+Stage Summary:
+- All 6 list pages now have year + month filter dropdowns alongside existing search/status filters.
+- User can filter the imported 2022-2026 data by specific year (2022-2026) or specific month (Januari-Desember), or leave both as "Semua" to see all data.
+- Default "Semua Bulan" + "Semua Tahun" shows all rows (consistent with the finance-module pattern).
+- Lint passes with 0 errors.
+
+---
+Task ID: FILTER-FIX-EXISTING
+Agent: Sub-agent (FILTER-FIX-EXISTING)
+Task: Fix year/month selectors in 4 existing modules (absensi, payroll, kpi, reports) — switch from Radix Select to native `<select>`, add "Semua Tahun" + "Semua Bulan" options with years 2022-2026
+
+Work Log:
+- Read worklog.md to understand the existing FILTER-ALL-MODULES pattern (NATIVE `<select>`, NOT Radix Select).
+- Read all 4 module files + their API routes to understand current selector shapes and data flow.
+
+Pattern applied (consistent with FILTER-ALL-MODULES):
+- Native `<select>` with className "h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+- Month options: "Semua Bulan" (value=0) + Januari-Desember
+- Year options: "Semua Tahun" (value=0) + 2026, 2025, 2024, 2023, 2022
+- Default month: 0 (Semua Bulan)
+- Default year: current year (2026)
+- When month=0 OR year=0: don't send that param to API (URLSearchParams omit)
+- API returns ALL records when both params absent (no date filter)
+
+Files modified (4 modules + 4 API routes = 8 files):
+
+1. src/components/modules/absensi-module.tsx
+   - Replaced two Radix `<Select>` (month + year) in SectionHeader action with native `<select>`s
+   - Added "Semua Bulan" option (value=0) to month selector
+   - Added "Semua Tahun" option (value=0) + years 2022-2026 to year selector (was: only current year + last year)
+   - Changed default month from `now.getMonth() + 1` to `0` (Semua Bulan)
+   - Updated `loadData` to use URLSearchParams — only sends month/year when > 0
+   - Updated `handleExportExcel`, `handleExportPDF`, and "Riwayat Absensi" CardTitle to handle month=0 (label becomes "Tahun {year}" instead of undefined monthNames[-1])
+
+2. src/app/api/attendance/route.ts
+   - Changed to treat absent / "0" as "no filter" (m=0/y=0)
+   - When y=0: no date filter applied → returns ALL attendance records
+   - When y>0, m=0: filters to whole year (Jan 1 - Dec 31)
+   - When y>0, m>0: filters to specific month (existing behavior)
+
+3. src/components/modules/payroll-module.tsx
+   - Replaced two Radix `<Select>` (month + year) in TEAM VIEW with native `<select>`s
+   - Added "Semua Bulan" (value=0) + "Semua Tahun" (value=0) + years 2022-2026
+   - Changed default month from `now.getMonth() + 1` to `0` (Semua Bulan)
+   - Updated `loadData` to use URLSearchParams — only sends month/year when > 0
+   - Updated TEAM empty-state message: when month=0 or year=0, shows "Pilih bulan & tahun spesifik untuk melihat slip gaji" (since team preview requires specific period)
+   - Left generator form (genForm) Selects untouched — those are for CREATING a payroll, which requires a specific month/year (no "Semua" option)
+
+4. src/app/api/payroll/route.ts
+   - Changed to treat absent / "0" as "no filter"
+   - OWNER: when both month>0 and year>0 → existing behavior (saved OR preview calc)
+   - OWNER: when month=0 OR year=0 → return ALL saved payrolls matching the non-zero filter (no preview calc, since preview requires specific period). Ordered by year DESC, month DESC, user name ASC.
+   - TEAM: when both month>0 and year>0 → existing behavior (saved OR preview)
+   - TEAM: when month=0 OR year=0 → return null payroll (UI shows "select period" empty state)
+
+5. src/components/modules/reports-module.tsx
+   - Removed `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` import (no longer used)
+   - Removed `YEAR_OPTIONS` constant (was `[currentYear-2, currentYear-1, currentYear, currentYear+1]`)
+   - Replaced Radix `<Select>` for year (Tahun) with native `<select>` + added "Semua Tahun" (value=0) + years 2022-2026
+   - Replaced Radix `<Select>` for month (Bulan) with native `<select>` (kept existing "Semua Bulan" option)
+   - Removed `apiMonth = m === 0 ? currentMonth : m` workaround in `loadData` — now passes year & month as-is, API handles 0 properly
+   - Updated `loadFinance` to use URLSearchParams — only sends month/year when > 0
+   - Updated `periodLabel`: year=0 → "Semua Tahun (Akumulasi)"; month=0 → "Tahun {year}"; else "{monthName} {year}"
+   - Updated `eff` useMemo: `isAll = month === 0 || year === 0` (was: just `month === 0`)
+   - Passed `year` prop to `SummaryTab` and `FinanceTab` components (added to type signatures)
+   - Updated SummaryTab `progress` and FinanceTab `isAll` to also account for year=0
+
+6. src/app/api/dashboard/owner/route.ts
+   - Removed unused `getMonthRange` import
+   - Replaced `monthRange` with computed `periodStart`/`periodEnd`:
+     * year=0: full range (2000-2100) → all-time aggregate
+     * year>0, month=0: whole year (Jan 1 - Dec 31)
+     * year>0, month>0: specific month (existing behavior)
+   - Used `periodStart/periodEnd` for: events count/list, finance aggregates, team productivity (was: monthRange)
+   - financeSetting lookup: only when both year>0 and month>0; otherwise defaults (500M / 150M)
+   - monthlyData: when year=0, aggregates per month across years 2022-2030 (Jan column = all January transactions 2022-2030); when year>0, normal 12 months of that year
+   - yearlyData: anchored to `now.getFullYear()` (independent of selected year) — shows last 5 years from current year
+
+7. src/app/api/finance/route.ts
+   - Changed to treat absent / "0" as "no filter"
+   - When y=0: no date filter → returns ALL transactions (Semua Tahun)
+   - When y>0, m=0: filters to whole year
+   - When y>0, m>0: filters to specific month (existing behavior)
+
+8. src/components/modules/kpi-module.tsx (NEW selectors — module previously had none)
+   - Added `useMemo` to imports
+   - Added `MONTH_NAMES` constant
+   - Added two new state: `year` (default current year) + `month` (default 0 = Semua Bulan)
+   - Built `dateRef` from year+month:
+     * year=0 → null (no date param, API uses today)
+     * year>0, month=0 → `${year}-06-15` (mid-year date for weekly/monthly aggregation)
+     * year>0, month>0 → `${year}-${MM}-01` (first day of selected month)
+   - Updated `loadData` to pass `date` param to both `/api/kpi/logs` and `/api/kpi/score` APIs (when dateRef is set)
+   - Updated `handleSaveLog` to use `dateRef` (when set) for the log date instead of always today — so updating a metric while viewing historical data saves to that period
+   - Added native `<select>` month + year selectors to SectionHeader action (next to Excel/PDF buttons)
+   - Added period label suffix to "Target {period} - {role}" CardTitle showing current filter (e.g., "(Januari 2024)" or "(Tahun 2024)" or "(Semua Tahun)")
+
+Rules respected:
+- NATIVE `<select>` used everywhere (Radix Select avoided for year/month — only the generator form's month Select in payroll remains Radix because it's for creating a new payroll, not filtering, and requires a specific month)
+- Years: 2026, 2025, 2024, 2023, 2022 (+ "Semua Tahun" value=0)
+- Months: Januari-Desember (+ "Semua Bulan" value=0)
+- Defaults: month=0 (Semua Bulan) shows all months; year=currentYear (2026) by default but "Semua Tahun" available
+- When year=0: API returns ALL years (no year filter)
+- When month=0: API returns ALL months (no month filter)
+- All existing functionality preserved (search, status filter, pagination, bulk-select, edit, delete, export, generator form)
+- Did NOT create test files
+
+Verification:
+- `bun run lint` → exit code 0, 0 errors ✓
+- `bunx tsc --noEmit` → verified via git stash that all TS errors in modified files (dashboard/owner, kpi-module, reports-module) are PRE-EXISTING (same count before and after my changes; only line numbers shifted). No new TS errors introduced.
+
+Stage Summary:
+- All 4 modules now use NATIVE `<select>` for year/month (no more Radix Select update bugs)
+- All 4 modules support "Semua Tahun" (year=0) and "Semua Bulan" (month=0) options
+- All 4 modules list years 2022-2026 (not just current year + last year)
+- Default month is 0 (Semua Bulan) — shows all data by default
+- APIs (attendance, payroll, dashboard/owner, finance) properly handle month=0/year=0 by skipping the date filter and returning all matching records
+- KPI module gained NEW year+month selectors (previously had none) — translates to `date` ref for the existing KPI logs/score APIs (no API change needed since they already accept `date`)
+- Lint passes with 0 errors.
+
+---
+Task ID: FILTER-ALL-MODULES-SUMMARY
+Agent: Main (Z.ai Code)
+Task: Summary - Add year/month filters (2022-2026 + Semua Tahun/Bulan) to ALL modules
+
+Work Log:
+- Task FILTER-ALL-MODULES (subagent): Added year/month native selects to 6 modules:
+  * CRM Client (tanggalEvent), Invoice (issueDate), Surat (issueDate)
+  * Data Artikel (tanggalPublish/createdAt), Dokumen (createdAt), Tugas Konten (createdAt)
+  * All use native <select> with "Semua Bulan" + "Semua Tahun" + years 2022-2026
+  * Client-side filtering in existing useMemo, default both = "0" (Semua)
+- Task FILTER-FIX-EXISTING (subagent): Fixed 4 existing modules + 4 API routes:
+  * Absensi: native selects, year=0/month=0 returns all from API
+  * Payroll: native selects, year=0/month=0 returns all saved payrolls
+  * KPI: added new year/month selectors, date ref computed from selections
+  * Reports: native selects, "Semua Tahun" added, periodLabel handles year=0
+  * API: /api/attendance, /api/payroll, /api/dashboard/owner, /api/finance all handle month=0/year=0
+- Verified with Agent Browser:
+  * CRM: 454 clients (Semua Tahun), 127 (2026), 0 (2022 - correct, data starts 2024)
+  * Reports: "Semua Tahun (Akumulasi)" shows Pendapatan Rp 24.8B across all years
+  * Absensi: month=0/year=2026 selects present
+  * 0 errors, lint clean
+
+Stage Summary:
+- ALL modules now have year/month filters with:
+  * "Semua Bulan" (value=0) and "Semua Tahun" (value=0) options
+  * Years: 2026, 2025, 2024, 2023, 2022
+  * Native <select> (not Radix Select — avoids update bugs)
+  * Default: month=0 (Semua Bulan), year=current year or 0
+- ALL backend APIs handle year=0/month=0 (return all records, no filter)
+- Data syncs correctly: each module shows real data for the selected period
+- Modules with filters: CRM, Invoice, Surat, Articles, Documents, Content, Absensi, Payroll, KPI, Reports, Finance (11 modules total)

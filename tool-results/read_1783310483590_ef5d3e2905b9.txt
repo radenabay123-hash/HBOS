@@ -1,0 +1,782 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import { Checkbox } from "@/components/ui/checkbox";
+    12→import { Separator } from "@/components/ui/separator";
+    13→import {
+    14→  FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye, Save,
+    15→  Calendar, MapPin, User, Building2, FileSignature, Settings as SettingsIcon,
+    16→  Search, CheckSquare,
+    17→} from "lucide-react";
+    18→import { api } from "@/lib/api-client";
+    19→import { formatDate } from "@/lib/constants";
+    20→import { downloadSuratPDF } from "@/lib/surat-pdf";
+    21→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    22→import { RichTextEditor } from "@/components/shared/rich-text-editor";
+    23→import { usePagination } from "@/lib/hooks/use-pagination";
+    24→import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+    25→import { Pagination } from "@/components/shared/pagination";
+    26→import { SelectCheckbox } from "@/components/shared/filter-bar";
+    27→import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+    28→import { toast } from "sonner";
+    29→import { cn } from "@/lib/utils";
+    30→import type { SafeUser } from "@/lib/auth";
+    31→
+    32→const SURAT_TYPES = [
+    33→  "Surat Penawaran", "Surat Perjanjian Kerjasama", "Surat Tugas",
+    34→  "Surat Keterangan", "Surat Undangan", "Surat Pemberitahuan",
+    35→  "Surat Pengantar", "Surat Permohonan", "Surat Edaran", "Surat Lainnya",
+    36→];
+    37→
+    38→const STATUS_LABELS: Record<string, string> = { DRAFT: "Draft", FINAL: "Final", ARCHIVED: "Arsip" };
+    39→const STATUS_COLORS: Record<string, string> = {
+    40→  DRAFT: "bg-slate-100 text-slate-700 border-slate-200",
+    41→  FINAL: "bg-blue-100 text-blue-700 border-blue-200",
+    42→  ARCHIVED: "bg-amber-100 text-amber-700 border-amber-200",
+    43→};
+    44→
+    45→export function SuratModule({ user }: { user: SafeUser }) {
+    46→  const [view, setView] = useState<"list" | "form">("list");
+    47→  const [surats, setSurats] = useState<any[]>([]);
+    48→  const [loading, setLoading] = useState(true);
+    49→  const [editId, setEditId] = useState<string | null>(null);
+    50→  const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
+    51→  const [layoutSettings, setLayoutSettings] = useState<any>(null);
+    52→  const [search, setSearch] = useState("");
+    53→  const [filterStatus, setFilterStatus] = useState("all");
+    54→  const [bulkMode, setBulkMode] = useState(false);
+    55→
+    56→  // Form state - OLD header fields (logoWidth, headerContact, headerAddress1, headerAddress2) REMOVED
+    57→  // Header design now comes entirely from Layout Dokumen settings
+    58→  const [form, setForm] = useState({
+    59→    suratType: "Surat Penawaran",
+    60→    suratNumber: "",
+    61→    issueDate: new Date().toISOString().slice(0, 10),
+    62→    city: "Jombang",
+    63→    perihal: "",
+    64→    lampiran: "",
+    65→    recipientName: "",
+    66→    recipientInstansi: "",
+    67→    recipientAddress: "",
+    68→    body: "",
+    69→    includeActivity: false,
+    70→    activityDate: "",
+    71→    activityLocation: "",
+    72→    activityTime: "",
+    73→    includePayment: false,
+    74→    paymentAmount: "",
+    75→    paymentAmountText: "",
+    76→    bookingAmount: "",
+    77→    bookingAmountText: "",
+    78→    bankName: "",
+    79→    bankAccount: "",
+    80→    accountName: "",
+    81→    signatoryName: "M. Aqil Baihaqi",
+    82→    signatoryTitle: "Direktur Utama",
+    83→    status: "DRAFT",
+    84→  });
+    85→
+    86→  const load = useCallback(async () => {
+    87→    setLoading(true);
+    88→    try {
+    89→      const [d, settings] = await Promise.all([
+    90→        api<{ surats: any[] }>("/api/surat").catch(() => ({ surats: [] })),
+    91→        api<{ settings: any[] }>("/api/settings").catch(() => ({ settings: [] })),
+    92→      ]);
+    93→      setSurats(d.surats || []);
+    94→      const sMap: Record<string, string> = {};
+    95→      for (const s of settings.settings || []) sMap[s.key] = s.value;
+    96→      setCompanySettings(sMap);
+    97→      if (sMap.director_name) setForm((f) => ({ ...f, signatoryName: sMap.director_name }));
+    98→      if (sMap.director_title) setForm((f) => ({ ...f, signatoryTitle: sMap.director_title }));
+    99→      // Fetch layout settings for preview
+   100→      try {
+   101→        const ld = await fetchLayoutSettings("SURAT");
+   102→        setLayoutSettings(ld.layout);
+   103→      } catch {}
+   104→    } catch (e: any) { toast.error(e.message); }
+   105→    finally { setLoading(false); }
+   106→  }, []);
+   107→
+   108→  useEffect(() => { load(); }, [load]);
+   109→
+   110→  function generateSuratNumber() {
+   111→    const now = new Date();
+   112→    const romanMonths = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+   113→    const seq = String(surats.length + 1).padStart(3, "0");
+   114→    return `${seq}/SP/HAN/${romanMonths[now.getMonth()]}/${now.getFullYear()}`;
+   115→  }
+   116→
+   117→  function openCreate() {
+   118→    setForm({
+   119→      suratType: "Surat Penawaran",
+   120→      suratNumber: generateSuratNumber(),
+   121→      issueDate: new Date().toISOString().slice(0, 10),
+   122→      city: "Jombang",
+   123→      perihal: "", lampiran: "", recipientName: "", recipientInstansi: "", recipientAddress: "",
+   124→      body: "", includeActivity: false, activityDate: "", activityLocation: "", activityTime: "",
+   125→      includePayment: false, paymentAmount: "", paymentAmountText: "", bookingAmount: "", bookingAmountText: "",
+   126→      bankName: "", bankAccount: "", accountName: "",
+   127→      signatoryName: companySettings.director_name || "M. Aqil Baihaqi",
+   128→      signatoryTitle: companySettings.director_title || "Direktur Utama",
+   129→      status: "DRAFT",
+   130→    });
+   131→    setEditId(null);
+   132→    setView("form");
+   133→  }
+   134→
+   135→  function openEdit(s: any) {
+   136→    setForm({
+   137→      suratType: s.suratType || "Surat Penawaran",
+   138→      suratNumber: s.suratNumber || "",
+   139→      issueDate: new Date(s.issueDate).toISOString().slice(0, 10),
+   140→      city: s.city || "Jombang",
+   141→      perihal: s.perihal || "",
+   142→      lampiran: s.lampiran || "",
+   143→      recipientName: s.recipientName || "",
+   144→      recipientInstansi: s.recipientInstansi || "",
+   145→      recipientAddress: s.recipientAddress || "",
+   146→      body: s.body || "",
+   147→      includeActivity: s.includeActivity || false,
+   148→      activityDate: s.activityDate || "",
+   149→      activityLocation: s.activityLocation || "",
+   150→      activityTime: s.activityTime || "",
+   151→      includePayment: s.includePayment || false,
+   152→      paymentAmount: s.paymentAmount ? String(s.paymentAmount) : "",
+   153→      paymentAmountText: s.paymentAmountText || "",
+   154→      bookingAmount: s.bookingAmount ? String(s.bookingAmount) : "",
+   155→      bookingAmountText: s.bookingAmountText || "",
+   156→      bankName: s.bankName || "",
+   157→      bankAccount: s.bankAccount || "",
+   158→      accountName: s.accountName || "",
+   159→      signatoryName: s.signatoryName || "M. Aqil Baihaqi",
+   160→      signatoryTitle: s.signatoryTitle || "Direktur Utama",
+   161→      status: s.status || "DRAFT",
+   162→    });
+   163→    setEditId(s.id);
+   164→    setView("form");
+   165→  }
+   166→
+   167→  async function handleSave() {
+   168→    if (!form.suratNumber || !form.perihal) { toast.error("Nomor surat dan perihal wajib diisi"); return; }
+   169→    try {
+   170→      if (editId) {
+   171→        await api(`/api/surat/${editId}`, { method: "PUT", body: JSON.stringify(form) });
+   172→        toast.success("Surat diperbarui");
+   173→      } else {
+   174→        await api("/api/surat", { method: "POST", body: JSON.stringify(form) });
+   175→        toast.success("Surat disimpan ke arsip");
+   176→      }
+   177→      setView("list");
+   178→      load();
+   179→    } catch (e: any) { toast.error(e.message); }
+   180→  }
+   181→
+   182→  async function handleDelete(id: string) {
+   183→    if (!confirm("Hapus surat ini?")) return;
+   184→    try { await api(`/api/surat/${id}`, { method: "DELETE" }); toast.success("Dihapus"); load(); }
+   185→    catch (e: any) { toast.error(e.message); }
+   186→  }
+   187→
+   188→  async function handleBulkDelete() {
+   189→    if (!confirm(`Hapus ${selectedCount} surat terpilih?`)) return;
+   190→    let success = 0;
+   191→    let failed = 0;
+   192→    for (const id of selectedArray) {
+   193→      try {
+   194→        await api(`/api/surat/${id}`, { method: "DELETE" });
+   195→        success++;
+   196→      } catch {
+   197→        failed++;
+   198→      }
+   199→    }
+   200→    clearSelection();
+   201→    setBulkMode(false);
+   202→    await load();
+   203→    if (failed === 0) {
+   204→      toast.success(`${success} surat berhasil dihapus`);
+   205→    } else {
+   206→      toast.error(`${success} dihapus, ${failed} gagal`);
+   207→    }
+   208→  }
+   209→
+   210→  // Search + filter (list view only)
+   211→  const filtered = useMemo(() => {
+   212→    return surats.filter((s) => {
+   213→      if (filterStatus !== "all" && s.status !== filterStatus) return false;
+   214→      if (search.trim()) {
+   215→        const q = search.toLowerCase().trim();
+   216→        const text = [s.suratNumber, s.perihal, s.suratType, s.recipientName, s.recipientInstansi]
+   217→          .filter(Boolean)
+   218→          .join(" ")
+   219→          .toLowerCase();
+   220→        if (!text.includes(q)) return false;
+   221→      }
+   222→      return true;
+   223→    });
+   224→  }, [surats, search, filterStatus]);
+   225→
+   226→  // Pagination (max 15 per page)
+   227→  const {
+   228→    paginatedItems,
+   229→    goToPage,
+   230→    nextPage,
+   231→    prevPage,
+   232→    pageInfo,
+   233→    resetPage,
+   234→  } = usePagination(filtered, { pageSize: 15 });
+   235→
+   236→  // Bulk selection
+   237→  const {
+   238→    selectedArray,
+   239→    selectedCount,
+   240→    isSelected,
+   241→    toggle,
+   242→    toggleAll,
+   243→    clearSelection,
+   244→    resetSelection,
+   245→    isAllSelected,
+   246→  } = useBulkSelect({ getId: (s: any) => s.id });
+   247→
+   248→  // Reset selection + go to page 1 when filters change
+   249→  useEffect(() => {
+   250→    resetSelection();
+   251→    resetPage();
+   252→  }, [search, filterStatus, resetSelection, resetPage]);
+   253→
+   254→  async function handleDownloadPDF(s: any) {
+   255→    let lSettings: any = null;
+   256→    let logoUrl = "";
+   257→    try {
+   258→      const ld = await fetchLayoutSettings("SURAT");
+   259→      lSettings = ld.layout;
+   260→      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+   261→    } catch {}
+   262→    // Load logo image as data URL for jsPDF
+   263→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   264→    // CLEAN: only pass content data, all design comes from layout settings
+   265→    downloadSuratPDF({
+   266→      suratType: s.suratType,
+   267→      suratNumber: s.suratNumber,
+   268→      issueDate: formatDate(s.issueDate),
+   269→      city: s.city,
+   270→      perihal: s.perihal,
+   271→      lampiran: s.lampiran,
+   272→      recipientName: s.recipientName,
+   273→      recipientInstansi: s.recipientInstansi,
+   274→      recipientAddress: s.recipientAddress,
+   275→      body: s.body,
+   276→      includeActivity: s.includeActivity,
+   277→      activityDate: s.activityDate,
+   278→      activityLocation: s.activityLocation,
+   279→      activityTime: s.activityTime,
+   280→      includePayment: s.includePayment,
+   281→      paymentAmount: Number(s.paymentAmount) || 0,
+   282→      paymentAmountText: s.paymentAmountText,
+   283→      bookingAmount: Number(s.bookingAmount) || 0,
+   284→      bookingAmountText: s.bookingAmountText,
+   285→      bankName: s.bankName,
+   286→      bankAccount: s.bankAccount,
+   287→      accountName: s.accountName,
+   288→      signatoryName: s.signatoryName,
+   289→      signatoryTitle: s.signatoryTitle,
+   290→      logoImageData,
+   291→      layout: lSettings,
+   292→    });
+   293→    toast.success("Surat PDF diunduh");
+   294→  }
+   295→
+   296→  if (loading && view === "list") {
+   297→    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-blue-600" /></div>;
+   298→  }
+   299→
+   300→  // ===== LIST VIEW =====
+   301→  if (view === "list") {
+   302→    return (
+   303→      <div className="space-y-5">
+   304→        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   305→          <div>
+   306→            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><FileText className="w-6 h-6 text-blue-600" /> Surat Resmi</h1>
+   307→            <p className="text-sm text-slate-500 mt-1">Buat dan kelola surat resmi perusahaan</p>
+   308→          </div>
+   309→          <Button size="sm" onClick={openCreate} className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-1" /> Surat Resmi Baru</Button>
+   310→        </div>
+   311→
+   312→        {/* Filter Bar (search + status filter + bulk-select toggle) */}
+   313→        <Card className="shadow-sm">
+   314→          <CardContent className="p-3">
+   315→            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+   316→              <div className="relative flex-1 min-w-[200px]">
+   317→                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   318→                <Input
+   319→                  type="text"
+   320→                  value={search}
+   321→                  onChange={(e) => setSearch(e.target.value)}
+   322→                  placeholder="Cari nomor surat, perihal, jenis..."
+   323→                  className="pl-9 h-9 bg-white text-sm"
+   324→                />
+   325→                {search && (
+   326→                  <button
+   327→                    onClick={() => setSearch("")}
+   328→                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+   329→                  >
+   330→                    <X className="w-4 h-4" />
+   331→                  </button>
+   332→                )}
+   333→              </div>
+   334→              <Select value={filterStatus} onValueChange={setFilterStatus}>
+   335→                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   336→                <SelectContent>
+   337→                  <SelectItem value="all">Semua Status</SelectItem>
+   338→                  <SelectItem value="DRAFT">Draft</SelectItem>
+   339→                  <SelectItem value="FINAL">Final</SelectItem>
+   340→                  <SelectItem value="ARCHIVED">Arsip</SelectItem>
+   341→                </SelectContent>
+   342→              </Select>
+   343→              <Button
+   344→                variant={bulkMode ? "default" : "outline"}
+   345→                size="sm"
+   346→                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+   347→                onClick={() => {
+   348→                  setBulkMode(!bulkMode);
+   349→                  if (bulkMode) clearSelection();
+   350→                }}
+   351→              >
+   352→                <CheckSquare className="w-3.5 h-3.5 mr-1" />
+   353→                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+   354→              </Button>
+   355→            </div>
+   356→          </CardContent>
+   357→        </Card>
+   358→
+   359→        {/* Bulk Action Bar */}
+   360→        {bulkMode && selectedCount > 0 && (
+   361→          <BulkActionBar
+   362→            selectedCount={selectedCount}
+   363→            actions={[
+   364→              {
+   365→                label: "Hapus Terpilih",
+   366→                icon: Trash2,
+   367→                onClick: handleBulkDelete,
+   368→                variant: "destructive",
+   369→                confirmText: `Hapus ${selectedCount} surat terpilih? Tindakan ini tidak dapat dibatalkan.`,
+   370→              },
+   371→            ]}
+   372→            onClearSelection={clearSelection}
+   373→          />
+   374→        )}
+   375→
+   376→        <Card className="shadow-sm">
+   377→          <CardContent className="p-0">
+   378→            {surats.length === 0 ? (
+   379→              <div className="py-16 text-center">
+   380→                <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   381→                <p className="text-sm text-slate-400">Belum ada surat</p>
+   382→                <p className="text-xs text-slate-400 mt-1">Klik "Surat Resmi Baru" untuk membuat</p>
+   383→              </div>
+   384→            ) : filtered.length === 0 ? (
+   385→              <div className="py-16 text-center">
+   386→                <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   387→                <p className="text-sm text-slate-400">Tidak ada surat yang cocok</p>
+   388→                <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter status</p>
+   389→              </div>
+   390→            ) : (
+   391→              <>
+   392→              <div className="max-h-[500px] overflow-y-auto">
+   393→                <table className="w-full text-sm">
+   394→                  <thead className="sticky top-0 bg-slate-50 z-10">
+   395→                    <tr className="border-b text-left text-xs text-slate-500">
+   396→                      {bulkMode && <th className="py-3 px-3 w-[40px]"><SelectCheckbox checked={isAllSelected(paginatedItems)} onChange={() => toggleAll(paginatedItems)} /></th>}
+   397→                      <th className="py-3 px-4 font-medium">Nomor Surat</th>
+   398→                      <th className="py-3 px-3 font-medium">Jenis</th>
+   399→                      <th className="py-3 px-3 font-medium">Perihal</th>
+   400→                      <th className="py-3 px-3 font-medium">Tanggal</th>
+   401→                      <th className="py-3 px-3 font-medium text-center">Status</th>
+   402→                      {!bulkMode && <th className="py-3 px-3 font-medium text-center">Aksi</th>}
+   403→                    </tr>
+   404→                  </thead>
+   405→                  <tbody>
+   406→                    {paginatedItems.map((s) => (
+   407→                      <tr key={s.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+   408→                        {bulkMode && <td className="py-2.5 px-3"><SelectCheckbox checked={isSelected(s)} onChange={() => toggle(s)} /></td>}
+   409→                        <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{s.suratNumber}</td>
+   410→                        <td className="py-2.5 px-3 text-slate-600 text-xs">{s.suratType}</td>
+   411→                        <td className="py-2.5 px-3 text-slate-600 text-xs max-w-[200px] truncate">{s.perihal || "-"}</td>
+   412→                        <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(s.issueDate)}</td>
+   413→                        <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[s.status])}>{STATUS_LABELS[s.status] || s.status}</Badge></td>
+   414→                        {!bulkMode && (
+   415→                          <td className="py-2.5 px-3">
+   416→                            <div className="flex gap-0.5 justify-center">
+   417→                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(s)}><Download className="w-3.5 h-3.5" /></Button>
+   418→                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(s)}><Edit3 className="w-3.5 h-3.5" /></Button>
+   419→                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+   420→                            </div>
+   421→                          </td>
+   422→                        )}
+   423→                      </tr>
+   424→                    ))}
+   425→                  </tbody>
+   426→                </table>
+   427→              </div>
+   428→              <Pagination
+   429→                currentPage={pageInfo.currentPage}
+   430→                totalPages={pageInfo.totalPages}
+   431→                totalItems={pageInfo.totalItems}
+   432→                startIndex={pageInfo.startIndex}
+   433→                endIndex={pageInfo.endIndex}
+   434→                hasNext={pageInfo.hasNext}
+   435→                hasPrev={pageInfo.hasPrev}
+   436→                onPageChange={goToPage}
+   437→                onNext={nextPage}
+   438→                onPrev={prevPage}
+   439→              />
+   440→              </>
+   441→            )}
+   442→          </CardContent>
+   443→        </Card>
+   444→      </div>
+   445→    );
+   446→  }
+   447→
+   448→  // ===== FORM VIEW (2-column: form left + preview right) =====
+   449→  return (
+   450→    <div className="space-y-4">
+   451→      {/* Header */}
+   452→      <div className="flex items-center justify-between">
+   453→        <div className="flex items-center gap-3">
+   454→          <Button variant="outline" size="sm" onClick={() => setView("list")} className="bg-white">
+   455→            <X className="w-4 h-4 mr-1" /> Kembali
+   456→          </Button>
+   457→          <h1 className="text-xl font-bold text-blue-900">Surat Resmi Baru</h1>
+   458→        </div>
+   459→        <Button size="sm" onClick={handleSave} className="bg-blue-900 hover:bg-blue-800">
+   460→          <Save className="w-4 h-4 mr-1" /> Simpan Surat Ke Arsip
+   461→        </Button>
+   462→      </div>
+   463→
+   464→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   465→        {/* ===== LEFT: Form ===== */}
+   466→        <Card className="shadow-sm">
+   467→          <CardContent className="p-5 space-y-3 max-h-[80vh] overflow-y-auto">
+   468→            {/* Jenis Surat + Tanggal */}
+   469→            <div className="grid grid-cols-2 gap-3">
+   470→              <div className="space-y-1.5">
+   471→                <Label className="text-xs font-semibold text-slate-600">Jenis Surat</Label>
+   472→                <Select value={form.suratType} onValueChange={(v) => setForm({ ...form, suratType: v })}>
+   473→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   474→                  <SelectContent>{SURAT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+   475→                </Select>
+   476→              </div>
+   477→              <div className="space-y-1.5">
+   478→                <Label className="text-xs font-semibold text-slate-600">Tanggal Surat</Label>
+   479→                <Input type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} className="bg-white" />
+   480→              </div>
+   481→            </div>
+   482→
+   483→            {/* Kota + Nomor */}
+   484→            <div className="grid grid-cols-2 gap-3">
+   485→              <div className="space-y-1.5">
+   486→                <Label className="text-xs font-semibold text-slate-600">Kota Penerbitan</Label>
+   487→                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="bg-white" placeholder="Jombang" />
+   488→              </div>
+   489→              <div className="space-y-1.5">
+   490→                <Label className="text-xs font-semibold text-slate-600">Nomor Surat (Otomatis/Edit)</Label>
+   491→                <Input value={form.suratNumber} onChange={(e) => setForm({ ...form, suratNumber: e.target.value })} className="bg-white" placeholder="116/SP/HAN/VII/2026" />
+   492→              </div>
+   493→            </div>
+   494→
+   495→            {/* Perihal + Lampiran */}
+   496→            <div className="grid grid-cols-2 gap-3">
+   497→              <div className="space-y-1.5">
+   498→                <Label className="text-xs font-semibold text-slate-600">Perihal</Label>
+   499→                <Input value={form.perihal} onChange={(e) => setForm({ ...form, perihal: e.target.value })} className="bg-white" placeholder="e.g. Penawaran Kerjasama Training" />
+   500→              </div>
+   501→              <div className="space-y-1.5">
+   502→                <Label className="text-xs font-semibold text-slate-600">Lampiran</Label>
+   503→                <Input value={form.lampiran} onChange={(e) => setForm({ ...form, lampiran: e.target.value })} className="bg-white" placeholder="1 Berkas" />
+   504→              </div>
+   505→            </div>
+   506→
+   507→            {/* Kepada Yth + Instansi */}
+   508→            <div className="grid grid-cols-2 gap-3">
+   509→              <div className="space-y-1.5">
+   510→                <Label className="text-xs font-semibold text-slate-600">Kepada Yth. (Nama Orang)</Label>
+   511→                <Input value={form.recipientName} onChange={(e) => setForm({ ...form, recipientName: e.target.value })} className="bg-white" placeholder="e.g. Bapak Budi Santoso" />
+   512→              </div>
+   513→              <div className="space-y-1.5">
+   514→                <Label className="text-xs font-semibold text-slate-600">Nama Instansi / Perusahaan</Label>
+   515→                <Input value={form.recipientInstansi} onChange={(e) => setForm({ ...form, recipientInstansi: e.target.value })} className="bg-white" placeholder="e.g. PT Maju Jaya" />
+   516→              </div>
+   517→            </div>
+   518→
+   519→            {/* Alamat Instansi */}
+   520→            <div className="space-y-1.5">
+   521→              <Label className="text-xs font-semibold text-slate-600">Alamat Instansi</Label>
+   522→              <Input value={form.recipientAddress} onChange={(e) => setForm({ ...form, recipientAddress: e.target.value })} className="bg-white" placeholder="e.g. Jl. Jenderal Sudirman No. 45, Jakarta" />
+   523→            </div>
+   524→
+   525→            {/* Isi Surat - Rich Text Editor */}
+   526→            <div className="space-y-1.5">
+   527→              <Label className="text-xs font-semibold text-slate-600">Isi Surat / Pesan Utama</Label>
+   528→              <RichTextEditor
+   529→                value={form.body}
+   530→                onChange={(html) => setForm({ ...form, body: html })}
+   531→                placeholder="Tulis isi surat resmi di sini..."
+   532→                minHeight={180}
+   533→              />
+   534→            </div>
+   535→
+   536→            {/* Checkboxes */}
+   537→            <div className="space-y-2 pt-1">
+   538→              <div className="flex items-center space-x-2">
+   539→                <Checkbox id="activity" checked={form.includeActivity} onCheckedChange={(v) => setForm({ ...form, includeActivity: !!v })} />
+   540→                <Label htmlFor="activity" className="text-xs font-semibold text-blue-900 cursor-pointer">SERTAKAN DETAIL KEGIATAN</Label>
+   541→              </div>
+   542→              <div className="flex items-center space-x-2">
+   543→                <Checkbox id="payment" checked={form.includePayment} onCheckedChange={(v) => setForm({ ...form, includePayment: !!v })} />
+   544→                <Label htmlFor="payment" className="text-xs font-semibold text-blue-900 cursor-pointer">SERTAKAN INFORMASI PEMBAYARAN</Label>
+   545→              </div>
+   546→            </div>
+   547→
+   548→            {/* Detail Kegiatan */}
+   549→            {form.includeActivity && (
+   550→              <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+   551→                <p className="text-xs font-semibold text-slate-500 uppercase">Detail Kegiatan</p>
+   552→                <div className="grid grid-cols-1 gap-2">
+   553→                  <div className="space-y-1"><Label className="text-[10px]">Tanggal Kegiatan</Label><Input value={form.activityDate} onChange={(e) => setForm({ ...form, activityDate: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. 4/11/18 Juli 2026" /></div>
+   554→                  <div className="space-y-1"><Label className="text-[10px]">Lokasi</Label><Input value={form.activityLocation} onChange={(e) => setForm({ ...form, activityLocation: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. Zoom Meet" /></div>
+   555→                  <div className="space-y-1"><Label className="text-[10px]">Waktu</Label><Input value={form.activityTime} onChange={(e) => setForm({ ...form, activityTime: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. 08.00 – 14.00 WITA" /></div>
+   556→                </div>
+   557→              </div>
+   558→            )}
+   559→
+   560→            {/* Informasi Pembayaran */}
+   561→            {form.includePayment && (
+   562→              <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+   563→                <p className="text-xs font-semibold text-slate-500 uppercase">Informasi Pembayaran</p>
+   564→                <div className="grid grid-cols-2 gap-2">
+   565→                  <div className="space-y-1"><Label className="text-[10px]">Total Biaya (Rp)</Label><Input type="number" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className="bg-white h-8 text-sm" placeholder="8000000" /></div>
+   566→                  <div className="space-y-1"><Label className="text-[10px]">Terbilang</Label><Input value={form.paymentAmountText} onChange={(e) => setForm({ ...form, paymentAmountText: e.target.value })} className="bg-white h-8 text-sm" placeholder="Delapan Juta Rupiah" /></div>
+   567→                  <div className="space-y-1"><Label className="text-[10px]">Booking (Rp)</Label><Input type="number" value={form.bookingAmount} onChange={(e) => setForm({ ...form, bookingAmount: e.target.value })} className="bg-white h-8 text-sm" placeholder="3000000" /></div>
+   568→                  <div className="space-y-1"><Label className="text-[10px]">Terbilang</Label><Input value={form.bookingAmountText} onChange={(e) => setForm({ ...form, bookingAmountText: e.target.value })} className="bg-white h-8 text-sm" placeholder="Tiga Juta Rupiah" /></div>
+   569→                  <div className="space-y-1"><Label className="text-[10px]">Bank</Label><Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} className="bg-white h-8 text-sm" placeholder="BNI" /></div>
+   570→                  <div className="space-y-1"><Label className="text-[10px]">No. Rekening</Label><Input value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} className="bg-white h-8 text-sm" placeholder="3023555310" /></div>
+   571→                  <div className="space-y-1 col-span-2"><Label className="text-[10px]">Atas Nama</Label><Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} className="bg-white h-8 text-sm" placeholder="PT HAFARA AQIBA NUSANTARA" /></div>
+   572→                </div>
+   573→              </div>
+   574→            )}
+   575→
+   576→            <Separator />
+   577→
+   578→            {/* Info: Header design comes from Layout Dokumen */}
+   579→            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 flex items-start gap-2">
+   580→              <SettingsIcon className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+   581→              <div className="text-xs text-blue-900">
+   582→                <p className="font-semibold">Header &amp; Footer dikelola via Layout Dokumen</p>
+   583→                <p className="text-blue-700 mt-0.5">Nama perusahaan, alamat, kontak, logo, warna header, dan footer sudah diatur di menu <strong>Layout Dokumen</strong>. Desain PDF otomatis mengikuti pengaturan tersebut.</p>
+   584→              </div>
+   585→            </div>
+   586→
+   587→            {/* Penandatangan + Status */}
+   588→            <div className="grid grid-cols-2 gap-3">
+   589→              <div className="space-y-1.5">
+   590→                <Label className="text-xs font-semibold text-slate-600">Penandatangan</Label>
+   591→                <Input value={form.signatoryName} onChange={(e) => setForm({ ...form, signatoryName: e.target.value })} className="bg-white" />
+   592→              </div>
+   593→              <div className="space-y-1.5">
+   594→                <Label className="text-xs font-semibold text-slate-600">Jabatan Penandatangan</Label>
+   595→                <Input value={form.signatoryTitle} onChange={(e) => setForm({ ...form, signatoryTitle: e.target.value })} className="bg-white" />
+   596→              </div>
+   597→            </div>
+   598→
+   599→            <div className="space-y-1.5">
+   600→              <Label className="text-xs font-semibold text-slate-600">Status Dokumen</Label>
+   601→              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   602→                <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   603→                <SelectContent>
+   604→                  <SelectItem value="DRAFT">Draft</SelectItem>
+   605→                  <SelectItem value="FINAL">Final</SelectItem>
+   606→                  <SelectItem value="ARCHIVED">Arsip</SelectItem>
+   607→                </SelectContent>
+   608→              </Select>
+   609→            </div>
+   610→          </CardContent>
+   611→        </Card>
+   612→
+   613→        {/* ===== RIGHT: Realtime Preview (uses Layout Dokumen settings) ===== */}
+   614→        <Card className="shadow-sm self-start sticky top-4">
+   615→          <CardHeader className="pb-2 bg-slate-50">
+   616→            <CardTitle className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1">
+   617→              <Eye className="w-3.5 h-3.5" /> Preview (Mengikuti Layout Dokumen)
+   618→            </CardTitle>
+   619→            <p className="text-[10px] text-slate-400">Desain header &amp; footer dari pengaturan Layout Dokumen</p>
+   620→          </CardHeader>
+   621→          <CardContent className="p-4">
+   622→            <SuratLayoutPreview form={form} layout={layoutSettings} companySettings={companySettings} />
+   623→          </CardContent>
+   624→        </Card>
+   625→      </div>
+   626→    </div>
+   627→  );
+   628→}
+   629→
+   630→// ===== Layout-driven Preview Component (matches PDF output) =====
+   631→function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layout: any; companySettings: any }) {
+   632→  const s = layout || {};
+   633→  const infoPos = s.companyInfoPosition || "inside";
+   634→  const headerBg = s.headerBgColor || "#0f234b";
+   635→  const accentLine = s.accentLineColor || "#ff8000";
+   636→  const footerBg = s.footerBgColor || "#0f234b";
+   637→  const docTitleColor = s.docTitleColor || "#0f234b";
+   638→  const footerTextColor = s.footerTextColor || "#ffffff";
+   639→  const logoColor = s.logoColor || "#ff8000";
+   640→  const logoUrl = companySettings.company_logo || "";
+   641→
+   642→  const companyNameText = s.companyNameText || companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
+   643→  const companyAddressText = s.companyAddressText || "";
+   644→  const companyContactText = s.companyContactText || "";
+   645→
+   646→  // Company info block renderer (function, not component - to avoid lint error)
+   647→  const renderCompanyInfo = (onDark: boolean) => {
+   648→    const nameColor = onDark ? "#ffffff" : (s.companyNameColor || "#0f234b");
+   649→    const addrColor = onDark ? "#dce6f5" : (s.companyAddressColor || "#64748b");
+   650→    const contactColor = onDark ? "#b4c8e6" : (s.companyContactColor || "#94a3b8");
+   651→    const nameAlign = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
+   652→    const addrAlign = s.companyAddressAlign === "left" ? "left" : s.companyAddressAlign === "center" ? "center" : "right";
+   653→    const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
+   654→    return (
+   655→      <div className="flex items-center gap-1.5 px-2 py-1">
+   656→        {/* Logo - use uploaded image if available, otherwise circle fallback */}
+   657→        <div className="shrink-0">
+   658→          {logoUrl ? (
+   659→            <img src={logoUrl} alt="Logo" style={{ maxHeight: "16px", maxWidth: "40px", objectFit: "contain" }} />
+   660→          ) : (
+   661→            <div className="rounded-full flex items-center justify-center text-white font-bold relative" style={{ width: "16px", height: "16px", backgroundColor: logoColor, fontSize: "8px" }}>
+   662→              {s.logoText || "H"}
+   663→              <div className="absolute inset-0 rounded-full" style={{ backgroundColor: headerBg, opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
+   664→            </div>
+   665→          )}
+   666→        </div>
+   667→        {/* Info */}
+   668→        <div className="flex-1 min-w-0">
+   669→          <p style={{ color: nameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: "8px", lineHeight: "1.3", textAlign: nameAlign }}>{companyNameText}</p>
+   670→          <p style={{ color: addrColor, fontSize: "5px", lineHeight: "1.3", textAlign: addrAlign }}>{companyAddressText}</p>
+   671→          <p style={{ color: contactColor, fontSize: "4.5px", lineHeight: "1.3", textAlign: contactAlign }}>{companyContactText}</p>
+   672→        </div>
+   673→      </div>
+   674→    );
+   675→  };
+   676→
+   677→  return (
+   678→    <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden shadow-md flex flex-col" style={{ maxWidth: "210px", minHeight: "297px" }}>
+   679→      {/* 1. INFO INSIDE NAVY HEADER (default - professional) */}
+   680→      {infoPos === "inside" && (
+   681→        <>
+   682→          <div style={{ background: headerBg, minHeight: "24px", padding: "0 6px", display: "flex", alignItems: "center" }}>
+   683→            {renderCompanyInfo(true)}
+   684→          </div>
+   685→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   686→        </>
+   687→      )}
+   688→
+   689→      {/* 2. INFO ABOVE + thin navy bar */}
+   690→      {infoPos === "above" && (
+   691→        <>
+   692→          {renderCompanyInfo(false)}
+   693→          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+   694→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   695→        </>
+   696→      )}
+   697→
+   698→      {/* 3. INFO BELOW: thin navy bar first, then info */}
+   699→      {infoPos === "below" && (
+   700→        <>
+   701→          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+   702→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   703→          {renderCompanyInfo(false)}
+   704→        </>
+   705→      )}
+   706→
+   707→      {/* 5. BODY */}
+   708→      <div className="px-2.5 py-2 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6 }}>
+   709→        {/* Document title (pill badge) */}
+   710→        {s.docTitleShow !== false && (
+   711→          <div className="mb-1.5" style={{ textAlign: s.docTitlePosition || "left" }}>
+   712→            <span style={{ display: "inline-block", backgroundColor: docTitleColor, color: "#fff", padding: "1px 6px", borderRadius: "8px", fontSize: "5px", fontWeight: "bold" }}>
+   713→              {s.docTitleText || form.suratType || "Surat Penawaran"}
+   714→            </span>
+   715→          </div>
+   716→        )}
+   717→
+   718→        {/* Nomor / Lampiran / Perihal */}
+   719→        <div className="space-y-0.5 mb-2">
+   720→          <div className="flex justify-between">
+   721→            <p>Nomor&nbsp;&nbsp;&nbsp;: {form.suratNumber || "—"}</p>
+   722→            <p className="text-slate-500">{form.city}, {formatDate(form.issueDate)}</p>
+   723→          </div>
+   724→          {form.lampiran && <p>Lampiran : {form.lampiran}</p>}
+   725→          <p>Perihal&nbsp;&nbsp;: {form.perihal || "—"}</p>
+   726→        </div>
+   727→
+   728→        {/* Kepada Yth */}
+   729→        <div className="space-y-0.5 mb-2">
+   730→          <p>Kepada Yth,</p>
+   731→          {form.recipientName && <p className="font-bold">{form.recipientName}</p>}
+   732→          {form.recipientInstansi && <p>{form.recipientInstansi}</p>}
+   733→          {form.recipientAddress && <p className="text-slate-600">{form.recipientAddress}</p>}
+   734→        </div>
+   735→
+   736→        {/* Isi Surat */}
+   737→        <div
+   738→          className="leading-relaxed mb-2"
+   739→          dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#cbd5e1;font-style:italic">Silakan tulis isi surat resmi Anda di form sebelah kiri...</p>' }}
+   740→        />
+   741→
+   742→        {/* Detail Kegiatan */}
+   743→        {form.includeActivity && (
+   744→          <div className="mt-1 space-y-0.5 mb-2">
+   745→            {form.activityDate && <p>Tanggal&nbsp;&nbsp;&nbsp;: {form.activityDate}</p>}
+   746→            {form.activityLocation && <p>Lokasi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityLocation}</p>}
+   747→            {form.activityTime && <p>Waktu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityTime}</p>}
+   748→          </div>
+   749→        )}
+   750→
+   751→        {/* Tanda Tangan */}
+   752→        <div className="mt-3" style={{ textAlign: s.sigPosition || "right" }}>
+   753→          <p>Hormat kami,</p>
+   754→          <div className="h-6"></div>
+   755→          {s.sigLineStyle !== "none" && (
+   756→            <div style={{
+   757→              width: "45%",
+   758→              marginLeft: s.sigPosition === "right" ? "auto" : s.sigPosition === "center" ? "auto" : "0",
+   759→              borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid",
+   760→              borderColor: s.sigLineColor || "#d1d5db",
+   761→              marginBottom: "2px",
+   762→            }} />
+   763→          )}
+   764→          <p className="font-bold" style={{ color: s.sigNameColor || "#0f234b" }}>{form.signatoryName}</p>
+   765→          <p className="text-slate-500" style={{ fontSize: "4.5px" }}>{form.signatoryTitle}</p>
+   766→        </div>
+   767→      </div>
+   768→
+   769→      {/* 6. FOOTER */}
+   770→      {s.footerShowText ? (
+   771→        <div style={{ background: footerBg, padding: "4px 8px", textAlign: "center" }}>
+   772→          <p style={{ color: footerTextColor, fontWeight: "bold", fontSize: "6px" }}>{s.footerText || "Terima Kasih!"}</p>
+   773→          {s.footerSubText && <p style={{ color: footerTextColor, fontSize: "4px", opacity: 0.8 }}>{s.footerSubText}</p>}
+   774→        </div>
+   775→      ) : (
+   776→        <div style={{ backgroundColor: footerBg, height: `${s.footerHeight || 6}px` }}></div>
+   777→      )}
+   778→    </div>
+   779→  );
+   780→}
+   781→
+   782→
