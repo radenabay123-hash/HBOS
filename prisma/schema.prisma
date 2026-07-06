@@ -43,6 +43,7 @@ model User {
   kanbanAssigned   KanbanCard[]  @relation("KanbanAssignee")
   kanbanCompleted  KanbanCard[]  @relation("KanbanCompletedBy")
   employeeProfile  EmployeeProfile?
+  dailyWorkSummaries DailyWorkSummary[]
 }
 
 model Session {
@@ -640,6 +641,32 @@ model KanbanCard {
   @@index([status])
   @@index([assigneeId])
   @@index([completedAt])
+}
+
+// ===================== DAILY WORK SUMMARY (Auto-generated from Kanban DONE cards) =====================
+
+model DailyWorkSummary {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime // the date of work (date-only, stored as midnight)
+  // Aggregated stats for the day
+  totalCompleted  Int      @default(0)
+  highPriorityCount Int    @default(0)
+  mediumPriorityCount Int  @default(0)
+  lowPriorityCount  Int    @default(0)
+  categories      String   // comma-separated list of categories worked on
+  // Structured summary content
+  summaryText     String   // auto-generated narrative summary
+  taskDetails     String   // JSON array of { title, category, priority, completedAt, description }
+  // Metadata
+  generatedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date]) // one summary per user per day
+  @@index([userId])
+  @@index([date])
 }
 
 // ===================== DOCUMENT LAYOUT (Custom design settings per document type) =====================

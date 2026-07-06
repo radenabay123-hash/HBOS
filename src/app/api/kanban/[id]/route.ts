@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ok, err, handleApi } from "@/lib/api";
+import { upsertDailyWorkSummary } from "../daily-summary/route";
 
 export const runtime = "nodejs";
 
@@ -27,13 +28,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (assigneeId != null) data.assigneeId = assigneeId || null;
     if (position != null) data.position = Number(position);
 
+    const now = new Date();
+    const wasCompleted = existing.status === "DONE";
+    const isCompleting = status === "DONE" && !wasCompleted;
+    const isUncompleting = status && status !== "DONE" && wasCompleted;
+
     // AUTO-SAVE: when card moved to DONE, record completedAt
-    if (status === "DONE" && existing.status !== "DONE") {
-      data.completedAt = new Date();
+    if (isCompleting) {
+      data.completedAt = now;
       data.completedById = user.id;
     }
     // If moved away from DONE, clear completedAt
-    if (status && status !== "DONE" && existing.status === "DONE") {
+    if (isUncompleting) {
       data.completedAt = null;
       data.completedById = null;
     }
@@ -46,7 +52,23 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         completedBy: { select: { id: true, name: true } },
       },
     });
-    return ok({ card });
+
+    // AUTO-GENERATE DAILY WORK SUMMARY when card moved to/from DONE
+    // Summary is keyed by (userId, date) so it aggregates all completed work for that day
+    try {
+      // The user who completed the work is the one whose summary gets updated
+      // If completing now: use current user; if uncompleting: use the previous completer
+      const summaryUserId = isCompleting ? user.id : (isUncompleting ? (existing.completedById || user.id) : user.id);
+      if (summaryUserId) {
+        await upsertDailyWorkSummary(summaryUserId, now);
+      }
+      // If completing for an assignee (different from completer), also update assignee's summary
+      // Actually summary is per "completer" - the person who did the work
+    } catch (e: any) {
+      console.error("Failed to upsert daily summary:", e.message);
+    }
+
+    return ok({ card, summaryGenerated: isCompleting || isUncompleting });
   });
 }
 

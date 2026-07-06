@@ -19,6 +19,7 @@ import { useDroppable, useDraggable } from "@dnd-kit/core";
 import {
   Plus, Download, Trash2, Edit3, GripVertical, CheckCircle2, Clock,
   AlertCircle, Loader2, KanbanSquare, Calendar, Flag, Save, Users, User as UserIcon,
+  ClipboardList, FileText,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatDate } from "@/lib/constants";
@@ -59,12 +60,19 @@ interface KanbanCard {
 
 export function KanbanModule({ user }: { user: SafeUser }) {
   const isOwner = user.role === ROLES.OWNER;
+  const isLeader = isOwner || user.role === ROLES.PROJECT_MANAGER;
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialog, setDialog] = useState<{ open: boolean; card: KanbanCard | null }>({ open: false, card: null });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [teamUsers, setTeamUsers] = useState<any[]>([]);
   const [filterUserId, setFilterUserId] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"board" | "summary">("board");
+  const [summaries, setSummaries] = useState<any[]>([]);
+  const [summaryFilterUser, setSummaryFilterUser] = useState<string>("");
+  const [summaryDateFrom, setSummaryDateFrom] = useState<string>("");
+  const [summaryDateTo, setSummaryDateTo] = useState<string>("");
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const [form, setForm] = useState({
     title: "", description: "", status: "TODO", priority: "MEDIUM", category: "", dueDate: "", assigneeId: "",
   });
@@ -87,6 +95,32 @@ export function KanbanModule({ user }: { user: SafeUser }) {
   }, [isOwner, filterUserId]);
 
   useEffect(() => { load(); }, [load]);
+
+  const loadSummaries = useCallback(async () => {
+    setLoadingSummary(true);
+    try {
+      const params = new URLSearchParams();
+      if (isLeader && summaryFilterUser) params.set("userId", summaryFilterUser);
+      if (summaryDateFrom) params.set("startDate", summaryDateFrom);
+      if (summaryDateTo) params.set("endDate", summaryDateTo);
+      const url = `/api/kanban/daily-summary${params.toString() ? "?" + params.toString() : ""}`;
+      const d = await api<{ summaries: any[] }>(url);
+      setSummaries(d.summaries || []);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setLoadingSummary(false); }
+  }, [isLeader, summaryFilterUser, summaryDateFrom, summaryDateTo]);
+
+  useEffect(() => { if (viewMode === "summary") loadSummaries(); }, [viewMode, loadSummaries]);
+
+  function handleDownloadSummaryPDF() {
+    const params = new URLSearchParams();
+    if (isLeader && summaryFilterUser) params.set("userId", summaryFilterUser);
+    if (summaryDateFrom) params.set("startDate", summaryDateFrom);
+    if (summaryDateTo) params.set("endDate", summaryDateTo);
+    const url = `/api/kanban/daily-summary/pdf${params.toString() ? "?" + params.toString() : ""}`;
+    window.open(url, "_blank");
+    toast.success("Laporan ringkasan harian PDF diunduh");
+  }
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(String(event.active.id));
@@ -130,7 +164,7 @@ export function KanbanModule({ user }: { user: SafeUser }) {
         body: JSON.stringify({ status: newStatus }),
       });
       if (isCompleting) {
-        toast.success(`✅ Pekerjaan "${card.title}" selesai & tersimpan otomatis!`);
+        toast.success(`✅ "${card.title}" selesai! Tersimpan ke Ringkasan Harian.`);
       }
     } catch (e: any) {
       toast.error("Gagal menyimpan: " + e.message);
@@ -203,16 +237,55 @@ export function KanbanModule({ user }: { user: SafeUser }) {
             {isOwner ? "Pantau pekerjaan semua tim. Pekerjaan selesai otomatis tersimpan." : "Kelola pekerjaan Anda dengan drag & drop. Pekerjaan selesai otomatis tersimpan."}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleDownloadReport("all")} className="bg-white">
-            <Download className="w-4 h-4 mr-1" /> Laporan PDF
-          </Button>
-          <Button size="sm" onClick={() => openCreate()} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-1" /> Tambah Pekerjaan
-          </Button>
+        <div className="flex gap-2 flex-wrap">
+          {/* View toggle */}
+          <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setViewMode("board")}
+              className={cn("px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors",
+                viewMode === "board" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600")}
+            >
+              <KanbanSquare className="w-3.5 h-3.5" /> Board
+            </button>
+            <button
+              onClick={() => setViewMode("summary")}
+              className={cn("px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors",
+                viewMode === "summary" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600")}
+            >
+              <ClipboardList className="w-3.5 h-3.5" /> Ringkasan Harian
+            </button>
+          </div>
+          {viewMode === "board" && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => handleDownloadReport("all")} className="bg-white">
+                <Download className="w-4 h-4 mr-1" /> Laporan PDF
+              </Button>
+              <Button size="sm" onClick={() => openCreate()} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-1" /> Tambah Pekerjaan
+              </Button>
+            </>
+          )}
+          {viewMode === "summary" && (
+            <Button variant="outline" size="sm" onClick={handleDownloadSummaryPDF} className="bg-white">
+              <FileText className="w-4 h-4 mr-1" /> Download PDF Evaluasi
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* Info banner: auto-summary */}
+      {viewMode === "board" && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 flex items-start gap-2">
+          <CheckCircle2 className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+          <p className="text-xs text-blue-900">
+            <strong>Auto Daily Summary:</strong> Setiap pekerjaan yang dipindah ke kolom "Selesai" akan otomatis dirangkum sebagai Daily Task harian. Lihat di tab <strong>Ringkasan Harian</strong> & download PDF untuk evaluasi.
+          </p>
+        </div>
+      )}
+
+      {/* ===== BOARD VIEW ===== */}
+      {viewMode === "board" && (
+        <>
       {/* Owner: User filter + Team summary */}
       {isOwner && teamUsers.length > 0 && (
         <>
@@ -351,6 +424,160 @@ export function KanbanModule({ user }: { user: SafeUser }) {
           ) : null}
         </DragOverlay>
       </DndContext>
+        </>
+      )}
+
+      {/* ===== SUMMARY VIEW (Ringkasan Harian) ===== */}
+      {viewMode === "summary" && (
+        <div className="space-y-4">
+          {/* Filters */}
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                  {isLeader && teamUsers.length > 0 && (
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold text-slate-600">Anggota Tim</Label>
+                      <Select value={summaryFilterUser || "all"} onValueChange={(v) => setSummaryFilterUser(v === "all" ? "" : v)}>
+                        <SelectTrigger className="bg-white h-9"><SelectValue placeholder="Semua Tim" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Tim</SelectItem>
+                          {teamUsers.map((u) => (
+                            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Dari Tanggal</Label>
+                    <Input type="date" value={summaryDateFrom} onChange={(e) => setSummaryDateFrom(e.target.value)} className="bg-white h-9" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Sampai Tanggal</Label>
+                    <Input type="date" value={summaryDateTo} onChange={(e) => setSummaryDateTo(e.target.value)} className="bg-white h-9" />
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => { setSummaryFilterUser(""); setSummaryDateFrom(""); setSummaryDateTo(""); }} className="bg-white">
+                  Reset
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Summary stats */}
+          {summaries.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Card className="shadow-sm border-blue-200">
+                <CardContent className="p-3">
+                  <p className="text-xs text-slate-500">Total Hari</p>
+                  <p className="text-xl font-bold text-blue-600">{summaries.length}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm border-green-200">
+                <CardContent className="p-3">
+                  <p className="text-xs text-slate-500">Total Pekerjaan</p>
+                  <p className="text-xl font-bold text-green-600">{summaries.reduce((s, x) => s + x.totalCompleted, 0)}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm border-amber-200">
+                <CardContent className="p-3">
+                  <p className="text-xs text-slate-500">Prioritas Tinggi</p>
+                  <p className="text-xl font-bold text-amber-600">{summaries.reduce((s, x) => s + x.highPriorityCount, 0)}</p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm border-slate-200">
+                <CardContent className="p-3">
+                  <p className="text-xs text-slate-500">Anggota Tim</p>
+                  <p className="text-xl font-bold text-slate-600">{new Set(summaries.map((s) => s.userId)).size}</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Summary list */}
+          {loadingSummary ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            </div>
+          ) : summaries.length === 0 ? (
+            <Card className="shadow-sm">
+              <CardContent className="py-12 text-center">
+                <ClipboardList className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-400">Belum ada ringkasan harian</p>
+                <p className="text-xs text-slate-400 mt-1">Pindahkan pekerjaan ke kolom "Selesai" di Kanban Board untuk membuat ringkasan otomatis</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3 max-h-[calc(100vh-380px)] overflow-y-auto pr-1">
+              {summaries.map((summary) => {
+                const dateObj = new Date(summary.date);
+                const dateStr = dateObj.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+                const userName = summary.user?.name || "Unknown";
+                const userRole = summary.user?.role ? ROLE_LABELS[summary.user.role] : "";
+                let taskDetails: any[] = [];
+                try { taskDetails = JSON.parse(summary.taskDetails); } catch {}
+                return (
+                  <Card key={summary.id} className="shadow-sm">
+                    <CardHeader className="pb-2 bg-blue-600 text-white rounded-t-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-sm">{userName}</p>
+                          <p className="text-[10px] opacity-80">{userRole}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-medium">{dateStr}</p>
+                          <p className="text-[10px] opacity-80">{summary.totalCompleted} pekerjaan selesai</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 space-y-2">
+                      {/* Stats row */}
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">
+                          Tinggi: {summary.highPriorityCount}
+                        </Badge>
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          Sedang: {summary.mediumPriorityCount}
+                        </Badge>
+                        <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
+                          Rendah: {summary.lowPriorityCount}
+                        </Badge>
+                        {summary.categories && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            {summary.categories}
+                          </Badge>
+                        )}
+                      </div>
+                      {/* Task list */}
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-slate-700">Pekerjaan yang Diselesaikan:</p>
+                        <div className="max-h-40 overflow-y-auto">
+                          {taskDetails.map((task, i) => (
+                            <div key={i} className="text-xs text-slate-600 py-0.5 border-b border-slate-50 last:border-0">
+                              <span className="text-slate-400">{i + 1}.</span>{" "}
+                              <Badge variant="outline" className={cn("text-[9px] mr-1", PRIORITY_COLORS[task.priority])}>
+                                {PRIORITY_LABELS[task.priority] || task.priority}
+                              </Badge>
+                              <span className="font-medium">{task.title}</span>
+                              {task.category && <span className="text-slate-400"> ({task.category})</span>}
+                              {task.completedAt && (
+                                <span className="text-slate-400 ml-1">
+                                  - {new Date(task.completedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialog.open} onOpenChange={(o) => setDialog({ open: o, card: dialog.card })}>

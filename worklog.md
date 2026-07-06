@@ -1358,3 +1358,84 @@ Stage Summary:
 - Copy-to-clipboard for AI responses
 - Professional UI: gradient identity card, color-coded quick prompts, clean chat bubbles
 - Accessible to all team members for content research and personal branding
+
+---
+Task ID: KANBAN-DAILY-SUMMARY
+Agent: Main (Z.ai Code)
+Task: Auto-summarize completed Kanban tasks as Daily Tasks for PDF evaluation
+
+Work Log:
+- Added DailyWorkSummary Prisma model:
+  * Fields: id, userId, date, totalCompleted, highPriorityCount, mediumPriorityCount, lowPriorityCount, categories, summaryText, taskDetails (JSON), generatedAt, updatedAt
+  * Unique constraint on (userId, date) - one summary per user per day
+  * Added relation to User model (dailyWorkSummaries)
+  * Ran bun run db:push successfully
+- Created src/app/api/kanban/daily-summary/route.ts:
+  * Exported upsertDailyWorkSummary(userId, date) helper function
+  * Function fetches all DONE cards completed by user on that date
+  * Calculates stats (total, high/medium/low priority counts, categories)
+  * Builds taskDetails JSON array with { title, description, category, priority, completedAt }
+  * Generates narrative summaryText
+  * Upserts DailyWorkSummary record (create if new, update if exists)
+  * Deletes summary if no completed cards for that day (card moved away from DONE)
+  * GET endpoint: list summaries with filters (userId, startDate, endDate)
+  * Non-owner/PM users can only see their own summaries
+- Updated src/app/api/kanban/[id]/route.ts PUT:
+  * Imported upsertDailyWorkSummary from daily-summary route
+  * When card moved to DONE (isCompleting): calls upsertDailyWorkSummary for current user
+  * When card moved away from DONE (isUncompleting): calls upsertDailyWorkSummary for previous completer
+  * Returns summaryGenerated flag in response
+- Created src/app/api/kanban/daily-summary/pdf/route.ts:
+  * GET endpoint exports summaries as professional PDF evaluation report
+  * Fetches layout settings + logo directly from DB (server-side)
+  * Reads logo file from disk, converts to base64 data URL
+  * PDF structure:
+    - Navy header with logo + company info (from SLIP_GAJI layout settings)
+    - Title: "LAPORAN RINGKASAN PEKERJAAN HARIAN"
+    - Period info + generation date + total summaries count
+    - Overall stats card (total days, total tasks, team members, priority breakdown)
+    - Per-summary cards: navy header bar (user name + role + date), stats row, task list with priority badges
+    - Footer with layout settings (footerText + footerSubText)
+    - Page numbers
+- Updated src/components/modules/kanban-module.tsx:
+  * Added view toggle: Board / Ringkasan Harian tabs
+  * Added state: viewMode, summaries, summaryFilterUser, summaryDateFrom, summaryDateTo, loadingSummary
+  * Added loadSummaries() function with filters
+  * Added handleDownloadSummaryPDF() function
+  * Board view: wrapped existing content in viewMode === "board" condition
+  * Added info banner: "Auto Daily Summary: Setiap pekerjaan yang dipindah ke kolom Selesai akan otomatis dirangkum..."
+  * Summary view includes:
+    - Filter card (Anggota Tim dropdown, Dari Tanggal, Sampai Tanggal, Reset button)
+    - Stats cards (Total Hari, Total Pekerjaan, Prioritas Tinggi, Anggota Tim)
+    - Summary list: cards with navy header (user name, role, date, total completed)
+    - Per summary: priority badges (Tinggi/Sedang/Rendah), categories badge, task list with priority labels
+    - Empty state with icon + helpful message
+    - Scrollable list (max-h calc)
+  * Updated completion toast: "✅ '{title}' selesai! Tersimpan ke Ringkasan Harian."
+  * Fixed SelectItem empty value issue (used "all" instead of "")
+- Backfilled existing DONE cards via script: generated 1 summary with 3 tasks
+- Verified with Agent Browser:
+  * Board view: toggle works, info banner visible
+  * Ringkasan Harian view: shows 2 summaries (3 tasks + 1 task = 4 total)
+  * Auto-summary: moved TODO card to DONE via API → summaryGenerated: true → new summary appeared in Ringkasan Harian
+  * PDF export: GET /api/kanban/daily-summary/pdf 200 (723ms, 551ms)
+  * VLM confirmed PDF: "header navy dengan logo dan info perusahaan terlihat, ada ringkasan per user per tanggal, list pekerjaan terlihat jelas, layout profesional"
+  * 0 errors after fresh browser session
+
+Stage Summary:
+- Kanban Board now auto-generates Daily Work Summaries when cards are moved to "Selesai"
+- Each summary aggregates all completed tasks per user per day with structured data:
+  * Total completed count
+  * Priority breakdown (high/medium/low)
+  * Categories worked on
+  * Full task details (title, description, category, priority, completion time)
+  * Narrative summary text
+- Summaries can be viewed in "Ringkasan Harian" tab with filters (user, date range)
+- PDF export generates professional evaluation report with:
+  * Company header (logo + info from Layout Dokumen settings)
+  * Overall stats
+  * Per-user per-day detailed summary cards
+  * Task lists with priority badges
+  * Professional footer
+- Kanban board can be refreshed daily - summaries accumulate for evaluation
+- Feature available to all roles (non-leaders see only their own summaries)
