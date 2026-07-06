@@ -2075,3 +2075,63 @@ Stage Summary:
 - API uses upsert pattern — impossible to create duplicates
 - DB cleaned: 24 configs → 4 configs
 - UI clean and practical: 4 cards with Edit, no Add button, integration info visible
+
+---
+Task ID: IMPORT-DATA-SYSTEM
+Agent: Main (Z.ai Code)
+Task: Build Import Data system with AI auto-mapping for Google Sheets/Excel import
+
+Work Log:
+- Created 3 reusable hooks earlier: use-pagination, use-bulk-select, use-search-filter
+- Analyzed user's CSV file: "HafaraGroup Project - payroll_records.csv"
+  * 9 rows of payroll data (months 5 & 6, year 2026)
+  * 12 columns: id, username, employeeName, month, year, basicSalary, allowances, deductions, netSalary, status, paidAt, notes
+  * 5 employees: M. Aqil Baihaqi (existing), Muhammad Badar Haula Abdi, Cinta Azzaria, Istiana Agu Saputri, Ade Ayu Saputri (4 new)
+- Created API /api/import/analyze/route.ts:
+  * Uses z-ai-web-dev-sdk (LLM) to analyze CSV headers + sample data
+  * AI identifies which HBOS module the data belongs to (PAYROLL, CRM_CLIENT, INVOICE, FINANCE_TRANSACTION, USER, ABSENSI)
+  * AI suggests field mapping: { csvColumn: hbosField }
+  * AI identifies user matching column
+  * Returns: suggestedModule, moduleName, fieldMapping, userMatchingColumn, userMatching, preview, stats
+  * Fallback rule-based analysis if AI unavailable
+  * User matching: matches CSV values to existing HBOS users by name/email
+- Created API /api/import/execute/route.ts:
+  * Executes import based on confirmed mapping
+  * Auto-creates new users with sensible defaults (email = username@hafara.com, role = ASSISTANT_TRAINER, password = password123)
+  * Uses userMatchingColumn to resolve userId from userLookup (not from fieldMapping)
+  * invertMapping() helper: converts { csvCol: hbosField } → { hbosField: csvCol } for easy lookup
+  * parseDate() helper: handles Excel serial numbers (e.g., 46188 → 2026-06-15), ISO strings, date strings
+  * Supports 6 modules: PAYROLL, CRM_CLIENT, INVOICE, FINANCE_TRANSACTION, USER, ABSENSI
+  * Upsert pattern for Payroll (unique constraint: userId + month + year)
+  * Returns detailed result: success/failed/skipped counts, newUsers, errors, per-row details
+- Created Import Data module (src/components/modules/import-data-module.tsx):
+  * 5-step wizard: Upload → AI Analysis → Review & Mapping → Import → Done
+  * Step 1: Drag & drop or click to upload CSV/Excel file
+  * Step 2: AI analyzing animation with Sparkles icon
+  * Step 3: Review & Mapping:
+    - AI suggestion card with module badge, matched fields count, new users count
+    - Module selector dropdown (can override AI suggestion)
+    - User Matching section: shows CSV value → matched user or "new user", with dropdown to assign existing user
+    - Field Mapping table: each CSV column → HBOS field dropdown (can adjust)
+    - Data Preview table: 10 rows of mapped data
+  * Step 4: Importing animation
+  * Step 5: Result with success/failed/skipped/newUsers counts, error details, success details table
+  * Uses XLSX library to parse CSV/Excel on client side
+- Added "Import Data" menu to sidebar (Database icon, Owner only)
+- Added routing in page.tsx: case "importdata" → <ImportDataModule />
+- Verified with real CSV data:
+  * AI correctly detected: PAYROLL module, userMatchingColumn = "username"
+  * AI mapped 10/12 fields correctly (id and employeeName unmapped)
+  * Import executed: 9/9 rows success, 0 failed, 0 skipped, 4 new users created
+  * DB verified: 4 new users (Muhammad Badar Haula Abdi, Cinta Azzaria, Istiana Agu Saputri, Ade Ayu Saputri) + 9 payroll records (months 5 & 6, 2026)
+  * Payroll module shows 15 total slip gaji (6 seed + 9 imported)
+  * 0 errors, lint clean
+
+Stage Summary:
+- Import Data system WORKING with AI auto-mapping
+- User's real Google Sheets payroll data successfully imported: 9 records, 4 new employees
+- AI automatically: detected module (PAYROLL), mapped 10 fields, identified user matching column
+- Auto-created 4 new users with default credentials (password123, email = username@hafara.com)
+- Future imports: user just uploads CSV/Excel → AI detects → user reviews → import
+- Supports 6 modules: PAYROLL, CRM_CLIENT, INVOICE, FINANCE_TRANSACTION, USER, ABSENSI
+- User can override AI suggestions (change module, adjust field mapping, assign existing users)

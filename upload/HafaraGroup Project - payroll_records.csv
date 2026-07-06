@@ -1,0 +1,10 @@
+id,username,employeeName,month,year,basicSalary,allowances,deductions,netSalary,status,paidAt,notes
+4bc75ee6-08f5-4715-b8ce-b86062ae1c6f,badar_asisten,Muhammad Badar Haula Abdi,5,2026,1700000,0,0,1700000,Paid,2026-06-15,
+4494eb09-b642-4789-aab7-f257a1c307a2,cinta_marketing,Cinta Azzaria ,5,2026,1500000,0,0,1500000,Paid,2026-06-15,
+897d0091-7066-4e45-85fa-d003108e2eb8,istiana_creative,Istiana Agu Saputri,5,2026,1500000,0,0,1500000,Paid,2026-06-15,
+abfc9dad-c5c8-4d86-9aa3-fd71341a2069,ayu_project,Ade Ayu Saputri,5,2026,1500000,0,0,1500000,Paid,2026-06-15,
+46e4dab1-57f8-4c65-8ad5-3e1d1f26f636,owner,M. Aqil Baihaqi,5,2026,4500000,0,0,4500000,Paid,2026-06-15,
+3c2bf1e2-40f9-42e4-bd3b-d399c5b52bd2,badar_asisten,Muhammad Badar Haula Abdi,6,2026,1500000,0,0,1500000,Paid,,
+873b1123-1279-45b0-8967-ae4023a89a60,cinta_marketing,Cinta Azzaria ,6,2026,1500000,0,0,1500000,Paid,,
+0bf6e275-8909-475c-ac08-4af67f5ebab6,istiana_creative,Istiana Agu Saputri,6,2026,1500000,0,0,1500000,Paid,,
+3d99d9b3-662b-4f3e-9e50-042a4371e119,ayu_project,Ade Ayu Saputri,6,2026,1500000,0,0,1500000,Paid,,

@@ -27,6 +27,7 @@ import { SuratModule } from "@/components/modules/surat-module";
 import { KanbanModule } from "@/components/modules/kanban-module";
 import { BiodataModule } from "@/components/modules/biodata-module";
 import { AiMasterContentModule } from "@/components/modules/ai-master-content-module";
+import { ImportDataModule } from "@/components/modules/import-data-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -146,6 +147,8 @@ export default function Home() {
         return <BiodataModule user={user} />;
       case "aimaster":
         return <AiMasterContentModule user={user} />;
+      case "importdata":
+        return <ImportDataModule />;
       default:
         return null;
     }
