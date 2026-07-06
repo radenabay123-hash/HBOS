@@ -28,6 +28,7 @@ import { KanbanModule } from "@/components/modules/kanban-module";
 import { BiodataModule } from "@/components/modules/biodata-module";
 import { AiMasterContentModule } from "@/components/modules/ai-master-content-module";
 import { ImportDataModule } from "@/components/modules/import-data-module";
+import { SubscriptionManagerModule } from "@/components/modules/subscription-manager-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -149,6 +150,8 @@ export default function Home() {
         return <AiMasterContentModule user={user} />;
       case "importdata":
         return <ImportDataModule />;
+      case "subscriptions":
+        return <SubscriptionManagerModule />;
       default:
         return null;
     }

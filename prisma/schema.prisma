@@ -44,6 +44,46 @@ model User {
   kanbanCompleted  KanbanCard[]  @relation("KanbanCompletedBy")
   employeeProfile  EmployeeProfile?
   dailyWorkSummaries DailyWorkSummary[]
+  subscriptions    Subscription[]  @relation("UserSubscriptions")
+}
+
+// ===================== SUBSCRIPTION MANAGER (Owner only) =====================
+
+model Subscription {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   @default("Pribadi") // Pribadi, Team Kerja, Operasional, dll
+  amount      Float    // biaya per bulan
+  dueDay      Int      @default(1) // tanggal jatuh tempo setiap bulan (1-31)
+  description String?
+  isActive    Boolean  @default(true)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation("UserSubscriptions", fields: [ownerId], references: [id], onDelete: Cascade)
+  payments    SubscriptionPayment[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model SubscriptionPayment {
+  id              String   @id @default(cuid())
+  subscriptionId  String
+  year            Int
+  month           Int      // 1-12
+  isPaid          Boolean  @default(false)
+  paidAt          DateTime?
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, year, month])
+  @@index([year, month])
+  @@index([isPaid])
 }
 
 model Session {
