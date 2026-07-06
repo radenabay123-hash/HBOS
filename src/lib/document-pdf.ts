@@ -290,118 +290,150 @@ function renderInvoiceContent(doc: jsPDF, content: DocumentContent, body: Layout
   const margin = body.x;
   let y = body.y;
   const contentWidth = body.w;
+  const NAVY: [number, number, number] = [15, 35, 75]; // #0f234b
+  const SLATE: [number, number, number] = [100, 116, 139];
+  const DARK: [number, number, number] = [51, 65, 85];
+  const BORDER: [number, number, number] = [226, 232, 240];
 
-  // Invoice info + status
+  // Invoice info (left) + details (right) — 2 column header
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 116, 139);
-  doc.text("No. Invoice:", 210 - margin - 55, y);
+  // Left: "DITAGIHKAN KEPADA"
+  doc.setTextColor(...NAVY);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(51, 65, 85);
-  doc.text(content.invoiceNumber || "", 210 - margin, y, { align: "right" });
+  doc.text("DITAGIHKAN KEPADA", margin, y);
   y += 5;
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 116, 139);
-  doc.text("Tanggal:", 210 - margin - 55, y);
-  doc.setTextColor(51, 65, 85);
-  doc.text(content.issueDate || "", 210 - margin, y, { align: "right" });
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...DARK);
+  doc.text(content.clientName || "", margin, y);
   y += 5;
-  // Status badge
-  const statusColor = content.status === "PAID" ? [34, 197, 94] : content.status === "CANCELLED" ? [239, 68, 68] : [251, 191, 36];
-  doc.setFillColor(...statusColor as [number, number, number]);
-  doc.roundedRect(210 - margin - 30, y - 3, 30, 5.5, 1, 1, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.text(content.status || "PENDING", 210 - margin - 15, y + 0.5, { align: "center" });
-  y += 10;
-
-  // Client info card
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, y, contentWidth, 18, 1.5, 1.5, "S");
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(30, 58, 138);
-  doc.text("DITAGIHKAN KEPADA", margin + 4, y + 5);
-  doc.setFontSize(10);
-  doc.text(content.clientName || "", margin + 4, y + 10);
   if (content.clientAddress) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setTextColor(100, 116, 139);
-    const addrLines = doc.splitTextToSize(content.clientAddress, contentWidth - 8);
-    doc.text(addrLines.slice(0, 2), margin + 4, y + 14);
+    doc.setTextColor(...SLATE);
+    const addrLines = doc.splitTextToSize(content.clientAddress, contentWidth * 0.55);
+    doc.text(addrLines.slice(0, 2), margin, y);
+    y += addrLines.slice(0, 2).length * 4;
   }
-  y += 22;
 
-  // Items table
-  doc.setFillColor(30, 58, 138);
-  doc.roundedRect(margin, y, contentWidth, 8, 1.5, 1.5, "F");
+  // Right: Invoice number + date + status (aligned right)
+  const rightX = 210 - margin;
+  let rightY = body.y;
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...SLATE);
+  doc.text("No. Invoice:", rightX - 60, rightY);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...DARK);
+  doc.text(content.invoiceNumber || "", rightX, rightY, { align: "right" });
+  rightY += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...SLATE);
+  doc.text("Tanggal:", rightX - 60, rightY);
+  doc.setTextColor(...DARK);
+  doc.text(content.issueDate || "", rightX, rightY, { align: "right" });
+  rightY += 5;
+  // Status badge
+  const statusColor = content.status === "PAID" ? [34, 197, 94] : content.status === "CANCELLED" ? [239, 68, 68] : [251, 191, 36];
+  doc.setFillColor(...statusColor as [number, number, number]);
+  doc.roundedRect(rightX - 35, rightY - 3, 35, 6, 1, 1, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(7);
+  doc.setFont("helvetica", "bold");
+  doc.text(content.status || "PENDING", rightX - 17.5, rightY + 1, { align: "center" });
+
+  y = Math.max(y, rightY) + 10;
+
+  // Items table — professional with proper column widths
+  // Header row
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(margin, y, contentWidth, 9, 1.5, 1.5, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("DESKRIPSI", margin + 4, y + 5.5);
-  doc.text("QTY", margin + contentWidth * 0.6, y + 5.5, { align: "center" });
-  doc.text("HARGA", margin + contentWidth * 0.78, y + 5.5, { align: "center" });
-  doc.text("TOTAL", 210 - margin - 4, y + 5.5, { align: "right" });
-  y += 8;
+  doc.text("DESKRIPSI", margin + 4, y + 6);
+  doc.text("QTY", margin + contentWidth * 0.58, y + 6, { align: "center" });
+  doc.text("HARGA SATUAN", margin + contentWidth * 0.75, y + 6, { align: "center" });
+  doc.text("TOTAL", rightX - 4, y + 6, { align: "right" });
+  y += 9;
 
+  // Data rows
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(51, 65, 85);
+  doc.setFontSize(9);
   for (let i = 0; i < (content.items || []).length; i++) {
     const item = content.items![i];
-    if (i % 2 === 0) { doc.setFillColor(239, 246, 255); doc.rect(margin, y, contentWidth, 8, "F"); }
-    doc.text(item.description, margin + 4, y + 5.5);
-    doc.text(String(item.qty), margin + contentWidth * 0.6, y + 5.5, { align: "center" });
-    doc.text(`Rp ${item.price.toLocaleString("id-ID")}`, margin + contentWidth * 0.78, y + 5.5, { align: "center" });
-    doc.text(`Rp ${item.total.toLocaleString("id-ID")}`, 210 - margin - 4, y + 5.5, { align: "right" });
-    y += 8;
+    const rowH = 10;
+    if (i % 2 === 0) { doc.setFillColor(245, 247, 250); doc.rect(margin, y, contentWidth, rowH, "F"); }
+    doc.setTextColor(...DARK);
+    doc.text(item.description, margin + 4, y + 6);
+    doc.setTextColor(...SLATE);
+    doc.text(String(item.qty), margin + contentWidth * 0.58, y + 6, { align: "center" });
+    doc.text(`Rp ${item.price.toLocaleString("id-ID")}`, margin + contentWidth * 0.75, y + 6, { align: "center" });
+    doc.setTextColor(...DARK);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Rp ${item.total.toLocaleString("id-ID")}`, rightX - 4, y + 6, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    y += rowH;
   }
-  doc.setDrawColor(226, 232, 240);
-  doc.line(margin, y, 210 - margin, y);
-  y += 8;
+  // Table bottom border
+  doc.setDrawColor(...BORDER);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, rightX, y);
+  y += 10;
 
-  // Summary
-  const summaryW = 70;
-  const summaryX = 210 - margin - summaryW;
+  // Summary (right-aligned, professional)
+  const summaryW = 75;
+  const summaryX = rightX - summaryW;
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 116, 139);
+  doc.setTextColor(...SLATE);
   doc.text("Subtotal", summaryX, y);
-  doc.setTextColor(51, 65, 85);
-  doc.text(`Rp ${(content.subtotal || 0).toLocaleString("id-ID")}`, 210 - margin, y, { align: "right" });
+  doc.setTextColor(...DARK);
+  doc.text(`Rp ${(content.subtotal || 0).toLocaleString("id-ID")}`, rightX, y, { align: "right" });
   y += 6;
   if (content.discount && content.discount > 0) {
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(...SLATE);
     doc.text("Diskon", summaryX, y);
-    doc.text(`- Rp ${content.discount.toLocaleString("id-ID")}`, 210 - margin, y, { align: "right" });
+    doc.text(`- Rp ${content.discount.toLocaleString("id-ID")}`, rightX, y, { align: "right" });
     y += 6;
   }
-  // Total box
-  doc.setFillColor(30, 58, 138);
-  doc.roundedRect(summaryX, y, summaryW, 9, 1.5, 1.5, "F");
+  if (content.tax && content.tax > 0) {
+    doc.setTextColor(...SLATE);
+    doc.text("Pajak", summaryX, y);
+    doc.text(`Rp ${content.tax.toLocaleString("id-ID")}`, rightX, y, { align: "right" });
+    y += 6;
+  }
+  // Total box (navy, prominent)
+  doc.setFillColor(...NAVY);
+  doc.roundedRect(summaryX, y, summaryW, 11, 1.5, 1.5, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("TOTAL", summaryX + 4, y + 6);
-  doc.text(`Rp ${(content.totalAmount || 0).toLocaleString("id-ID")}`, 210 - margin - 4, y + 6, { align: "right" });
-  y += 15;
+  doc.text("TOTAL", summaryX + 5, y + 7);
+  doc.setFontSize(10);
+  doc.text(`Rp ${(content.totalAmount || 0).toLocaleString("id-ID")}`, rightX - 5, y + 7, { align: "right" });
+  y += 17;
 
-  // Payment info
+  // Payment info (card with light background)
   if (content.bankName) {
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(margin, y, contentWidth, 12, 1.5, 1.5, "FD");
-    doc.setFontSize(7.5);
+    doc.setDrawColor(...BORDER);
+    doc.roundedRect(margin, y, contentWidth, 14, 2, 2, "FD");
+    doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 58, 138);
+    doc.setTextColor(...NAVY);
     doc.text("PEMBAYARAN VIA TRANSFER", margin + 4, y + 5);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.setTextColor(51, 65, 85);
-    doc.text(`${content.bankName} — ${content.bankAccount} — ${content.accountName}`, margin + 4, y + 9);
-    y += 17;
+    doc.setFontSize(8.5);
+    doc.setTextColor(...DARK);
+    doc.text(`${content.bankName}  —  ${content.bankAccount}  —  ${content.accountName}`, margin + 4, y + 10);
+    y += 19;
   }
+
+  // Terms & conditions (if space allows)
+  y += 2;
 
   // Signature
   if (sig) {
@@ -409,11 +441,11 @@ function renderInvoiceContent(doc: jsPDF, content: DocumentContent, body: Layout
     let sigY = sig.y + 5;
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(51, 65, 85);
+    doc.setTextColor(...DARK);
     doc.text("Hormat kami,", sigX, sigY);
     sigY += 22;
     if (sig.lineStyle !== "none") {
-      doc.setDrawColor(...hexToRgb(sig.lineColor || "#d1d5db"));
+      doc.setDrawColor(...hexToRgb(sig.lineColor || "#94a3b8"));
       doc.setLineWidth(0.3);
       if (sig.lineStyle === "dashed") doc.setLineDashPattern([1, 0.5], 0);
       doc.line(sigX, sigY, sigX + sig.w, sigY);
@@ -421,11 +453,11 @@ function renderInvoiceContent(doc: jsPDF, content: DocumentContent, body: Layout
     }
     sigY += 4;
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(...hexToRgb(sig.color || "#1e3a8a"));
+    doc.setTextColor(...hexToRgb(sig.color || "#0f234b"));
     doc.text(content.directorName || "", sigX, sigY);
     sigY += 5;
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(100, 116, 139);
+    doc.setTextColor(...SLATE);
     doc.setFontSize(8);
     doc.text(content.directorTitle || "", sigX, sigY);
   }

@@ -2769,3 +2769,53 @@ Stage Summary:
 - PDF generators read element positions → preview = download, GUARANTEED
 - Backward compatible: old form settings still work if no elements saved
 - 3 document types supported: Surat, Invoice, Slip Gaji
+
+---
+Task ID: INVOICE-PROFESSIONAL-REDESIGN
+Agent: Main (Z.ai Code)
+Task: Redesign invoice layout to match professional reference (inv 2.jpg)
+
+Work Log:
+- Analyzed reference invoice (inv 2.jpg) with VLM:
+  * Header: 38mm tall navy (#0f234b)
+  * Logo: 20mm, left side, vertically centered
+  * Company info: right-aligned, white text on navy
+  * Title "INVOICE": 24pt, centered, bold, navy color
+  * Table: proper column proportions (Deskripsi 58%, QTY center, Harga center, Total right)
+  * Summary: right-aligned with navy total box
+  * Signature: right bottom with solid line
+  * Footer: navy with accent line
+- Updated document-elements.ts:
+  * Split getDefaultLayout into getInvoiceLayout (special) and getStandardLayout (surat/slip)
+  * INVOICE layout: header 38mm, logo 20mm, title 24pt centered, body starts at 75mm, signature at 248mm
+  * SURAT/SLIP_GAJI: standard 28mm header, dynamic text positioning
+- Updated document-pdf.ts renderInvoiceContent:
+  * 2-column header: "DITAGIHKAN KEPADA" (left) + invoice details (right)
+  * Navy (#0f234b) table header with "DESKRIPSI / QTY / HARGA SATUAN / TOTAL"
+  * Alternating row colors (light gray)
+  * Summary with subtotal/diskon/pajak/total in navy box
+  * Payment info card with light background
+  * Signature with solid line (not dashed)
+  * Proper spacing (10mm between sections)
+- VLM comparison: 7/10 similarity with reference
+  * Header/logo/info: mirip ✓
+  * Title INVOICE: besar dan profesional ✓
+  * Table items: rapi dan proporsional ✓
+  * Summary/total box: profesional ✓
+  * Differences: orange accent line (not in reference), no signature image (just line)
+- 0 errors, lint clean
+
+Stage Summary:
+- Invoice layout redesigned to match professional reference
+- Key improvements:
+  1. Header 38mm (taller, more prominent)
+  2. Logo 20mm (bigger)
+  3. Title "INVOICE" 24pt centered (matches reference)
+  4. 2-column header (client left, invoice details right)
+  5. Table with "HARGA SATUAN" label (more professional)
+  6. Navy total box (#0f234b, not #1e3a8a)
+  7. Proper 10mm spacing between sections
+  8. Solid signature line (not dashed)
+  9. Payment info card with border
+- Drag & Drop Editor: users can further adjust positions
+- PDF download uses element positions → preview = download guaranteed
