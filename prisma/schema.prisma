@@ -49,6 +49,17 @@ model User {
 
 // ===================== SUBSCRIPTION MANAGER (Owner only) =====================
 
+model RoleResponsibility {
+  id          String   @id @default(cuid())
+  role        String   // OWNER, PROJECT_MANAGER, ASSISTANT_TRAINER, etc.
+  title       String   // The responsibility text
+  order       Int      @default(0) // for sorting
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([role])
+}
+
 model Subscription {
   id          String   @id @default(cuid())
   name        String

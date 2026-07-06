@@ -33,17 +33,24 @@ export function TeamDashboard() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [data, setData] = useState<any>(null);
   const [kpiScore, setKpiScore] = useState<any>(null);
+  const [myResponsibilities, setMyResponsibilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
     setLoading(true);
     try {
-      const [d, kpi] = await Promise.all([
+      const [d, kpi, resp] = await Promise.all([
         api(`/api/dashboard/team?year=${year}&month=${month}`),
         api<{ score: any }>("/api/kpi/score").catch(() => ({ score: null })),
+        api<{ grouped: Record<string, any[]> }>("/api/role-responsibilities").catch(() => ({ grouped: {} })),
       ]);
       setData(d);
       setKpiScore(kpi.score);
+      // Set current user's role responsibilities
+      const userRole = d.user?.role || data?.user?.role;
+      if (userRole && resp.grouped) {
+        setMyResponsibilities(resp.grouped[userRole] || []);
+      }
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat dashboard");
     } finally {
@@ -106,6 +113,27 @@ export function TeamDashboard() {
           </div>
         </div>
       </div>
+
+      {/* My Responsibilities */}
+      {myResponsibilities.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-blue-600" /> Tanggung Jawab Saya ({u.roleLabel})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {myResponsibilities.map((r: any, i: number) => (
+                <div key={r.id} className="flex items-start gap-2 p-1.5 rounded-md bg-white border border-blue-100">
+                  <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0 mt-0.5" />
+                  <span className="text-xs text-slate-700">{r.title}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Today's overview */}
       <div>
