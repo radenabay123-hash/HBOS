@@ -40,7 +40,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -613,34 +612,32 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
             </div>
           ) : (
             <>
-            <ScrollArea className="max-h-[600px]">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
                     {bulkMode && (
-                      <TableHead className="w-[40px]">
+                      <TableHead className="w-[40px] sticky left-0 bg-slate-50/50 z-10">
                         <SelectCheckbox
                           checked={isAllDocsSelected(paginatedDocs)}
                           onChange={() => toggleAllDocs(paginatedDocs)}
                         />
                       </TableHead>
                     )}
-                    <TableHead className="min-w-[200px]">Nama Dokumen</TableHead>
-                    <TableHead className="min-w-[120px]">Tipe</TableHead>
-                    <TableHead className="min-w-[140px]">Nomor</TableHead>
-                    <TableHead className="min-w-[160px]">Klien</TableHead>
-                    <TableHead className="text-center min-w-[80px]">Link</TableHead>
-                    <TableHead className="min-w-[200px]">Keterangan</TableHead>
-                    <TableHead className="min-w-[140px]">Diunggah Oleh</TableHead>
-                    <TableHead className="min-w-[120px]">Tanggal</TableHead>
-                    {!bulkMode && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+                    <TableHead className="min-w-[160px]">Dokumen</TableHead>
+                    <TableHead className="min-w-[90px]">Tipe</TableHead>
+                    <TableHead className="min-w-[120px]">Klien</TableHead>
+                    <TableHead className="min-w-[160px]">Keterangan</TableHead>
+                    <TableHead className="min-w-[100px]">Diunggah</TableHead>
+                    <TableHead className="min-w-[80px]">Tanggal</TableHead>
+                    {!bulkMode && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedDocs.map((d) => (
                     <TableRow key={d.id} className="hover:bg-slate-50/50">
                       {bulkMode && (
-                        <TableCell>
+                        <TableCell className="sticky left-0 bg-white z-10">
                           <SelectCheckbox
                             checked={isDocSelected(d)}
                             onChange={() => toggleDoc(d)}
@@ -649,85 +646,64 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                       )}
                       <TableCell>
                         <div className="font-medium text-slate-900">{d.documentName}</div>
+                        {d.documentNumber && <div className="text-xs text-slate-500">{d.documentNumber}</div>}
+                        <a
+                          href={d.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 mt-0.5"
+                          title="Buka dokumen"
+                        >
+                          <ExternalLink className="w-3 h-3" /> Buka Link
+                        </a>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={docTypeColor(d.documentType)}>
                           {docTypeLabel(d.documentType)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-700">{d.documentNumber || "-"}</TableCell>
-                      <TableCell className="text-slate-700">
-                        {d.client?.namaKlien || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-center">
-                          <a
-                            href={d.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
-                            title="Buka dokumen"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-slate-600 max-w-[240px]">
-                        <div className="truncate" title={d.description || ""}>
+                      <TableCell className="text-slate-700 text-sm">{d.client?.namaKlien || "-"}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">
+                        <div className="truncate max-w-[200px]" title={d.description || ""}>
                           {d.description || "-"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-slate-700">
-                        {d.uploadedBy?.name || "-"}
-                      </TableCell>
-                      <TableCell className="text-slate-700">
-                        {formatDate(d.createdAt)}
-                      </TableCell>
-                      {canDelete && !bulkMode && (
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
+                      <TableCell className="text-slate-700 text-sm whitespace-nowrap">{d.uploadedBy?.name || "-"}</TableCell>
+                      <TableCell className="text-slate-700 text-xs whitespace-nowrap">{formatDate(d.createdAt)}</TableCell>
+                      {!bulkMode && (
+                        <TableCell className="sticky right-0 bg-white z-10">
+                          <div className="flex items-center justify-center gap-0.5">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                               onClick={() => setPreviewDialog({ open: true, item: d })}
                               title="Preview Dokumen"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                              onClick={() => openEdit(d)}
-                              title="Edit Dokumen"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-rose-600"
-                              onClick={() => setDeleteId(d.id)}
-                              title="Hapus Dokumen"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      )}
-                      {!canDelete && !bulkMode && (
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
-                              onClick={() => setPreviewDialog({ open: true, item: d })}
-                              title="Preview Dokumen"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                            {canDelete && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+                                  onClick={() => openEdit(d)}
+                                  title="Edit Dokumen"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-rose-600 hover:bg-rose-50"
+                                  onClick={() => setDeleteId(d.id)}
+                                  title="Hapus Dokumen"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       )}
@@ -735,7 +711,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
             <Pagination
               currentPage={docPageInfo.currentPage}
               totalPages={docPageInfo.totalPages}
