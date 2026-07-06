@@ -5,6 +5,7 @@ import {
   Film, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
   Loader2, CheckCircle2, Clock, AlertCircle, Globe, Link2,
   Check, X, MessageSquare, Eye, BarChart3, Calendar,
+  Search, CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,11 @@ import {
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface ContentUser { id: string; name: string; role: string; }
 interface MetrikKonten {
@@ -96,6 +102,8 @@ export function ContentModule({ user }: { user: SafeUser }) {
   const [kategoriFilter, setKategoriFilter] = useState<string>("all");
   const [accFilter, setAccFilter] = useState<string>("all");
   const [tab, setTab] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -126,9 +134,56 @@ export function ContentModule({ user }: { user: SafeUser }) {
   useEffect(() => { loadIdeas(); }, [loadIdeas]);
 
   const filtered = useMemo(() => {
-    if (tab === "all") return ideas;
-    return ideas.filter((i) => i.statusACC === tab);
-  }, [ideas, tab]);
+    let r = ideas;
+    if (tab !== "all") r = r.filter((i) => i.statusACC === tab);
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((i) =>
+        (i.judul || "").toLowerCase().includes(q) ||
+        (i.kategori || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [ideas, tab, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect({ getId: (i: ContentIdea) => i.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, tab, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} ide konten terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/content-ideas/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadIdeas();
+    if (failed === 0) {
+      toast.success(`${success} ide konten berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   const stats = useMemo(() => {
     const total = ideas.length;
@@ -380,8 +435,59 @@ export function ContentModule({ user }: { user: SafeUser }) {
               <TabsTrigger value="REVISI" className="text-xs">Revisi</TabsTrigger>
             </TabsList>
           </Tabs>
+
+          {/* Search + Bulk select toggle */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari judul atau kategori..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                if (bulkMode) clearSelection();
+              }}
+              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} ide konten terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
 
       {/* Cards Grid */}
       {loading ? (
@@ -392,29 +498,35 @@ export function ContentModule({ user }: { user: SafeUser }) {
         <Card className="border-dashed border-slate-300">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center px-4">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-              <Film className="w-7 h-7 text-slate-400" />
+              <Search className="w-7 h-7 text-slate-400" />
             </div>
-            <p className="text-slate-700 font-medium">Belum ada ide konten</p>
+            <p className="text-slate-700 font-medium">Tidak ada konten yang cocok</p>
             <p className="text-sm text-slate-500 mt-1">
-              {tab !== "all" || kategoriFilter !== "all" || accFilter !== "all"
-                ? "Tidak ada konten yang cocok dengan filter."
-                : "Mulai ajukan ide konten pertama Anda."}
+              Coba ubah kata kunci pencarian atau filter.
             </p>
-            <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
-              <Plus className="w-4 h-4" /> Tambah Ide Konten
-            </Button>
           </CardContent>
         </Card>
       ) : (
+        <>
         <div className="max-h-[700px] overflow-y-auto pr-1 -mr-1">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((idea) => {
+            {paginatedItems.map((idea) => {
               const m = parseMetrik(idea.metrikKonten);
               const canEdit = isOwner || idea.userId === user.id;
               const isPublished = idea.statusPublish === "PUBLISHED";
               return (
                 <Card key={idea.id} className="border-slate-200 hover:shadow-md transition-shadow flex flex-col">
                   <CardContent className="p-4 flex flex-col gap-3 flex-1">
+                    {/* Bulk checkbox (when in bulk mode) */}
+                    {bulkMode && (
+                      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                        <SelectCheckbox
+                          checked={isSelected(idea)}
+                          onChange={() => toggle(idea)}
+                        />
+                        <span className="text-xs text-slate-500">Pilih konten ini</span>
+                      </div>
+                    )}
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex flex-wrap gap-1.5">
@@ -567,6 +679,23 @@ export function ContentModule({ user }: { user: SafeUser }) {
             })}
           </div>
         </div>
+        <Card className="border-slate-200">
+          <CardContent className="p-0">
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+          </CardContent>
+        </Card>
+        </>
       )}
 
       {/* Add/Edit Dialog */}

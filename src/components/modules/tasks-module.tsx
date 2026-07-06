@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ListTodo, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
   Loader2, CalendarDays, CheckCircle2, Clock, CircleDashed, Filter,
+  Search, CheckSquare, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,11 @@ import {
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface TaskUser { id: string; name: string; role: string; }
 interface Task {
@@ -71,6 +77,9 @@ export function TasksModule({ user }: { user: SafeUser }) {
   const [dateFilter, setDateFilter] = useState<string>(todayStr());
   const [userFilter, setUserFilter] = useState<string>("all");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -110,6 +119,59 @@ export function TasksModule({ user }: { user: SafeUser }) {
     const belum = tasks.filter((t) => t.status === "BELUM").length;
     return { total, selesai, sedang, belum };
   }, [tasks]);
+
+  // Client-side search + status filter (on top of backend date/user filter)
+  const filtered = useMemo(() => {
+    let r = tasks;
+    if (statusFilter !== "all") r = r.filter((t) => t.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((t) =>
+        (t.taskHariIni || "").toLowerCase().includes(q) ||
+        (t.progress || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [tasks, search, statusFilter]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect({ getId: (t: Task) => t.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, statusFilter, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} tugas terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/tasks/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadTasks();
+    if (failed === 0) {
+      toast.success(`${success} tugas berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   function openAdd() {
     setEditingId(null);
@@ -272,8 +334,70 @@ export function TasksModule({ user }: { user: SafeUser }) {
               </Button>
             </div>
           </div>
+
+          {/* Search + Status filter + Bulk select toggle */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari tugas atau progress..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <div className="min-w-[180px]">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  {TASK_STATUS.map((s) => (
+                    <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                if (bulkMode) clearSelection();
+              }}
+              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} tugas terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -329,11 +453,30 @@ export function TasksModule({ user }: { user: SafeUser }) {
                 <Plus className="w-4 h-4" /> Tambah Tugas
               </Button>
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                <Search className="w-7 h-7 text-slate-400" />
+              </div>
+              <p className="text-slate-700 font-medium">Tidak ada tugas yang cocok</p>
+              <p className="text-sm text-slate-500 mt-1">
+                Coba ubah kata kunci atau filter status.
+              </p>
+            </div>
           ) : (
+            <>
             <div className="max-h-[600px] overflow-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-slate-50 z-10">
                   <TableRow>
+                    {bulkMode && (
+                      <TableHead className="w-[40px]">
+                        <SelectCheckbox
+                          checked={isAllSelected(paginatedItems)}
+                          onChange={() => toggleAll(paginatedItems)}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="min-w-[200px]">Tugas</TableHead>
                     {isOwner && <TableHead>User</TableHead>}
                     <TableHead>Progress</TableHead>
@@ -346,10 +489,18 @@ export function TasksModule({ user }: { user: SafeUser }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tasks.map((t) => {
+                  {paginatedItems.map((t) => {
                     const canEdit = isOwner || t.userId === user.id;
                     return (
                       <TableRow key={t.id} className="hover:bg-slate-50">
+                        {bulkMode && (
+                          <TableCell>
+                            <SelectCheckbox
+                              checked={isSelected(t)}
+                              onChange={() => toggle(t)}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium text-slate-900 align-top">
                           {t.taskHariIni}
                         </TableCell>
@@ -418,6 +569,19 @@ export function TasksModule({ user }: { user: SafeUser }) {
                 </TableBody>
               </Table>
             </div>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

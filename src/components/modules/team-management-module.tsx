@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Users, UserCheck, UserX, UserPlus, Pencil, Trash2, Power, FileDown,
-  FileSpreadsheet, Loader2, Search, ShieldAlert,
+  FileSpreadsheet, Loader2, Search, ShieldAlert, CheckSquare, X,
 } from "lucide-react";
 
 import { api } from "@/lib/api-client";
@@ -36,6 +36,12 @@ import {
 } from "@/components/ui/select";
 
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+import { cn } from "@/lib/utils";
 
 interface UserRow {
   id: string;
@@ -76,6 +82,7 @@ export function TeamManagementModule() {
   const [submitting, setSubmitting] = useState(false);
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -111,7 +118,7 @@ export function TeamManagementModule() {
   }));
 
   // Filtered list
-  const filtered = users.filter((u) => {
+  const filtered = useMemo(() => users.filter((u) => {
     if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -122,7 +129,57 @@ export function TeamManagementModule() {
       );
     }
     return true;
-  });
+  }), [users, roleFilter, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems: paginatedUsers,
+    goToPage: goToUserPage,
+    nextPage: nextUserPage,
+    prevPage: prevUserPage,
+    pageInfo: userPageInfo,
+    resetPage: resetUserPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection (Owner-only feature — module is mounted on owner-only route)
+  const {
+    selectedArray: selectedUserArray,
+    selectedCount: selectedUserCount,
+    isSelected: isUserSelected,
+    toggle: toggleUser,
+    toggleAll: toggleAllUsers,
+    clearSelection: clearUserSelection,
+    resetSelection: resetUserSelection,
+    isAllSelected: isAllUsersSelected,
+  } = useBulkSelect({ getId: (u: UserRow) => u.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetUserSelection();
+    resetUserPage();
+  }, [search, roleFilter, resetUserSelection, resetUserPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedUserCount} anggota terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedUserArray) {
+      try {
+        await api(`/api/users/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearUserSelection();
+    setBulkMode(false);
+    await loadUsers();
+    if (failed === 0) {
+      toast.success(`${success} anggota berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   function openAdd() {
     setForm(EMPTY_FORM);
@@ -361,6 +418,14 @@ export function TeamManagementModule() {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"
           />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
           <SelectTrigger className="w-full sm:w-56">
@@ -373,7 +438,36 @@ export function TeamManagementModule() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant={bulkMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            setBulkMode(!bulkMode);
+            if (bulkMode) clearUserSelection();
+          }}
+          className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+        >
+          <CheckSquare className="w-3.5 h-3.5" />
+          {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+        </Button>
       </div>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedUserCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedUserCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedUserCount} anggota terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearUserSelection}
+        />
+      )}
 
       {/* Table */}
       <Card>
@@ -384,13 +478,24 @@ export function TeamManagementModule() {
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
+          ) : users.length === 0 ? (
+            <EmptyState onAdd={openAdd} hasFilter={false} />
           ) : filtered.length === 0 ? (
             <EmptyState onAdd={openAdd} hasFilter={search !== "" || roleFilter !== "ALL"} />
           ) : (
+            <>
             <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-slate-50 z-10">
                   <TableRow>
+                    {bulkMode && (
+                      <TableHead className="w-[40px]">
+                        <SelectCheckbox
+                          checked={isAllUsersSelected(paginatedUsers)}
+                          onChange={() => toggleAllUsers(paginatedUsers)}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="min-w-[160px]">Nama</TableHead>
                     <TableHead className="min-w-[180px]">Email</TableHead>
                     <TableHead className="min-w-[140px]">Role</TableHead>
@@ -401,12 +506,20 @@ export function TeamManagementModule() {
                     <TableHead className="text-center min-w-[70px]">Konten</TableHead>
                     <TableHead className="text-center min-w-[70px]">Artikel</TableHead>
                     <TableHead className="min-w-[110px]">Bergabung</TableHead>
-                    <TableHead className="text-right min-w-[160px]">Aksi</TableHead>
+                    {!bulkMode && <TableHead className="text-right min-w-[160px]">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((u) => (
+                  {paginatedUsers.map((u) => (
                     <TableRow key={u.id} className={!u.isActive ? "opacity-60" : ""}>
+                      {bulkMode && (
+                        <TableCell>
+                          <SelectCheckbox
+                            checked={isUserSelected(u)}
+                            onChange={() => toggleUser(u)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell className="font-medium text-slate-900">{u.name}</TableCell>
                       <TableCell className="text-slate-600 text-xs">{u.email}</TableCell>
                       <TableCell>
@@ -427,42 +540,57 @@ export function TeamManagementModule() {
                       <TableCell className="text-center text-sm">{u._count.contentIdeas}</TableCell>
                       <TableCell className="text-center text-sm">{u._count.articles}</TableCell>
                       <TableCell className="text-slate-600 text-xs">{formatDate(u.createdAt)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => openEdit(u)}
-                            title="Edit"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-600 hover:text-amber-700 hover:bg-amber-50"
-                            onClick={() => handleToggleActive(u)}
-                            title={u.isActive ? "Nonaktifkan" : "Aktifkan"}
-                          >
-                            <Power className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-600 hover:text-rose-700 hover:bg-rose-50"
-                            onClick={() => setDeleteTarget(u)}
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      {!bulkMode && (
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-slate-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => openEdit(u)}
+                              title="Edit"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-slate-600 hover:text-amber-700 hover:bg-amber-50"
+                              onClick={() => handleToggleActive(u)}
+                              title={u.isActive ? "Nonaktifkan" : "Aktifkan"}
+                            >
+                              <Power className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-slate-600 hover:text-rose-700 hover:bg-rose-50"
+                              onClick={() => setDeleteTarget(u)}
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </div>
+            <Pagination
+              currentPage={userPageInfo.currentPage}
+              totalPages={userPageInfo.totalPages}
+              totalItems={userPageInfo.totalItems}
+              startIndex={userPageInfo.startIndex}
+              endIndex={userPageInfo.endIndex}
+              hasNext={userPageInfo.hasNext}
+              hasPrev={userPageInfo.hasPrev}
+              onPageChange={goToUserPage}
+              onNext={nextUserPage}
+              onPrev={prevUserPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

@@ -5,6 +5,7 @@ import {
   FileText, Plus, Pencil, Trash2, FileSpreadsheet, FileText as FilePdf,
   Loader2, CheckCircle2, Clock, AlertCircle, Globe, ExternalLink,
   Check, X, MessageSquare,
+  Search, CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,11 @@ import {
 } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface ArticleUser { id: string; name: string; role: string; }
 interface Article {
@@ -79,6 +85,8 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
   const [websiteFilter, setWebsiteFilter] = useState<string>("all");
   const [accFilter, setAccFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -107,6 +115,55 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
   }, [websiteFilter, accFilter, statusFilter]);
 
   useEffect(() => { loadArticles(); }, [loadArticles]);
+
+  // Client-side search (on top of backend website/acc/status filters)
+  const filtered = useMemo(() => {
+    if (!search.trim()) return articles;
+    const q = search.toLowerCase().trim();
+    return articles.filter((a) =>
+      (a.judulArtikel || "").toLowerCase().includes(q) ||
+      (a.keyword || "").toLowerCase().includes(q)
+    );
+  }, [articles, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect({ getId: (a: Article) => a.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} artikel terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/articles/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadArticles();
+    if (failed === 0) {
+      toast.success(`${success} artikel berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   const stats = useMemo(() => {
     const total = articles.length;
@@ -345,8 +402,59 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
               </Button>
             </div>
           </div>
+
+          {/* Search + Bulk select toggle */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari judul atau keyword..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                if (bulkMode) clearSelection();
+              }}
+              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} artikel terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
 
       {/* Table */}
       <Card className="border-slate-200">
@@ -370,11 +478,30 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                 <Plus className="w-4 h-4" /> Tambah Artikel
               </Button>
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                <Search className="w-7 h-7 text-slate-400" />
+              </div>
+              <p className="text-slate-700 font-medium">Tidak ada artikel yang cocok</p>
+              <p className="text-sm text-slate-500 mt-1">
+                Coba ubah kata kunci pencarian.
+              </p>
+            </div>
           ) : (
+            <>
             <div className="max-h-[700px] overflow-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-slate-50 z-10">
                   <TableRow>
+                    {bulkMode && (
+                      <TableHead className="w-[40px]">
+                        <SelectCheckbox
+                          checked={isAllSelected(paginatedItems)}
+                          onChange={() => toggleAll(paginatedItems)}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="min-w-[240px]">Judul Artikel</TableHead>
                     <TableHead>Keyword</TableHead>
                     <TableHead>Website</TableHead>
@@ -387,12 +514,20 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {articles.map((a) => {
+                  {paginatedItems.map((a) => {
                     const canEdit = isOwner || a.userId === user.id;
                     const isAccd = a.statusACC === "ACC";
                     const isPublished = a.status === "PUBLISHED";
                     return (
                       <TableRow key={a.id} className="hover:bg-slate-50 align-top">
+                        {bulkMode && (
+                          <TableCell>
+                            <SelectCheckbox
+                              checked={isSelected(a)}
+                              onChange={() => toggle(a)}
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium text-slate-900">
                           <div className="max-w-xs">
                             <p className="line-clamp-2">{a.judulArtikel}</p>
@@ -505,6 +640,19 @@ export function ArticlesModule({ user }: { user: SafeUser }) {
                 </TableBody>
               </Table>
             </div>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

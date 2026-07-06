@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,15 @@ import { Switch } from "@/components/ui/switch";
 import {
   User, Save, RefreshCw, CheckCircle2, AlertCircle, FileText, Wallet,
   Calendar, MapPin, Phone, GraduationCap, Building2, Hash, Banknote,
-  Users, Search, Edit3, Lock,
+  Users, Search, Edit3, Lock, X,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { Pagination } from "@/components/shared/pagination";
 
 const PTKP_OPTIONS = [
   { value: "TK0", label: "TK0 - Tidak Kawin, 0 Tanggungan" },
@@ -41,6 +43,8 @@ export function BiodataModule({ user }: { user: SafeUser }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [completionFilter, setCompletionFilter] = useState<string>("all");
+  const [npwpFilter, setNpwpFilter] = useState<string>("all");
   const [editSalaryUser, setEditSalaryUser] = useState<string | null>(null);
   const [salaryForm, setSalaryForm] = useState({ gajiPokok: "", tunjanganMakan: "", tunjanganTransport: "", statusKaryawan: "", tanggalMasuk: "" });
 
@@ -106,17 +110,44 @@ export function BiodataModule({ user }: { user: SafeUser }) {
     setForm({ ...form, [key]: value });
   }
 
+  // Owner view: filter profiles by search + completion + NPWP status
+  const filtered = useMemo(() => {
+    let r = allProfiles;
+    if (completionFilter !== "all") {
+      const wantComplete = completionFilter === "complete";
+      r = r.filter((p) => Boolean(p.isComplete) === wantComplete);
+    }
+    if (npwpFilter !== "all") {
+      const wantNpwp = npwpFilter === "with";
+      r = r.filter((p) => Boolean(p.npwp) === wantNpwp);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((p) =>
+        (p.user?.name || "").toLowerCase().includes(q) ||
+        (p.npwp || "").toLowerCase().includes(q) ||
+        (p.nik || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [allProfiles, search, completionFilter, npwpFilter]);
+
+  // Pagination (max 15 per page) - hooks must be called unconditionally
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Reset page when filters change (prevents stale page beyond range)
+  useEffect(() => {
+    resetPage();
+  }, [search, completionFilter, npwpFilter, resetPage]);
+
   if (loading) {
     return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-blue-600" /></div>;
   }
 
   // ===== OWNER: VIEW ALL =====
   if (isOwner && view === "all") {
-    const filtered = allProfiles.filter((p) => {
-      const q = search.toLowerCase();
-      return !q || p.user?.name?.toLowerCase().includes(q) || p.npwp?.includes(q) || p.nik?.includes(q);
-    });
-
     return (
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -129,12 +160,36 @@ export function BiodataModule({ user }: { user: SafeUser }) {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama, NPWP, NIK..." className="pl-9 bg-white" />
+        {/* Search + Filters */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama, NPWP, NIK..." className="pl-9 h-9 bg-white text-sm" />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
+          <Select value={completionFilter} onValueChange={setCompletionFilter}>
+            <SelectTrigger className="w-[180px] h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Kelengkapan</SelectItem>
+              <SelectItem value="complete">Lengkap</SelectItem>
+              <SelectItem value="incomplete">Belum Lengkap</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={npwpFilter} onValueChange={setNpwpFilter}>
+            <SelectTrigger className="w-[160px] h-9 bg-white"><SelectValue placeholder="Semua NPWP" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua NPWP</SelectItem>
+              <SelectItem value="with">Punya NPWP</SelectItem>
+              <SelectItem value="without">Tanpa NPWP</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Summary */}
@@ -146,72 +201,107 @@ export function BiodataModule({ user }: { user: SafeUser }) {
         </div>
 
         {/* Profile cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filtered.map((p) => (
-            <Card key={p.id} className="shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                      {p.user?.name?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900 text-sm">{p.user?.name}</p>
-                      <p className="text-xs text-slate-500">{ROLE_LABELS[p.user?.role] || p.user?.role}</p>
-                    </div>
-                  </div>
-                  {p.isComplete ? (
-                    <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px]"><CheckCircle2 className="w-3 h-3 mr-0.5" /> Lengkap</Badge>
-                  ) : (
-                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]"><AlertCircle className="w-3 h-3 mr-0.5" /> Belum Lengkap</Badge>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <InfoRow label="NIK" value={p.nik || "-"} />
-                  <InfoRow label="NPWP" value={p.npwp || "-"} />
-                  <InfoRow label="PTKP" value={p.ptkpStatus || "-"} />
-                  <InfoRow label="Bank" value={p.bankName ? `${p.bankName} (${p.bankAccount})` : "-"} />
-                  <InfoRow label="Gaji Pokok" value={p.gajiPokok ? formatCurrency(p.gajiPokok) : "-"} />
-                  <InfoRow label="Status" value={p.statusKaryawan || "-"} />
-                </div>
-
-                {p.npwp && (
-                  <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-blue-600">
-                    <FileText className="w-3 h-3" />
-                    <span>NPWP terhubung ke sistem pajak & payroll PPh 21</span>
-                  </div>
-                )}
-
-                <Button size="sm" variant="outline" className="w-full mt-3 text-xs bg-white" onClick={() => openEditSalary(p)}>
-                  <Edit3 className="w-3 h-3 mr-1" /> Edit Gaji & Status
-                </Button>
-
-                {/* Edit salary dialog inline */}
-                {editSalaryUser === p.userId && (
-                  <div className="mt-3 p-3 border border-blue-200 rounded-lg bg-blue-50/30 space-y-2">
-                    <p className="text-xs font-semibold text-blue-900">Edit Gaji & Status: {p.user?.name}</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1"><Label className="text-[10px]">Gaji Pokok</Label><Input type="number" value={salaryForm.gajiPokok} onChange={(e) => setSalaryForm({ ...salaryForm, gajiPokok: e.target.value })} className="bg-white h-8 text-xs" /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Tunjangan Makan</Label><Input type="number" value={salaryForm.tunjanganMakan} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganMakan: e.target.value })} className="bg-white h-8 text-xs" /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Tunjangan Transport</Label><Input type="number" value={salaryForm.tunjanganTransport} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganTransport: e.target.value })} className="bg-white h-8 text-xs" /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Status Karyawan</Label>
-                        <Select value={salaryForm.statusKaryawan} onValueChange={(v) => setSalaryForm({ ...salaryForm, statusKaryawan: v })}>
-                          <SelectTrigger className="bg-white h-8 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent><SelectItem value="TETAP">Tetap</SelectItem><SelectItem value="KONTRAK">Kontrak</SelectItem><SelectItem value="PROBATION">Probation</SelectItem><SelectItem value="MAGANG">Magang</SelectItem></SelectContent>
-                        </Select>
+        {allProfiles.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-16 text-center">
+              <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-400">Belum ada biodata karyawan</p>
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="py-16 text-center">
+              <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-400">Tidak ada karyawan yang cocok</p>
+              <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {paginatedItems.map((p) => (
+              <Card key={p.id} className="shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                        {p.user?.name?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 text-sm">{p.user?.name}</p>
+                        <p className="text-xs text-slate-500">{ROLE_LABELS[p.user?.role] || p.user?.role}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs flex-1" onClick={() => handleSaveSalary(p.userId)} disabled={saving}>Simpan</Button>
-                      <Button size="sm" variant="outline" className="text-xs" onClick={() => setEditSalaryUser(null)}>Batal</Button>
-                    </div>
+                    {p.isComplete ? (
+                      <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px]"><CheckCircle2 className="w-3 h-3 mr-0.5" /> Lengkap</Badge>
+                    ) : (
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]"><AlertCircle className="w-3 h-3 mr-0.5" /> Belum Lengkap</Badge>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <InfoRow label="NIK" value={p.nik || "-"} />
+                    <InfoRow label="NPWP" value={p.npwp || "-"} />
+                    <InfoRow label="PTKP" value={p.ptkpStatus || "-"} />
+                    <InfoRow label="Bank" value={p.bankName ? `${p.bankName} (${p.bankAccount})` : "-"} />
+                    <InfoRow label="Gaji Pokok" value={p.gajiPokok ? formatCurrency(p.gajiPokok) : "-"} />
+                    <InfoRow label="Status" value={p.statusKaryawan || "-"} />
+                  </div>
+
+                  {p.npwp && (
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-blue-600">
+                      <FileText className="w-3 h-3" />
+                      <span>NPWP terhubung ke sistem pajak & payroll PPh 21</span>
+                    </div>
+                  )}
+
+                  <Button size="sm" variant="outline" className="w-full mt-3 text-xs bg-white" onClick={() => openEditSalary(p)}>
+                    <Edit3 className="w-3 h-3 mr-1" /> Edit Gaji & Status
+                  </Button>
+
+                  {/* Edit salary dialog inline */}
+                  {editSalaryUser === p.userId && (
+                    <div className="mt-3 p-3 border border-blue-200 rounded-lg bg-blue-50/30 space-y-2">
+                      <p className="text-xs font-semibold text-blue-900">Edit Gaji & Status: {p.user?.name}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1"><Label className="text-[10px]">Gaji Pokok</Label><Input type="number" value={salaryForm.gajiPokok} onChange={(e) => setSalaryForm({ ...salaryForm, gajiPokok: e.target.value })} className="bg-white h-8 text-xs" /></div>
+                        <div className="space-y-1"><Label className="text-[10px]">Tunjangan Makan</Label><Input type="number" value={salaryForm.tunjanganMakan} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganMakan: e.target.value })} className="bg-white h-8 text-xs" /></div>
+                        <div className="space-y-1"><Label className="text-[10px]">Tunjangan Transport</Label><Input type="number" value={salaryForm.tunjanganTransport} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganTransport: e.target.value })} className="bg-white h-8 text-xs" /></div>
+                        <div className="space-y-1"><Label className="text-[10px]">Status Karyawan</Label>
+                          <Select value={salaryForm.statusKaryawan} onValueChange={(v) => setSalaryForm({ ...salaryForm, statusKaryawan: v })}>
+                            <SelectTrigger className="bg-white h-8 text-xs"><SelectValue /></SelectTrigger>
+                            <SelectContent><SelectItem value="TETAP">Tetap</SelectItem><SelectItem value="KONTRAK">Kontrak</SelectItem><SelectItem value="PROBATION">Probation</SelectItem><SelectItem value="MAGANG">Magang</SelectItem></SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs flex-1" onClick={() => handleSaveSalary(p.userId)} disabled={saving}>Simpan</Button>
+                        <Button size="sm" variant="outline" className="text-xs" onClick={() => setEditSalaryUser(null)}>Batal</Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card className="shadow-sm">
+            <CardContent className="p-0">
+              <Pagination
+                currentPage={pageInfo.currentPage}
+                totalPages={pageInfo.totalPages}
+                totalItems={pageInfo.totalItems}
+                startIndex={pageInfo.startIndex}
+                endIndex={pageInfo.endIndex}
+                hasNext={pageInfo.hasNext}
+                hasPrev={pageInfo.hasPrev}
+                onPageChange={goToPage}
+                onNext={nextPage}
+                onPrev={prevPage}
+              />
+            </CardContent>
+          </Card>
+          </>
+        )}
       </div>
     );
   }

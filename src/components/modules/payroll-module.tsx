@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
   Receipt, Wallet, TrendingUp, TrendingDown, Clock, Award, FileText,
   RefreshCw, Download, CheckCircle2, DollarSign, Settings, Zap, Printer,
   Trash2, Eye, Building2, User, Calendar, Banknote, FileSpreadsheet,
-  ChevronRight, Sparkles, Plus,
+  ChevronRight, Sparkles, Plus, Search, CheckSquare, X,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
@@ -26,6 +26,11 @@ import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -85,6 +90,9 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   const [loading, setLoading] = useState(true);
   const [payslipDialog, setPayslipDialog] = useState<{ open: boolean; payroll: Payroll | null }>({ open: false, payroll: null });
   const [users, setUsers] = useState<{ id: string; name: string; role: string; position: string }[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   // Manual generator form state
   const [genForm, setGenForm] = useState({
@@ -232,6 +240,59 @@ export function PayrollModule({ user }: { user: SafeUser }) {
   }
 
   const previewNet = (Number(genForm.baseSalary) || 0) + (Number(genForm.tunjangan) || 0) - (Number(genForm.potongan) || 0);
+
+  // Client-side search + status filter on archive (owner view)
+  const filtered = useMemo(() => {
+    let r = archive;
+    if (statusFilter !== "all") r = r.filter((p) => p.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((p) =>
+        (p.user?.name || p.userName || "").toLowerCase().includes(q) ||
+        (p.jabatan || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [archive, search, statusFilter]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect<Payroll>({ getId: (p) => p.id || "" });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, statusFilter, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} slip gaji terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/payroll/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadData();
+    if (failed === 0) {
+      toast.success(`${success} slip gaji berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   if (loading) {
     return (
@@ -498,6 +559,21 @@ export function PayrollModule({ user }: { user: SafeUser }) {
 
         {/* ===== ARSIP (right, 3 cols) ===== */}
         <div className="lg:col-span-3 space-y-4">
+          {bulkMode && selectedCount > 0 && (
+            <BulkActionBar
+              selectedCount={selectedCount}
+              actions={[
+                {
+                  label: "Hapus Terpilih",
+                  icon: Trash2,
+                  onClick: handleBulkDelete,
+                  variant: "destructive",
+                  confirmText: `Hapus ${selectedCount} slip gaji terpilih? Tindakan ini tidak dapat dibatalkan.`,
+                },
+              ]}
+              onClearSelection={clearSelection}
+            />
+          )}
           <Card className="shadow-sm border-slate-200">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -511,6 +587,50 @@ export function PayrollModule({ user }: { user: SafeUser }) {
               </div>
               <Badge variant="outline" className="text-xs bg-slate-50">{archive.length} data</Badge>
             </div>
+            {/* Search + Status filter + Bulk select toggle */}
+            <div className="px-5 py-3 border-b border-slate-100 flex flex-col sm:flex-row gap-3 sm:items-center bg-slate-50/40">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cari nama karyawan atau jabatan..."
+                  className="pl-9 h-9 bg-white text-sm"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="min-w-[170px]">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="APPROVED">Disetujui</SelectItem>
+                    <SelectItem value="PAID">Dibayar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant={bulkMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setBulkMode(!bulkMode);
+                  if (bulkMode) clearSelection();
+                }}
+                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+              </Button>
+            </div>
             <CardContent className="p-0">
               {archive.length === 0 ? (
                 <div className="py-16 text-center">
@@ -518,11 +638,26 @@ export function PayrollModule({ user }: { user: SafeUser }) {
                   <p className="text-sm text-slate-400">Belum ada slip gaji</p>
                   <p className="text-xs text-slate-400 mt-1">Generate slip gaji di form sebelah kiri</p>
                 </div>
+              ) : filtered.length === 0 ? (
+                <div className="py-16 text-center">
+                  <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-400">Tidak ada slip gaji yang cocok</p>
+                  <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter status</p>
+                </div>
               ) : (
+                <>
                 <div className="max-h-[600px] overflow-y-auto">
                   <table className="w-full text-sm">
                     <thead className="sticky top-0 bg-slate-50 z-10">
                       <tr className="border-b border-slate-200 text-left">
+                        {bulkMode && (
+                          <th className="py-3 px-3 w-10">
+                            <SelectCheckbox
+                              checked={isAllSelected(paginatedItems)}
+                              onChange={() => toggleAll(paginatedItems)}
+                            />
+                          </th>
+                        )}
                         <th className="py-3 px-4 font-semibold text-xs text-slate-500 uppercase tracking-wide w-10">#</th>
                         <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide">Karyawan</th>
                         <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-medium">Periode</th>
@@ -532,12 +667,20 @@ export function PayrollModule({ user }: { user: SafeUser }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {archive.map((p, i) => {
+                      {paginatedItems.map((p, i) => {
                         const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
                         const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
                         return (
                           <tr key={p.id || i} className="border-b border-slate-50 hover:bg-blue-50/30 transition-colors">
-                            <td className="py-3 px-4 text-slate-400 text-xs font-medium">{i + 1}</td>
+                            {bulkMode && (
+                              <td className="py-3 px-3">
+                                <SelectCheckbox
+                                  checked={isSelected(p)}
+                                  onChange={() => toggle(p)}
+                                />
+                              </td>
+                            )}
+                            <td className="py-3 px-4 text-slate-400 text-xs font-medium">{(pageInfo.currentPage - 1) * 15 + i + 1}</td>
                             <td className="py-3 px-3">
                               <p className="font-medium text-slate-900 text-sm">{p.user?.name || p.userName}</p>
                               <p className="text-[10px] text-slate-400">{ROLE_LABELS[p.user?.role || p.role || ""]}</p>
@@ -577,12 +720,25 @@ export function PayrollModule({ user }: { user: SafeUser }) {
                     </tbody>
                   </table>
                 </div>
+                <Pagination
+                  currentPage={pageInfo.currentPage}
+                  totalPages={pageInfo.totalPages}
+                  totalItems={pageInfo.totalItems}
+                  startIndex={pageInfo.startIndex}
+                  endIndex={pageInfo.endIndex}
+                  hasNext={pageInfo.hasNext}
+                  hasPrev={pageInfo.hasPrev}
+                  onPageChange={goToPage}
+                  onNext={nextPage}
+                  onPrev={prevPage}
+                />
+                </>
               )}
             </CardContent>
             {archive.length > 0 && (
               <div className="border-t border-slate-100 px-5 py-3 bg-slate-50/50 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Menampilkan {archive.length} dari {archive.length} data</span>
-                <span className="text-slate-500">Total: <span className="font-bold text-blue-700">{formatCurrency(totalNet)}</span></span>
+                <span className="text-slate-500">Total {archive.length} slip gaji (filter: {filtered.length})</span>
+                <span className="text-slate-500">Total Net: <span className="font-bold text-blue-700">{formatCurrency(totalNet)}</span></span>
               </div>
             )}
           </Card>

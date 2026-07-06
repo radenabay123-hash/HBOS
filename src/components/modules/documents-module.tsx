@@ -65,7 +65,16 @@ import {
   Receipt,
   FileSignature,
   ScrollText,
+  Search,
+  CheckSquare,
+  X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface DocumentItem {
   id: string;
@@ -140,6 +149,8 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [clientFilter, setClientFilter] = useState<string>("ALL");
+  const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<DocumentItem | null>(null);
@@ -183,9 +194,70 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
           if (d.clientId) return false;
         } else if (d.clientId !== clientFilter) return false;
       }
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        if (
+          !(d.documentName || "").toLowerCase().includes(q) &&
+          !(d.documentType || "").toLowerCase().includes(q) &&
+          !(docTypeLabel(d.documentType) || "").toLowerCase().includes(q) &&
+          !(d.documentNumber || "").toLowerCase().includes(q)
+        ) {
+          return false;
+        }
+      }
       return true;
     });
-  }, [documents, typeFilter, clientFilter]);
+  }, [documents, typeFilter, clientFilter, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems: paginatedDocs,
+    goToPage: goToDocPage,
+    nextPage: nextDocPage,
+    prevPage: prevDocPage,
+    pageInfo: docPageInfo,
+    resetPage: resetDocPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection (only users with delete permission can use bulk mode)
+  const {
+    selectedArray: selectedDocArray,
+    selectedCount: selectedDocCount,
+    isSelected: isDocSelected,
+    toggle: toggleDoc,
+    toggleAll: toggleAllDocs,
+    clearSelection: clearDocSelection,
+    resetSelection: resetDocSelection,
+    isAllSelected: isAllDocsSelected,
+  } = useBulkSelect({ getId: (d: DocumentItem) => d.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetDocSelection();
+    resetDocPage();
+  }, [search, typeFilter, clientFilter, resetDocSelection, resetDocPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedDocCount} dokumen terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedDocArray) {
+      try {
+        await api(`/api/documents/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearDocSelection();
+    setBulkMode(false);
+    await loadDocuments();
+    if (failed === 0) {
+      toast.success(`${success} dokumen berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   const stats = useMemo(() => {
     const total = documents.length;
@@ -417,8 +489,61 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
               </Button>
             </div>
           </div>
+
+          {/* Search + bulk-select toggle */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center mt-3 pt-3 border-t border-slate-100">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari nama, tipe, atau nomor dokumen..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {canDelete && (
+              <Button
+                variant={bulkMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setBulkMode(!bulkMode);
+                  if (bulkMode) clearDocSelection();
+                }}
+                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedDocCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedDocCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedDocCount} dokumen terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearDocSelection}
+        />
+      )}
 
       {/* Data Table */}
       <Card>
@@ -430,7 +555,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : documents.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                 <Inbox className="w-8 h-8 text-slate-400" />
@@ -442,11 +567,30 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                   : "Belum ada dokumen yang tersedia."}
               </p>
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-slate-400" />
+              </div>
+              <p className="text-slate-600 font-medium">Tidak ada dokumen yang cocok</p>
+              <p className="text-sm text-slate-400 mt-1">
+                Coba ubah kata kunci, tipe, atau klien.
+              </p>
+            </div>
           ) : (
+            <>
             <ScrollArea className="max-h-[600px]">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
+                    {bulkMode && (
+                      <TableHead className="w-[40px]">
+                        <SelectCheckbox
+                          checked={isAllDocsSelected(paginatedDocs)}
+                          onChange={() => toggleAllDocs(paginatedDocs)}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="min-w-[200px]">Nama Dokumen</TableHead>
                     <TableHead className="min-w-[120px]">Tipe</TableHead>
                     <TableHead className="min-w-[140px]">Nomor</TableHead>
@@ -455,12 +599,20 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                     <TableHead className="min-w-[200px]">Keterangan</TableHead>
                     <TableHead className="min-w-[140px]">Diunggah Oleh</TableHead>
                     <TableHead className="min-w-[120px]">Tanggal</TableHead>
-                    {canDelete && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+                    {canDelete && !bulkMode && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((d) => (
+                  {paginatedDocs.map((d) => (
                     <TableRow key={d.id} className="hover:bg-slate-50/50">
+                      {bulkMode && (
+                        <TableCell>
+                          <SelectCheckbox
+                            checked={isDocSelected(d)}
+                            onChange={() => toggleDoc(d)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div className="font-medium text-slate-900">{d.documentName}</div>
                       </TableCell>
@@ -497,7 +649,7 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                       <TableCell className="text-slate-700">
                         {formatDate(d.createdAt)}
                       </TableCell>
-                      {canDelete && (
+                      {canDelete && !bulkMode && (
                         <TableCell>
                           <div className="flex items-center justify-center gap-1">
                             <Button
@@ -524,6 +676,19 @@ export function DocumentsModule({ user }: DocumentsModuleProps) {
                 </TableBody>
               </Table>
             </ScrollArea>
+            <Pagination
+              currentPage={docPageInfo.currentPage}
+              totalPages={docPageInfo.totalPages}
+              totalItems={docPageInfo.totalItems}
+              startIndex={docPageInfo.startIndex}
+              endIndex={docPageInfo.endIndex}
+              hasNext={docPageInfo.hasNext}
+              hasPrev={docPageInfo.hasPrev}
+              onPageChange={goToDocPage}
+              onNext={nextDocPage}
+              onPrev={prevDocPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

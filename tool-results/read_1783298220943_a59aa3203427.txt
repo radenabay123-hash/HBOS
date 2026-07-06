@@ -1,0 +1,580 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import {
+    12→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+    13→} from "@/components/ui/dialog";
+    14→import {
+    15→  FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye,
+    16→  Building2, Calendar, User, CreditCard, FileCheck, AlertCircle,
+    17→} from "lucide-react";
+    18→import { api } from "@/lib/api-client";
+    19→import { formatCurrency, formatDate } from "@/lib/constants";
+    20→import { downloadInvoicePDF } from "@/lib/invoice-pdf";
+    21→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    22→import { toast } from "sonner";
+    23→import { cn } from "@/lib/utils";
+    24→import type { SafeUser } from "@/lib/auth";
+    25→
+    26→const STATUS_LABELS: Record<string, string> = { PENDING: "Pending", PAID: "Lunas", CANCELLED: "Dibatalkan" };
+    27→const STATUS_COLORS: Record<string, string> = {
+    28→  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+    29→  PAID: "bg-green-100 text-green-700 border-green-200",
+    30→  CANCELLED: "bg-rose-100 text-rose-700 border-rose-200",
+    31→};
+    32→
+    33→interface InvoiceItem {
+    34→  description: string;
+    35→  qty: number;
+    36→  price: number;
+    37→  total: number;
+    38→}
+    39→
+    40→interface Invoice {
+    41→  id: string;
+    42→  invoiceNumber: string;
+    43→  issueDate: string;
+    44→  clientName: string;
+    45→  clientAddress?: string;
+    46→  city?: string;
+    47→  description?: string;
+    48→  items: string; // JSON
+    49→  subtotal: number;
+    50→  discount: number;
+    51→  tax: number;
+    52→  totalAmount: number;
+    53→  status: string;
+    54→  paymentInstruction?: string;
+    55→  terms?: string;
+    56→  note?: string;
+    57→  bankName?: string;
+    58→  bankAccount?: string;
+    59→  accountName?: string;
+    60→  createdAt: string;
+    61→}
+    62→
+    63→export function InvoiceModule({ user }: { user: SafeUser }) {
+    64→  const [invoices, setInvoices] = useState<Invoice[]>([]);
+    65→  const [loading, setLoading] = useState(true);
+    66→  const [dialog, setDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
+    67→  const [previewDialog, setPreviewDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
+    68→  const [filterStatus, setFilterStatus] = useState("all");
+    69→  const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
+    70→  const [form, setForm] = useState({
+    71→    invoiceNumber: "", issueDate: new Date().toISOString().slice(0, 10),
+    72→    clientName: "", clientAddress: "", city: "Jombang", description: "",
+    73→    items: [{ description: "", qty: 1, price: 0, total: 0 }] as InvoiceItem[],
+    74→    discount: 0, tax: 0, status: "PENDING",
+    75→    paymentInstruction: "Transfer ke Bank Mandiri 1234567890 a.n PT Hafara Aqiba Nusantara",
+    76→    terms: "1. Pembayaran DP sebesar 50% sebelum kegiatan.\n2. Pelunasan maksimal H+3 setelah training selesai.",
+    77→    note: "", bankName: "Bank Mandiri", bankAccount: "1234567890", accountName: "PT Hafara Aqiba Nusantara",
+    78→  });
+    79→
+    80→  const load = useCallback(async () => {
+    81→    setLoading(true);
+    82→    try {
+    83→      const [d, settings] = await Promise.all([
+    84→        api<{ invoices: Invoice[] }>("/api/invoice"),
+    85→        api<{ settings: any[] }>("/api/settings").catch(() => ({ settings: [] })),
+    86→      ]);
+    87→      setInvoices(d.invoices || []);
+    88→      const sMap: Record<string, string> = {};
+    89→      for (const s of settings.settings || []) {
+    90→        sMap[s.key] = s.value;
+    91→      }
+    92→      setCompanySettings(sMap);
+    93→    } catch (e: any) { toast.error(e.message); }
+    94→    finally { setLoading(false); }
+    95→  }, []);
+    96→
+    97→  useEffect(() => { load(); }, [load]);
+    98→
+    99→  // Generate auto invoice number
+   100→  function generateInvoiceNumber() {
+   101→    const now = new Date();
+   102→    const month = now.getMonth() + 1;
+   103→    const romanMonth = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][month - 1];
+   104→    const seq = String(invoices.length + 1).padStart(3, "0");
+   105→    return `${seq}/INV/HAN/${romanMonth}/${now.getFullYear()}`;
+   106→  }
+   107→
+   108→  function handleAddItem() {
+   109→    setForm({ ...form, items: [...form.items, { description: "", qty: 1, price: 0, total: 0 }] });
+   110→  }
+   111→
+   112→  function handleRemoveItem(index: number) {
+   113→    setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
+   114→  }
+   115→
+   116→  function handleItemChange(index: number, field: keyof InvoiceItem, value: any) {
+   117→    const newItems = [...form.items];
+   118→    newItems[index] = { ...newItems[index], [field]: value };
+   119→    newItems[index].total = newItems[index].qty * newItems[index].price;
+   120→    setForm({ ...form, items: newItems });
+   121→  }
+   122→
+   123→  const subtotal = form.items.reduce((s, i) => s + i.total, 0);
+   124→  const totalAmount = subtotal - (Number(form.discount) || 0) + (Number(form.tax) || 0);
+   125→
+   126→  async function handleSave() {
+   127→    if (!form.invoiceNumber || !form.clientName) {
+   128→      toast.error("Nomor invoice dan nama klien wajib diisi");
+   129→      return;
+   130→    }
+   131→    try {
+   132→      const payload = {
+   133→        ...form,
+   134→        items: form.items,
+   135→        subtotal,
+   136→        totalAmount,
+   137→      };
+   138→      if (dialog.invoice) {
+   139→        await api(`/api/invoice/${dialog.invoice.id}`, { method: "PUT", body: JSON.stringify(payload) });
+   140→        toast.success("Invoice diperbarui");
+   141→      } else {
+   142→        await api("/api/invoice", { method: "POST", body: JSON.stringify(payload) });
+   143→        toast.success("Invoice dibuat");
+   144→      }
+   145→      setDialog({ open: false, invoice: null });
+   146→      // Reset form
+   147→      setForm({
+   148→        ...form,
+   149→        invoiceNumber: "", clientName: "", clientAddress: "", description: "",
+   150→        items: [{ description: "", qty: 1, price: 0, total: 0 }],
+   151→        discount: 0, tax: 0, note: "",
+   152→      });
+   153→      load();
+   154→    } catch (e: any) { toast.error(e.message); }
+   155→  }
+   156→
+   157→  async function handleDelete(id: string) {
+   158→    if (!confirm("Hapus invoice ini?")) return;
+   159→    try { await api(`/api/invoice/${id}`, { method: "DELETE" }); toast.success("Dihapus"); load(); }
+   160→    catch (e: any) { toast.error(e.message); }
+   161→  }
+   162→
+   163→  async function handleDownloadPDF(inv: Invoice) {
+   164→    const items = JSON.parse(inv.items || "[]");
+   165→    // Fetch layout settings - ALL design comes from here
+   166→    let layoutSettings: any = null;
+   167→    let logoUrl = "";
+   168→    try {
+   169→      const ld = await fetchLayoutSettings("INVOICE");
+   170→      layoutSettings = ld.layout;
+   171→      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+   172→    } catch {}
+   173→    // Load logo image as data URL for jsPDF
+   174→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   175→    // CLEAN: only pass content data, all design comes from layout settings
+   176→    downloadInvoicePDF({
+   177→      invoiceNumber: inv.invoiceNumber,
+   178→      issueDate: formatDate(inv.issueDate),
+   179→      clientName: inv.clientName,
+   180→      clientAddress: inv.clientAddress || "",
+   181→      city: inv.city || "",
+   182→      description: inv.description || "",
+   183→      items,
+   184→      subtotal: inv.subtotal,
+   185→      discount: inv.discount,
+   186→      tax: inv.tax,
+   187→      totalAmount: inv.totalAmount,
+   188→      status: inv.status,
+   189→      paymentInstruction: inv.paymentInstruction || "",
+   190→      terms: inv.terms || "",
+   191→      bankName: inv.bankName || "",
+   192→      bankAccount: inv.bankAccount || "",
+   193→      accountName: inv.accountName || "",
+   194→      directorName: companySettings.director_name,
+   195→      directorTitle: companySettings.director_title,
+   196→      logoImageData,
+   197→      layout: layoutSettings,
+   198→    });
+   199→    toast.success("Invoice PDF diunduh");
+   200→  }
+   201→
+   202→  function openCreate() {
+   203→    setForm({
+   204→      invoiceNumber: generateInvoiceNumber(),
+   205→      issueDate: new Date().toISOString().slice(0, 10),
+   206→      clientName: "", clientAddress: "", city: "Jombang", description: "",
+   207→      items: [{ description: "", qty: 1, price: 0, total: 0 }],
+   208→      discount: 0, tax: 0, status: "PENDING",
+   209→      paymentInstruction: "Transfer ke Bank Mandiri 1234567890 a.n PT Hafara Aqiba Nusantara",
+   210→      terms: "1. Pembayaran DP sebesar 50% sebelum kegiatan.\n2. Pelunasan maksimal H+3 setelah training selesai.",
+   211→      note: "", bankName: "Bank Mandiri", bankAccount: "1234567890", accountName: "PT Hafara Aqiba Nusantara",
+   212→    });
+   213→    setDialog({ open: true, invoice: null });
+   214→  }
+   215→
+   216→  function openEdit(inv: Invoice) {
+   217→    const items = JSON.parse(inv.items || "[]");
+   218→    setForm({
+   219→      invoiceNumber: inv.invoiceNumber,
+   220→      issueDate: new Date(inv.issueDate).toISOString().slice(0, 10),
+   221→      clientName: inv.clientName,
+   222→      clientAddress: inv.clientAddress || "",
+   223→      city: inv.city || "Jombang",
+   224→      description: inv.description || "",
+   225→      items: items.length > 0 ? items : [{ description: "", qty: 1, price: 0, total: 0 }],
+   226→      discount: inv.discount,
+   227→      tax: inv.tax,
+   228→      status: inv.status,
+   229→      paymentInstruction: inv.paymentInstruction || "",
+   230→      terms: inv.terms || "",
+   231→      note: inv.note || "",
+   232→      bankName: inv.bankName || "",
+   233→      bankAccount: inv.bankAccount || "",
+   234→      accountName: inv.accountName || "",
+   235→    });
+   236→    setDialog({ open: true, invoice: inv });
+   237→  }
+   238→
+   239→  const filtered = filterStatus === "all" ? invoices : invoices.filter((i) => i.status === filterStatus);
+   240→
+   241→  if (loading) {
+   242→    return (
+   243→      <div className="flex items-center justify-center py-20">
+   244→        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+   245→      </div>
+   246→    );
+   247→  }
+   248→
+   249→  return (
+   250→    <div className="space-y-5">
+   251→      {/* Header */}
+   252→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   253→        <div>
+   254→          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+   255→            <FileText className="w-6 h-6 text-blue-600" /> Invoice
+   256→          </h1>
+   257→          <p className="text-sm text-slate-500 mt-1">Buat dan kelola invoice profesional</p>
+   258→        </div>
+   259→        <div className="flex gap-2">
+   260→          <Select value={filterStatus} onValueChange={setFilterStatus}>
+   261→            <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   262→            <SelectContent>
+   263→              <SelectItem value="all">Semua Status</SelectItem>
+   264→              <SelectItem value="PENDING">Pending</SelectItem>
+   265→              <SelectItem value="PAID">Lunas</SelectItem>
+   266→              <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
+   267→            </SelectContent>
+   268→          </Select>
+   269→          <Button size="sm" onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+   270→            <Plus className="w-4 h-4 mr-1" /> Buat Invoice
+   271→          </Button>
+   272→        </div>
+   273→      </div>
+   274→
+   275→      {/* Stats */}
+   276→      <div className="grid grid-cols-3 gap-3">
+   277→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   278→          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center"><FileText className="w-5 h-5 text-blue-600" /></div>
+   279→          <div><p className="text-xs text-slate-500">Total Invoice</p><p className="text-lg font-bold text-slate-900">{invoices.length}</p></div>
+   280→        </CardContent></Card>
+   281→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   282→          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center"><AlertCircle className="w-5 h-5 text-amber-600" /></div>
+   283→          <div><p className="text-xs text-slate-500">Pending</p><p className="text-lg font-bold text-slate-900">{invoices.filter((i) => i.status === "PENDING").length}</p></div>
+   284→        </CardContent></Card>
+   285→        <Card className="shadow-sm"><CardContent className="p-4 flex items-center gap-3">
+   286→          <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center"><FileCheck className="w-5 h-5 text-green-600" /></div>
+   287→          <div><p className="text-xs text-slate-500">Lunas</p><p className="text-lg font-bold text-slate-900">{invoices.filter((i) => i.status === "PAID").length}</p></div>
+   288→        </CardContent></Card>
+   289→      </div>
+   290→
+   291→      {/* Invoice list */}
+   292→      <Card className="shadow-sm">
+   293→        <CardContent className="p-0">
+   294→          {filtered.length === 0 ? (
+   295→            <div className="py-16 text-center">
+   296→              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   297→              <p className="text-sm text-slate-400">Belum ada invoice</p>
+   298→              <p className="text-xs text-slate-400 mt-1">Klik "Buat Invoice" untuk membuat baru</p>
+   299→            </div>
+   300→          ) : (
+   301→            <div className="max-h-[500px] overflow-y-auto">
+   302→              <table className="w-full text-sm">
+   303→                <thead className="sticky top-0 bg-slate-50 z-10">
+   304→                  <tr className="border-b text-left text-xs text-slate-500">
+   305→                    <th className="py-3 px-4 font-medium">Nomor Invoice</th>
+   306→                    <th className="py-3 px-3 font-medium">Klien</th>
+   307→                    <th className="py-3 px-3 font-medium">Tanggal</th>
+   308→                    <th className="py-3 px-3 font-medium text-right">Total</th>
+   309→                    <th className="py-3 px-3 font-medium text-center">Status</th>
+   310→                    <th className="py-3 px-3 font-medium text-center">Aksi</th>
+   311→                  </tr>
+   312→                </thead>
+   313→                <tbody>
+   314→                  {filtered.map((inv) => (
+   315→                    <tr key={inv.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+   316→                      <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{inv.invoiceNumber}</td>
+   317→                      <td className="py-2.5 px-3 text-slate-600 text-xs">{inv.clientName}</td>
+   318→                      <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(inv.issueDate)}</td>
+   319→                      <td className="py-2.5 px-3 text-right font-bold text-slate-900 text-xs">{formatCurrency(inv.totalAmount)}</td>
+   320→                      <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[inv.status])}>{STATUS_LABELS[inv.status]}</Badge></td>
+   321→                      <td className="py-2.5 px-3">
+   322→                        <div className="flex gap-0.5 justify-center">
+   323→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Preview" onClick={() => setPreviewDialog({ open: true, invoice: inv })}><Eye className="w-3.5 h-3.5" /></Button>
+   324→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(inv)}><Download className="w-3.5 h-3.5" /></Button>
+   325→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(inv)}><Edit3 className="w-3.5 h-3.5" /></Button>
+   326→                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(inv.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+   327→                        </div>
+   328→                      </td>
+   329→                    </tr>
+   330→                  ))}
+   331→                </tbody>
+   332→              </table>
+   333→            </div>
+   334→          )}
+   335→        </CardContent>
+   336→      </Card>
+   337→
+   338→      {/* Create/Edit Dialog */}
+   339→      <Dialog open={dialog.open} onOpenChange={(o) => setDialog({ open: o, invoice: dialog.invoice })}>
+   340→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   341→          <DialogHeader>
+   342→            <DialogTitle className="text-blue-900">Buat Invoice Baru</DialogTitle>
+   343→            <DialogDescription>Isi data uang masuk atau uang keluar</DialogDescription>
+   344→          </DialogHeader>
+   345→          <div className="space-y-3 py-1">
+   346→            {/* Invoice info */}
+   347→            <div className="grid grid-cols-2 gap-3">
+   348→              <div className="space-y-1.5">
+   349→                <Label className="text-xs font-semibold text-slate-600">Nomor Invoice</Label>
+   350→                <Input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} className="bg-white" placeholder="001/INV/HAN/VII/2026" />
+   351→              </div>
+   352→              <div className="space-y-1.5">
+   353→                <Label className="text-xs font-semibold text-slate-600">Tanggal Terbit</Label>
+   354→                <Input type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} className="bg-white" />
+   355→              </div>
+   356→            </div>
+   357→
+   358→            <div className="grid grid-cols-2 gap-3">
+   359→              <div className="space-y-1.5">
+   360→                <Label className="text-xs font-semibold text-slate-600">Ditagihkan Ke</Label>
+   361→                <Input value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="bg-white" placeholder="e.g. PT Maju Jaya" />
+   362→              </div>
+   363→              <div className="space-y-1.5">
+   364→                <Label className="text-xs font-semibold text-slate-600">Kota Penerbitan</Label>
+   365→                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="bg-white" placeholder="Jombang" />
+   366→              </div>
+   367→            </div>
+   368→
+   369→            <div className="space-y-1.5">
+   370→              <Label className="text-xs font-semibold text-slate-600">Alamat Klien</Label>
+   371→              <Textarea value={form.clientAddress} onChange={(e) => setForm({ ...form, clientAddress: e.target.value })} className="bg-white resize-none" rows={2} placeholder="Alamat lengkap klien..." />
+   372→            </div>
+   373→
+   374→            {/* Items */}
+   375→            <div>
+   376→              <p className="text-xs font-semibold text-blue-900 mb-1.5">RINCIAN PRODUK / JASA</p>
+   377→              <div className="space-y-1.5">
+   378→                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="bg-white" placeholder="e.g. Leadership Training – Batch 1" />
+   379→              </div>
+   380→
+   381→              {/* Items table */}
+   382→              <div className="mt-2 border border-slate-200 rounded-lg overflow-hidden">
+   383→                <table className="w-full text-sm">
+   384→                  <thead className="bg-blue-900 text-white">
+   385→                    <tr>
+   386→                      <th className="py-2 px-2 text-left text-[10px] font-bold">DESKRIPSI</th>
+   387→                      <th className="py-2 px-2 text-center text-[10px] font-bold w-16">JUMLAH</th>
+   388→                      <th className="py-2 px-2 text-right text-[10px] font-bold w-32">HARGA SATUAN</th>
+   389→                      <th className="py-2 px-2 text-right text-[10px] font-bold w-32">TOTAL</th>
+   390→                      <th className="py-2 px-1 w-8"></th>
+   391→                    </tr>
+   392→                  </thead>
+   393→                  <tbody>
+   394→                    {form.items.map((item, i) => (
+   395→                      <tr key={i} className="border-t border-slate-100">
+   396→                        <td className="p-1"><Input value={item.description} onChange={(e) => handleItemChange(i, "description", e.target.value)} className="h-8 bg-white border-0" placeholder="Deskripsi item" /></td>
+   397→                        <td className="p-1"><Input type="number" value={item.qty} onChange={(e) => handleItemChange(i, "qty", Number(e.target.value))} className="h-8 bg-white border-0 text-center" /></td>
+   398→                        <td className="p-1"><Input type="number" value={item.price} onChange={(e) => handleItemChange(i, "price", Number(e.target.value))} className="h-8 bg-white border-0 text-right" /></td>
+   399→                        <td className="p-1 text-right font-bold text-blue-900 text-xs px-2">{formatCurrency(item.total)}</td>
+   400→                        <td className="p-1 text-center">{form.items.length > 1 && <button onClick={() => handleRemoveItem(i)} className="text-rose-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>}</td>
+   401→                      </tr>
+   402→                    ))}
+   403→                  </tbody>
+   404→                </table>
+   405→              </div>
+   406→              <Button size="sm" variant="outline" onClick={handleAddItem} className="mt-1.5 bg-white text-xs">
+   407→                <Plus className="w-3 h-3 mr-1" /> Tambah Item
+   408→              </Button>
+   409→            </div>
+   410→
+   411→            {/* Summary */}
+   412→            <div className="grid grid-cols-2 gap-3">
+   413→              <div className="space-y-1.5">
+   414→                <Label className="text-xs font-semibold text-slate-600">Diskon (Rp)</Label>
+   415→                <Input type="number" value={form.discount} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className="bg-white" />
+   416→              </div>
+   417→              <div className="space-y-1.5">
+   418→                <Label className="text-xs font-semibold text-slate-600">Pajak (Rp)</Label>
+   419→                <Input type="number" value={form.tax} onChange={(e) => setForm({ ...form, tax: Number(e.target.value) })} className="bg-white" />
+   420→              </div>
+   421→            </div>
+   422→
+   423→            {/* Total preview */}
+   424→            <div className="bg-blue-50 rounded-lg p-3 flex justify-between items-center">
+   425→              <span className="text-sm font-semibold text-blue-900">TOTAL PEMBAYARAN</span>
+   426→              <span className="text-xl font-bold text-blue-700">{formatCurrency(totalAmount)}</span>
+   427→            </div>
+   428→
+   429→            {/* Status & Note */}
+   430→            <div className="grid grid-cols-2 gap-3">
+   431→              <div className="space-y-1.5">
+   432→                <Label className="text-xs font-semibold text-slate-600">Status Pembayaran</Label>
+   433→                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   434→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   435→                  <SelectContent>
+   436→                    <SelectItem value="PENDING">Pending</SelectItem>
+   437→                    <SelectItem value="PAID">Lunas</SelectItem>
+   438→                    <SelectItem value="CANCELLED">Dibatalkan</SelectItem>
+   439→                  </SelectContent>
+   440→                </Select>
+   441→              </div>
+   442→              <div className="space-y-1.5">
+   443→                <Label className="text-xs font-semibold text-slate-600">Catatan Internal</Label>
+   444→                <Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className="bg-white" placeholder="e.g. Pembayaran DP masuk 50%" />
+   445→              </div>
+   446→            </div>
+   447→
+   448→            {/* Payment Instructions */}
+   449→            <div className="space-y-1.5">
+   450→              <Label className="text-xs font-semibold text-slate-600">Instruksi Pembayaran</Label>
+   451→              <Textarea value={form.paymentInstruction} onChange={(e) => setForm({ ...form, paymentInstruction: e.target.value })} className="bg-white resize-none" rows={2} />
+   452→            </div>
+   453→
+   454→            {/* Bank info */}
+   455→            <div className="grid grid-cols-3 gap-2">
+   456→              <div className="space-y-1.5"><Label className="text-xs">Bank</Label><Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} className="bg-white" /></div>
+   457→              <div className="space-y-1.5"><Label className="text-xs">No. Rekening</Label><Input value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} className="bg-white" /></div>
+   458→              <div className="space-y-1.5"><Label className="text-xs">Atas Nama</Label><Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} className="bg-white" /></div>
+   459→            </div>
+   460→
+   461→            {/* Terms */}
+   462→            <div className="space-y-1.5">
+   463→              <Label className="text-xs font-semibold text-slate-600">Syarat & Ketentuan</Label>
+   464→              <Textarea value={form.terms} onChange={(e) => setForm({ ...form, terms: e.target.value })} className="bg-white resize-none" rows={3} />
+   465→            </div>
+   466→          </div>
+   467→          <DialogFooter>
+   468→            <Button variant="outline" onClick={() => setDialog({ open: false, invoice: null })}>Batal</Button>
+   469→            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">{dialog.invoice ? "Update" : "Simpan"} Invoice</Button>
+   470→          </DialogFooter>
+   471→        </DialogContent>
+   472→      </Dialog>
+   473→
+   474→      {/* Preview Dialog */}
+   475→      <Dialog open={previewDialog.open} onOpenChange={(o) => setPreviewDialog({ open: o, invoice: previewDialog.invoice })}>
+   476→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   477→          <DialogHeader>
+   478→            <DialogTitle className="flex items-center gap-2"><Building2 className="w-5 h-5 text-blue-600" /> Preview Invoice</DialogTitle>
+   479→          </DialogHeader>
+   480→          {previewDialog.invoice && (() => {
+   481→            const inv = previewDialog.invoice;
+   482→            const items = JSON.parse(inv.items || "[]");
+   483→            return (
+   484→              <div className="space-y-3">
+   485→                {/* Company header */}
+   486→                <div className="border-b-2 border-blue-600 pb-3 flex items-start justify-between">
+   487→                  <div className="flex items-center gap-3">
+   488→                    <div className="w-12 h-12 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg relative">
+   489→                      H
+   490→                      <div className="absolute inset-0 rounded-full bg-blue-600 opacity-50" style={{ clipPath: "circle(60% at 60% 60%)" }} />
+   491→                    </div>
+   492→                    <div>
+   493→                      <p className="font-bold text-blue-900">PT. HAFARA AQIBA NUSANTARA</p>
+   494→                      <p className="text-[10px] text-slate-500">{`Email: info@hafaragroup.com | Web: www.HafaraGroup.com | Telp: 081324511570`}</p>
+   495→                      <p className="text-[10px] text-slate-500">New Head Office: Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur</p>
+   496→                    </div>
+   497→                  </div>
+   498→                </div>
+   499→
+   500→                {/* Invoice title */}
+   501→                <p className="text-center font-bold text-blue-900 text-2xl">INVOICE</p>
+   502→
+   503→                {/* Invoice info */}
+   504→                <div className="flex justify-end text-xs text-slate-500 space-y-0.5">
+   505→                  <div className="text-right">
+   506→                    <p>Nomor Invoice: {inv.invoiceNumber}</p>
+   507→                    <p>Tanggal: {formatDate(inv.issueDate)}</p>
+   508→                  </div>
+   509→                </div>
+   510→
+   511→                {/* Client */}
+   512→                <div>
+   513→                  <p className="text-xs font-bold text-blue-900">DITAGIHKAN KEPADA:</p>
+   514→                  <p className="font-bold text-blue-900">{inv.clientName}</p>
+   515→                  <p className="text-xs text-slate-500">{inv.clientAddress}</p>
+   516→                </div>
+   517→
+   518→                {/* Items table */}
+   519→                <div className="border border-slate-200 rounded-lg overflow-hidden">
+   520→                  <table className="w-full text-xs">
+   521→                    <thead className="bg-blue-900 text-white">
+   522→                      <tr>
+   523→                        <th className="py-2 px-2 text-left">DESKRIPSI PRODUK / LAYANAN</th>
+   524→                        <th className="py-2 px-2 text-center w-16">JUMLAH</th>
+   525→                        <th className="py-2 px-2 text-center w-32">HARGA SATUAN</th>
+   526→                        <th className="py-2 px-2 text-right w-32">TOTAL</th>
+   527→                      </tr>
+   528→                    </thead>
+   529→                    <tbody>
+   530→                      {items.map((item: InvoiceItem, i: number) => (
+   531→                        <tr key={i} className="border-t border-slate-100">
+   532→                          <td className="py-2 px-2">{item.description}</td>
+   533→                          <td className="py-2 px-2 text-center">{item.qty}</td>
+   534→                          <td className="py-2 px-2 text-center">{formatCurrency(item.price)}</td>
+   535→                          <td className="py-2 px-2 text-right font-medium">{formatCurrency(item.total)}</td>
+   536→                        </tr>
+   537→                      ))}
+   538→                    </tbody>
+   539→                  </table>
+   540→                </div>
+   541→
+   542→                {/* Summary */}
+   543→                <div className="flex justify-end">
+   544→                  <div className="w-64 space-y-1 text-xs">
+   545→                    <div className="flex justify-between"><span className="text-slate-500">Subtotal:</span><span>{formatCurrency(inv.subtotal)}</span></div>
+   546→                    {inv.discount > 0 && <div className="flex justify-between"><span className="text-slate-500">Diskon:</span><span>- {formatCurrency(inv.discount)}</span></div>}
+   547→                    {inv.tax > 0 && <div className="flex justify-between"><span className="text-slate-500">Pajak:</span><span>{formatCurrency(inv.tax)}</span></div>}
+   548→                    <div className="flex justify-between font-bold text-blue-900 border-t border-slate-200 pt-1"><span>TOTAL PEMBAYARAN:</span><span>{formatCurrency(inv.totalAmount)}</span></div>
+   549→                    <div className={cn("rounded px-2 py-1 text-center font-bold", STATUS_COLORS[inv.status])}>STATUS: {STATUS_LABELS[inv.status]}</div>
+   550→                  </div>
+   551→                </div>
+   552→
+   553→                {/* Payment instructions */}
+   554→                {inv.paymentInstruction && (
+   555→                  <div>
+   556→                    <p className="text-xs font-bold text-blue-900">INSTRUKSI PEMBAYARAN:</p>
+   557→                    <p className="text-xs text-slate-600">{inv.paymentInstruction}</p>
+   558→                  </div>
+   559→                )}
+   560→
+   561→                {/* Terms */}
+   562→                {inv.terms && (
+   563→                  <div>
+   564→                    <p className="text-xs font-bold text-blue-900">SYARAT & KETENTUAN:</p>
+   565→                    <p className="text-xs text-slate-500 whitespace-pre-wrap">{inv.terms}</p>
+   566→                  </div>
+   567→                )}
+   568→
+   569→                <Button onClick={() => handleDownloadPDF(inv)} className="w-full bg-blue-600 hover:bg-blue-700">
+   570→                  <Download className="w-4 h-4 mr-2" /> Download PDF
+   571→                </Button>
+   572→              </div>
+   573→            );
+   574→          })()}
+   575→        </DialogContent>
+   576→      </Dialog>
+   577→    </div>
+   578→  );
+   579→}
+   580→

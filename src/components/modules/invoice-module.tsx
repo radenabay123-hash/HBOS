@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,17 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye,
-  Building2, Calendar, User, CreditCard, FileCheck, AlertCircle,
+  Building2, Calendar, User, CreditCard, FileCheck, AlertCircle, Search, CheckSquare,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { formatCurrency, formatDate } from "@/lib/constants";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -66,6 +71,8 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
   const [dialog, setDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
   const [previewDialog, setPreviewDialog] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
   const [filterStatus, setFilterStatus] = useState("all");
+  const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
   const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     invoiceNumber: "", issueDate: new Date().toISOString().slice(0, 10),
@@ -160,6 +167,28 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
     catch (e: any) { toast.error(e.message); }
   }
 
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} invoice terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/invoice/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await load();
+    if (failed === 0) {
+      toast.success(`${success} invoice berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
+
   async function handleDownloadPDF(inv: Invoice) {
     const items = JSON.parse(inv.items || "[]");
     // Fetch layout settings - ALL design comes from here
@@ -236,7 +265,48 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
     setDialog({ open: true, invoice: inv });
   }
 
-  const filtered = filterStatus === "all" ? invoices : invoices.filter((i) => i.status === filterStatus);
+  const filtered = useMemo(() => {
+    return invoices.filter((i) => {
+      if (filterStatus !== "all" && i.status !== filterStatus) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const text = [i.invoiceNumber, i.clientName, i.description, i.city]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [invoices, filterStatus, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems,
+    goToPage,
+    nextPage,
+    prevPage,
+    pageInfo,
+    resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray,
+    selectedCount,
+    isSelected,
+    toggle,
+    toggleAll,
+    clearSelection,
+    resetSelection,
+    isAllSelected,
+  } = useBulkSelect({ getId: (i: Invoice) => i.id });
+
+  // Reset selection + go to page 1 when filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, filterStatus, resetSelection, resetPage]);
 
   if (loading) {
     return (
@@ -288,6 +358,61 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
         </CardContent></Card>
       </div>
 
+      {/* Filter Bar (search + bulk-select toggle) */}
+      <Card className="shadow-sm">
+        <CardContent className="p-3">
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari nomor invoice, klien, deskripsi..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                if (bulkMode) clearSelection();
+              }}
+            >
+              <CheckSquare className="w-3.5 h-3.5 mr-1" />
+              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} invoice terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
+
       {/* Invoice list */}
       <Card className="shadow-sm">
         <CardContent className="p-0">
@@ -298,39 +423,57 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
               <p className="text-xs text-slate-400 mt-1">Klik "Buat Invoice" untuk membuat baru</p>
             </div>
           ) : (
+            <>
             <div className="max-h-[500px] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-slate-50 z-10">
                   <tr className="border-b text-left text-xs text-slate-500">
+                    {bulkMode && <th className="py-3 px-3 w-[40px]"><SelectCheckbox checked={isAllSelected(paginatedItems)} onChange={() => toggleAll(paginatedItems)} /></th>}
                     <th className="py-3 px-4 font-medium">Nomor Invoice</th>
                     <th className="py-3 px-3 font-medium">Klien</th>
                     <th className="py-3 px-3 font-medium">Tanggal</th>
                     <th className="py-3 px-3 font-medium text-right">Total</th>
                     <th className="py-3 px-3 font-medium text-center">Status</th>
-                    <th className="py-3 px-3 font-medium text-center">Aksi</th>
+                    {!bulkMode && <th className="py-3 px-3 font-medium text-center">Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((inv) => (
+                  {paginatedItems.map((inv) => (
                     <tr key={inv.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+                      {bulkMode && <td className="py-2.5 px-3"><SelectCheckbox checked={isSelected(inv)} onChange={() => toggle(inv)} /></td>}
                       <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{inv.invoiceNumber}</td>
                       <td className="py-2.5 px-3 text-slate-600 text-xs">{inv.clientName}</td>
                       <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(inv.issueDate)}</td>
                       <td className="py-2.5 px-3 text-right font-bold text-slate-900 text-xs">{formatCurrency(inv.totalAmount)}</td>
                       <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[inv.status])}>{STATUS_LABELS[inv.status]}</Badge></td>
-                      <td className="py-2.5 px-3">
-                        <div className="flex gap-0.5 justify-center">
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Preview" onClick={() => setPreviewDialog({ open: true, invoice: inv })}><Eye className="w-3.5 h-3.5" /></Button>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(inv)}><Download className="w-3.5 h-3.5" /></Button>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(inv)}><Edit3 className="w-3.5 h-3.5" /></Button>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(inv.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                        </div>
-                      </td>
+                      {!bulkMode && (
+                        <td className="py-2.5 px-3">
+                          <div className="flex gap-0.5 justify-center">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Preview" onClick={() => setPreviewDialog({ open: true, invoice: inv })}><Eye className="w-3.5 h-3.5" /></Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(inv)}><Download className="w-3.5 h-3.5" /></Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(inv)}><Edit3 className="w-3.5 h-3.5" /></Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(inv.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

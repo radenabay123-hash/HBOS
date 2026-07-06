@@ -1,0 +1,647 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import {
+     5→  FileText, Plus, Pencil, Trash2, FileSpreadsheet, FileText as FilePdf,
+     6→  Loader2, CheckCircle2, Clock, AlertCircle, Globe, ExternalLink,
+     7→  Check, X, MessageSquare,
+     8→} from "lucide-react";
+     9→import { Button } from "@/components/ui/button";
+    10→import { Badge } from "@/components/ui/badge";
+    11→import { Card, CardContent } from "@/components/ui/card";
+    12→import { Input } from "@/components/ui/input";
+    13→import { Textarea } from "@/components/ui/textarea";
+    14→import { Label } from "@/components/ui/label";
+    15→import {
+    16→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    17→} from "@/components/ui/select";
+    18→import {
+    19→  Dialog, DialogContent, DialogDescription, DialogFooter,
+    20→  DialogHeader, DialogTitle,
+    21→} from "@/components/ui/dialog";
+    22→import {
+    23→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    24→} from "@/components/ui/table";
+    25→import { toast } from "sonner";
+    26→import { api } from "@/lib/api-client";
+    27→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    28→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    29→import {
+    30→  ROLES, WEBSITE_OPTIONS, ARTICLE_ACC_STATUS, ARTICLE_STATUS,
+    31→  formatDate, formatNumber,
+    32→} from "@/lib/constants";
+    33→import type { SafeUser } from "@/lib/auth";
+    34→import { cn } from "@/lib/utils";
+    35→
+    36→interface ArticleUser { id: string; name: string; role: string; }
+    37→interface Article {
+    38→  id: string;
+    39→  userId: string;
+    40→  judulArtikel: string;
+    41→  keyword: string | null;
+    42→  websiteTujuan: string | null;
+    43→  tanggalPublish: string | null;
+    44→  linkArtikel: string | null;
+    45→  statusACC: string;
+    46→  catatanRevisi: string | null;
+    47→  accAt: string | null;
+    48→  accById: string | null;
+    49→  status: string;
+    50→  user: ArticleUser;
+    51→}
+    52→
+    53→const ACC_LABELS: Record<string, string> = {
+    54→  PENDING: "Menunggu ACC",
+    55→  ACC: "ACC",
+    56→  REVISI_ADMIN: "Revisi Admin",
+    57→};
+    58→const ACC_COLORS: Record<string, string> = {
+    59→  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+    60→  ACC: "bg-blue-100 text-blue-700 border-blue-200",
+    61→  REVISI_ADMIN: "bg-rose-100 text-rose-700 border-rose-200",
+    62→};
+    63→
+    64→const emptyForm = {
+    65→  judulArtikel: "",
+    66→  keyword: "",
+    67→  websiteTujuan: WEBSITE_OPTIONS[0] as string,
+    68→  websiteCustom: "",
+    69→  tanggalPublish: "",
+    70→  linkArtikel: "",
+    71→  status: "DRAFT",
+    72→};
+    73→
+    74→export function ArticlesModule({ user }: { user: SafeUser }) {
+    75→  const isOwner = user.role === ROLES.OWNER;
+    76→
+    77→  const [articles, setArticles] = useState<Article[]>([]);
+    78→  const [loading, setLoading] = useState(true);
+    79→  const [websiteFilter, setWebsiteFilter] = useState<string>("all");
+    80→  const [accFilter, setAccFilter] = useState<string>("all");
+    81→  const [statusFilter, setStatusFilter] = useState<string>("all");
+    82→
+    83→  const [dialogOpen, setDialogOpen] = useState(false);
+    84→  const [editingId, setEditingId] = useState<string | null>(null);
+    85→  const [form, setForm] = useState({ ...emptyForm });
+    86→  const [saving, setSaving] = useState(false);
+    87→
+    88→  const [revisiOpen, setRevisiOpen] = useState(false);
+    89→  const [revisiTarget, setRevisiTarget] = useState<Article | null>(null);
+    90→  const [catatanRevisi, setCatatanRevisi] = useState("");
+    91→  const [accLoading, setAccLoading] = useState(false);
+    92→
+    93→  const loadArticles = useCallback(async () => {
+    94→    setLoading(true);
+    95→    try {
+    96→      const params = new URLSearchParams();
+    97→      if (websiteFilter !== "all") params.set("websiteTujuan", websiteFilter);
+    98→      if (accFilter !== "all") params.set("statusACC", accFilter);
+    99→      if (statusFilter !== "all") params.set("status", statusFilter);
+   100→      const data = await api<{ articles: Article[] }>(`/api/articles?${params.toString()}`);
+   101→      setArticles(data.articles || []);
+   102→    } catch (e: any) {
+   103→      toast.error(e?.message || "Gagal memuat artikel");
+   104→    } finally {
+   105→      setLoading(false);
+   106→    }
+   107→  }, [websiteFilter, accFilter, statusFilter]);
+   108→
+   109→  useEffect(() => { loadArticles(); }, [loadArticles]);
+   110→
+   111→  const stats = useMemo(() => {
+   112→    const total = articles.length;
+   113→    const pending = articles.filter((a) => a.statusACC === "PENDING").length;
+   114→    const acc = articles.filter((a) => a.statusACC === "ACC").length;
+   115→    const published = articles.filter((a) => a.status === "PUBLISHED").length;
+   116→    return { total, pending, acc, published };
+   117→  }, [articles]);
+   118→
+   119→  function openAdd() {
+   120→    setEditingId(null);
+   121→    setForm({ ...emptyForm });
+   122→    setDialogOpen(true);
+   123→  }
+   124→
+   125→  function openEdit(a: Article) {
+   126→    const isCustomWebsite = a.websiteTujuan && !WEBSITE_OPTIONS.includes(a.websiteTujuan as any);
+   127→    setEditingId(a.id);
+   128→    setForm({
+   129→      judulArtikel: a.judulArtikel || "",
+   130→      keyword: a.keyword || "",
+   131→      websiteTujuan: isCustomWebsite ? "Lainnya" : (a.websiteTujuan || (WEBSITE_OPTIONS[0] as string)),
+   132→      websiteCustom: isCustomWebsite ? (a.websiteTujuan || "") : "",
+   133→      tanggalPublish: a.tanggalPublish ? new Date(a.tanggalPublish).toISOString().split("T")[0] : "",
+   134→      linkArtikel: a.linkArtikel || "",
+   135→      status: a.status || "DRAFT",
+   136→    });
+   137→    setDialogOpen(true);
+   138→  }
+   139→
+   140→  async function handleSave() {
+   141→    if (!form.judulArtikel.trim()) { toast.error("Judul artikel wajib diisi"); return; }
+   142→    setSaving(true);
+   143→    try {
+   144→      const website = form.websiteTujuan === "Lainnya" ? form.websiteCustom.trim() : form.websiteTujuan;
+   145→      if (form.websiteTujuan === "Lainnya" && !website) {
+   146→        toast.error("Website tujuan wajib diisi");
+   147→        setSaving(false);
+   148→        return;
+   149→      }
+   150→      const payload = {
+   151→        judulArtikel: form.judulArtikel,
+   152→        keyword: form.keyword || null,
+   153→        websiteTujuan: website,
+   154→        tanggalPublish: form.tanggalPublish || null,
+   155→        linkArtikel: form.linkArtikel || null,
+   156→        status: form.status,
+   157→      };
+   158→      if (editingId) {
+   159→        await api(`/api/articles/${editingId}`, { method: "PUT", body: JSON.stringify(payload) });
+   160→        toast.success("Artikel diperbarui");
+   161→      } else {
+   162→        await api("/api/articles", { method: "POST", body: JSON.stringify(payload) });
+   163→        toast.success("Artikel ditambahkan");
+   164→      }
+   165→      setDialogOpen(false);
+   166→      loadArticles();
+   167→    } catch (e: any) {
+   168→      toast.error(e?.message || "Gagal menyimpan");
+   169→    } finally {
+   170→      setSaving(false);
+   171→    }
+   172→  }
+   173→
+   174→  async function handleDelete(a: Article) {
+   175→    if (!confirm(`Hapus artikel "${a.judulArtikel}"?`)) return;
+   176→    try {
+   177→      await api(`/api/articles/${a.id}`, { method: "DELETE" });
+   178→      toast.success("Artikel dihapus");
+   179→      loadArticles();
+   180→    } catch (e: any) {
+   181→      toast.error(e?.message || "Gagal menghapus");
+   182→    }
+   183→  }
+   184→
+   185→  async function handleAcc(a: Article) {
+   186→    setAccLoading(true);
+   187→    try {
+   188→      await api(`/api/articles/${a.id}/acc`, {
+   189→        method: "POST",
+   190→        body: JSON.stringify({ statusACC: "ACC" }),
+   191→      });
+   192→      toast.success(`Artikel "${a.judulArtikel}" di-ACC`);
+   193→      loadArticles();
+   194→    } catch (e: any) {
+   195→      toast.error(e?.message || "Gagal ACC");
+   196→    } finally {
+   197→      setAccLoading(false);
+   198→    }
+   199→  }
+   200→
+   201→  function openRevisi(a: Article) {
+   202→    setRevisiTarget(a);
+   203→    setCatatanRevisi("");
+   204→    setRevisiOpen(true);
+   205→  }
+   206→
+   207→  async function handleRevisiSubmit() {
+   208→    if (!revisiTarget) return;
+   209→    if (!catatanRevisi.trim()) { toast.error("Catatan revisi wajib diisi"); return; }
+   210→    setAccLoading(true);
+   211→    try {
+   212→      await api(`/api/articles/${revisiTarget.id}/acc`, {
+   213→        method: "POST",
+   214→        body: JSON.stringify({ statusACC: "REVISI_ADMIN", catatanRevisi }),
+   215→      });
+   216→      toast.success("Catatan revisi terkirim");
+   217→      setRevisiOpen(false);
+   218→      loadArticles();
+   219→    } catch (e: any) {
+   220→      toast.error(e?.message || "Gagal mengirim revisi");
+   221→    } finally {
+   222→      setAccLoading(false);
+   223→    }
+   224→  }
+   225→
+   226→  async function handlePublish(a: Article) {
+   227→    try {
+   228→      await api(`/api/articles/${a.id}`, {
+   229→        method: "PUT",
+   230→        body: JSON.stringify({ status: "PUBLISHED" }),
+   231→      });
+   232→      toast.success("Artikel dipublikasikan");
+   233→      loadArticles();
+   234→    } catch (e: any) {
+   235→      toast.error(e?.message || "Gagal publish artikel");
+   236→    }
+   237→  }
+   238→
+   239→  function handleExportExcel() {
+   240→    if (!articles.length) { toast.error("Tidak ada data"); return; }
+   241→    const rows = articles.map((a) => ({
+   242→      "Judul Artikel": a.judulArtikel,
+   243→      Keyword: a.keyword || "-",
+   244→      "Website Tujuan": a.websiteTujuan || "-",
+   245→      "Tanggal Publish": a.tanggalPublish ? formatDate(a.tanggalPublish) : "-",
+   246→      "Link Artikel": a.linkArtikel || "-",
+   247→      "Status ACC": ACC_LABELS[a.statusACC] || a.statusACC,
+   248→      "Catatan Revisi": a.catatanRevisi || "-",
+   249→      Status: a.status,
+   250→      Penulis: a.user?.name || "-",
+   251→    }));
+   252→    exportToExcel(rows, "Data_Artikel", "Artikel");
+   253→    toast.success("Excel diunduh");
+   254→  }
+   255→
+   256→  function handleExportPDF() {
+   257→    if (!articles.length) { toast.error("Tidak ada data"); return; }
+   258→    const columns = ["Judul", "Keyword", "Website", "Tanggal", "ACC", "Status", "Penulis"];
+   259→    const rows = articles.map((a) => [
+   260→      a.judulArtikel,
+   261→      a.keyword || "-",
+   262→      a.websiteTujuan || "-",
+   263→      a.tanggalPublish ? formatDate(a.tanggalPublish) : "-",
+   264→      ACC_LABELS[a.statusACC] || a.statusACC,
+   265→      a.status,
+   266→      a.user?.name || "-",
+   267→    ]);
+   268→    exportToPDF("Laporan Data Artikel", columns, rows as any, "Data_Artikel");
+   269→    toast.success("PDF diunduh");
+   270→  }
+   271→
+   272→  const websiteBadgeColor = (w: string | null) => {
+   273→    if (!w) return "bg-slate-100 text-slate-700 border-slate-200";
+   274→    if (w.includes("hafaragroup")) return "bg-blue-100 text-blue-700 border-blue-200";
+   275→    if (w.includes("mentorskill")) return "bg-sky-100 text-sky-700 border-sky-200";
+   276→    if (w.includes("aqilbaihaqi")) return "bg-amber-100 text-amber-700 border-amber-200";
+   277→    return "bg-slate-100 text-slate-700 border-slate-200";
+   278→  };
+   279→
+   280→  return (
+   281→    <div className="space-y-5">
+   282→      <SectionHeader
+   283→        title="Data Artikel"
+   284→        description="Kelola artikel SEO. Owner akan ACC atau meminta revisi. Jika ACC, artikel dapat di-publish."
+   285→        action={
+   286→          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
+   287→            <Plus className="w-4 h-4" /> Tambah Artikel
+   288→          </Button>
+   289→        }
+   290→      />
+   291→
+   292→      {/* Stats */}
+   293→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   294→        <StatCard title="Total Artikel" value={formatNumber(stats.total)} icon={FileText} indicator="neutral" accent="bg-slate-100 text-slate-600" />
+   295→        <StatCard title="Pending ACC" value={formatNumber(stats.pending)} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
+   296→        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
+   297→        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-sky-50 text-sky-600" />
+   298→      </div>
+   299→
+   300→      {/* Filters + Export */}
+   301→      <Card className="border-slate-200">
+   302→        <CardContent className="p-4">
+   303→          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+   304→            <div>
+   305→              <Label className="text-xs text-slate-500 mb-1.5 block">Website</Label>
+   306→              <Select value={websiteFilter} onValueChange={setWebsiteFilter}>
+   307→                <SelectTrigger className="h-9"><SelectValue placeholder="Semua Website" /></SelectTrigger>
+   308→                <SelectContent>
+   309→                  <SelectItem value="all">Semua Website</SelectItem>
+   310→                  {WEBSITE_OPTIONS.map((w) => (
+   311→                    <SelectItem key={w} value={w}>{w}</SelectItem>
+   312→                  ))}
+   313→                </SelectContent>
+   314→              </Select>
+   315→            </div>
+   316→            <div>
+   317→              <Label className="text-xs text-slate-500 mb-1.5 block">Status ACC</Label>
+   318→              <Select value={accFilter} onValueChange={setAccFilter}>
+   319→                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+   320→                <SelectContent>
+   321→                  <SelectItem value="all">Semua</SelectItem>
+   322→                  <SelectItem value="PENDING">Menunggu ACC</SelectItem>
+   323→                  <SelectItem value="ACC">ACC</SelectItem>
+   324→                  <SelectItem value="REVISI_ADMIN">Revisi Admin</SelectItem>
+   325→                </SelectContent>
+   326→              </Select>
+   327→            </div>
+   328→            <div>
+   329→              <Label className="text-xs text-slate-500 mb-1.5 block">Status</Label>
+   330→              <Select value={statusFilter} onValueChange={setStatusFilter}>
+   331→                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+   332→                <SelectContent>
+   333→                  <SelectItem value="all">Semua</SelectItem>
+   334→                  <SelectItem value="DRAFT">Draft</SelectItem>
+   335→                  <SelectItem value="PUBLISHED">Published</SelectItem>
+   336→                </SelectContent>
+   337→              </Select>
+   338→            </div>
+   339→            <div className="flex items-end gap-2">
+   340→              <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 flex-1">
+   341→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   342→              </Button>
+   343→              <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 flex-1">
+   344→                <FilePdf className="w-4 h-4" /> PDF
+   345→              </Button>
+   346→            </div>
+   347→          </div>
+   348→        </CardContent>
+   349→      </Card>
+   350→
+   351→      {/* Table */}
+   352→      <Card className="border-slate-200">
+   353→        <CardContent className="p-0">
+   354→          {loading ? (
+   355→            <div className="flex items-center justify-center py-16">
+   356→              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+   357→            </div>
+   358→          ) : articles.length === 0 ? (
+   359→            <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+   360→              <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+   361→                <FileText className="w-7 h-7 text-slate-400" />
+   362→              </div>
+   363→              <p className="text-slate-700 font-medium">Belum ada artikel</p>
+   364→              <p className="text-sm text-slate-500 mt-1">
+   365→                {websiteFilter !== "all" || accFilter !== "all" || statusFilter !== "all"
+   366→                  ? "Tidak ada artikel yang cocok dengan filter."
+   367→                  : "Mulai tambahkan artikel SEO pertama."}
+   368→              </p>
+   369→              <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
+   370→                <Plus className="w-4 h-4" /> Tambah Artikel
+   371→              </Button>
+   372→            </div>
+   373→          ) : (
+   374→            <div className="max-h-[700px] overflow-auto">
+   375→              <Table>
+   376→                <TableHeader className="sticky top-0 bg-slate-50 z-10">
+   377→                  <TableRow>
+   378→                    <TableHead className="min-w-[240px]">Judul Artikel</TableHead>
+   379→                    <TableHead>Keyword</TableHead>
+   380→                    <TableHead>Website</TableHead>
+   381→                    <TableHead>Tanggal Publish</TableHead>
+   382→                    <TableHead>Link</TableHead>
+   383→                    <TableHead>Status ACC</TableHead>
+   384→                    <TableHead>Status</TableHead>
+   385→                    <TableHead>Penulis</TableHead>
+   386→                    <TableHead className="text-right">Aksi</TableHead>
+   387→                  </TableRow>
+   388→                </TableHeader>
+   389→                <TableBody>
+   390→                  {articles.map((a) => {
+   391→                    const canEdit = isOwner || a.userId === user.id;
+   392→                    const isAccd = a.statusACC === "ACC";
+   393→                    const isPublished = a.status === "PUBLISHED";
+   394→                    return (
+   395→                      <TableRow key={a.id} className="hover:bg-slate-50 align-top">
+   396→                        <TableCell className="font-medium text-slate-900">
+   397→                          <div className="max-w-xs">
+   398→                            <p className="line-clamp-2">{a.judulArtikel}</p>
+   399→                            {a.statusACC === "REVISI_ADMIN" && a.catatanRevisi && (
+   400→                              <div className="mt-1.5 rounded-md border border-rose-200 bg-rose-50 p-2">
+   401→                                <p className="text-[10px] font-semibold text-rose-700 flex items-center gap-1 mb-0.5">
+   402→                                  <MessageSquare className="w-3 h-3" /> Catatan Revisi
+   403→                                </p>
+   404→                                <p className="text-[11px] text-rose-800 line-clamp-2">{a.catatanRevisi}</p>
+   405→                              </div>
+   406→                            )}
+   407→                          </div>
+   408→                        </TableCell>
+   409→                        <TableCell className="text-sm text-slate-600">
+   410→                          {a.keyword ? (
+   411→                            <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-xs">{a.keyword}</span>
+   412→                          ) : <span className="text-slate-400">-</span>}
+   413→                        </TableCell>
+   414→                        <TableCell>
+   415→                          <Badge variant="outline" className={websiteBadgeColor(a.websiteTujuan)}>
+   416→                            {a.websiteTujuan || "-"}
+   417→                          </Badge>
+   418→                        </TableCell>
+   419→                        <TableCell className="text-sm text-slate-600 whitespace-nowrap">
+   420→                          {a.tanggalPublish ? formatDate(a.tanggalPublish) : <span className="text-slate-400">-</span>}
+   421→                        </TableCell>
+   422→                        <TableCell>
+   423→                          {a.linkArtikel ? (
+   424→                            <a
+   425→                              href={a.linkArtikel} target="_blank" rel="noreferrer"
+   426→                              className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 hover:underline"
+   427→                            >
+   428→                              <ExternalLink className="w-3 h-3" /> Buka
+   429→                            </a>
+   430→                          ) : <span className="text-slate-400 text-xs">-</span>}
+   431→                        </TableCell>
+   432→                        <TableCell>
+   433→                          <Badge variant="outline" className={ACC_COLORS[a.statusACC]}>
+   434→                            {ACC_LABELS[a.statusACC] || a.statusACC}
+   435→                          </Badge>
+   436→                        </TableCell>
+   437→                        <TableCell>
+   438→                          <Badge variant="outline" className={cn(
+   439→                            isPublished
+   440→                              ? "bg-sky-100 text-sky-700 border-sky-200"
+   441→                              : "bg-slate-100 text-slate-700 border-slate-200"
+   442→                          )}>
+   443→                            {a.status}
+   444→                          </Badge>
+   445→                        </TableCell>
+   446→                        <TableCell className="text-sm text-slate-600">{a.user?.name || "-"}</TableCell>
+   447→                        <TableCell className="text-right">
+   448→                          <div className="flex flex-col gap-1 items-end">
+   449→                            <div className="flex gap-1 justify-end">
+   450→                              {isOwner && a.statusACC === "PENDING" && (
+   451→                                <>
+   452→                                  <Button
+   453→                                    size="sm" variant="ghost"
+   454→                                    className="h-7 px-2 text-blue-700 hover:bg-blue-50"
+   455→                                    onClick={() => handleAcc(a)} disabled={accLoading}
+   456→                                    title="ACC Artikel"
+   457→                                  >
+   458→                                    <Check className="w-3.5 h-3.5" /> ACC
+   459→                                  </Button>
+   460→                                  <Button
+   461→                                    size="sm" variant="ghost"
+   462→                                    className="h-7 px-2 text-rose-700 hover:bg-rose-50"
+   463→                                    onClick={() => openRevisi(a)} disabled={accLoading}
+   464→                                    title="Minta Revisi"
+   465→                                  >
+   466→                                    <X className="w-3.5 h-3.5" /> Revisi
+   467→                                  </Button>
+   468→                                </>
+   469→                              )}
+   470→                            </div>
+   471→                            <div className="flex gap-1 justify-end">
+   472→                              {isAccd && !isPublished && canEdit && (
+   473→                                <Button
+   474→                                  size="sm" variant="outline"
+   475→                                  className="h-7 px-2 border-sky-200 text-sky-700 hover:bg-sky-50"
+   476→                                  onClick={() => handlePublish(a)}
+   477→                                  title="Publish Artikel"
+   478→                                >
+   479→                                  <Globe className="w-3.5 h-3.5" /> Publish
+   480→                                </Button>
+   481→                              )}
+   482→                              {canEdit && (
+   483→                                <>
+   484→                                  <Button
+   485→                                    size="icon" variant="ghost" className="h-7 w-7"
+   486→                                    onClick={() => openEdit(a)} title="Edit"
+   487→                                  >
+   488→                                    <Pencil className="w-3.5 h-3.5" />
+   489→                                  </Button>
+   490→                                  <Button
+   491→                                    size="icon" variant="ghost"
+   492→                                    className="h-7 w-7 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+   493→                                    onClick={() => handleDelete(a)} title="Hapus"
+   494→                                  >
+   495→                                    <Trash2 className="w-3.5 h-3.5" />
+   496→                                  </Button>
+   497→                                </>
+   498→                              )}
+   499→                            </div>
+   500→                          </div>
+   501→                        </TableCell>
+   502→                      </TableRow>
+   503→                    );
+   504→                  })}
+   505→                </TableBody>
+   506→              </Table>
+   507→            </div>
+   508→          )}
+   509→        </CardContent>
+   510→      </Card>
+   511→
+   512→      {/* Add/Edit Dialog */}
+   513→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   514→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   515→          <DialogHeader>
+   516→            <DialogTitle>{editingId ? "Edit Artikel" : "Tambah Artikel"}</DialogTitle>
+   517→            <DialogDescription>
+   518→              {editingId ? "Perbarui informasi artikel." : "Tambahkan artikel SEO baru."}
+   519→            </DialogDescription>
+   520→          </DialogHeader>
+   521→
+   522→          <div className="space-y-4 py-2">
+   523→            <div>
+   524→              <Label className="mb-1.5">Judul Artikel <span className="text-rose-500">*</span></Label>
+   525→              <Input
+   526→                value={form.judulArtikel}
+   527→                onChange={(e) => setForm({ ...form, judulArtikel: e.target.value })}
+   528→                placeholder="Judul artikel SEO..."
+   529→              />
+   530→            </div>
+   531→
+   532→            <div>
+   533→              <Label className="mb-1.5">Keyword</Label>
+   534→              <Input
+   535→                value={form.keyword}
+   536→                onChange={(e) => setForm({ ...form, keyword: e.target.value })}
+   537→                placeholder="Kata kunci utama (mis: pelatihan public speaking)"
+   538→              />
+   539→            </div>
+   540→
+   541→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   542→              <div>
+   543→                <Label className="mb-1.5">Website Tujuan</Label>
+   544→                <Select value={form.websiteTujuan} onValueChange={(v) => setForm({ ...form, websiteTujuan: v })}>
+   545→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   546→                  <SelectContent>
+   547→                    {WEBSITE_OPTIONS.map((w) => (
+   548→                      <SelectItem key={w} value={w}>{w}</SelectItem>
+   549→                    ))}
+   550→                  </SelectContent>
+   551→                </Select>
+   552→              </div>
+   553→              {form.websiteTujuan === "Lainnya" && (
+   554→                <div>
+   555→                  <Label className="mb-1.5">Website Lainnya <span className="text-rose-500">*</span></Label>
+   556→                  <Input
+   557→                    value={form.websiteCustom}
+   558→                    onChange={(e) => setForm({ ...form, websiteCustom: e.target.value })}
+   559→                    placeholder="masukkan nama website..."
+   560→                  />
+   561→                </div>
+   562→              )}
+   563→            </div>
+   564→
+   565→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   566→              <div>
+   567→                <Label className="mb-1.5">Tanggal Publish</Label>
+   568→                <Input
+   569→                  type="date"
+   570→                  value={form.tanggalPublish}
+   571→                  onChange={(e) => setForm({ ...form, tanggalPublish: e.target.value })}
+   572→                />
+   573→              </div>
+   574→              <div>
+   575→                <Label className="mb-1.5">Status</Label>
+   576→                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   577→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   578→                  <SelectContent>
+   579→                    {ARTICLE_STATUS.map((s) => (
+   580→                      <SelectItem key={s} value={s}>{s}</SelectItem>
+   581→                    ))}
+   582→                  </SelectContent>
+   583→                </Select>
+   584→              </div>
+   585→            </div>
+   586→
+   587→            <div>
+   588→              <Label className="mb-1.5">Link Artikel</Label>
+   589→              <Input
+   590→                value={form.linkArtikel}
+   591→                onChange={(e) => setForm({ ...form, linkArtikel: e.target.value })}
+   592→                placeholder="https://... URL artikel jika sudah publish"
+   593→                type="url"
+   594→              />
+   595→            </div>
+   596→          </div>
+   597→
+   598→          <DialogFooter>
+   599→            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
+   600→            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+   601→              {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   602→              {editingId ? "Simpan Perubahan" : "Tambah Artikel"}
+   603→            </Button>
+   604→          </DialogFooter>
+   605→        </DialogContent>
+   606→      </Dialog>
+   607→
+   608→      {/* Revisi Dialog */}
+   609→      <Dialog open={revisiOpen} onOpenChange={setRevisiOpen}>
+   610→        <DialogContent className="max-w-md">
+   611→          <DialogHeader>
+   612→            <DialogTitle className="flex items-center gap-2">
+   613→              <AlertCircle className="w-5 h-5 text-rose-600" /> Minta Revisi Artikel
+   614→            </DialogTitle>
+   615→            <DialogDescription>
+   616→              {revisiTarget && (
+   617→                <>Berikan catatan revisi untuk <span className="font-medium text-slate-700">"{revisiTarget.judulArtikel}"</span>.</>
+   618→              )}
+   619→            </DialogDescription>
+   620→          </DialogHeader>
+   621→          <div className="py-2">
+   622→            <Label className="mb-1.5">Catatan Revisi <span className="text-rose-500">*</span></Label>
+   623→            <Textarea
+   624→              value={catatanRevisi}
+   625→              onChange={(e) => setCatatanRevisi(e.target.value)}
+   626→              placeholder="Tuliskan catatan revisi untuk penulis..."
+   627→              rows={4}
+   628→              autoFocus
+   629→            />
+   630→          </div>
+   631→          <DialogFooter>
+   632→            <Button variant="outline" onClick={() => setRevisiOpen(false)} disabled={accLoading}>Batal</Button>
+   633→            <Button
+   634→              onClick={handleRevisiSubmit}
+   635→              disabled={accLoading}
+   636→              className="bg-rose-600 hover:bg-rose-700"
+   637→            >
+   638→              {accLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   639→              Kirim Revisi
+   640→            </Button>
+   641→          </DialogFooter>
+   642→        </DialogContent>
+   643→      </Dialog>
+   644→    </div>
+   645→  );
+   646→}
+   647→

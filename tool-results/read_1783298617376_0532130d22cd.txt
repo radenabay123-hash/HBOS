@@ -1,0 +1,773 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import {
+     5→  Film, Plus, Pencil, Trash2, FileSpreadsheet, FileText,
+     6→  Loader2, CheckCircle2, Clock, AlertCircle, Globe, Link2,
+     7→  Check, X, MessageSquare, Eye, BarChart3, Calendar,
+     8→} from "lucide-react";
+     9→import { Button } from "@/components/ui/button";
+    10→import { Badge } from "@/components/ui/badge";
+    11→import { Card, CardContent } from "@/components/ui/card";
+    12→import { Input } from "@/components/ui/input";
+    13→import { Textarea } from "@/components/ui/textarea";
+    14→import { Label } from "@/components/ui/label";
+    15→import { Checkbox } from "@/components/ui/checkbox";
+    16→import {
+    17→  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    18→} from "@/components/ui/select";
+    19→import {
+    20→  Dialog, DialogContent, DialogDescription, DialogFooter,
+    21→  DialogHeader, DialogTitle,
+    22→} from "@/components/ui/dialog";
+    23→import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    24→import { toast } from "sonner";
+    25→import { api } from "@/lib/api-client";
+    26→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    27→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    28→import {
+    29→  ROLES, CONTENT_CATEGORIES, PRODUCTION_STATUS, PRODUCTION_STATUS_LABELS,
+    30→  EDITING_STATUS, PUBLISH_STATUS, ACC_STATUS, ACC_STATUS_LABELS, ACC_STATUS_COLORS,
+    31→  formatDate, formatNumber,
+    32→} from "@/lib/constants";
+    33→import type { SafeUser } from "@/lib/auth";
+    34→import { cn } from "@/lib/utils";
+    35→
+    36→interface ContentUser { id: string; name: string; role: string; }
+    37→interface MetrikKonten {
+    38→  reach?: number; views?: number; watchTime?: number;
+    39→  share?: number; save?: number; comment?: number; followerGrowth?: number;
+    40→}
+    41→interface ContentIdea {
+    42→  id: string;
+    43→  userId: string;
+    44→  kategori: string;
+    45→  judul: string;
+    46→  link: string | null;
+    47→  ideKonten: string | null;
+    48→  script: string | null;
+    49→  caption: string | null;
+    50→  statusProduksi: string;
+    51→  statusEditing: string;
+    52→  statusPublish: string;
+    53→  linkKonten: string | null;
+    54→  metrikKonten: string | null;
+    55→  statusACC: string;
+    56→  catatanRevisi: string | null;
+    57→  accAt: string | null;
+    58→  accById: string | null;
+    59→  tanggal: string;
+    60→  user: ContentUser;
+    61→}
+    62→
+    63→const emptyMetrik: MetrikKonten = {
+    64→  reach: 0, views: 0, watchTime: 0, share: 0, save: 0, comment: 0, followerGrowth: 0,
+    65→};
+    66→
+    67→const emptyForm = {
+    68→  kategori: CONTENT_CATEGORIES[0] as string,
+    69→  judul: "",
+    70→  link: "",
+    71→  ideKonten: "",
+    72→  script: "",
+    73→  caption: "",
+    74→  statusProduksi: "IDE",
+    75→  statusEditing: "PENDING",
+    76→  statusPublish: "PENDING",
+    77→  linkKonten: "",
+    78→  metrik: { ...emptyMetrik },
+    79→};
+    80→
+    81→function parseMetrik(s: string | null): MetrikKonten {
+    82→  if (!s) return { ...emptyMetrik };
+    83→  try {
+    84→    const parsed = JSON.parse(s);
+    85→    return { ...emptyMetrik, ...parsed };
+    86→  } catch {
+    87→    return { ...emptyMetrik };
+    88→  }
+    89→}
+    90→
+    91→export function ContentModule({ user }: { user: SafeUser }) {
+    92→  const isOwner = user.role === ROLES.OWNER;
+    93→
+    94→  const [ideas, setIdeas] = useState<ContentIdea[]>([]);
+    95→  const [loading, setLoading] = useState(true);
+    96→  const [kategoriFilter, setKategoriFilter] = useState<string>("all");
+    97→  const [accFilter, setAccFilter] = useState<string>("all");
+    98→  const [tab, setTab] = useState<string>("all");
+    99→
+   100→  const [dialogOpen, setDialogOpen] = useState(false);
+   101→  const [editingId, setEditingId] = useState<string | null>(null);
+   102→  const [form, setForm] = useState({ ...emptyForm });
+   103→  const [saving, setSaving] = useState(false);
+   104→
+   105→  // Revisi dialog
+   106→  const [revisiOpen, setRevisiOpen] = useState(false);
+   107→  const [revisiTarget, setRevisiTarget] = useState<ContentIdea | null>(null);
+   108→  const [catatanRevisi, setCatatanRevisi] = useState("");
+   109→  const [accLoading, setAccLoading] = useState(false);
+   110→
+   111→  const loadIdeas = useCallback(async () => {
+   112→    setLoading(true);
+   113→    try {
+   114→      const params = new URLSearchParams();
+   115→      if (kategoriFilter !== "all") params.set("kategori", kategoriFilter);
+   116→      if (accFilter !== "all") params.set("statusACC", accFilter);
+   117→      const data = await api<{ ideas: ContentIdea[] }>(`/api/content-ideas?${params.toString()}`);
+   118→      setIdeas(data.ideas || []);
+   119→    } catch (e: any) {
+   120→      toast.error(e?.message || "Gagal memuat konten");
+   121→    } finally {
+   122→      setLoading(false);
+   123→    }
+   124→  }, [kategoriFilter, accFilter]);
+   125→
+   126→  useEffect(() => { loadIdeas(); }, [loadIdeas]);
+   127→
+   128→  const filtered = useMemo(() => {
+   129→    if (tab === "all") return ideas;
+   130→    return ideas.filter((i) => i.statusACC === tab);
+   131→  }, [ideas, tab]);
+   132→
+   133→  const stats = useMemo(() => {
+   134→    const total = ideas.length;
+   135→    const pending = ideas.filter((i) => i.statusACC === "PENDING").length;
+   136→    const acc = ideas.filter((i) => i.statusACC === "ACC").length;
+   137→    const revisi = ideas.filter((i) => i.statusACC === "REVISI").length;
+   138→    const published = ideas.filter((i) => i.statusPublish === "PUBLISHED").length;
+   139→    return { total, pending, acc, revisi, published };
+   140→  }, [ideas]);
+   141→
+   142→  function openAdd() {
+   143→    setEditingId(null);
+   144→    setForm({ ...emptyForm, metrik: { ...emptyMetrik } });
+   145→    setDialogOpen(true);
+   146→  }
+   147→
+   148→  function openEdit(idea: ContentIdea) {
+   149→    const m = parseMetrik(idea.metrikKonten);
+   150→    setEditingId(idea.id);
+   151→    setForm({
+   152→      kategori: idea.kategori,
+   153→      judul: idea.judul || "",
+   154→      link: idea.link || "",
+   155→      ideKonten: idea.ideKonten || "",
+   156→      script: idea.script || "",
+   157→      caption: idea.caption || "",
+   158→      statusProduksi: idea.statusProduksi || "IDE",
+   159→      statusEditing: idea.statusEditing || "PENDING",
+   160→      statusPublish: idea.statusPublish || "PENDING",
+   161→      linkKonten: idea.linkKonten || "",
+   162→      metrik: m,
+   163→    });
+   164→    setDialogOpen(true);
+   165→  }
+   166→
+   167→  async function handleSave() {
+   168→    if (!form.judul.trim()) { toast.error("Judul wajib diisi"); return; }
+   169→    if (!form.kategori) { toast.error("Kategori wajib dipilih"); return; }
+   170→    setSaving(true);
+   171→    try {
+   172→      const payload = {
+   173→        kategori: form.kategori,
+   174→        judul: form.judul,
+   175→        link: form.link || null,
+   176→        ideKonten: form.ideKonten || null,
+   177→        script: form.script || null,
+   178→        caption: form.caption || null,
+   179→        statusProduksi: form.statusProduksi,
+   180→        statusEditing: form.statusEditing,
+   181→        statusPublish: form.statusPublish,
+   182→        linkKonten: form.linkKonten || null,
+   183→        metrikKonten: JSON.stringify(form.metrik),
+   184→      };
+   185→      if (editingId) {
+   186→        await api(`/api/content-ideas/${editingId}`, { method: "PUT", body: JSON.stringify(payload) });
+   187→        toast.success("Ide konten diperbarui");
+   188→      } else {
+   189→        await api("/api/content-ideas", { method: "POST", body: JSON.stringify(payload) });
+   190→        toast.success("Ide konten ditambahkan");
+   191→      }
+   192→      setDialogOpen(false);
+   193→      loadIdeas();
+   194→    } catch (e: any) {
+   195→      toast.error(e?.message || "Gagal menyimpan");
+   196→    } finally {
+   197→      setSaving(false);
+   198→    }
+   199→  }
+   200→
+   201→  async function handleDelete(idea: ContentIdea) {
+   202→    if (!confirm(`Hapus ide konten "${idea.judul}"?`)) return;
+   203→    try {
+   204→      await api(`/api/content-ideas/${idea.id}`, { method: "DELETE" });
+   205→      toast.success("Ide konten dihapus");
+   206→      loadIdeas();
+   207→    } catch (e: any) {
+   208→      toast.error(e?.message || "Gagal menghapus");
+   209→    }
+   210→  }
+   211→
+   212→  async function handleAcc(idea: ContentIdea) {
+   213→    setAccLoading(true);
+   214→    try {
+   215→      await api(`/api/content-ideas/${idea.id}/acc`, {
+   216→        method: "POST",
+   217→        body: JSON.stringify({ statusACC: "ACC" }),
+   218→      });
+   219→      toast.success(`Konten "${idea.judul}" di-ACC`);
+   220→      loadIdeas();
+   221→    } catch (e: any) {
+   222→      toast.error(e?.message || "Gagal ACC");
+   223→    } finally {
+   224→      setAccLoading(false);
+   225→    }
+   226→  }
+   227→
+   228→  function openRevisi(idea: ContentIdea) {
+   229→    setRevisiTarget(idea);
+   230→    setCatatanRevisi("");
+   231→    setRevisiOpen(true);
+   232→  }
+   233→
+   234→  async function handleRevisiSubmit() {
+   235→    if (!revisiTarget) return;
+   236→    if (!catatanRevisi.trim()) { toast.error("Catatan revisi wajib diisi"); return; }
+   237→    setAccLoading(true);
+   238→    try {
+   239→      await api(`/api/content-ideas/${revisiTarget.id}/acc`, {
+   240→        method: "POST",
+   241→        body: JSON.stringify({ statusACC: "REVISI", catatanRevisi }),
+   242→      });
+   243→      toast.success("Catatan revisi terkirim");
+   244→      setRevisiOpen(false);
+   245→      loadIdeas();
+   246→    } catch (e: any) {
+   247→      toast.error(e?.message || "Gagal mengirim revisi");
+   248→    } finally {
+   249→      setAccLoading(false);
+   250→    }
+   251→  }
+   252→
+   253→  async function handlePublishToggle(idea: ContentIdea, publish: boolean) {
+   254→    try {
+   255→      await api(`/api/content-ideas/${idea.id}`, {
+   256→        method: "PUT",
+   257→        body: JSON.stringify({
+   258→          statusPublish: publish ? "PUBLISHED" : "PENDING",
+   259→          statusProduksi: publish ? "PUBLISHED" : "SIAP_PUBLISH",
+   260→        }),
+   261→      });
+   262→      toast.success(publish ? "Konten dipublikasikan" : "Konten dibatalkan publish");
+   263→      loadIdeas();
+   264→    } catch (e: any) {
+   265→      toast.error(e?.message || "Gagal mengubah status publish");
+   266→    }
+   267→  }
+   268→
+   269→  function handleExportExcel() {
+   270→    if (!ideas.length) { toast.error("Tidak ada data"); return; }
+   271→    const rows = ideas.map((i) => {
+   272→      const m = parseMetrik(i.metrikKonten);
+   273→      return {
+   274→        Judul: i.judul,
+   275→        Kategori: i.kategori,
+   276→        "Diajukan Oleh": i.user?.name || "-",
+   277→        Tanggal: formatDate(i.tanggal),
+   278→        Produksi: PRODUCTION_STATUS_LABELS[i.statusProduksi] || i.statusProduksi,
+   279→        Editing: i.statusEditing,
+   280→        Publish: i.statusPublish,
+   281→        "Status ACC": ACC_STATUS_LABELS[i.statusACC] || i.statusACC,
+   282→        "Catatan Revisi": i.catatanRevisi || "-",
+   283→        Reach: m.reach || 0,
+   284→        Views: m.views || 0,
+   285→        "Watch Time": m.watchTime || 0,
+   286→        Share: m.share || 0,
+   287→        Save: m.save || 0,
+   288→        Comment: m.comment || 0,
+   289→        "Follower Growth": m.followerGrowth || 0,
+   290→        "Link Konten": i.linkKonten || "-",
+   291→      };
+   292→    });
+   293→    exportToExcel(rows, "Tugas_Konten", "Tugas Konten");
+   294→    toast.success("Excel diunduh");
+   295→  }
+   296→
+   297→  function handleExportPDF() {
+   298→    if (!ideas.length) { toast.error("Tidak ada data"); return; }
+   299→    const columns = ["Judul", "Kategori", "Pengaju", "ACC", "Publish", "Reach", "Views"];
+   300→    const rows = ideas.map((i) => {
+   301→      const m = parseMetrik(i.metrikKonten);
+   302→      return [
+   303→        i.judul,
+   304→        i.kategori,
+   305→        i.user?.name || "-",
+   306→        ACC_STATUS_LABELS[i.statusACC] || i.statusACC,
+   307→        i.statusPublish,
+   308→        formatNumber(m.reach || 0),
+   309→        formatNumber(m.views || 0),
+   310→      ];
+   311→    });
+   312→    exportToPDF("Laporan Tugas Konten", columns, rows as any, "Tugas_Konten");
+   313→    toast.success("PDF diunduh");
+   314→  }
+   315→
+   316→  return (
+   317→    <div className="space-y-5">
+   318→      <SectionHeader
+   319→        title="Tugas Konten"
+   320→        description="Ajukan ide konten & judul. Owner akan ACC atau memberi catatan revisi. Jika ACC, akan muncul checklist publish di dashboard Anda."
+   321→        action={
+   322→          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
+   323→            <Plus className="w-4 h-4" /> Tambah Ide Konten
+   324→          </Button>
+   325→        }
+   326→      />
+   327→
+   328→      {/* Stats */}
+   329→      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+   330→        <StatCard title="Total Ide" value={formatNumber(stats.total)} icon={Film} indicator="neutral" accent="bg-slate-100 text-slate-600" />
+   331→        <StatCard title="Pending ACC" value={formatNumber(stats.pending)} icon={Clock} indicator="yellow" accent="bg-amber-50 text-amber-600" />
+   332→        <StatCard title="ACC" value={formatNumber(stats.acc)} icon={CheckCircle2} indicator="green" accent="bg-blue-50 text-blue-600" />
+   333→        <StatCard title="Revisi" value={formatNumber(stats.revisi)} icon={AlertCircle} indicator="red" accent="bg-rose-50 text-rose-600" />
+   334→        <StatCard title="Published" value={formatNumber(stats.published)} icon={Globe} indicator="green" accent="bg-sky-50 text-sky-600" />
+   335→      </div>
+   336→
+   337→      {/* Filters + Export */}
+   338→      <Card className="border-slate-200">
+   339→        <CardContent className="p-4">
+   340→          <div className="flex flex-col lg:flex-row gap-3 lg:items-end">
+   341→            <div className="flex-1 min-w-0">
+   342→              <Label className="text-xs text-slate-500 mb-1.5 block">Kategori</Label>
+   343→              <Select value={kategoriFilter} onValueChange={setKategoriFilter}>
+   344→                <SelectTrigger className="h-9"><SelectValue placeholder="Semua Kategori" /></SelectTrigger>
+   345→                <SelectContent>
+   346→                  <SelectItem value="all">Semua Kategori</SelectItem>
+   347→                  {CONTENT_CATEGORIES.map((c) => (
+   348→                    <SelectItem key={c} value={c}>{c}</SelectItem>
+   349→                  ))}
+   350→                </SelectContent>
+   351→              </Select>
+   352→            </div>
+   353→            <div className="flex-1 min-w-0">
+   354→              <Label className="text-xs text-slate-500 mb-1.5 block">Status ACC</Label>
+   355→              <Select value={accFilter} onValueChange={setAccFilter}>
+   356→                <SelectTrigger className="h-9"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+   357→                <SelectContent>
+   358→                  <SelectItem value="all">Semua</SelectItem>
+   359→                  <SelectItem value="PENDING">Menunggu ACC</SelectItem>
+   360→                  <SelectItem value="ACC">ACC</SelectItem>
+   361→                  <SelectItem value="REVISI">Revisi</SelectItem>
+   362→                </SelectContent>
+   363→              </Select>
+   364→            </div>
+   365→            <div className="flex gap-2">
+   366→              <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9">
+   367→                <FileSpreadsheet className="w-4 h-4" /> Excel
+   368→              </Button>
+   369→              <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9">
+   370→                <FileText className="w-4 h-4" /> PDF
+   371→              </Button>
+   372→            </div>
+   373→          </div>
+   374→
+   375→          <Tabs value={tab} onValueChange={setTab} className="mt-4">
+   376→            <TabsList className="grid w-full grid-cols-4 max-w-md h-9">
+   377→              <TabsTrigger value="all" className="text-xs">Semua</TabsTrigger>
+   378→              <TabsTrigger value="PENDING" className="text-xs">Menunggu</TabsTrigger>
+   379→              <TabsTrigger value="ACC" className="text-xs">ACC</TabsTrigger>
+   380→              <TabsTrigger value="REVISI" className="text-xs">Revisi</TabsTrigger>
+   381→            </TabsList>
+   382→          </Tabs>
+   383→        </CardContent>
+   384→      </Card>
+   385→
+   386→      {/* Cards Grid */}
+   387→      {loading ? (
+   388→        <div className="flex items-center justify-center py-16">
+   389→          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+   390→        </div>
+   391→      ) : filtered.length === 0 ? (
+   392→        <Card className="border-dashed border-slate-300">
+   393→          <CardContent className="flex flex-col items-center justify-center py-16 text-center px-4">
+   394→            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+   395→              <Film className="w-7 h-7 text-slate-400" />
+   396→            </div>
+   397→            <p className="text-slate-700 font-medium">Belum ada ide konten</p>
+   398→            <p className="text-sm text-slate-500 mt-1">
+   399→              {tab !== "all" || kategoriFilter !== "all" || accFilter !== "all"
+   400→                ? "Tidak ada konten yang cocok dengan filter."
+   401→                : "Mulai ajukan ide konten pertama Anda."}
+   402→            </p>
+   403→            <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm">
+   404→              <Plus className="w-4 h-4" /> Tambah Ide Konten
+   405→            </Button>
+   406→          </CardContent>
+   407→        </Card>
+   408→      ) : (
+   409→        <div className="max-h-[700px] overflow-y-auto pr-1 -mr-1">
+   410→          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+   411→            {filtered.map((idea) => {
+   412→              const m = parseMetrik(idea.metrikKonten);
+   413→              const canEdit = isOwner || idea.userId === user.id;
+   414→              const isPublished = idea.statusPublish === "PUBLISHED";
+   415→              return (
+   416→                <Card key={idea.id} className="border-slate-200 hover:shadow-md transition-shadow flex flex-col">
+   417→                  <CardContent className="p-4 flex flex-col gap-3 flex-1">
+   418→                    {/* Header */}
+   419→                    <div className="flex items-start justify-between gap-2">
+   420→                      <div className="flex flex-wrap gap-1.5">
+   421→                        <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
+   422→                          {idea.kategori}
+   423→                        </Badge>
+   424→                        <Badge variant="outline" className={ACC_STATUS_COLORS[idea.statusACC]}>
+   425→                          {ACC_STATUS_LABELS[idea.statusACC] || idea.statusACC}
+   426→                        </Badge>
+   427→                      </div>
+   428→                      <Badge variant="outline" className={cn(
+   429→                        "text-[10px]",
+   430→                        idea.statusProduksi === "PUBLISHED"
+   431→                          ? "bg-sky-50 text-sky-700 border-sky-200"
+   432→                          : "bg-slate-50 text-slate-600 border-slate-200"
+   433→                      )}>
+   434→                        {PRODUCTION_STATUS_LABELS[idea.statusProduksi] || idea.statusProduksi}
+   435→                      </Badge>
+   436→                    </div>
+   437→
+   438→                    {/* Title */}
+   439→                    <div>
+   440→                      <h3 className="font-semibold text-slate-900 leading-snug line-clamp-2">{idea.judul}</h3>
+   441→                      {idea.ideKonten && (
+   442→                        <p className="text-sm text-slate-500 mt-1 line-clamp-2">{idea.ideKonten}</p>
+   443→                      )}
+   444→                    </div>
+   445→
+   446→                    {/* Meta */}
+   447→                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+   448→                      <span className="flex items-center gap-1">
+   449→                        <Calendar className="w-3 h-3" /> {formatDate(idea.tanggal)}
+   450→                      </span>
+   451→                      <span>•</span>
+   452→                      <span>oleh <span className="font-medium text-slate-700">{idea.user?.name || "-"}</span></span>
+   453→                    </div>
+   454→
+   455→                    {/* Link */}
+   456→                    {(idea.link || idea.linkKonten) && (
+   457→                      <div className="flex flex-wrap gap-2">
+   458→                        {idea.link && (
+   459→                          <a
+   460→                            href={idea.link} target="_blank" rel="noreferrer"
+   461→                            className="inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 hover:underline"
+   462→                          >
+   463→                            <Link2 className="w-3 h-3" /> Referensi
+   464→                          </a>
+   465→                        )}
+   466→                        {idea.linkKonten && (
+   467→                          <a
+   468→                            href={idea.linkKonten} target="_blank" rel="noreferrer"
+   469→                            className="inline-flex items-center gap-1 text-xs text-sky-700 hover:text-sky-800 hover:underline"
+   470→                          >
+   471→                            <Globe className="w-3 h-3" /> Konten Published
+   472→                          </a>
+   473→                        )}
+   474→                      </div>
+   475→                    )}
+   476→
+   477→                    {/* Script/Caption preview */}
+   478→                    {(idea.script || idea.caption) && (
+   479→                      <div className="text-xs text-slate-500 bg-slate-50 rounded-md p-2 space-y-1">
+   480→                        {idea.script && (
+   481→                          <p><span className="font-medium text-slate-600">Script:</span> <span className="line-clamp-2">{idea.script}</span></p>
+   482→                        )}
+   483→                        {idea.caption && (
+   484→                          <p><span className="font-medium text-slate-600">Caption:</span> <span className="line-clamp-2">{idea.caption}</span></p>
+   485→                        )}
+   486→                      </div>
+   487→                    )}
+   488→
+   489→                    {/* Catatan Revisi */}
+   490→                    {idea.statusACC === "REVISI" && idea.catatanRevisi && (
+   491→                      <div className="rounded-md border border-rose-200 bg-rose-50 p-2.5">
+   492→                        <p className="text-xs font-semibold text-rose-700 flex items-center gap-1.5 mb-1">
+   493→                          <MessageSquare className="w-3.5 h-3.5" /> Catatan Revisi Owner
+   494→                        </p>
+   495→                        <p className="text-xs text-rose-800">{idea.catatanRevisi}</p>
+   496→                      </div>
+   497→                    )}
+   498→
+   499→                    {/* Metrik */}
+   500→                    {isPublished && (
+   501→                      <div className="rounded-md border border-blue-200 bg-blue-50/50 p-2.5">
+   502→                        <p className="text-xs font-semibold text-blue-700 flex items-center gap-1.5 mb-1.5">
+   503→                          <BarChart3 className="w-3.5 h-3.5" /> Metrik Konten
+   504→                        </p>
+   505→                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+   506→                          <div className="flex justify-between"><span className="text-slate-500">Reach</span><span className="font-medium text-slate-700">{formatNumber(m.reach || 0)}</span></div>
+   507→                          <div className="flex justify-between"><span className="text-slate-500">Views</span><span className="font-medium text-slate-700">{formatNumber(m.views || 0)}</span></div>
+   508→                          <div className="flex justify-between"><span className="text-slate-500">Watch</span><span className="font-medium text-slate-700">{formatNumber(m.watchTime || 0)}</span></div>
+   509→                          <div className="flex justify-between"><span className="text-slate-500">Share</span><span className="font-medium text-slate-700">{formatNumber(m.share || 0)}</span></div>
+   510→                          <div className="flex justify-between"><span className="text-slate-500">Save</span><span className="font-medium text-slate-700">{formatNumber(m.save || 0)}</span></div>
+   511→                          <div className="flex justify-between"><span className="text-slate-500">Comment</span><span className="font-medium text-slate-700">{formatNumber(m.comment || 0)}</span></div>
+   512→                          <div className="flex justify-between col-span-2"><span className="text-slate-500">Follower Growth</span><span className="font-medium text-blue-700">+{formatNumber(m.followerGrowth || 0)}</span></div>
+   513→                        </div>
+   514→                      </div>
+   515→                    )}
+   516→
+   517→                    {/* Spacer */}
+   518→                    <div className="flex-1" />
+   519→
+   520→                    {/* Owner ACC actions */}
+   521→                    {isOwner && idea.statusACC === "PENDING" && (
+   522→                      <div className="flex gap-2 pt-1 border-t border-slate-100">
+   523→                        <Button
+   524→                          size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700"
+   525→                          onClick={() => handleAcc(idea)} disabled={accLoading}
+   526→                        >
+   527→                          <Check className="w-3.5 h-3.5" /> ACC
+   528→                        </Button>
+   529→                        <Button
+   530→                          size="sm" variant="outline"
+   531→                          className="flex-1 border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
+   532→                          onClick={() => openRevisi(idea)} disabled={accLoading}
+   533→                        >
+   534→                          <X className="w-3.5 h-3.5" /> Revisi
+   535→                        </Button>
+   536→                      </div>
+   537→                    )}
+   538→
+   539→                    {/* Publish toggle (when ACC) */}
+   540→                    {idea.statusACC === "ACC" && canEdit && (
+   541→                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+   542→                        <Label htmlFor={`pub-${idea.id}`} className="text-xs font-medium text-slate-700 flex items-center gap-1.5 cursor-pointer">
+   543→                          <Globe className="w-3.5 h-3.5" /> Publish Konten
+   544→                        </Label>
+   545→                        <Checkbox
+   546→                          id={`pub-${idea.id}`}
+   547→                          checked={isPublished}
+   548→                          onCheckedChange={(v) => handlePublishToggle(idea, !!v)}
+   549→                        />
+   550→                      </div>
+   551→                    )}
+   552→
+   553→                    {/* Edit/Delete */}
+   554→                    {canEdit && (
+   555→                      <div className="flex justify-end gap-1 pt-1 border-t border-slate-100">
+   556→                        <Button size="sm" variant="ghost" className="h-8" onClick={() => openEdit(idea)}>
+   557→                          <Pencil className="w-3.5 h-3.5" /> Edit
+   558→                        </Button>
+   559→                        <Button size="sm" variant="ghost" className="h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50" onClick={() => handleDelete(idea)}>
+   560→                          <Trash2 className="w-3.5 h-3.5" /> Hapus
+   561→                        </Button>
+   562→                      </div>
+   563→                    )}
+   564→                  </CardContent>
+   565→                </Card>
+   566→              );
+   567→            })}
+   568→          </div>
+   569→        </div>
+   570→      )}
+   571→
+   572→      {/* Add/Edit Dialog */}
+   573→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   574→        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+   575→          <DialogHeader>
+   576→            <DialogTitle>{editingId ? "Edit Ide Konten" : "Tambah Ide Konten"}</DialogTitle>
+   577→            <DialogDescription>
+   578→              {editingId ? "Perbarui detail ide konten." : "Ajukan ide konten baru untuk di-ACC owner."}
+   579→            </DialogDescription>
+   580→          </DialogHeader>
+   581→
+   582→          <div className="space-y-4 py-2">
+   583→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+   584→              <div>
+   585→                <Label className="mb-1.5">Kategori <span className="text-rose-500">*</span></Label>
+   586→                <Select value={form.kategori} onValueChange={(v) => setForm({ ...form, kategori: v })}>
+   587→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   588→                  <SelectContent>
+   589→                    {CONTENT_CATEGORIES.map((c) => (
+   590→                      <SelectItem key={c} value={c}>{c}</SelectItem>
+   591→                    ))}
+   592→                  </SelectContent>
+   593→                </Select>
+   594→              </div>
+   595→              <div>
+   596→                <Label className="mb-1.5">Judul <span className="text-rose-500">*</span></Label>
+   597→                <Input
+   598→                  value={form.judul}
+   599→                  onChange={(e) => setForm({ ...form, judul: e.target.value })}
+   600→                  placeholder="Judul konten..."
+   601→                />
+   602→              </div>
+   603→            </div>
+   604→
+   605→            <div>
+   606→              <Label className="mb-1.5">Link Referensi</Label>
+   607→              <Input
+   608→                value={form.link}
+   609→                onChange={(e) => setForm({ ...form, link: e.target.value })}
+   610→                placeholder="https://..."
+   611→                type="url"
+   612→              />
+   613→            </div>
+   614→
+   615→            <div>
+   616→              <Label className="mb-1.5">Ide Konten</Label>
+   617→              <Textarea
+   618→                value={form.ideKonten}
+   619→                onChange={(e) => setForm({ ...form, ideKonten: e.target.value })}
+   620→                placeholder="Deskripsikan ide konten..."
+   621→                rows={3}
+   622→              />
+   623→            </div>
+   624→
+   625→            <div>
+   626→              <Label className="mb-1.5">Script</Label>
+   627→              <Textarea
+   628→                value={form.script}
+   629→                onChange={(e) => setForm({ ...form, script: e.target.value })}
+   630→                placeholder="Script video/konten..."
+   631→                rows={3}
+   632→              />
+   633→            </div>
+   634→
+   635→            <div>
+   636→              <Label className="mb-1.5">Caption</Label>
+   637→              <Textarea
+   638→                value={form.caption}
+   639→                onChange={(e) => setForm({ ...form, caption: e.target.value })}
+   640→                placeholder="Caption posting..."
+   641→                rows={2}
+   642→              />
+   643→            </div>
+   644→
+   645→            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+   646→              <div>
+   647→                <Label className="mb-1.5">Status Produksi</Label>
+   648→                <Select value={form.statusProduksi} onValueChange={(v) => setForm({ ...form, statusProduksi: v })}>
+   649→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   650→                  <SelectContent>
+   651→                    {PRODUCTION_STATUS.map((s) => (
+   652→                      <SelectItem key={s} value={s}>{PRODUCTION_STATUS_LABELS[s]}</SelectItem>
+   653→                    ))}
+   654→                  </SelectContent>
+   655→                </Select>
+   656→              </div>
+   657→              <div>
+   658→                <Label className="mb-1.5">Status Editing</Label>
+   659→                <Select value={form.statusEditing} onValueChange={(v) => setForm({ ...form, statusEditing: v })}>
+   660→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   661→                  <SelectContent>
+   662→                    {EDITING_STATUS.map((s) => (
+   663→                      <SelectItem key={s} value={s}>{s}</SelectItem>
+   664→                    ))}
+   665→                  </SelectContent>
+   666→                </Select>
+   667→              </div>
+   668→              <div>
+   669→                <Label className="mb-1.5">Status Publish</Label>
+   670→                <Select value={form.statusPublish} onValueChange={(v) => setForm({ ...form, statusPublish: v })}>
+   671→                  <SelectTrigger><SelectValue /></SelectTrigger>
+   672→                  <SelectContent>
+   673→                    {PUBLISH_STATUS.map((s) => (
+   674→                      <SelectItem key={s} value={s}>{s}</SelectItem>
+   675→                    ))}
+   676→                  </SelectContent>
+   677→                </Select>
+   678→              </div>
+   679→            </div>
+   680→
+   681→            <div>
+   682→              <Label className="mb-1.5">Link Konten (Published)</Label>
+   683→              <Input
+   684→                value={form.linkKonten}
+   685→                onChange={(e) => setForm({ ...form, linkKonten: e.target.value })}
+   686→                placeholder="https://... (URL konten yang sudah publish)"
+   687→                type="url"
+   688→              />
+   689→            </div>
+   690→
+   691→            {/* Metrik */}
+   692→            <div className="rounded-lg border border-slate-200 p-3 space-y-3">
+   693→              <p className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+   694→                <BarChart3 className="w-4 h-4 text-blue-600" /> Metrik Konten
+   695→              </p>
+   696→              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+   697→                {[
+   698→                  { key: "reach", label: "Reach" },
+   699→                  { key: "views", label: "Views" },
+   700→                  { key: "watchTime", label: "Watch Time" },
+   701→                  { key: "share", label: "Share" },
+   702→                  { key: "save", label: "Save" },
+   703→                  { key: "comment", label: "Comment" },
+   704→                  { key: "followerGrowth", label: "Follower Growth" },
+   705→                ].map((f) => (
+   706→                  <div key={f.key}>
+   707→                    <Label className="text-xs text-slate-500 mb-1 block">{f.label}</Label>
+   708→                    <Input
+   709→                      type="number"
+   710→                      min={0}
+   711→                      value={(form.metrik as any)[f.key] ?? 0}
+   712→                      onChange={(e) => setForm({
+   713→                        ...form,
+   714→                        metrik: { ...form.metrik, [f.key]: Number(e.target.value) || 0 },
+   715→                      })}
+   716→                      className="h-8"
+   717→                    />
+   718→                  </div>
+   719→                ))}
+   720→              </div>
+   721→            </div>
+   722→          </div>
+   723→
+   724→          <DialogFooter>
+   725→            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>Batal</Button>
+   726→            <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+   727→              {saving && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   728→              {editingId ? "Simpan Perubahan" : "Ajukan Ide"}
+   729→            </Button>
+   730→          </DialogFooter>
+   731→        </DialogContent>
+   732→      </Dialog>
+   733→
+   734→      {/* Revisi Dialog */}
+   735→      <Dialog open={revisiOpen} onOpenChange={setRevisiOpen}>
+   736→        <DialogContent className="max-w-md">
+   737→          <DialogHeader>
+   738→            <DialogTitle className="flex items-center gap-2">
+   739→              <AlertCircle className="w-5 h-5 text-rose-600" /> Minta Revisi Konten
+   740→            </DialogTitle>
+   741→            <DialogDescription>
+   742→              {revisiTarget && (
+   743→                <>Berikan catatan revisi untuk <span className="font-medium text-slate-700">"{revisiTarget.judul}"</span>.</>
+   744→              )}
+   745→            </DialogDescription>
+   746→          </DialogHeader>
+   747→          <div className="py-2">
+   748→            <Label className="mb-1.5">Catatan Revisi <span className="text-rose-500">*</span></Label>
+   749→            <Textarea
+   750→              value={catatanRevisi}
+   751→              onChange={(e) => setCatatanRevisi(e.target.value)}
+   752→              placeholder="Tuliskan catatan revisi untuk anggota tim..."
+   753→              rows={4}
+   754→              autoFocus
+   755→            />
+   756→          </div>
+   757→          <DialogFooter>
+   758→            <Button variant="outline" onClick={() => setRevisiOpen(false)} disabled={accLoading}>Batal</Button>
+   759→            <Button
+   760→              onClick={handleRevisiSubmit}
+   761→              disabled={accLoading}
+   762→              className="bg-rose-600 hover:bg-rose-700"
+   763→            >
+   764→              {accLoading && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+   765→              Kirim Revisi
+   766→            </Button>
+   767→          </DialogFooter>
+   768→        </DialogContent>
+   769→      </Dialog>
+   770→    </div>
+   771→  );
+   772→}
+   773→

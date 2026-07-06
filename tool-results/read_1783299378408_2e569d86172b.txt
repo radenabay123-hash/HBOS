@@ -1,0 +1,718 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import { Separator } from "@/components/ui/separator";
+    12→import {
+    13→  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+    14→} from "@/components/ui/dialog";
+    15→import {
+    16→  Receipt, Wallet, TrendingUp, TrendingDown, Clock, Award, FileText,
+    17→  RefreshCw, Download, CheckCircle2, DollarSign, Settings, Zap, Printer,
+    18→  Trash2, Eye, Building2, User, Calendar, Banknote, FileSpreadsheet,
+    19→  ChevronRight, Sparkles, Plus,
+    20→} from "lucide-react";
+    21→import { api } from "@/lib/api-client";
+    22→import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
+    23→import { exportToExcel } from "@/lib/export-utils";
+    24→import { downloadSlipGajiPDF, type SlipGajiData } from "@/lib/slip-gaji-pdf";
+    25→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    26→import { toast } from "sonner";
+    27→import { cn } from "@/lib/utils";
+    28→import type { SafeUser } from "@/lib/auth";
+    29→
+    30→const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    31→
+    32→interface Payroll {
+    33→  id?: string;
+    34→  userId: string;
+    35→  userName?: string;
+    36→  role?: string;
+    37→  user?: { id: string; name: string; role: string; position: string; phone: string };
+    38→  month: number;
+    39→  year: number;
+    40→  baseSalary: number;
+    41→  mealAllowance: number;
+    42→  transportAllowance: number;
+    43→  workingDays: number;
+    44→  presentDays: number;
+    45→  absentDays: number;
+    46→  lateDays: number;
+    47→  leaveDays: number;
+    48→  kpiScore: number;
+    49→  kpiBonus: number;
+    50→  attendanceDeduction: number;
+    51→  bpjs: number;
+    52→  tax: number;
+    53→  otherDeduction: number;
+    54→  grossSalary: number;
+    55→  totalDeduction: number;
+    56→  netSalary: number;
+    57→  status: string;
+    58→  paidAt: string | null;
+    59→  note?: string;
+    60→  isManual?: boolean;
+    61→  nik?: string;
+    62→  jabatan?: string;
+    63→  bankName?: string;
+    64→  bankAccount?: string;
+    65→  accountName?: string;
+    66→  periodeLabel?: string;
+    67→  companyName?: string;
+    68→}
+    69→
+    70→const STATUS_LABELS: Record<string, string> = { DRAFT: "Draft", APPROVED: "Disetujui", PAID: "Dibayar" };
+    71→const STATUS_COLORS: Record<string, string> = {
+    72→  DRAFT: "bg-slate-100 text-slate-600 border-slate-200",
+    73→  APPROVED: "bg-amber-100 text-amber-700 border-amber-200",
+    74→  PAID: "bg-blue-100 text-blue-700 border-blue-200",
+    75→};
+    76→
+    77→export function PayrollModule({ user }: { user: SafeUser }) {
+    78→  const isOwner = user.role === ROLES.OWNER;
+    79→  const now = new Date();
+    80→  const [year, setYear] = useState(now.getFullYear());
+    81→  const [month, setMonth] = useState(now.getMonth() + 1);
+    82→  const [archive, setArchive] = useState<Payroll[]>([]);
+    83→  const [myPayroll, setMyPayroll] = useState<Payroll | null>(null);
+    84→  const [saved, setSaved] = useState(false);
+    85→  const [loading, setLoading] = useState(true);
+    86→  const [payslipDialog, setPayslipDialog] = useState<{ open: boolean; payroll: Payroll | null }>({ open: false, payroll: null });
+    87→  const [users, setUsers] = useState<{ id: string; name: string; role: string; position: string }[]>([]);
+    88→
+    89→  // Manual generator form state
+    90→  const [genForm, setGenForm] = useState({
+    91→    userId: "",
+    92→    month: String(now.getMonth() + 1),
+    93→    year: String(now.getFullYear()),
+    94→    baseSalary: "",
+    95→    tunjangan: "",
+    96→    potongan: "",
+    97→    note: "",
+    98→    bankName: "Bank Syariah Indonesia (BSI)",
+    99→    bankAccount: "",
+   100→    accountName: "",
+   101→    nik: "",
+   102→    jabatan: "",
+   103→  });
+   104→  const [generating, setGenerating] = useState(false);
+   105→
+   106→  const loadData = useCallback(async () => {
+   107→    setLoading(true);
+   108→    try {
+   109→      if (isOwner) {
+   110→        const [archData, previewData] = await Promise.all([
+   111→          api<{ payrolls: Payroll[] }>("/api/payroll/manual").catch(() => ({ payrolls: [] })),
+   112→          api<any>(`/api/payroll?month=${month}&year=${year}`).catch(() => ({ payrolls: [], saved: false })),
+   113→        ]);
+   114→        setArchive(archData.payrolls || []);
+   115→        setSaved(previewData.saved || false);
+   116→        const u = await api<{ users: any[] }>("/api/users").catch(() => ({ users: [] }));
+   117→        setUsers(u.users.filter((x: any) => x.role !== "OWNER"));
+   118→      } else {
+   119→        const data = await api<any>(`/api/payroll?month=${month}&year=${year}`);
+   120→        setMyPayroll(data.payroll || null);
+   121→        setSaved(data.saved || false);
+   122→      }
+   123→    } catch (e: any) {
+   124→      toast.error(e.message || "Gagal memuat payroll");
+   125→    } finally {
+   126→      setLoading(false);
+   127→    }
+   128→  }, [month, year, isOwner]);
+   129→
+   130→  useEffect(() => { loadData(); }, [loadData]);
+   131→
+   132→  async function handleGenerateManual() {
+   133→    if (!genForm.userId) { toast.error("Pilih karyawan dulu"); return; }
+   134→    setGenerating(true);
+   135→    try {
+   136→      await api("/api/payroll/manual", {
+   137→        method: "POST",
+   138→        body: JSON.stringify({
+   139→          userId: genForm.userId,
+   140→          month: Number(genForm.month),
+   141→          year: Number(genForm.year),
+   142→          baseSalary: Number(genForm.baseSalary) || 0,
+   143→          tunjangan: Number(genForm.tunjangan) || 0,
+   144→          potongan: Number(genForm.potongan) || 0,
+   145→          note: genForm.note,
+   146→          bankName: genForm.bankName,
+   147→          bankAccount: genForm.bankAccount,
+   148→          accountName: genForm.accountName,
+   149→          nik: genForm.nik,
+   150→          jabatan: genForm.jabatan,
+   151→          status: "DRAFT",
+   152→        }),
+   153→      });
+   154→      toast.success("Slip gaji berhasil dibuat!");
+   155→      setGenForm({ ...genForm, baseSalary: "", tunjangan: "", potongan: "", note: "", bankAccount: "", accountName: "", nik: "" });
+   156→      loadData();
+   157→    } catch (e: any) {
+   158→      toast.error(e.message || "Gagal generate");
+   159→    } finally {
+   160→      setGenerating(false);
+   161→    }
+   162→  }
+   163→
+   164→  async function handleUpdateStatus(payrollId: string, status: string) {
+   165→    try {
+   166→      await api(`/api/payroll/${payrollId}`, { method: "PUT", body: JSON.stringify({ status }) });
+   167→      toast.success(status === "PAID" ? "Gaji ditandai LUNAS" : status === "APPROVED" ? "Payroll disetujui" : "Status diperbarui");
+   168→      loadData();
+   169→    } catch (e: any) {
+   170→      toast.error(e.message || "Gagal update status");
+   171→    }
+   172→  }
+   173→
+   174→  async function handleDelete(payrollId: string) {
+   175→    if (!confirm("Hapus slip gaji ini?")) return;
+   176→    try {
+   177→      await api(`/api/payroll/${payrollId}`, { method: "DELETE" });
+   178→      toast.success("Slip gaji dihapus");
+   179→      loadData();
+   180→    } catch (e: any) {
+   181→      toast.error(e.message || "Gagal hapus");
+   182→    }
+   183→  }
+   184→
+   185→  async function handleDownloadSlip(p: Payroll) {
+   186→    const u = p.user || { name: p.userName || "", role: p.role || "", position: "", phone: "" };
+   187→    // Fetch layout settings - ALL design comes from here
+   188→    let layoutSettings: any = null;
+   189→    let logoUrl = "";
+   190→    try {
+   191→      const ld = await fetchLayoutSettings("SLIP_GAJI");
+   192→      layoutSettings = ld.layout;
+   193→      logoUrl = ld.appSettings?.companyLogo || "";
+   194→    } catch {}
+   195→    // Load logo image as data URL for jsPDF
+   196→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   197→    // CLEAN: only pass content data, all design comes from layout settings
+   198→    const slipData: SlipGajiData = {
+   199→      employeeName: u.name,
+   200→      nik: p.nik || p.userId.slice(-4).toUpperCase(),
+   201→      jabatan: p.jabatan || u.position || ROLE_LABELS[u.role] || "-",
+   202→      periode: p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`,
+   203→      bankName: p.bankName || "Bank Syariah Indonesia (BSI)",
+   204→      bankAccount: p.bankAccount || "-",
+   205→      accountName: p.accountName || u.name,
+   206→      gajiPokok: p.baseSalary,
+   207→      tunjanganBonus: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+   208→      potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction),
+   209→      note: p.note || "",
+   210→      status: p.status,
+   211→      paidAt: p.paidAt ? formatDate(p.paidAt) : null,
+   212→      logoImageData,
+   213→      layout: layoutSettings,
+   214→    };
+   215→    downloadSlipGajiPDF(slipData);
+   216→    toast.success("Slip gaji PDF diunduh");
+   217→  }
+   218→
+   219→  function handleExportExcel() {
+   220→    const rows = archive.map((p, i) => ({
+   221→      No: i + 1,
+   222→      Nama: p.user?.name || p.userName,
+   223→      "Bulan/Tahun": `${monthNames[p.month - 1]} ${p.year}`,
+   224→      "Gaji Pokok": p.baseSalary,
+   225→      Tunjangan: p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus),
+   226→      Potongan: p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax),
+   227→      "Gaji Bersih": p.netSalary,
+   228→      Status: STATUS_LABELS[p.status] || p.status,
+   229→    }));
+   230→    exportToExcel(rows, "Arsip-Slip-Gaji", "Slip Gaji");
+   231→    toast.success("Excel diunduh");
+   232→  }
+   233→
+   234→  const previewNet = (Number(genForm.baseSalary) || 0) + (Number(genForm.tunjangan) || 0) - (Number(genForm.potongan) || 0);
+   235→
+   236→  if (loading) {
+   237→    return (
+   238→      <div className="flex items-center justify-center py-20">
+   239→        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+   240→      </div>
+   241→    );
+   242→  }
+   243→
+   244→  // ===== TEAM VIEW =====
+   245→  if (!isOwner) {
+   246→    const p = myPayroll;
+   247→    return (
+   248→      <div className="space-y-6">
+   249→        <div>
+   250→          <h1 className="text-2xl font-bold text-slate-900">Slip Gaji Saya</h1>
+   251→          <p className="text-sm text-slate-500 mt-1">Rincian gaji bulanan Anda</p>
+   252→        </div>
+   253→
+   254→        <div className="flex flex-wrap items-center gap-2">
+   255→          <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+   256→            <SelectTrigger className="w-[140px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   257→            <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+   258→          </Select>
+   259→          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+   260→            <SelectTrigger className="w-[100px] h-9 bg-white"><SelectValue /></SelectTrigger>
+   261→            <SelectContent>{[now.getFullYear(), now.getFullYear() - 1].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+   262→          </Select>
+   263→        </div>
+   264→
+   265→        {!p ? (
+   266→          <Card className="border-dashed">
+   267→            <CardContent className="py-16 text-center">
+   268→              <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   269→              <p className="text-slate-400">Belum ada slip gaji untuk periode {monthNames[month - 1]} {year}</p>
+   270→            </CardContent>
+   271→          </Card>
+   272→        ) : (
+   273→          <>
+   274→            {/* Status banner */}
+   275→            <Card className={cn("border-2", p.status === "PAID" ? "border-blue-300 bg-blue-50/50" : "border-amber-200 bg-amber-50/50")}>
+   276→              <CardContent className="p-5 flex items-center justify-between">
+   277→                <div className="flex items-center gap-3">
+   278→                  <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center", p.status === "PAID" ? "bg-blue-600 text-white" : "bg-amber-500 text-white")}>
+   279→                    {p.status === "PAID" ? <CheckCircle2 className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+   280→                  </div>
+   281→                  <div>
+   282→                    <p className="font-semibold text-slate-900">Periode: {monthNames[p.month - 1]} {p.year}</p>
+   283→                    <p className="text-sm text-slate-600">{p.status === "PAID" ? `Dibayar pada ${p.paidAt ? formatDate(p.paidAt) : "-"}` : "Draft - belum disetujui"}</p>
+   284→                  </div>
+   285→                </div>
+   286→                <Badge className={cn("text-sm px-3 py-1", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge>
+   287→              </CardContent>
+   288→            </Card>
+   289→
+   290→            {/* Net salary hero card */}
+   291→            <Card className="border-0 shadow-lg shadow-blue-600/20 overflow-hidden">
+   292→              <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 p-6 text-white">
+   293→                <div className="flex items-center justify-between mb-4">
+   294→                  <div className="flex items-center gap-2">
+   295→                    <div className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur flex items-center justify-center">
+   296→                      <Wallet className="w-5 h-5" />
+   297→                    </div>
+   298→                    <span className="text-blue-100 text-sm font-medium">Gaji Bersih Diterima</span>
+   299→                  </div>
+   300→                  <Sparkles className="w-5 h-5 text-blue-200" />
+   301→                </div>
+   302→                <p className="text-4xl font-bold tracking-tight">{formatCurrency(p.netSalary)}</p>
+   303→                <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-white/20">
+   304→                  <div>
+   305→                    <p className="text-blue-200 text-xs mb-0.5">Gross</p>
+   306→                    <p className="font-semibold text-sm">{formatCurrency(p.grossSalary)}</p>
+   307→                  </div>
+   308→                  <div>
+   309→                    <p className="text-blue-200 text-xs mb-0.5">Potongan</p>
+   310→                    <p className="font-semibold text-sm">{formatCurrency(p.totalDeduction)}</p>
+   311→                  </div>
+   312→                  <div>
+   313→                    <p className="text-blue-200 text-xs mb-0.5">KPI Score</p>
+   314→                    <p className="font-semibold text-sm">{p.kpiScore || "-"}</p>
+   315→                  </div>
+   316→                </div>
+   317→              </div>
+   318→            </Card>
+   319→
+   320→            {/* Breakdown cards */}
+   321→            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   322→              <Card className="shadow-sm">
+   323→                <CardHeader className="pb-3">
+   324→                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+   325→                    <span className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center"><TrendingUp className="w-4 h-4 text-green-600" /></span>
+   326→                    Pendapatan
+   327→                  </CardTitle>
+   328→                </CardHeader>
+   329→                <CardContent className="space-y-2.5 text-sm pt-0">
+   330→                  <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
+   331→                  {p.isManual ? (
+   332→                    <Row label="Tunjangan & Bonus" value={formatCurrency(p.transportAllowance)} />
+   333→                  ) : (
+   334→                    <>
+   335→                      <Row label="Tunjangan Makan" value={formatCurrency(p.mealAllowance)} />
+   336→                      <Row label="Tunjangan Transport" value={formatCurrency(p.transportAllowance)} />
+   337→                      <Row label="Bonus KPI" value={formatCurrency(p.kpiBonus)} />
+   338→                    </>
+   339→                  )}
+   340→                  <Separator className="my-1" />
+   341→                  <Row label="Total Gross" value={formatCurrency(p.grossSalary)} bold />
+   342→                </CardContent>
+   343→              </Card>
+   344→              <Card className="shadow-sm">
+   345→                <CardHeader className="pb-3">
+   346→                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+   347→                    <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center"><TrendingDown className="w-4 h-4 text-rose-600" /></span>
+   348→                    Potongan
+   349→                  </CardTitle>
+   350→                </CardHeader>
+   351→                <CardContent className="space-y-2.5 text-sm pt-0">
+   352→                  {p.isManual ? (
+   353→                    <Row label="Potongan" value={formatCurrency(p.otherDeduction)} negative />
+   354→                  ) : (
+   355→                    <>
+   356→                      <Row label="Potongan Kehadiran" value={formatCurrency(p.attendanceDeduction)} negative />
+   357→                      <Row label="BPJS" value={formatCurrency(p.bpjs)} negative />
+   358→                      <Row label="Pajak (PPh)" value={formatCurrency(p.tax)} negative />
+   359→                    </>
+   360→                  )}
+   361→                  <Separator className="my-1" />
+   362→                  <Row label="Total Potongan" value={formatCurrency(p.totalDeduction)} bold negative />
+   363→                </CardContent>
+   364→              </Card>
+   365→            </div>
+   366→
+   367→            <Button onClick={() => handleDownloadSlip(p)} className="w-full bg-blue-600 hover:bg-blue-700 h-11">
+   368→              <Download className="w-4 h-4 mr-2" /> Download Slip Gaji (PDF)
+   369→            </Button>
+   370→          </>
+   371→        )}
+   372→      </div>
+   373→    );
+   374→  }
+   375→
+   376→  // ===== OWNER VIEW =====
+   377→  const totalGross = archive.reduce((s, p) => s + p.grossSalary, 0);
+   378→  const totalNet = archive.reduce((s, p) => s + p.netSalary, 0);
+   379→  const paidCount = archive.filter((p) => p.status === "PAID").length;
+   380→  const draftCount = archive.filter((p) => p.status === "DRAFT").length;
+   381→
+   382→  return (
+   383→    <div className="space-y-6">
+   384→      {/* Page header */}
+   385→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   386→        <div>
+   387→          <h1 className="text-2xl font-bold text-slate-900">Payroll & Gaji</h1>
+   388→          <p className="text-sm text-slate-500 mt-1">Generator slip gaji manual & arsip penggajian tim</p>
+   389→        </div>
+   390→        <Button variant="outline" size="sm" onClick={handleExportExcel} className="bg-white">
+   391→          <FileSpreadsheet className="w-4 h-4 mr-2" /> Export Excel
+   392→        </Button>
+   393→      </div>
+   394→
+   395→      {/* Summary stat cards */}
+   396→      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   397→        <SummaryCard icon={Receipt} label="Total Slip" value={String(archive.length)} accent="blue" />
+   398→        <SummaryCard icon={CheckCircle2} label="Sudah Dibayar" value={String(paidCount)} accent="green" />
+   399→        <SummaryCard icon={DollarSign} label="Total Gaji Bruto" value={formatCurrency(totalGross)} accent="violet" />
+   400→        <SummaryCard icon={Wallet} label="Total Gaji Bersih" value={formatCurrency(totalNet)} accent="blue" />
+   401→      </div>
+   402→
+   403→      {/* Main content: Generator + Arsip */}
+   404→      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+   405→        {/* ===== GENERATOR (left, 2 cols) ===== */}
+   406→        <Card className="lg:col-span-2 shadow-sm border-slate-200 self-start sticky top-20">
+   407→          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4 rounded-t-lg">
+   408→            <div className="flex items-center gap-2.5">
+   409→              <div className="w-9 h-9 rounded-lg bg-white/15 backdrop-blur flex items-center justify-center">
+   410→                <Zap className="w-5 h-5 text-white" />
+   411→              </div>
+   412→              <div>
+   413→                <h3 className="font-semibold text-white text-sm">Generator Gaji Bulanan</h3>
+   414→                <p className="text-blue-100 text-xs">Buat slip gaji manual</p>
+   415→              </div>
+   416→            </div>
+   417→          </div>
+   418→          <CardContent className="p-5 space-y-4">
+   419→            {/* Karyawan */}
+   420→            <div className="space-y-1.5">
+   421→              <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+   422→                <User className="w-3 h-3" /> PILIH KARYAWAN
+   423→              </Label>
+   424→              <Select value={genForm.userId} onValueChange={(v) => {
+   425→                const u = users.find((x) => x.id === v);
+   426→                setGenForm({ ...genForm, userId: v, jabatan: u?.position || ROLE_LABELS[u?.role || ""] || "", accountName: u?.name || "" });
+   427→              }}>
+   428→                <SelectTrigger className="bg-white"><SelectValue placeholder="-- Pilih Karyawan --" /></SelectTrigger>
+   429→                <SelectContent>{users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name} ({ROLE_LABELS[u.role]})</SelectItem>)}</SelectContent>
+   430→              </Select>
+   431→            </div>
+   432→
+   433→            {/* Periode */}
+   434→            <div className="grid grid-cols-2 gap-3">
+   435→              <div className="space-y-1.5">
+   436→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> BULAN</Label>
+   437→                <Select value={genForm.month} onValueChange={(v) => setGenForm({ ...genForm, month: v })}>
+   438→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   439→                  <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+   440→                </Select>
+   441→              </div>
+   442→              <div className="space-y-1.5">
+   443→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><Calendar className="w-3 h-3" /> TAHUN</Label>
+   444→                <Input value={genForm.year} onChange={(e) => setGenForm({ ...genForm, year: e.target.value })} className="bg-white" />
+   445→              </div>
+   446→            </div>
+   447→
+   448→            <Separator />
+   449→
+   450→            {/* Nominal inputs */}
+   451→            <div className="space-y-3">
+   452→              <div className="space-y-1.5">
+   453→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><DollarSign className="w-3 h-3" /> GAJI POKOK (IDR)</Label>
+   454→                <Input type="number" value={genForm.baseSalary} onChange={(e) => setGenForm({ ...genForm, baseSalary: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   455→              </div>
+   456→              <div className="space-y-1.5">
+   457→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><TrendingUp className="w-3 h-3" /> TOTAL TUNJANGAN (IDR)</Label>
+   458→                <Input type="number" value={genForm.tunjangan} onChange={(e) => setGenForm({ ...genForm, tunjangan: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   459→              </div>
+   460→              <div className="space-y-1.5">
+   461→                <Label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5"><TrendingDown className="w-3 h-3" /> TOTAL POTONGAN (IDR)</Label>
+   462→                <Input type="number" value={genForm.potongan} onChange={(e) => setGenForm({ ...genForm, potongan: e.target.value })} placeholder="0" className="bg-white text-right font-medium" />
+   463→              </div>
+   464→            </div>
+   465→
+   466→            {/* Preview net */}
+   467→            <div className="bg-gradient-to-r from-blue-50 to-sky-50 border border-blue-100 rounded-xl p-3.5">
+   468→              <div className="flex items-center justify-between">
+   469→                <span className="text-sm text-slate-600">Preview Gaji Bersih</span>
+   470→                <span className="text-xl font-bold text-blue-700">{formatCurrency(previewNet)}</span>
+   471→              </div>
+   472→            </div>
+   473→
+   474→            <Separator />
+   475→
+   476→            {/* Info Transfer (collapsible feel) */}
+   477→            <div className="space-y-2.5">
+   478→              <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5"><Banknote className="w-3 h-3" /> INFO TRANSFER (opsional)</p>
+   479→              <Input placeholder="Nama Bank (BCA/BNI/BSI/Mandiri)" value={genForm.bankName} onChange={(e) => setGenForm({ ...genForm, bankName: e.target.value })} className="bg-white text-sm h-9" />
+   480→              <div className="grid grid-cols-2 gap-2">
+   481→                <Input placeholder="No. Rekening" value={genForm.bankAccount} onChange={(e) => setGenForm({ ...genForm, bankAccount: e.target.value })} className="bg-white text-sm h-9" />
+   482→                <Input placeholder="NIK Karyawan" value={genForm.nik} onChange={(e) => setGenForm({ ...genForm, nik: e.target.value })} className="bg-white text-sm h-9" />
+   483→              </div>
+   484→            </div>
+   485→
+   486→            {/* Keterangan */}
+   487→            <div className="space-y-1.5">
+   488→              <Label className="text-xs font-semibold text-slate-600">KETERANGAN / NOTES</Label>
+   489→              <Textarea value={genForm.note} onChange={(e) => setGenForm({ ...genForm, note: e.target.value })} placeholder="e.g. Gaji bulanan terstruktur" rows={2} className="bg-white text-sm resize-none" />
+   490→            </div>
+   491→
+   492→            <Button onClick={handleGenerateManual} disabled={generating || !genForm.userId} className="w-full bg-blue-600 hover:bg-blue-700 h-11 font-medium">
+   493→              {generating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+   494→              {generating ? "Memproses..." : "GENERATE SLIP GAJI"}
+   495→            </Button>
+   496→          </CardContent>
+   497→        </Card>
+   498→
+   499→        {/* ===== ARSIP (right, 3 cols) ===== */}
+   500→        <div className="lg:col-span-3 space-y-4">
+   501→          <Card className="shadow-sm border-slate-200">
+   502→            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+   503→              <div className="flex items-center gap-2.5">
+   504→                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+   505→                  <Receipt className="w-5 h-5 text-slate-600" />
+   506→                </div>
+   507→                <div>
+   508→                  <h3 className="font-semibold text-slate-900 text-sm">Arsip Slip Gaji</h3>
+   509→                  <p className="text-slate-500 text-xs">Daftar penggajian bulanan seluruh staf</p>
+   510→                </div>
+   511→              </div>
+   512→              <Badge variant="outline" className="text-xs bg-slate-50">{archive.length} data</Badge>
+   513→            </div>
+   514→            <CardContent className="p-0">
+   515→              {archive.length === 0 ? (
+   516→                <div className="py-16 text-center">
+   517→                  <Receipt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   518→                  <p className="text-sm text-slate-400">Belum ada slip gaji</p>
+   519→                  <p className="text-xs text-slate-400 mt-1">Generate slip gaji di form sebelah kiri</p>
+   520→                </div>
+   521→              ) : (
+   522→                <div className="max-h-[600px] overflow-y-auto">
+   523→                  <table className="w-full text-sm">
+   524→                    <thead className="sticky top-0 bg-slate-50 z-10">
+   525→                      <tr className="border-b border-slate-200 text-left">
+   526→                        <th className="py-3 px-4 font-semibold text-xs text-slate-500 uppercase tracking-wide w-10">#</th>
+   527→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide">Karyawan</th>
+   528→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-medium">Periode</th>
+   529→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-right">Gaji Bersih</th>
+   530→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-center">Status</th>
+   531→                        <th className="py-3 px-3 font-semibold text-xs text-slate-500 uppercase tracking-wide text-center w-24">Aksi</th>
+   532→                      </tr>
+   533→                    </thead>
+   534→                    <tbody>
+   535→                      {archive.map((p, i) => {
+   536→                        const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+   537→                        const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+   538→                        return (
+   539→                          <tr key={p.id || i} className="border-b border-slate-50 hover:bg-blue-50/30 transition-colors">
+   540→                            <td className="py-3 px-4 text-slate-400 text-xs font-medium">{i + 1}</td>
+   541→                            <td className="py-3 px-3">
+   542→                              <p className="font-medium text-slate-900 text-sm">{p.user?.name || p.userName}</p>
+   543→                              <p className="text-[10px] text-slate-400">{ROLE_LABELS[p.user?.role || p.role || ""]}</p>
+   544→                            </td>
+   545→                            <td className="py-3 px-3 text-slate-600 text-xs">{monthNames[p.month - 1].slice(0, 3)} {p.year}</td>
+   546→                            <td className="py-3 px-3 text-right">
+   547→                              <p className="font-bold text-slate-900">{formatCurrency(p.netSalary)}</p>
+   548→                              <p className="text-[10px] text-slate-400">{formatCurrency(p.baseSalary)} + {formatCurrency(tunj)} - {formatCurrency(pot)}</p>
+   549→                            </td>
+   550→                            <td className="py-3 px-3 text-center"><Badge variant="outline" className={cn("text-[10px] font-medium", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status] || p.status}</Badge></td>
+   551→                            <td className="py-3 px-3">
+   552→                              <div className="flex gap-0.5 justify-center">
+   553→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Preview" onClick={() => setPayslipDialog({ open: true, payroll: p })}>
+   554→                                  <Eye className="w-3.5 h-3.5" />
+   555→                                </Button>
+   556→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Download PDF" onClick={() => handleDownloadSlip(p)}>
+   557→                                  <Download className="w-3.5 h-3.5" />
+   558→                                </Button>
+   559→                                {p.status === "DRAFT" && (
+   560→                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-amber-600 hover:bg-amber-50" title="Setujui" onClick={() => handleUpdateStatus(p.id!, "APPROVED")}>
+   561→                                    <CheckCircle2 className="w-3.5 h-3.5" />
+   562→                                  </Button>
+   563→                                )}
+   564→                                {p.status === "APPROVED" && (
+   565→                                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-blue-600 hover:bg-blue-50" title="Tandai Lunas" onClick={() => handleUpdateStatus(p.id!, "PAID")}>
+   566→                                    <DollarSign className="w-3.5 h-3.5" />
+   567→                                  </Button>
+   568→                                )}
+   569→                                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-rose-600 hover:bg-rose-50" title="Hapus" onClick={() => handleDelete(p.id!)}>
+   570→                                  <Trash2 className="w-3.5 h-3.5" />
+   571→                                </Button>
+   572→                              </div>
+   573→                            </td>
+   574→                          </tr>
+   575→                        );
+   576→                      })}
+   577→                    </tbody>
+   578→                  </table>
+   579→                </div>
+   580→              )}
+   581→            </CardContent>
+   582→            {archive.length > 0 && (
+   583→              <div className="border-t border-slate-100 px-5 py-3 bg-slate-50/50 flex items-center justify-between text-xs">
+   584→                <span className="text-slate-500">Menampilkan {archive.length} dari {archive.length} data</span>
+   585→                <span className="text-slate-500">Total: <span className="font-bold text-blue-700">{formatCurrency(totalNet)}</span></span>
+   586→              </div>
+   587→            )}
+   588→          </Card>
+   589→        </div>
+   590→      </div>
+   591→
+   592→      {/* ===== Payslip Detail Dialog ===== */}
+   593→      <Dialog open={payslipDialog.open} onOpenChange={(o) => setPayslipDialog({ open: o, payroll: payslipDialog.payroll })}>
+   594→        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+   595→          {payslipDialog.payroll && (() => {
+   596→            const p = payslipDialog.payroll;
+   597→            const tunj = p.isManual ? p.transportAllowance : (p.mealAllowance + p.transportAllowance + p.kpiBonus);
+   598→            const pot = p.isManual ? p.otherDeduction : (p.attendanceDeduction + p.bpjs + p.tax + p.otherDeduction);
+   599→            return (
+   600→              <>
+   601→                <DialogHeader className="sr-only">
+   602→                  <DialogTitle>Detail Slip Gaji</DialogTitle>
+   603→                </DialogHeader>
+   604→                {/* Company header */}
+   605→                <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-5 text-white">
+   606→                  <div className="flex items-start justify-between">
+   607→                    <div>
+   608→                      <p className="font-bold text-lg">PT. HAFARA AIQBA NUSANTARA</p>
+   609→                      <p className="text-xs text-blue-100 mt-1">Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur</p>
+   610→                      <p className="text-xs text-blue-100">Info@hafaragroup.com | www.HafaraGroup.com | 081324511570</p>
+   611→                    </div>
+   612→                    <Badge className="bg-white/15 text-white border-white/20 text-xs">SLIP GAJI</Badge>
+   613→                  </div>
+   614→                </div>
+   615→
+   616→                <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+   617→                  {/* Employee & periode */}
+   618→                  <div className="grid grid-cols-2 gap-3">
+   619→                    <div className="bg-slate-50 rounded-xl p-4">
+   620→                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-2">Karyawan</p>
+   621→                      <p className="text-sm"><span className="text-slate-400">Nama</span><br /><span className="font-semibold text-slate-900">{p.user?.name}</span></p>
+   622→                      <p className="text-sm mt-1.5"><span className="text-slate-400">NIK</span> <span className="text-slate-700">{p.nik || p.userId.slice(-4).toUpperCase()}</span></p>
+   623→                      <p className="text-sm"><span className="text-slate-400">Jabatan</span> <span className="text-slate-700">{p.jabatan || p.user?.position || "-"}</span></p>
+   624→                    </div>
+   625→                    <div className="bg-slate-50 rounded-xl p-4">
+   626→                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wide mb-2">Periode & Transfer</p>
+   627→                      <p className="text-sm"><span className="text-slate-400">Periode</span><br /><span className="font-semibold text-slate-900">{p.periodeLabel || `${monthNames[p.month - 1]} ${p.year}`}</span></p>
+   628→                      <p className="text-sm mt-1.5"><span className="text-slate-400">Bank</span> <span className="text-slate-700">{p.bankName || "-"}</span></p>
+   629→                      <p className="text-sm"><span className="text-slate-400">No. Rek</span> <span className="text-slate-700">{p.bankAccount || "-"}</span></p>
+   630→                    </div>
+   631→                  </div>
+   632→
+   633→                  {/* Earnings & Deductions */}
+   634→                  <div className="grid grid-cols-2 gap-3">
+   635→                    <div className="border border-slate-200 rounded-xl p-4">
+   636→                      <p className="text-xs font-semibold text-green-700 mb-2.5 flex items-center gap-1.5">
+   637→                        <span className="w-2 h-2 rounded-full bg-green-500" /> PENDAPATAN
+   638→                      </p>
+   639→                      <Row label="Gaji Pokok" value={formatCurrency(p.baseSalary)} />
+   640→                      <Row label="Tunjangan & Bonus" value={formatCurrency(tunj)} />
+   641→                      <Separator className="my-1.5" />
+   642→                      <Row label="Total Pendapatan" value={formatCurrency(p.grossSalary)} bold />
+   643→                    </div>
+   644→                    <div className="border border-slate-200 rounded-xl p-4">
+   645→                      <p className="text-xs font-semibold text-rose-700 mb-2.5 flex items-center gap-1.5">
+   646→                        <span className="w-2 h-2 rounded-full bg-rose-500" /> POTONGAN
+   647→                      </p>
+   648→                      <Row label="Potongan" value={formatCurrency(pot)} negative />
+   649→                      <Separator className="my-1.5" />
+   650→                      <Row label="Total Potongan" value={formatCurrency(pot)} bold negative />
+   651→                    </div>
+   652→                  </div>
+   653→
+   654→                  {/* Note */}
+   655→                  {p.note && (
+   656→                    <div className="bg-amber-50 border border-amber-100 rounded-xl p-3">
+   657→                      <p className="text-[10px] font-semibold text-amber-600 uppercase mb-1">Catatan</p>
+   658→                      <p className="text-xs text-slate-600">{p.note}</p>
+   659→                    </div>
+   660→                  )}
+   661→                </div>
+   662→
+   663→                {/* Net + action footer */}
+   664→                <div className="border-t border-slate-100">
+   665→                  <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-6 py-4 flex items-center justify-between">
+   666→                    <div>
+   667→                      <p className="text-blue-100 text-xs">TAKE HOME PAY (GAJI BERSIH)</p>
+   668→                      <p className="text-2xl font-bold text-white">{formatCurrency(p.netSalary)}</p>
+   669→                    </div>
+   670→                    <Badge className={cn("text-sm px-3 py-1.5", STATUS_COLORS[p.status])}>{p.status === "PAID" ? "LUNAS / PAID" : STATUS_LABELS[p.status]}</Badge>
+   671→                  </div>
+   672→                  <div className="p-4 flex gap-2">
+   673→                    <Button onClick={() => handleDownloadSlip(p)} className="flex-1 bg-blue-600 hover:bg-blue-700">
+   674→                      <Download className="w-4 h-4 mr-2" /> Download PDF
+   675→                    </Button>
+   676→                    <Button variant="outline" onClick={() => setPayslipDialog({ open: false, payroll: null })}>Tutup</Button>
+   677→                  </div>
+   678→                </div>
+   679→              </>
+   680→            );
+   681→          })()}
+   682→        </DialogContent>
+   683→      </Dialog>
+   684→    </div>
+   685→  );
+   686→}
+   687→
+   688→// ===== Helper components =====
+   689→function Row({ label, value, bold, negative }: { label: string; value: string; bold?: boolean; negative?: boolean }) {
+   690→  return (
+   691→    <div className="flex items-center justify-between py-1">
+   692→      <span className={cn("text-slate-600", bold && "font-semibold text-slate-900")}>{label}</span>
+   693→      <span className={cn(bold ? "font-bold" : "font-medium", negative ? "text-rose-600" : "text-slate-800")}>{value}</span>
+   694→    </div>
+   695→  );
+   696→}
+   697→
+   698→function SummaryCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: "blue" | "green" | "violet" }) {
+   699→  const accentMap = {
+   700→    blue: "bg-blue-50 text-blue-600",
+   701→    green: "bg-green-50 text-green-600",
+   702→    violet: "bg-violet-50 text-violet-600",
+   703→  };
+   704→  return (
+   705→    <Card className="shadow-sm border-slate-200">
+   706→      <CardContent className="p-4 flex items-center gap-3">
+   707→        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", accentMap[accent])}>
+   708→          <Icon className="w-5 h-5" />
+   709→        </div>
+   710→        <div className="min-w-0">
+   711→          <p className="text-xs text-slate-500">{label}</p>
+   712→          <p className="text-lg font-bold text-slate-900 truncate">{value}</p>
+   713→        </div>
+   714→      </CardContent>
+   715→    </Card>
+   716→  );
+   717→}
+   718→

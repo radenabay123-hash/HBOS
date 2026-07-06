@@ -74,7 +74,14 @@ import {
   X,
   PlusCircle,
   ListChecks,
+  Search,
+  CheckSquare,
 } from "lucide-react";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface EventItem {
   id: string;
@@ -199,6 +206,12 @@ export function EventsModule({ user }: EventsModuleProps) {
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Client-side search + status + month filters (for the list tab)
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [monthFilter, setMonthFilter] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const assistantTrainerOptions = useMemo(
     () => users.filter((u) => u.role === ASSISTANT_TRAINER_ROLE),
@@ -418,6 +431,103 @@ export function EventsModule({ user }: EventsModuleProps) {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Client-side search + status + month filter for the list view
+  const filteredEvents = useMemo(() => {
+    let r = events;
+    if (statusFilter !== "all") r = r.filter((e) => e.statusPersiapan === statusFilter);
+    if (monthFilter !== "all") {
+      r = r.filter((e) => {
+        try {
+          const d = new Date(e.tanggal);
+          if (isNaN(d.getTime())) return false;
+          const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          return ym === monthFilter;
+        } catch {
+          return false;
+        }
+      });
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((e) =>
+        (e.namaEvent || "").toLowerCase().includes(q) ||
+        (e.lokasi || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [events, search, statusFilter, monthFilter]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems: paginatedEvents,
+    goToPage: goToEventPage,
+    nextPage: nextEventPage,
+    prevPage: prevEventPage,
+    pageInfo: eventPageInfo,
+    resetPage: resetEventPage,
+  } = usePagination(filteredEvents, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray: selectedEventArray,
+    selectedCount: selectedEventCount,
+    isSelected: isEventSelected,
+    toggle: toggleEvent,
+    toggleAll: toggleAllEvents,
+    clearSelection: clearEventSelection,
+    resetSelection: resetEventSelection,
+    isAllSelected: isAllEventsSelected,
+  } = useBulkSelect({ getId: (e: EventItem) => e.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetEventSelection();
+    resetEventPage();
+  }, [search, statusFilter, monthFilter, resetEventSelection, resetEventPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedEventCount} event terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedEventArray) {
+      try {
+        await api(`/api/events/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearEventSelection();
+    setBulkMode(false);
+    await loadEvents();
+    if (failed === 0) {
+      toast.success(`${success} event berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
+
+  // List of available months (YYYY-MM) from current events, descending
+  const monthOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of events) {
+      try {
+        const d = new Date(e.tanggal);
+        if (isNaN(d.getTime())) continue;
+        const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        set.add(ym);
+      } catch {}
+    }
+    return Array.from(set).sort((a, b) => (a < b ? 1 : -1));
+  }, [events]);
+
+  function formatMonthLabel(ym: string): string {
+    const [y, m] = ym.split("-");
+    const idx = Number(m) - 1;
+    if (idx < 0 || idx > 11) return ym;
+    return `${MONTH_LABELS[idx]} ${y}`;
   }
 
   async function handleDelete() {
@@ -723,6 +833,85 @@ export function EventsModule({ user }: EventsModuleProps) {
 
         {/* List View */}
         <TabsContent value="list">
+          {/* Filter + bulk-select bar for the list view */}
+          <Card className="border-slate-200 mb-4">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Cari nama event atau lokasi..."
+                    className="pl-9 h-9 bg-white text-sm"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="min-w-[180px]">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      {EVENT_PREP_STATUS.map((s) => (
+                        <SelectItem key={s} value={s}>{EVENT_PREP_LABELS[s]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="min-w-[180px]">
+                  <Select value={monthFilter} onValueChange={setMonthFilter}>
+                    <SelectTrigger className="h-9 bg-white"><SelectValue placeholder="Semua Bulan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Bulan</SelectItem>
+                      {monthOptions.map((ym) => (
+                        <SelectItem key={ym} value={ym}>{formatMonthLabel(ym)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {canManage && (
+                  <Button
+                    variant={bulkMode ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setBulkMode(!bulkMode);
+                      if (bulkMode) clearEventSelection();
+                    }}
+                    className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+                  >
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Bulk Action Bar */}
+          {bulkMode && selectedEventCount > 0 && (
+            <BulkActionBar
+              selectedCount={selectedEventCount}
+              actions={[
+                {
+                  label: "Hapus Terpilih",
+                  icon: Trash2,
+                  onClick: handleBulkDelete,
+                  variant: "destructive",
+                  confirmText: `Hapus ${selectedEventCount} event terpilih? Tindakan ini tidak dapat dibatalkan.`,
+                },
+              ]}
+              onClearSelection={clearEventSelection}
+            />
+          )}
+
           <Card>
             <CardContent className="p-0">
               {loading ? (
@@ -742,11 +931,30 @@ export function EventsModule({ user }: EventsModuleProps) {
                     {canManage ? "Klik tombol Tambah Event untuk membuat event baru." : "Belum ada event yang tersedia."}
                   </p>
                 </div>
+              ) : filteredEvents.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                    <Search className="w-8 h-8 text-slate-400" />
+                  </div>
+                  <p className="text-slate-600 font-medium">Tidak ada event yang cocok</p>
+                  <p className="text-sm text-slate-400 mt-1">
+                    Coba ubah kata kunci, status, atau bulan.
+                  </p>
+                </div>
               ) : (
+                <>
                 <ScrollArea className="max-h-[600px]">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50/50">
+                        {bulkMode && (
+                          <TableHead className="w-[40px]">
+                            <SelectCheckbox
+                              checked={isAllEventsSelected(paginatedEvents)}
+                              onChange={() => toggleAllEvents(paginatedEvents)}
+                            />
+                          </TableHead>
+                        )}
                         <TableHead className="min-w-[200px]">Nama Event</TableHead>
                         <TableHead className="min-w-[160px]">Klien</TableHead>
                         <TableHead className="min-w-[140px]">Tanggal</TableHead>
@@ -759,11 +967,19 @@ export function EventsModule({ user }: EventsModuleProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {events.map((e) => {
+                      {paginatedEvents.map((e) => {
                         const cl = parseChecklist(e.checklist);
                         const prog = checklistProgress(cl);
                         return (
                           <TableRow key={e.id} className="hover:bg-slate-50/50">
+                            {bulkMode && (
+                              <TableCell>
+                                <SelectCheckbox
+                                  checked={isEventSelected(e)}
+                                  onChange={() => toggleEvent(e)}
+                                />
+                              </TableCell>
+                            )}
                             <TableCell>
                               <div className="font-medium text-slate-900">{e.namaEvent}</div>
                             </TableCell>
@@ -833,6 +1049,19 @@ export function EventsModule({ user }: EventsModuleProps) {
                     </TableBody>
                   </Table>
                 </ScrollArea>
+                <Pagination
+                  currentPage={eventPageInfo.currentPage}
+                  totalPages={eventPageInfo.totalPages}
+                  totalItems={eventPageInfo.totalItems}
+                  startIndex={eventPageInfo.startIndex}
+                  endIndex={eventPageInfo.endIndex}
+                  hasNext={eventPageInfo.hasNext}
+                  hasPrev={eventPageInfo.hasPrev}
+                  onPageChange={goToEventPage}
+                  onNext={nextEventPage}
+                  onPrev={prevEventPage}
+                />
+                </>
               )}
             </CardContent>
           </Card>

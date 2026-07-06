@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,18 @@ import { Separator } from "@/components/ui/separator";
 import {
   FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye, Save,
   Calendar, MapPin, User, Building2, FileSignature, Settings as SettingsIcon,
+  Search, CheckSquare,
 } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { formatDate } from "@/lib/constants";
 import { downloadSuratPDF } from "@/lib/surat-pdf";
 import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
 import { RichTextEditor } from "@/components/shared/rich-text-editor";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
@@ -43,6 +49,9 @@ export function SuratModule({ user }: { user: SafeUser }) {
   const [editId, setEditId] = useState<string | null>(null);
   const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
   const [layoutSettings, setLayoutSettings] = useState<any>(null);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   // Form state - OLD header fields (logoWidth, headerContact, headerAddress1, headerAddress2) REMOVED
   // Header design now comes entirely from Layout Dokumen settings
@@ -176,6 +185,72 @@ export function SuratModule({ user }: { user: SafeUser }) {
     catch (e: any) { toast.error(e.message); }
   }
 
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} surat terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/surat/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await load();
+    if (failed === 0) {
+      toast.success(`${success} surat berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
+
+  // Search + filter (list view only)
+  const filtered = useMemo(() => {
+    return surats.filter((s) => {
+      if (filterStatus !== "all" && s.status !== filterStatus) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const text = [s.suratNumber, s.perihal, s.suratType, s.recipientName, s.recipientInstansi]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (!text.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [surats, search, filterStatus]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems,
+    goToPage,
+    nextPage,
+    prevPage,
+    pageInfo,
+    resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray,
+    selectedCount,
+    isSelected,
+    toggle,
+    toggleAll,
+    clearSelection,
+    resetSelection,
+    isAllSelected,
+  } = useBulkSelect({ getId: (s: any) => s.id });
+
+  // Reset selection + go to page 1 when filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, filterStatus, resetSelection, resetPage]);
+
   async function handleDownloadPDF(s: any) {
     let lSettings: any = null;
     let logoUrl = "";
@@ -234,6 +309,70 @@ export function SuratModule({ user }: { user: SafeUser }) {
           <Button size="sm" onClick={openCreate} className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-1" /> Surat Resmi Baru</Button>
         </div>
 
+        {/* Filter Bar (search + status filter + bulk-select toggle) */}
+        <Card className="shadow-sm">
+          <CardContent className="p-3">
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Cari nomor surat, perihal, jenis..."
+                  className="pl-9 h-9 bg-white text-sm"
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[160px] h-9 bg-white"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="FINAL">Final</SelectItem>
+                  <SelectItem value="ARCHIVED">Arsip</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant={bulkMode ? "default" : "outline"}
+                size="sm"
+                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+                onClick={() => {
+                  setBulkMode(!bulkMode);
+                  if (bulkMode) clearSelection();
+                }}
+              >
+                <CheckSquare className="w-3.5 h-3.5 mr-1" />
+                {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bulk Action Bar */}
+        {bulkMode && selectedCount > 0 && (
+          <BulkActionBar
+            selectedCount={selectedCount}
+            actions={[
+              {
+                label: "Hapus Terpilih",
+                icon: Trash2,
+                onClick: handleBulkDelete,
+                variant: "destructive",
+                confirmText: `Hapus ${selectedCount} surat terpilih? Tindakan ini tidak dapat dibatalkan.`,
+              },
+            ]}
+            onClearSelection={clearSelection}
+          />
+        )}
+
         <Card className="shadow-sm">
           <CardContent className="p-0">
             {surats.length === 0 ? (
@@ -242,39 +381,63 @@ export function SuratModule({ user }: { user: SafeUser }) {
                 <p className="text-sm text-slate-400">Belum ada surat</p>
                 <p className="text-xs text-slate-400 mt-1">Klik "Surat Resmi Baru" untuk membuat</p>
               </div>
+            ) : filtered.length === 0 ? (
+              <div className="py-16 text-center">
+                <Search className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-sm text-slate-400">Tidak ada surat yang cocok</p>
+                <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter status</p>
+              </div>
             ) : (
+              <>
               <div className="max-h-[500px] overflow-y-auto">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-slate-50 z-10">
                     <tr className="border-b text-left text-xs text-slate-500">
+                      {bulkMode && <th className="py-3 px-3 w-[40px]"><SelectCheckbox checked={isAllSelected(paginatedItems)} onChange={() => toggleAll(paginatedItems)} /></th>}
                       <th className="py-3 px-4 font-medium">Nomor Surat</th>
                       <th className="py-3 px-3 font-medium">Jenis</th>
                       <th className="py-3 px-3 font-medium">Perihal</th>
                       <th className="py-3 px-3 font-medium">Tanggal</th>
                       <th className="py-3 px-3 font-medium text-center">Status</th>
-                      <th className="py-3 px-3 font-medium text-center">Aksi</th>
+                      {!bulkMode && <th className="py-3 px-3 font-medium text-center">Aksi</th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {surats.map((s) => (
+                    {paginatedItems.map((s) => (
                       <tr key={s.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+                        {bulkMode && <td className="py-2.5 px-3"><SelectCheckbox checked={isSelected(s)} onChange={() => toggle(s)} /></td>}
                         <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{s.suratNumber}</td>
                         <td className="py-2.5 px-3 text-slate-600 text-xs">{s.suratType}</td>
                         <td className="py-2.5 px-3 text-slate-600 text-xs max-w-[200px] truncate">{s.perihal || "-"}</td>
                         <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(s.issueDate)}</td>
                         <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[s.status])}>{STATUS_LABELS[s.status] || s.status}</Badge></td>
-                        <td className="py-2.5 px-3">
-                          <div className="flex gap-0.5 justify-center">
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(s)}><Download className="w-3.5 h-3.5" /></Button>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(s)}><Edit3 className="w-3.5 h-3.5" /></Button>
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                          </div>
-                        </td>
+                        {!bulkMode && (
+                          <td className="py-2.5 px-3">
+                            <div className="flex gap-0.5 justify-center">
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(s)}><Download className="w-3.5 h-3.5" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(s)}><Edit3 className="w-3.5 h-3.5" /></Button>
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+              <Pagination
+                currentPage={pageInfo.currentPage}
+                totalPages={pageInfo.totalPages}
+                totalItems={pageInfo.totalItems}
+                startIndex={pageInfo.startIndex}
+                endIndex={pageInfo.endIndex}
+                hasNext={pageInfo.hasNext}
+                hasPrev={pageInfo.hasPrev}
+                onPageChange={goToPage}
+                onNext={nextPage}
+                onPrev={prevPage}
+              />
+              </>
             )}
           </CardContent>
         </Card>

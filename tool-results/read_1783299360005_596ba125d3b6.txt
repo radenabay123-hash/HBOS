@@ -1,0 +1,1737 @@
+     1→---
+     2→Task ID: 1
+     3→Agent: Main (Z.ai Code)
+     4→Task: Foundation - install packages, Prisma schema, auth lib, constants, seed data
+     5→
+     6→Work Log:
+     7→- Explored existing project structure (Next.js 16, shadcn/ui, Prisma SQLite)
+     8→- Installed bcryptjs, xlsx, jspdf, jspdf-autotable, @types/bcryptjs
+     9→- Wrote complete Prisma schema with models: User, Session, Client (CRM), Event, DailyTask, ContentIdea (ACC workflow), Article (SEO with ACC), FinanceTransaction, FinanceSetting, Document (surat/invoice/SPK), ScoreLog, Notification
+    10→- Ran prisma db push successfully
+    11→- Created src/lib/constants.ts with all roles, statuses, labels, colors, formatters
+    12→- Created src/lib/auth.ts with bcrypt password hashing, session-based auth (cookie), getCurrentUser/requireUser/requireOwner helpers
+    13→- Created prisma/seed.ts with 6 users (owner + 5 team roles), 8 clients, 3 events, 14 days of daily tasks, 40 content ideas, 60 articles, 6 months finance data, documents, 30 days score logs
+    14→- Ran seed script successfully
+    15→
+    16→Stage Summary:
+    17→- Database fully seeded and ready. Login credentials:
+    18→  - Owner: owner@hafara.com / password123
+    19→  - PM: pm@hafara.com / password123
+    20→  - Trainer: trainer@hafara.com / password123
+    21→  - Creative: creative@hafara.com / password123
+    22→  - Digital: digital@hafara.com / password123
+    23→  - Finance: finance@hafara.com / password123
+    24→- Color theme: emerald/green primary (success-oriented, avoids blue/indigo), with green/amber/red status indicators
+    25→- Next: build backend API routes + frontend
+    26→
+    27→---
+    28→Task ID: 4-c
+    29→Agent: Z.ai Code (subagent for finance + scoreboard modules)
+    30→Task: Build frontend module components — finance-module.tsx and scoreboard-module.tsx
+    31→
+    32→Work Log:
+    33→- Read worklog.md (Task 1 foundation done) + explored shared resources: constants, StatCard/SectionHeader, charts.tsx, export-utils, api-client, UI primitives.
+    34→- Confirmed API routes already exist: /api/finance (GET/POST), /api/finance/[id] (PUT/DELETE), /api/finance/settings (GET/PUT), /api/clients, /api/scoreboard.
+    35→- Created /home/z/my-project/src/components/modules/finance-module.tsx:
+    36→  - FinanceModule({ user }) with period selector (year 2023-2026 + month Jan-Des or "Semua Bulan").
+    37→  - Two rows of StatCards: revenue/expense/profit/margin (row 1) + target revenue / target profit / cash flow / forecast (row 2). Indicator colors wired.
+    38→  - Bar chart (Revenue vs Expense vs Profit monthly), Pie chart (expense by category), Area chart (revenue trend) — all computed client-side from fetched transactions.
+    39→  - Transactions table with sticky header, max-h scroll, edit/delete actions, color-coded type badges + amounts.
+    40→  - Add/Edit dialog with type/amount/category/date/clientId/description.
+    41→  - Target & Setting dialog → PUT /api/finance/settings.
+    42→  - AlertDialog for delete confirmation.
+    43→  - Export Excel (transactions) and exportReportPDF (4-section report: summary, monthly chart, expense-by-category, transactions).
+    44→  - Forecast = avg monthly profit × remaining months.
+    45→  - Empty state with CTA, sonner toasts, refresh after mutations.
+    46→- Created /home/z/my-project/src/components/modules/scoreboard-module.tsx:
+    47→  - ScoreboardModule() — period selector buttons (Bulan/Tahun/Semua).
+    48→  - Summary StatCards (total score, total tasks done, avg discipline with indicator, total content+articles).
+    49→  - Top-3 podium with 2nd/1st/3rd ordering, medal emojis 🥇🥈🥉, Crown/Medal/Award icons, role-colored badges, avatar, discipline progress bar.
+    50→  - Full ranking table — desktop (Table) + mobile (cards). Sorted desc by productivityScore.
+    51→  - Discipline progress bar colored green/yellow/red (>=80/>=50/<50) + matching badge.
+    52→  - ROLE_COLORS used for role badges throughout.
+    53→  - Export Excel + PDF.
+    54→  - Empty state.
+    55→- All "use client", Bahasa Indonesia, emerald/teal primary theme (no blue/indigo), responsive mobile-first, long lists max-h-[28rem] overflow-y-auto.
+    56→- Lint: bun run lint → 0 errors after fixing one @typescript-eslint/no-empty-object-type (changed `_: {} = {}` → `_props?: Record<string, never>`).
+    57→- Wrote work record to /home/z/my-project/agent-ctx/4-c-finance-scoreboard-modules.md.
+    58→
+    59→Stage Summary:
+    60→- Finance module: complete keuangan workspace for OWNER + FINANCE (CRUD txns, monthly charts, target KPIs, forecast, Excel/PDF export).
+    61→- Scoreboard module: transparent productivity ranking for ALL roles (podium + full table + export).
+    62→- Both files compile cleanly and pass lint. Ready for use via existing wiring in src/app/page.tsx.
+    63→
+    64→---
+    65→Task ID: 4-b
+    66→Agent: Module Builder (Tasks/Content/Articles)
+    67→
+    68→Work Log:
+    69→- Read worklog.md (Task 1: foundation - prisma schema, auth, constants, seed data).
+    70→- Reviewed existing shared resources: stat-card.tsx (StatCard/SectionHeader), api-client.ts (api), export-utils.ts (exportToExcel/exportToPDF), constants.ts (ROLES, TASK_STATUS, CONTENT_CATEGORIES, ACC_STATUS, etc.), app-shell.tsx (ViewKey routing), and the existing API routes for /api/tasks, /api/content-ideas, /api/content-ideas/[id]/acc, /api/articles, /api/articles/[id]/acc, /api/users.
+    71→- Created three feature modules in src/components/modules/:
+    72→
+    73→  1. tasks-module.tsx (Tugas Harian - Daily Task Management)
+    74→     - Header with "Tambah Tugas" button + date filter + owner-only user filter (fetches team from /api/users).
+    75→     - 4 stat cards: Total Hari Ini (neutral), Selesai (green), Sedang Dikerjakan (yellow), Belum Dikerjakan (red).
+    76→     - Table with sticky header, columns: Tugas, User (owner only), Progress, % Selesai (color-coded progress bar), Hambatan, Jam Mulai, Jam Selesai, Status badge (TASK_STATUS_COLORS), Aksi (Edit/Delete).
+    77→     - Add/Edit dialog with Slider for persentaseSelesai, time inputs, date input, status Select.
+    78→     - Permission-aware: owner edits/deletes any, team edits/deletes own (disabled buttons otherwise).
+    79→     - Excel + PDF export buttons (with owner-aware columns).
+    80→     - Loading state with Loader2 spinner, empty state with CTA.
+    81→     - max-h-[600px] overflow-auto on the table for long lists.
+    82→
+    83→  2. content-module.tsx (Tugas Konten - Content Management with ACC workflow)
+    84→     - Header with description explaining ACC workflow + "Tambah Ide Konten" button.
+    85→     - 5 stat cards: Total Ide, Pending ACC (amber), ACC (green), Revisi (red), Published (teal).
+    86→     - Filters: kategori (Select with CONTENT_CATEGORIES), statusACC (Select).
+    87→     - Tabs: Semua / Menunggu ACC / ACC / Revisi.
+    88→     - Responsive CARD GRID (grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4) instead of table - each content idea rendered as a card showing judul, kategori badge, statusACC badge, statusProduksi badge, submitter, tanggal, links, script/caption preview, metrik (when published).
+    89→     - OWNER ACC workflow: For each PENDING card, owner sees "ACC" (emerald) and "Revisi" (rose) buttons. ACC calls POST /api/content-ideas/[id]/acc {statusACC:'ACC'}. Revisi opens dialog with catatanRevisi textarea, then POST with {statusACC:'REVISI', catatanRevisi}.
+    90→     - catatanRevisi displayed in rose-tinted box when statusACC === 'REVISI'.
+    91→     - Publish checkbox: when statusACC === 'ACC', shows Checkbox that toggles statusPublish (PUBLISHED/PENDING) and statusProduksi (PUBLISHED/SIAP_PUBLISH) via PUT.
+    92→     - Add/Edit dialog includes all fields: kategori, judul, link, ideKonten, script, caption, statusProduksi, statusEditing, statusPublish, linkKonten, and a metrik grid (reach, views, watchTime, share, save, comment, followerGrowth). metrikKonten is parsed/serialized as JSON string per backend.
+    93→     - Permission-aware editing (owner any, team own).
+    94→     - Excel + PDF export.
+    95→     - Loading + empty states.
+    96→
+    97→  3. articles-module.tsx (Data Artikel - SEO Article Management with ACC workflow)
+    98→     - Header with description + "Tambah Artikel" button.
+    99→     - 4 stat cards: Total Artikel, Pending ACC (amber), ACC (green), Published (teal).
+   100→     - Filters: websiteTujuan, statusACC, status (DRAFT/PUBLISHED).
+   101→     - Table with sticky header, columns: Judul Artikel (with inline catatanRevisi box when REVISI_ADMIN), Keyword, Website (color-coded badge per website), Tanggal Publish, Link (external button), Status ACC badge, Status badge, Penulis, Aksi.
+   102→     - OWNER ACC workflow: "ACC" and "Revisi" buttons shown for PENDING articles. Revisi opens dialog with catatanRevisi textarea, POST /api/articles/[id]/acc {statusACC:'ACC'} or {statusACC:'REVISI_ADMIN', catatanRevisi}.
+   103→     - Publish button: only enabled when statusACC === 'ACC' AND not yet published. PUT status='PUBLISHED'.
+   104→     - catatanRevisi displayed in rose-tinted inline box (in the judul cell) when REVISI_ADMIN.
+   105→     - Add/Edit dialog: judulArtikel, keyword, websiteTujuan (Select with WEBSITE_OPTIONS + "Lainnya" custom text input), tanggalPublish, linkArtikel, status.
+   106→     - Permission-aware (owner any, team own).
+   107→     - Excel + PDF export.
+   108→     - Loading + empty states.
+   109→
+   110→Quality:
+   111→- All three files use "use client".
+   112→- Emerald green theme throughout (no blue/indigo); rose for destructive/revisi, amber for pending, teal for published.
+   113→- Consistent with shared StatCard, SectionHeader, shadcn/ui components, sonner toast.
+   114→- Responsive mobile-first with sm:/lg: breakpoints.
+   115→- All text in Bahasa Indonesia.
+   116→- Loading spinners, error handling with toast, refresh after mutations.
+   117→- Long-list scroll containers with max-h.
+   118→- Lint result: `bun run lint` exit code 0, no errors or warnings.
+   119→
+   120→Stage Summary:
+   121→- 3 module files created at:
+   122→  - /home/z/my-project/src/components/modules/tasks-module.tsx
+   123→  - /home/z/my-project/src/components/modules/content-module.tsx
+   124→  - /home/z/my-project/src/components/modules/articles-module.tsx
+   125→- All exports match imports in src/app/page.tsx (TasksModule, ContentModule, ArticlesModule - each accepting { user: SafeUser }).
+   126→- Note: dev.log shows Module not found errors for other parallel-agent files (team-dashboard, owner-dashboard, crm-module, events-module, finance-module, etc.) - those are NOT in scope of this task.
+   127→
+   128→---
+   129→Task ID: 4-a
+   130→Agent: Module Builder (CRM / Events / Documents)
+   131→Task: Build 3 frontend module components for HBOS single-page app
+   132→
+   133→Work Log:
+   134→- Read prior context: worklog.md, constants.ts, shared UI (stat-card, charts), api-client, export-utils, auth (SafeUser), app-shell, page.tsx, and backend API routes (clients, events, documents, users) to confirm request/response shapes and permissions
+   135→- Verified backend `ROLES.ASSISTANT_TRAINTER` constant typo (key) but value is "ASSISTANT_TRAINER" (correct) - used the correct string for filtering
+   136→- Created `src/components/modules/crm-module.tsx` (CRM Client Management):
+   137→  * Header with "Tambah Klien" button gated on OWNER/PM
+   138→  * 4 StatCards: Total Lead (neutral), Total Proposal (yellow), Total Deal (green), Total Lost (red)
+   139→  * Filter bar: search input (name/instansi/PIC/email/jenisTraining) + status select (All + 6 statuses)
+   140→  * Data table in ScrollArea (max-h-600px): Nama Klien, Instansi, PIC (+WA), Jenis Training, Peserta, Budget (formatCurrency), Status (CLIENT_STATUS_COLORS badge), Tanggal Event, Aksi (Edit/Delete)
+   141→  * Add/Edit Dialog (sm:max-w-2xl, scrollable): namaKlien, instansi, pic, nomorWA, email, jenisTraining, jumlahPeserta, budget, lokasi, tanggalEvent (date input), status (select), catatanFollowUp (textarea), reminderFollowUp (datetime-local), assignedToId (select of users for owner; disabled input showing self for PM)
+   142→  * Export PDF + Excel buttons
+   143→  * Loading skeletons, empty state, delete confirmation AlertDialog, toast feedback
+   144→- Created `src/components/modules/events-module.tsx` (Event Management):
+   145→  * Header with "Tambah Event" button gated on OWNER/PM
+   146→  * 4 StatCards: Event Bulan Ini (neutral), Event Selesai (green), Event Pending (yellow), Event Siap (cyan)
+   147→  * Two Tabs: "Kalender" (custom month grid) + "Daftar Event" (table)
+   148→  * Custom month calendar: prev/next month buttons, "Hari Ini" shortcut, month-year label in Indonesian, 7-col grid showing up to 3 events per day as colored chips (color-coded by statusPersiapan), click day to see full event list for that date
+   149→  * List view table: Nama Event, Klien, Tanggal (formatDateTime), Lokasi, Trainer, Asst Trainer, Status (badge), Checklist progress (done/total + Progress bar), Aksi
+   150→  * Add/Edit Dialog: namaEvent, clientId (select with "tanpa klien" option), tanggal (datetime-local), lokasi, trainer, assistantTrainerId (select filtered to ASSISTANT_TRAINER role if users available; falls back to text input for PM since /api/users is owner-only), statusPersiapan (select), dynamic checklist editor (add/remove items, toggle done checkbox, edit text inline, progress counter)
+   151→  * Checklist JSON parse/serialize handled correctly (JSON.parse fallback to [])
+   152→  * Export PDF + Excel buttons
+   153→  * Loading skeletons, empty state, delete AlertDialog, toast feedback
+   154→- Created `src/components/modules/documents-module.tsx` (Documents & Administrasi):
+   155→  * Header with "Tambah Dokumen" button gated on OWNER/PM/FINANCE
+   156→  * 4 StatCards: Total Dokumen (neutral), Total Invoice (green), Total SPK (violet), Total Surat (amber)
+   157→  * Filter bar: documentType select (All + 6 types) + clientId select (All + "Tanpa Klien" + clients)
+   158→  * Data table in ScrollArea: Nama Dokumen, Tipe (colored badge - INVOICE=emerald, SPK=violet, SURAT=amber, KONTRAK=cyan, KWITANSI=pink, LAINNYA=slate), Nomor, Klien, Link (external link icon button, target=_blank), Keterangan, Diunggah Oleh, Tanggal, Aksi (Edit/Delete for OWNER/PM only)
+   159→  * Add/Edit Dialog: documentType (select with DOCUMENT_TYPES; when "LAINNYA" shows customType text input), documentName, documentNumber, clientId (select with "tanpa klien" option), link (url), description (textarea)
+   160→  * Custom types: normalized to UPPER_SNAKE_CASE on save
+   161→  * Export PDF + Excel buttons
+   162→  * Loading skeletons, empty state, delete AlertDialog, toast feedback
+   163→- All 3 modules:
+   164→  * "use client" directive
+   165→  * Emerald green primary theme (no blue/indigo)
+   166→  * Responsive grid (grid-cols-1 sm:grid-cols-2 lg:grid-cols-4)
+   167→  * Indonesian text throughout
+   168→  * Refresh data after create/update/delete via loadX() callbacks
+   169→  * Permission-aware UI (canManage/canDelete flags gate buttons)
+   170→  * Date conversion helpers (toDateInput/toDateTimeInput) for ISO <-> input value
+   171→- Lint check: `bun run lint` passed with 0 errors/warnings (only `$ eslint .` printed, no output)
+   172→- Dev server: existing "Module not found" errors in dev.log are for OTHER not-yet-built modules (team-dashboard, owner-dashboard, tasks-module, content-module, articles-module, finance-module, scoreboard-module, team-management-module, reports-module); my 3 modules produce no compile errors
+   173→
+   174→Stage Summary:
+   175→- 3 production-ready module components created at:
+   176→  - /home/z/my-project/src/components/modules/crm-module.tsx
+   177→  - /home/z/my-project/src/components/modules/events-module.tsx
+   178→  - /home/z/my-project/src/components/modules/documents-module.tsx
+   179→- These integrate with the existing AppShell via src/app/page.tsx (CrmModule on view="crm", EventsModule on view="events", DocumentsModule on view="documents")
+   180→- Each module has stat cards, filter bar, data table with scroll, add/edit dialog, delete confirmation, export buttons, loading states, empty states, toast feedback
+   181→- Next: other agents need to build the remaining 8 modules referenced in page.tsx (OwnerDashboard, TeamDashboard, TasksModule, ContentModule, ArticlesModule, FinanceModule, ScoreboardModule, TeamManagementModule, ReportsModule) to clear the pre-existing module-not-found errors in dev.log
+   182→
+   183→---
+   184→Task ID: 4-d
+   185→Agent: Frontend Agent (Z.ai Code)
+   186→Task: Create two OWNER-only module components - Team Management & Reports
+   187→
+   188→Work Log:
+   189→- Read worklog.md and reviewed shared resources (constants, stat-card, charts, api-client, export-utils)
+   190→- Reviewed existing API routes: /api/users (GET/POST), /api/users/[id] (PUT/DELETE), /api/dashboard/owner (GET), /api/finance, /api/content-ideas, /api/articles
+   191→- Reviewed shadcn/ui exports (button, dialog, alert-dialog, select, table, tabs, switch, badge, card, skeleton, progress, input, label)
+   192→- Created /home/z/my-project/src/components/modules/team-management-module.tsx (TeamManagementModule)
+   193→  - Stat cards: Total Anggota, Aktif, Nonaktif, Per Role breakdown
+   194→  - Filter by role + text search
+   195→  - Users table with sticky header, scroll, 11 columns
+   196→  - Add dialog with role Select (TEAM_ROLES only, no OWNER)
+   197→  - Edit dialog with optional password + isActive Switch
+   198→  - Delete with AlertDialog confirmation
+   199→  - Export PDF + Excel
+   200→  - Empty state, loading skeletons, toast error handling
+   201→- Created /home/z/my-project/src/components/modules/reports-module.tsx (ReportsModule)
+   202→  - Period selector (year + month with "Semua Bulan" option)
+   203→  - "Download Laporan Lengkap (PDF)" button using exportReportPDF with 6 sections
+   204→  - 5-tab interface: Ringkasan Bisnis | CRM & Penjualan | Konten & Artikel | Keuangan | Tim
+   205→  - Ringkasan: 8 KPI cards + 4 charts + monthly table, PDF/Excel export
+   206→  - CRM: 6 pipeline cards + 3 metric cards + pipeline chart + deal clients with docs table (Invoice/SPK/Surat status)
+   207→  - Konten & Artikel: 8 KPI cards + 2 pie charts + pending ACC lists + published lists (lazy-loaded)
+   208→  - Keuangan: 4 KPI cards + 2 charts + monthly finance table with margin + transactions table (lazy-loaded)
+   209→  - Tim: 4 productivity cards + team productivity table with Progress bar
+   210→  - Each tab has its own PDF + Excel export buttons
+   211→  - "Semua Bulan" handling: aggregates annual totals from monthlyData via useMemo
+   212→  - Lazy-loading of finance/content/articles data per tab to minimize initial fetch
+   213→  - Loading skeletons, error toasts, emerald accents, all Bahasa Indonesia
+   214→- Removed unused FileStack import from reports-module
+   215→- Ran `bun run lint` → exit 0, no errors
+   216→- Wrote agent-ctx work record at /agent-ctx/4-d-frontend-agent.md
+   217→
+   218→Stage Summary:
+   219→- Both OWNER-only modules complete and lint-clean
+   220→- TeamManagementModule: full CRUD with role badges, activation toggle, delete confirmation, exports
+   221→- ReportsModule: comprehensive 5-tab reporting dashboard with KPIs, charts, tables, lazy-loaded data, and multi-format exports (PDF multi-section + Excel)
+   222→- All shared resources reused (StatCard, SectionHeader, BarChartCard, LineChartCard, PieChartCard, api client, export utils, constants)
+   223→- Backend API routes were already in place — only frontend code added; no schema or API changes
+   224→
+   225→---
+   226→Task ID: 4-5-7-8
+   227→Agent: Main (Z.ai Code)
+   228→Task: Owner dashboard, Team dashboard, integration testing, bug fixes
+   229→
+   230→Work Log:
+   231→- Built owner dashboard (src/components/owner/owner-dashboard.tsx): all 14 KPIs (Lead, Proposal, Deal, Conversion Rate, Event, Revenue, Target, Konten, Artikel SEO, Reels, Followers Growth, Engagement Rate, Cash Flow, Profit Estimation), monthly + yearly charts, CRM pipeline pie, content category pie, deal clients with invoice/SPK/surat status table, team productivity summary, color indicators (green/yellow/red), PDF/Excel export
+   232→- Built team dashboard (src/components/team/team-dashboard.tsx): role-specific KPIs for PM (CRM pipeline, events, documents), Assistant Trainer (reels/articles KPIs, my events), Content Creative (daily/weekly targets, evaluation metrics), Digital Marketing & IT (SEO/website KPIs, weekly growth), Finance (revenue/expense/profit/margin/forecast), integrated content/article ACC status, monthly + yearly charts
+   233→- Integrated all module components built by 4 parallel subagents (CRM, Events, Tasks, Content with ACC workflow, Articles with ACC workflow, Finance, Documents, Scoreboard, Team Management, Reports)
+   234→- Fixed critical bug: typo in ROLES constant (ASSISTANT_TRAINTER → ASSISTANT_TRAINER) causing undefined role value
+   235→- Fixed critical bug: scoreboard API used wrong date field names (date vs tanggal vs createdAt) for different models - now uses per-model date filters
+   236→- Verified with Agent Browser: login, owner dashboard, CRM module, Tugas Konten (ACC workflow), team dashboard (Content Creative), role-based sidebar, scoreboard (podium + ranking), finance module, reports module, mobile responsiveness, sticky footer
+   237→
+   238→Stage Summary:
+   239→- Application fully functional and verified end-to-end
+   240→- All 6 roles work with role-based access control
+   241→- Owner sees all modules; team members see only their relevant modules + Scoreboard (transparency)
+   242→- ACC workflow functional: team submits content/articles → owner approves (ACC) or requests revision (Revisi) with notes → ACC'd items show publish checkbox on team dashboard
+   243→- Deal clients table shows invoice/SPK/surat document status
+   244→- Monthly + yearly charts on all dashboards
+   245→- PDF + Excel export on all major data views
+   246→- Mobile responsive with hamburger menu
+   247→- Lint passes with 0 errors, dev server runs clean with no runtime errors
+   248→
+   249→---
+   250→Task ID: KPI-1 to KPI-8
+   251→Agent: Main (Z.ai Code)
+   252→Task: Build comprehensive KPI system with Daily/Weekly/Monthly targets per role + weighted KPI Score for Dashboard & Productivity Score
+   253→
+   254→Work Log:
+   255→- Created src/lib/kpi-targets.ts with full target config for all 5 team roles:
+   256→  - PROJECT_MANAGER: 6 daily, 8 weekly, 7 monthly targets (Artikel Kota, Prospek, Penawaran, Follow Up, etc.) + Instagram Magang KPI
+   257→  - ASSISTANT_TRAINER: 5 daily, 6 weekly, 6 monthly (Ide Konten, Thumbnail, Caption, Shooting, Kolaborasi) + Instagram Aqil Baihaqi KPI
+   258→  - CONTENT_CREATIVE: 4 daily, 5 weekly, 5 monthly (Ide Viral, Konten, Batch Production) + TikTok KPI
+   259→  - DIGITAL_MARKETING_IT: 5 daily, 6 weekly, 6 monthly (Riset SDM, Konten Hafara, Reels Viral, Testimoni) + Hafara Group KPI
+   260→  - FINANCE: 4 daily, 3 weekly, 4 monthly targets
+   261→- Created src/lib/kpi-score.ts with weighted KPI score calculation engine (30% daily + 25% weekly + 25% monthly + 10% deadline + 10% quality)
+   262→- Added KpiLog model to Prisma schema, pushed to DB, generated client
+   263→- Created seed script (prisma/seed-kpi.ts) and seeded 392 KPI log entries (14 days daily + weekly + monthly for all team members)
+   264→- Built 5 KPI API routes: /api/kpi/logs (GET/POST), /api/kpi/logs/[id] (DELETE), /api/kpi/score (GET), /api/kpi/targets (GET), /api/kpi/team-scores (GET owner)
+   265→- Created src/components/modules/kpi-module.tsx (Team KPI Dashboard): hero score card, period tabs (Harian/Mingguan/Bulanan), target progress bars, update dialog, social KPI card, export PDF/Excel
+   266→- Created src/components/owner/owner-kpi-dashboard.tsx (Owner KPI Dashboard): formula explanation, team summary cards, Top 3 podium, ranking table with all score components, detail per member
+   267→- Added "Dashboard KPI" menu item to sidebar (visible to all roles)
+   268→- Integrated KPI Score summary card into Owner Dashboard (shows all 5 team members with score + H/M/B breakdown + category)
+   269→- Integrated KPI Score badge into Team Dashboard welcome header
+   270→- Updated Scoreboard API to include KPI Score, category, and H/M/B breakdown; sort by KPI Score
+   271→- Updated Scoreboard module UI: summary card shows avg KPI, podium shows KPI Score + category, table has KPI Score + Kategori columns
+   272→- Fixed bug: KPI_TARGETS imported from wrong module (constants vs kpi-targets)
+   273→- Verified all with Agent Browser: Owner Dashboard KPI summary, Owner KPI Dashboard, Team KPI Module (PM), Scoreboard with KPI scores
+   274→
+   275→Stage Summary:
+   276→- Complete KPI system with Daily → Weekly → Monthly targets per role
+   277→- Weighted KPI Score (100%) = 30% Harian + 25% Mingguan + 25% Bulanan + 10% Deadline + 10% Kualitas(ACC)
+   278→- 4 categories: Excellent (90-100), Good (80-89), Need Coaching (70-79), Warning (<70)
+   279→- Team can input/update their KPI achievements via Dashboard KPI module
+   280→- Owner sees KPI scores for all team members on Dashboard Owner + dedicated Dashboard KPI
+   281→- Scoreboard now ranks by KPI Score (transparent to all divisions)
+   282→- All APIs return 200, lint passes clean, no runtime errors
+   283→
+   284→---
+   285→Task ID: COLOR+ABSENSI+PAYROLL
+   286→Agent: Main (Z.ai Code)
+   287→Task: Change app color to blue + add Absensi, Payroll & Gaji features
+   288→
+   289→Work Log:
+   290→- Changed app color theme from emerald to blue: global sed replace emerald→blue, teal→sky across all 21 source files; updated globals.css, chart colors (#059669→#2563eb), PDF export color (RGB 5,150,105 → 37,99,235), all hex colors
+   291→- Added 3 Prisma models: Attendance (check-in/out, status, work hours), SalaryConfig (base salary, allowances, bonus, penalty, bpjs, tax per user), Payroll (monthly payslip with gross/deduction/net, KPI integration)
+   292→- Pushed schema, generated Prisma client
+   293→- Created seed script (prisma/seed-attendance.ts): 5 salary configs + 100 attendance records (30 days, weekdays, random statuses)
+   294→- Built payroll calculation engine (src/lib/payroll-calc.ts): calculates gross from base+allowances+KPI bonus, deductions from attendance+bpjs+tax, net salary. KPI bonus: 100% if ≥90, 75% if ≥80, 50% if ≥70, 0 if <70. Allowances pro-rated by attendance rate.
+   295→- Built 7 API routes: /api/attendance (GET/POST), /api/attendance/check-in (POST), /api/attendance/check-out (POST), /api/attendance/[id] (PUT/DELETE owner), /api/salary-config (GET/POST), /api/payroll (GET), /api/payroll/generate (POST owner), /api/payroll/[id] (GET/PUT/DELETE)
+   296→- Created Absensi module (absensi-module.tsx): team check-in/out with live clock, today status card, monthly history table, owner view with all-team filter + edit status dialog, export PDF/Excel
+   297→- Created Payroll module (payroll-module.tsx): owner view with summary stats, payroll table (generate/approve/pay), salary config tab (edit per-user), payslip detail dialog with download PDF; team view with own payslip (hero net salary, pendapatan/potongan breakdown, attendance summary, download slip PDF)
+   298→- Added "Absensi" and "Payroll & Gaji" menu items to sidebar (visible to all roles)
+   299→- Integrated page.tsx with new modules
+   300→- Verified with Agent Browser: blue color theme confirmed, Absensi owner view (all team + filter + edit), Absensi team view (check-in card), Payroll owner view (generate + table + summary), Payroll team view (payslip with breakdown), all APIs return 200, lint clean, no errors
+   301→
+   302→Stage Summary:
+   303→- App color changed to blue (primary #2563eb, gradients blue→sky)
+   304→- Absensi feature: team check-in/out, 6 statuses (Hadir/Terlambat/Izin/Sakit/Alpha/Cuti), work hours auto-calculated, owner can view all + edit
+   305→- Payroll & Gaji feature: auto-calculated from attendance + KPI score, 3 statuses (Draft/Approved/Paid), salary config per user, payslip PDF export
+   306→- Payroll formula: Gross = Base + Meal Allowance (pro-rated) + Transport Allowance (pro-rated) + KPI Bonus; Net = Gross - (Attendance Deduction + BPJS + Tax + Other)
+   307→- All verified working end-to-end
+   308→
+   309→---
+   310→Task ID: MANUAL-PAYROLL-SLIP
+   311→Agent: Main (Z.ai Code)
+   312→Task: Manual payroll input + slip gaji PDF template sesuai gambar
+   313→
+   314→Work Log:
+   315→- Analyzed 2 uploaded images with VLM: image 1 = slip gaji PDF template (PT. HAFARA AIQBA NUSANTARA header, employee info, pendapatan/potongan, take home pay, status, tanda tangan), image 2 = manual generator form (Pilih Karyawan, Bulan, Tahun, Gaji Pokok, Total Tunjangan, Total Potongan, Keterangan, Generate button, Arsip table)
+   316→- Updated Prisma Payroll model: added fields isManual, nik, jabatan, bankName, bankAccount, accountName, periodeLabel, companyName
+   317→- Created /api/payroll/manual (POST manual create/update, GET archive list) - owner only
+   318→- Created src/lib/slip-gaji-pdf.ts: professional slip gaji PDF generator matching image 1 template:
+   319→  - Company header bar (blue dark) with PT. HAFARA AIQBA NUSANTARA, email, website, phone, address
+   320→  - SLIP GAJI title
+   321→  - Employee info section (Nama, NIK, Jabatan)
+   322→  - Periode & Transfer section (Periode Gaji, Metode Transfer bank, Atas Nama)
+   323→  - Pendapatan (Earnings) column with green dot, Gaji Pokok, Tunjangan & Bonus, Total
+   324→  - Potongan (Deductions) column with red dot, Potongan Keterlambatan/BPJS/Absensi, Total
+   325→  - Catatan Internal section
+   326→  - Take Home Pay bar (blue dark) with large net salary
+   327→  - Status Pembayaran bar (green LUNAS/PAID or yellow)
+   328→  - 3 tanda tangan boxes (Penerima Gaji, Owner PT. HAN, HRD/Finance)
+   329→  - Footer with thank you message
+   330→- Rewrote payroll-module.tsx with new owner view:
+   331→  - Left: "GENERATOR GAJI BULANAN" form (Pilih Karyawan, Bulan, Tahun, Gaji Pokok IDR, Total Tunjangan IDR, Total Potongan IDR, Info Transfer: bank/no.rek/NIK/jabatan, Keterangan/Notes, Preview Gaji Bersih, GENERATE SLIP GAJI button)
+   332→  - Right: "ARSIP SLIP GAJI" table (No, Nama, Periode, Gaji Pokok, Tunjangan, Potongan, Gaji Bersih, Status, Aksi: Preview/Download PDF/Approve/Pay/Delete)
+   333→  - Summary stat cards (Total Slip, Sudah Dibayar, Total Bruto, Total Bersih)
+   334→  - Payslip detail dialog matching slip gaji layout
+   335→- Updated team view to use new slip gaji PDF download
+   336→- Verified: manual API creates payroll with all fields (tested via curl: baseSalary 5M, tunjangan 1M, potongan 500K, net 5.5M, bank BCA, NIK 003), archive shows 6 payrolls, PDF download triggers without errors, lint clean, no runtime errors
+   337→
+   338→Stage Summary:
+   339→- Manual payroll input: owner can select employee + input gaji pokok, tunjangan, potongan manually + bank info + NIK + keterangan
+   340→- Slip gaji PDF matches template: company header, employee info, periode/transfer, pendapatan/potongan tables, take home pay, status LUNAS/PAID, 3 tanda tangan, footer
+   341→- Arsip slip gaji table with all payrolls, download/approve/pay/delete actions
+   342→- All verified working
+   343→
+   344→---
+   345→Task ID: PAYROLL-REDESIGN + ABSENSI-FIX
+   346→Agent: Main (Z.ai Code)
+   347→Task: Redesign Payroll layout to be elegant + fix absensi check-in/check-out
+   348→
+   349→Work Log:
+   350→- Redesigned payroll-module.tsx owner view with elegant layout:
+   351→  - 5-column grid (2 for generator, 3 for arsip) instead of 2-column equal split
+   352→  - Generator card: gradient blue header with icon, sticky positioning, clean form sections with labels + icons, preview box with gradient background, separator dividers
+   353→  - Arsip table: cleaner columns (Karyawan with role subtitle, Periode, Gaji Bersih with breakdown detail, Status badge, icon-only action buttons), hover highlight, footer with total
+   354→  - Summary cards: compact 4-card row with icon badges (blue/green/violet)
+   355→  - Payslip dialog: gradient company header, rounded info cards, earnings/deductions side-by-side with colored dots, net salary footer bar
+   356→  - Team view: status banner, gradient net salary hero card with sparkle icon, breakdown cards with icon badges
+   357→- Redesigned absensi check-in/out card:
+   358→  - Full-width gradient header (blue when ready/done, amber when checked-in waiting checkout)
+   359→  - Large white check-in/check-out buttons with colored text
+   360→  - 4-column stats grid below (Check In, Check Out, Jam Kerja, Status) with clean dividers
+   361→  - "Selesai Hari Ini" badge when both done
+   362→- Verified check-in/check-out works: tested as Content Creative - check-in at 03:55, check-out at 03:59, jam kerja 0.1j calculated, status Hadir, badge shows "Selesai Hari Ini"
+   363→- All APIs return 200, lint clean, no runtime errors
+   364→
+   365→Stage Summary:
+   366→- Payroll layout now elegant: 2/3 grid split, gradient headers, icon labels, clean table, sticky generator
+   367→- Absensi check-in/check-out fully functional: team can check in (before 09:00=Hadir, after=Terlambat), check out (auto-calculates work hours), status updates live
+   368→- Both verified working in browser
+   369→
+   370→---
+   371→Task ID: ADVANCED-FINANCE
+   372→Agent: Main (Z.ai Code)
+   373→Task: Build advanced finance system for Finance role + AI integration + Owner Dashboard integration
+   374→
+   375→Work Log:
+   376→- Updated Prisma schema: enhanced FinanceTransaction (accountType, accountName, attachmentUrl, isTaxable, taxType, isPaid, dueDate, vendorName), added FinanceCategory, Inventory, AssetMovement, TaxConfig, TaxPayment models
+   377→- Created seed script: 31 categories (12 pemasukan + 19 pengeluaran), 10 inventory items with depreciation, tax config (PPh 21 progressive brackets, PPh 23 2%, PPh Badan 22%, PPN 11%), 5 sample tax payments
+   378→- Created finance-engine.ts: getFinanceDashboard (saldo, kas, bank, ewallet, piutang, hutang, laba, tax, monthly chart, expense/income by category, reminders, forecast), getNeraca (auto balance sheet from transactions), getLabaRugi (income statement)
+   379→- Built 9 backend API routes:
+   380→  - /api/finance/dashboard (GET) - full dashboard aggregation
+   381→  - /api/finance/categories (GET/POST) + [id] (PUT/DELETE) - category CRUD
+   382→  - /api/finance/inventory (GET/POST) + [id] (PUT/DELETE) - inventory with auto-depreciation + asset movement tracking
+   383→  - /api/finance/neraca (GET) - auto-generated balance sheet
+   384→  - /api/finance/tax-config (GET/POST) - configurable tax rates
+   385→  - /api/finance/tax (GET/POST) + [id] (PUT/DELETE) - tax payments with calendar, status, docs
+   386→  - /api/finance/laporan (GET) - all financial reports
+   387→  - /api/finance/ai-insight (GET) - daily AI insight using z-ai-web-dev-sdk
+   388→  - /api/finance/ai-tax (POST) - AI Tax Consultant chat
+   389→  - /api/finance/ai-assistant (POST) - AI Finance Assistant chat
+   390→  - Updated /api/finance (transactions) + [id] for new fields
+   391→- Created finance-advanced-module.tsx (1050+ lines): 8 sub-modules with tabs:
+   392→  1. Dashboard: AI Insight card, saldo cards (Total/Kas/Bank/Dompet Digital), month cards (Pendapatan/Pengeluaran/Laba/Pajak), Piutang/Hutang, Cash Flow chart, Laba trend, expense/income pie, Forecast card, 3 Reminder cards (Pajak/Piutang/Hutang)
+   393→  2. Arus Kas: summary (masuk/keluar/selisih), filter by type/account, input uang masuk/keluar dialog, transaction table, export Excel
+   394→  3. Kategori: pemasukan & pengeluaran categories with CRUD, color-coded
+   395→  4. Neraca: auto-generated (Aset Lancar, Aset Tetap, Kewajiban, Modal), balanced check
+   396→  5. Inventaris: asset cards with photo/QR/location/PIC/depreciation, CRUD, nilai buku calculation
+   397→  6. Pajak: AI Tax Consultant button, summary (terutang/dibayar/dilaporkan), tax calendar, tax table with status actions, tax types info (PPh 21/23/Badan/PPN)
+   398→  7. Laporan: 6 report cards (Laba Rugi, Neraca, Arus Kas, Pajak, Inventaris, Piutang), export PDF, Laba Rugi preview
+   399→  8. AI Assistant: chat interface with AI Finance Assistant
+   400→- Integrated AI Insight into Owner Dashboard: fetches /api/finance/ai-insight and displays in blue gradient card with Bot icon
+   401→- Replaced old finance-module.tsx with wrapper to finance-advanced-module
+   402→- Verified with Agent Browser: Finance login shows "Sistem Keuangan" with 8 tabs, AI Insight displays real LLM analysis, Owner Dashboard shows "AI Insight Keuangan" section, all APIs return 200, AI Tax Consultant responds with PPh 23 explanation, AI Assistant answers finance questions, lint clean, no runtime errors
+   403→
+   404→Stage Summary:
+   405→- Finance role now has advanced system: 8 modules (Dashboard, Arus Kas, Kategori, Neraca, Inventaris, Pajak, Laporan, AI Assistant)
+   406→- AI features working: AI Insight (daily analysis), AI Tax Consultant (PPh/PPN explanations), AI Finance Assistant (Q&A)
+   407→- Bahasa sederhana: uses "Uang Masuk/Keluar/Saldo/Piutang/Hutang" not "Debit/Kredit/Jurnal"
+   408→- Tax: config-driven (PPh 21 progressive, PPh 23 2%, PPh Badan 22%, PPN 11%), calendar, status, AI consultant
+   409→- Neraca: auto-generated from transactions (no manual journal)
+   410→- Inventaris: depreciation auto-calculated, asset movement tracking
+   411→- Owner Dashboard: integrated AI Finance Insight card
+   412→- All verified working end-to-end
+   413→
+   414→---
+   415→Task ID: FINANCE-RESTRUCTURE-SPT
+   416→Agent: Main (Z.ai Code)
+   417→Task: Restructure Finance to menu cards + editable tax config + SPT Badan PDF documents with company letterhead
+   418→
+   419→Work Log:
+   420→- Restructured FinanceModule: replaced 8 stacked tabs with elegant menu dashboard (10 card-based menu items with icons, descriptions, color-coded, hover effects). Each card navigates to a dedicated page with back button.
+   421→- Created src/lib/spt-pdf.ts: professional PDF generators with company letterhead (kop surat):
+   422→  - COMPANY_INFO: PT. HAFARA AQIBA NUSANTARA, address, phone, email, website, NPWP
+   423→  - drawKopSurat(): logo box (HF), company name, address, contact, NPWP, blue borders
+   424→  - generateNeracaPDF: Aset Lancar (Kas/Bank/Piutang), Aset Tetap (Inventaris/Penyusutan), Kewajiban (Hutang/Pajak), Modal (Laba Ditahan), balance check, signature block
+   425→  - generateLabaRugiPDF: Pendapatan by category, Beban by category, Laba Kotor, Laba Operasi, Pajak (22%), Laba Bersih, signature
+   426→  - generateBuktiPotongPDF: Form bukti potong PPh 23/22/4(2) with pemotong & wajib pajak identity, amount table (bruto/tarif/PPh dipotong), signature
+   427→  - generateSSPPDF: Surat Setoran Pajak with NPWP, kode akun, kode jenis setoran, NTPN, jumlah setoran box, status badge, signature
+   428→- Created SptBadanModule: 4 document cards (Neraca, Laba Rugi, Bukti Potong PPh, SSP) with company letterhead preview, download PDF buttons, input forms for Bukti Potong & SSP
+   429→- Created TaxConfigModule: editable tax rates (PPh 21 with progressive brackets + PTKP, PPh 23, PPh Badan, PPN) - owner can update rates when regulations change, stored in database
+   430→- Added 2 new menu items: "Dokumen SPT Badan" and "Pengaturan Pajak"
+   431→- Fixed duplicate import issue, lint errors (set-state-in-effect)
+   432→- Verified with Agent Browser: Finance menu shows 10 elegant cards, SPT Badan module shows kop surat preview + 4 document download buttons, Tax Config shows all 4 tax types with editable rates, all APIs 200, lint clean
+   433→
+   434→Stage Summary:
+   435→- Finance layout now professional: menu dashboard with cards (not stacked tabs)
+   436→- Tax config editable: owner can change PPh 21/23/Badan/PPN rates when regulations update
+   437→- SPT Badan documents: 4 PDF types with professional kop surat (logo HF, company name, address, NPWP, phone, email, website)
+   438→  1. Laporan Neraca - auto from transactions
+   439→  2. Laporan Laba Rugi - auto from transactions
+   440→  3. Bukti Potong PPh - manual input form
+   441→  4. Surat Setoran Pajak (SSP) - manual input form
+   442→- All verified working
+   443→
+   444→---
+   445→Task ID: LABA-RUGI-FORMAT
+   446→Agent: Main (Z.ai Code)
+   447→Task: Sesuaikan Laporan Laba Rugi sesuai format gambar + filter periode + format angka Rupiah
+   448→
+   449→Work Log:
+   450→- Created category mapping in finance-engine.ts:
+   451→  - PENDAPATAN_AKUN (4 akun): Pendapatan Training & Motivation, Pendapatan Jasa Konsultasi, Pendapatan Sertifikasi, Pendapatan Lain-lain
+   452→  - BIAYA_AKUN (14 akun): Beban Gaji & Bonus, Biaya Operasional Kantor, Biaya Internet, Biaya Listrik Air & Kebersihan, Biaya Sosial, Biaya Transportasi, Biaya Kredit Bank, Biaya Marketing & Promosi, Biaya Penyusutan (auto from inventory), Biaya Sewa, Biaya ATK, Biaya Perjalanan Dinas, Biaya Konsumsi, Biaya Lain-lain
+   453→- Rewrote getLabaRugi function with period filter support (BULANAN/TRIWULAN/SEMESTER/TAHUNAN/CUSTOM), fiscal reconciliation logic, PPh Badan rate from config
+   454→- Created src/lib/laba-rugi-pdf.ts: professional PDF generator with:
+   455→  - formatRupiahID(): Rupiah format with thousands separator (.), decimal comma (,), negatives in parentheses ()
+   456→  - generateLabaRugiSesuaiFormat(): kop surat, PENDAPATAN USAHA section, BIAYA OPERASIONAL section, LABA SEBELUM PAJAK, Pajak Penghasilan Badan, LABA BERSIH with double-line separators
+   457→  - Pajak note: "Estimasi Pajak berdasarkan laba komersial" (or fiscal reconciliation note)
+   458→- Updated spt-pdf.ts generateLabaRugiPDF to use new format with pendapatanItems/biayaItems
+   459→- Created /api/finance/laba-rugi route for dedicated laba rugi API with period filter
+   460→- Updated /api/finance/laporan route to support periodType + customStart/customEnd
+   461→- Rewrote LaporanModule in finance-advanced-module.tsx:
+   462→  - Period filter: Bulanan, Triwulan, Semester, Tahunan, Custom Periode (with date pickers)
+   463→  - Laba Rugi report with exact format: PENDAPATAN USAHA header, 4 akun items, TOTAL with separator, BIAYA OPERASIONAL header, 14 akun items (negatives in parentheses), TOTAL, LABA SEBELUM PAJAK, Pajak, LABA BERSIH
+   464→  - Export buttons: PDF (professional with kop surat), Excel, Print
+   465→  - formatRupiahID used for all numbers
+   466→- Fixed circular dependency (spt-pdf ↔ laba-rugi-pdf) by making spt-pdf self-contained
+   467→- Verified with Agent Browser: Laba Rugi shows correct format (145.000.000,00 / (5.000.000,00)), period filter works (Tahunan shows full year data), PDF/Excel/Print buttons work, all APIs 200, lint clean
+   468→
+   469→Stage Summary:
+   470→- Laba Rugi format sesuai gambar: 4 pendapatan akun + 14 biaya akun, format Rupiah (titik pemisah, koma desimal, kurung untuk negatif)
+   471→- Filter periode: Bulanan, Triwulan, Semester, Tahunan, Custom Periode
+   472→- Rule perhitungan: Total Pendapatan - Total Biaya = Laba Sebelum Pajak, Pajak dari laba (estimasi komersial), Laba Bersih = Laba Sebelum Pajak - Pajak
+   473→- Export: PDF (kop surat profesional), Excel, Print
+   474→- Sumber data: otomatis dari transaksi (tidak perlu input manual)
+   475→
+   476→---
+   477→Task ID: ARUSKAS-FORM + KALKULATOR-PAJAK
+   478→Agent: Main (Z.ai Code)
+   479→Task: Fix Arus Kas form to match image (with category integration) + add Tax Calculator
+   480→
+   481→Work Log:
+   482→- Updated Prisma FinanceTransaction: added taxIncluded, kontakName, projectName, trainerName, invoiceNumber, receiptNumber fields
+   483→- Updated /api/finance POST and /api/finance/[id] PUT to handle all new fields
+   484→- Rewrote ArusKas dialog form to match image exactly:
+   485→  - TIPE TRANSAKSI: two card buttons (Uang Masuk green / Uang Keluar red) with icons
+   486→  - Nominal (Rp) + OCR Bukti (Scan Foto button with camera icon)
+   487→  - Tanggal + Akun (dropdown: Kas/Bank/Dompet Digital)
+   488→  - Deskripsi (input with placeholder "Mis: Honor Training Leadership PT X")
+   489→  - KATEGORI dropdown (integrated with FinanceCategory - filters by type Pemasukan/Pengeluaran)
+   490→  - Kontak (dropdown from clients - optional)
+   491→  - Pajak (dropdown PPh 21/23/Badan/PPN - optional) + "Termasuk dalam nominal" checkbox
+   492→  - Proyek (input - optional, placeholder "Mis: TRN-001")
+   493→  - Trainer/Konsultan (input - optional, placeholder "Nama trainer")
+   494→  - No. Invoice (input - optional, placeholder "Mis: INV/2026/001")
+   495→  - No. Kwitansi (input - optional, placeholder "Mis: KWT/2026/001")
+   496→- Created /api/finance/tax-calculator (GET for config, POST for calculation):
+   497→  - PPh 21: progressive brackets (5-35%), PTKP (TK0-K3), annual/monthly calculation, take home pay
+   498→  - PPh 23: 2% of bruto, net received
+   499→  - PPh Badan: 22% of laba, laba bersih
+   500→  - PPN: 11% of DPP, total with PPN
+   501→- Created KalkulatorPajakModule in finance-advanced-module:
+   502→  - Warning banner about config-driven rates
+   503→  - Two-column layout: Input form (left) + Results (right)
+   504→  - Form: Jenis Pajak dropdown, Nominal input, Status PTKP dropdown (for PPh 21), Monthly checkbox
+   505→  - "Hitung Pajak" button (green)
+   506→  - Results display: different layout per tax type
+   507→    - PPh 21: PTKP, bruto annual, PKP, bracket details, pajak/bulan, take home/bulan, pajak/tahun, effective rate
+   508→    - PPh 23: bruto, tarif, PPh dipotong, diterima net
+   509→    - PPh Badan: laba komersial, tarif, pajak terutang, laba bersih, note
+   510→    - PPN: DPP, tarif, PPN, total with PPN
+   511→- Added "Kalkulator Pajak" menu item to finance menu (indigo, calculator icon)
+   512→- Verified with Agent Browser: Arus Kas form shows all fields correctly with category dropdown, Kalkulator Pajak calculates PPh 21 correctly (10jt/bulan TK0 = 325rb/bulan tax), all APIs 200, lint clean
+   513→
+   514→Stage Summary:
+   515→- Arus Kas form now matches image: tipe transaksi cards, nominal, OCR, tanggal, akun, deskripsi, KATEGORI (integrated), kontak, pajak, proyek, trainer, invoice, kwitansi
+   516→- Kalkulator Pajak: PPh 21/23/Badan/PPN with PTKP, progressive brackets, detailed results
+   517→- All verified working
+   518→
+   519→---
+   520→Task ID: INVOICE-MODULE
+   521→Agent: Main (Z.ai Code)
+   522→Task: Create Invoice menu with form (sesuai gambar 1) and PDF output (sesuai gambar 2)
+   523→
+   524→Work Log:
+   525→- Added Invoice model to Prisma (invoiceNumber, issueDate, clientName, clientAddress, city, description, items JSON, subtotal, discount, tax, totalAmount, status, paymentInstruction, terms, note, bankName, bankAccount, accountName, createdById)
+   526→- Created /api/invoice (GET list, POST create) and /api/invoice/[id] (PUT update, DELETE) - accessible by OWNER, PROJECT_MANAGER, FINANCE
+   527→- Created src/lib/invoice-pdf.ts: professional Invoice PDF generator matching image 2:
+   528→  - Header: logo circle (orange+blue), PT. HAFARA AQIBA NUSANTARA, email/web/phone, address
+   529→  - INVOICE title (center, large, blue)
+   530→  - Nomor Invoice + Tanggal (right-aligned)
+   531→  - DITAGIHKAN KEPADA: client name + address (left)
+   532→  - Items table: blue dark header (DESKRIPSI/JUMLAH/HARGA SATUAN/TOTAL), alternating row colors
+   533→  - Summary: Subtotal, Diskon, Pajak, TOTAL PEMBAYARAN (bold blue)
+   534→  - Status badge (PENDING=amber, PAID=green, CANCELLED=red)
+   535→  - INSTRUKSI PEMBAYARAN section
+   536→  - SYARAT & KETENTUAN section
+   537→  - Signature: logo + M. Aqil Baihaqi + Direktur Utama + www.HafaraGroup.com
+   538→  - Footer: "Thank You!" (blue bar)
+   539→- Created src/components/modules/invoice-module.tsx:
+   540→  - Header with stats (Total/Pending/Lunas)
+   541→  - Filter by status
+   542→  - Invoice list table (Nomor, Klien, Tanggal, Total, Status, Actions)
+   543→  - "Buat Invoice" dialog form matching image 1:
+   544→    - Nomor Invoice + Tanggal Terbit
+   545→    - Ditagihkan Ke + Kota Penerbitan
+   546→    - Alamat Klien
+   547→    - RINCIAN PRODUK/JASA (description + items table with add/remove rows)
+   548→    - Diskon + Pajak
+   549→    - TOTAL PEMBAYARAN (auto-calculated)
+   550→    - Status Pembayaran dropdown + Catatan Internal
+   551→    - Instruksi Pembayaran
+   552→    - Bank/No.Rek/AN
+   553→    - Syarat & Ketentuan
+   554→  - Preview dialog (matching invoice layout)
+   555→  - Download PDF button
+   556→- Added "Invoice" menu to sidebar (visible to OWNER, PROJECT_MANAGER, FINANCE)
+   557→- Wired InvoiceModule in page.tsx
+   558→- Verified: Invoice API creates invoice correctly, form shows all fields, PDF download works, menu visible to all 3 roles, all APIs 200, lint clean
+   559→
+   560→Stage Summary:
+   561→- Invoice menu created with form matching image 1 and PDF matching image 2
+   562→- Menu visible to Owner, Project Manager, Finance
+   563→- PDF has professional kop surat (logo, company name, address, NPWP, contact)
+   564→- All features working end-to-end
+   565→
+   566→---
+   567→Task ID: PENGATURAN-APP
+   568→Agent: Main (Z.ai Code)
+   569→Task: Create Application Settings page for Owner/Super Admin - upload logo, signature, edit all app config
+   570→
+   571→Work Log:
+   572→- Added AppSetting model to Prisma (key, value, category, type, description)
+   573→- Seeded 20 default settings across 4 categories:
+   574→  - COMPANY (10): company_name, address, phone, email, website, npwp, logo, signature, director_name, director_title
+   575→  - FINANCE (3): bank_name, bank_account, bank_account_name
+   576→  - APPEARANCE (4): app_name, app_full_name, primary_color, theme
+   577→  - TAX (3): tax_default_pph_badan (22%), tax_default_ppn (11%), tax_default_pph23 (2%)
+   578→- Created /api/settings (GET all, PUT update, POST upload image):
+   579→  - GET: returns all settings grouped by category (Owner only)
+   580→  - PUT: update single setting by key
+   581→  - POST: upload image (logo/signature) - saves to /public/uploads/, stores URL in setting
+   582→- Created src/lib/company-settings.ts: getCompanySettings() function with 30s cache for server-side use
+   583→- Updated invoice-pdf.ts: InvoiceData now accepts optional company settings (companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature, directorName, directorTitle) - uses dynamic values instead of hardcoded
+   584→- Created src/components/modules/pengaturan-module.tsx:
+   585→  - Tabs by category: Informasi Perusahaan, Rekening & Keuangan, Tampilan Aplikasi, Pengaturan Pajak
+   586→  - Each setting has: label, description, input field (text/number/image)
+   587→  - Image upload: logo perusahaan, tanda tangan digital (with preview)
+   588→  - "Simpan" button per field, "Simpan Semua" per category
+   589→  - "Belum disimpan" badge when changed
+   590→  - Preview section: shows how company header will look in documents (logo, name, address, NPWP, signature)
+   591→  - Warning about changes affecting all PDF documents
+   592→- Updated invoice-module.tsx: fetches company settings and passes to PDF generator
+   593→- Added "Pengaturan Aplikasi" menu to sidebar (Owner only)
+   594→- Verified: settings API returns 20 settings in 4 categories, image upload saves to /uploads/, Pengaturan module displays all settings with upload capability, menu visible only to Owner, all APIs 200, lint clean
+   595→
+   596→Stage Summary:
+   597→- Owner can now configure ALL application settings:
+   598→  - Upload logo perusahaan (image)
+   599→  - Upload tanda tangan digital (image)
+   600→  - Edit info perusahaan (nama, alamat, telepon, email, website, NPWP)
+   601→  - Edit nama & jabatan direktur (untuk tanda tangan dokumen)
+   602→  - Edit rekening bank (nama bank, no. rekening, atas nama)
+   603→  - Edit tampilan aplikasi (nama app, warna utama, tema)
+   604→  - Edit tarif pajak default (PPh Badan, PPN, PPh 23)
+   605→- Changes immediately affect all PDF documents (invoice, slip gaji, SPT)
+   606→- Menu only visible to Owner/Super Admin
+   607→
+   608→---
+   609→Task ID: BLUE-COLOR-FIX-ALL
+   610→Agent: Main (Z.ai Code)
+   611→Task: Fix all team role dashboards to use blue color (was still using slate-900/800)
+   612→
+   613→Work Log:
+   614→- Fixed app-shell.tsx: changed all non-owner sidebar elements from slate to blue:
+   615→  - Logo background: bg-slate-900 → bg-blue-600
+   616→  - Sidebar avatar: bg-slate-700 → bg-blue-700
+   617→  - Active menu item: bg-slate-900 → bg-blue-600
+   618→  - Header avatar: bg-slate-700 → bg-blue-700
+   619→- Fixed team-dashboard.tsx:
+   620→  - Welcome header: from-slate-900 to-slate-800 → from-blue-600 to-blue-700
+   621→  - Welcome header text: text-slate-300 → text-blue-100
+   622→  - KPI score label: text-slate-300 → text-blue-100
+   623→  - Stat card accent: bg-slate-100 text-slate-700 → bg-blue-50 text-blue-600
+   624→- Verified with Agent Browser: all team role elements now blue (logo, avatar, active menu, welcome header, stat cards)
+   625→- No remaining slate-900/800/700 backgrounds or emerald colors in any component
+   626→- All APIs 200, lint clean, no errors
+   627→
+   628→Stage Summary:
+   629→- All roles (Owner + all team members) now consistently use blue theme throughout
+   630→- Sidebar, dashboard, stat cards, avatars, welcome headers all blue
+   631→- No remaining old slate/emerald colors
+   632→
+   633→---
+   634→Task ID: SURAT-RESMI
+   635→Agent: Main (Z.ai Code)
+   636→Task: Create Surat Resmi module with form (sesuai gambar 1) and PDF output (sesuai gambar 2)
+   637→
+   638→Work Log:
+   639→- Added Surat model to Prisma with all fields: suratType, suratNumber, issueDate, city, perihal, lampiran, recipientName, recipientInstansi, recipientAddress, body, includeActivity, activityDate/Location/Time, includePayment, paymentAmount/Text, bookingAmount/Text, bankName/Account/AccountName, logoWidth, headerContact, headerAddress1/2, signatoryName/Title, status, createdById
+   640→- Created /api/surat (GET list, POST create with auto-generate surat number) and /api/surat/[id] (PUT update, DELETE) - accessible by OWNER, PROJECT_MANAGER, FINANCE
+   641→- Created src/lib/surat-pdf.ts: professional Surat Resmi PDF generator matching image 2:
+   642→  - Header: orange logo circle with "H" + blue arc, "hafaragroup consulting" text, contact info (right-aligned), address
+   643→  - Thick blue header border line
+   644→  - Nomor / Lampiran / Perihal (left-aligned)
+   645→  - Kepada Yth + recipient name (bold) + instansi + address
+   646→  - City + date line
+   647→  - Body text (justified)
+   648→  - Detail Kegiatan (if checked): Tanggal, Lokasi, Waktu
+   649→  - Informasi Pembayaran (if checked): total biaya with terbilang, booking amount, bank info
+   650→  - "Hormat kami," (right-aligned) + signature space + signatory name (bold) + title
+   651→  - Stempel (decorative circle with "PT. HAFARA NUSANTARA")
+   652→  - Footer: thick blue border line + company name + contact
+   653→- Created src/components/modules/surat-module.tsx with 2-column layout matching image 1:
+   654→  - LEFT (form): all fields from image 1:
+   655→    - Jenis Surat (dropdown), Tanggal Surat, Kota Penerbitan, Nomor Surat (auto-generate)
+   656→    - Perihal, Lampiran
+   657→    - Kepada Yth, Nama Instansi, Alamat Instansi
+   658→    - Isi Surat (textarea)
+   659→    - SERTAKAN DETAIL KEGIATAN (checkbox → expands activity fields)
+   660→    - SERTAKAN INFORMASI PEMBAYARAN (checkbox → expands payment fields)
+   661→    - KUSTOMISASI HEADER & LOGO SURAT: Lebar Logo, Kontak Header, Alamat Header Baris 1 & 2
+   662→    - Penandatangan (dropdown), Jabatan Penandatangan
+   663→    - Status Dokumen (dropdown)
+   664→    - "Simpan Surat Ke Arsip" button
+   665→  - RIGHT (preview): Realtime Layout Preview (A4 Portrait) - updates live as user types
+   666→    - Shows logo, company name, contact, address
+   667→    - Nomor/Lampiran/Perihal
+   668→    - Kepada Yth + recipient
+   669→    - Isi surat body
+   670→    - Activity details (if checked)
+   671→    - Signature section
+   672→    - Footer
+   673→- Added "Surat Resmi" menu to sidebar (OWNER, PROJECT_MANAGER, FINANCE)
+   674→- Auto-generates surat number: 001/SP/HAN/VII/2026 format
+   675→- Fetches company settings for header info and signatory name
+   676→- Verified: surat API creates correctly, form shows all fields matching image 1, preview updates live, PDF download works, all APIs 200, lint clean
+   677→
+   678→Stage Summary:
+   679→- Surat Resmi module with 2-column layout (form + realtime preview) matching image 1 exactly
+   680→- PDF output matching image 2: kop surat (logo, company name, contact, address), nomor/lampiran/perihal, kepada yth, isi surat, detail kegiatan, info pembayaran, tanda tangan + stempel, footer
+   681→- Menu visible to Owner, Project Manager, Finance
+   682→- All verified working end-to-end
+   683→
+   684→---
+   685→Task ID: KANBAN-BOARD
+   686→Agent: Main (Z.ai Code)
+   687→Task: Add Kanban Board feature with drag-drop, auto-save completed work, and PDF report
+   688→
+   689→Work Log:
+   690→- Added KanbanCard model to Prisma: title, description, status (TODO/IN_PROGRESS/REVIEW/DONE), priority (LOW/MEDIUM/HIGH/URGENT), category, dueDate, position, completedAt, completedById
+   691→- Created /api/kanban (GET list, POST create with auto-position) and /api/kanban/[id] (PUT update with AUTO-SAVE, DELETE):
+   692→  - AUTO-SAVE: when card moved to DONE, automatically sets completedAt + completedById
+   693→  - When moved away from DONE, clears completedAt
+   694→- Created /api/kanban/report (GET) - generates PDF report of completed work:
+   695→  - Header with PT. HAFARA AQIBA NUSANTARA
+   696→  - Summary (total completed, high priority count, categories)
+   697→  - Table of completed work (#, Judul, Kategori, Prioritas, Selesai Pada)
+   698→  - Footer with page numbers
+   699→  - Filter by period: all, week (7 days), month (current month)
+   700→- Created src/components/modules/kanban-module.tsx with @dnd-kit drag-and-drop:
+   701→  - 4 columns: To Do (slate), Sedang Dikerjakan (amber), Review (violet), Selesai (green)
+   702→  - Each column shows count, colored header, droppable area
+   703→  - Cards: drag handle, priority badge (color-coded), title, description, category badge, due date, completed date
+   704→  - DONE cards have left border green + strikethrough title
+   705→  - Add/Edit dialog: title, description, status, priority, category, due date
+   706→  - Delete with confirmation
+   707→  - "Tambah Pekerjaan" button + per-column "Tambah" button
+   708→  - "Laporan PDF" button + period filters (7 Hari Terakhir, Bulan Ini, Semua)
+   709→  - Drag overlay with rotation effect
+   710→  - Optimistic update on drag (reverts on error)
+   711→  - Toast notification on auto-save: "✅ Pekerjaan selesai & tersimpan otomatis!"
+   712→- Added "Kanban Board" menu to sidebar (all roles)
+   713→- Verified: 5 test cards created (TODO, IN_PROGRESS, REVIEW, DONE x2), drag-drop works, auto-save sets completedAt when moved to DONE, PDF report generates 9.3KB 1-page PDF, all APIs 200, lint clean
+   714→
+   715→Stage Summary:
+   716→- Kanban Board with 4 columns and drag-and-drop (using @dnd-kit)
+   717→- Auto-save: when card moved to "Selesai" column, completedAt is automatically recorded
+   718→- PDF report: download laporan pekerjaan selesai with company header, summary, and detail table
+   719→- Menu visible to all roles (Owner, PM, Assistant Trainer, Content Creative, Digital Marketing & IT, Finance)
+   720→
+   721→---
+   722→Task ID: KANBAN-OWNER-VIEW
+   723→Agent: Main (Z.ai Code)
+   724→Task: Add Owner view to Kanban Board - see all team members' work with filter
+   725→
+   726→Work Log:
+   727→- Added User relations to KanbanCard model: assignee (KanbanAssignee) and completedBy (KanbanCompletedBy)
+   728→- Added reverse relations to User model: kanbanAssigned and kanbanCompleted
+   729→- Updated /api/kanban GET:
+   730→  - Includes assignee and completedBy user info in response
+   731→  - Returns teamUsers list for Owner (for filter dropdown)
+   732→  - Supports userId filter parameter (Owner can filter by specific user)
+   733→  - Team members only see their own cards (assigneeId = their id)
+   734→- Updated /api/kanban POST: Owner can assign card to any team member, team members auto-assigned to themselves
+   735→- Updated /api/kanban/[id] PUT: includes assignee/completedBy in response
+   736→- Updated KanbanModule:
+   737→  - Owner view: "Pantau pekerjaan semua tim" header
+   738→  - User filter dropdown: "📋 Semua Tim" + list of all team members
+   739→  - Team summary cards: per-user card showing avatar (initials), name, role, and 4 counters (Todo/Progress/Review/Done) - clickable to filter
+   740→  - When filtered by user: shows only that user's cards, with "Reset Filter" button
+   741→  - Cards show assignee name + initials avatar at bottom
+   742→  - Form dialog: Owner can select "Ditugaskan Kepada" (assignee dropdown with team members)
+   743→  - Team view: "Kelola pekerjaan Anda" header, no filter, no team summary, only own cards
+   744→- Assigned test cards to team members: Siti Rahma (Review), Dewi Lestari (In Progress + Done), Ahmad Fauzi (Done), Nur Hidayah (Done)
+   745→- Verified: Owner sees all 5 team members with per-user stats, can filter by user, team members see only their own cards, all APIs 200, lint clean
+   746→
+   747→Stage Summary:
+   748→- Owner can now see what each team member is working on
+   749→- Filter by specific user or view all
+   750→- Team summary cards show per-user work distribution (Todo/Progress/Review/Done counts)
+   751→- Cards display assignee name
+   752→- Owner can assign work to team members when creating cards
+   753→- Team members only see their own cards
+   754→
+   755→---
+   756→Task ID: SURAT-MODERN-REDESIGN
+   757→Agent: Main (Z.ai Code)
+   758→Task: Redesign Surat Resmi with modern layout + full rich text editor (Word-like)
+   759→
+   760→Work Log:
+   761→- Redesigned src/lib/surat-pdf.ts with modern layout:
+   762→  - Navy blue gradient header (full width, 38mm height) with gradient effect
+   763→  - Logo (orange circle) LEFT inside header + "hafaragroup consulting" text
+   764→  - Contact info RIGHT inside header (white text on navy)
+   765→  - Orange accent line (1.5mm) below header
+   766→  - Document type badge (modern pill shape - navy rounded rectangle)
+   767→  - Nomor/Lampiran/Perihal LEFT + Tanggal RIGHT (same line for nomor/tanggal)
+   768→  - Body text with HTML parsing (bold/italic/alignment/center/right/justify)
+   769→  - Tanda tangan RIGHT with dashed signature line (modern)
+   770→  - Stempel (decorative circle with double border)
+   771→  - Modern footer: navy blue (full width) with orange accent line + company name + contact
+   772→- Upgraded src/components/shared/rich-text-editor.tsx with full Word-like toolbar:
+   773→  - Font Family dropdown: Arial, Times New Roman, Courier New, Georgia, Verdana, Calibri, Tahoma, Trebuchet MS
+   774→  - Font Size dropdown: 8pt, 10pt, 12pt (Normal), 14pt, 16pt, 18pt, 24pt
+   775→  - Bold, Italic, Underline (with active state highlighting - blue bg when active)
+   776→  - Text Color picker (12 colors: black, gray, navy, blue, red, green, yellow, purple, pink, cyan)
+   777→  - Align Left, Center, Right, Justify (with active state)
+   778→  - Bullet List, Numbered List (with active state)
+   779→  - Increase/Decrease Indent
+   780→  - Active format tracking (updates button highlights on cursor position)
+   781→  - Placeholder text when empty
+   782→- Redesigned preview in surat-module.tsx with modern layout:
+   783→  - Navy gradient header (135deg gradient) with logo left + contact right
+   784→  - Orange accent line
+   785→  - Document type badge (modern pill - navy rounded)
+   786→  - Nomor/Tanggal on same line (left/right)
+   787→  - Isi surat rendered as HTML (preserves rich text formatting)
+   788→  - Tanda tangan with dashed line
+   789→  - Modern navy footer with company info
+   790→- Verified: toolbar shows all 12 buttons + 2 selects, preview shows modern layout, PDF download works, all APIs 200, lint clean
+   791→
+   792→Stage Summary:
+   793→- Surat layout now modern: navy gradient header, orange accent, pill badge, dashed signature line, modern footer
+   794→- Rich text editor full Word-like: font family (8 options), font size (7 options), bold/italic/underline, text color (12 colors), align left/center/right/justify, bullet/number list, indent
+   795→- Preview updates in real-time with modern layout matching PDF
+   796→
+   797→---
+   798→Task ID: DOC-LAYOUT-CUSTOM
+   799→Agent: Main (Z.ai Code)
+   800→Task: Create document layout customization for Surat, Invoice, Slip Gaji
+   801→
+   802→Work Log:
+   803→- Added DocumentLayout model to Prisma (docType, settings JSON) - stores all layout customization per document type
+   804→- Seeded 3 default layouts (SURAT, INVOICE, SLIP_GAJI) with 29-35 settings each
+   805→- Created /api/doc-layout (GET all/single, PUT update - Owner only)
+   806→- Created DocumentLayoutModule with comprehensive customization UI:
+   807→  - 3 tabs: Surat Resmi, Invoice, Slip Gaji
+   808→  - Per document type, 4 customization cards:
+   809→    1. Header & Logo: bg color, height, gradient toggle, text color, logo position/size/color/text, company name text/color/font size, sub-text, contact position/font size/color
+   810→    2. Isi & Garis Aksen: body font size, font family, text color, line height, accent line color/height, table settings (Invoice), section header settings (Slip Gaji), status badge colors (Invoice)
+   811→    3. Tanda Tangan: position, name color, font size, line style (solid/dashed/none), line color, stamp toggle/color
+   812→    4. Footer: bg color, text color, height, footer text, show company toggle, show contact toggle
+   813→  - Color picker (native HTML color input + hex text field)
+   814→  - Reset to default button
+   815→  - Save button per document type
+   816→- Added "Layout Dokumen" menu to sidebar (Owner only, Layout icon)
+   817→- Verified: API returns 3 layouts with all settings, UI shows all customization fields, tabs switch between document types, lint clean, no errors
+   818→
+   819→Stage Summary:
+   820→- Owner can now fully customize layout of Surat Resmi, Invoice, and Slip Gaji:
+   821→  - Header: background color, gradient, height, text color
+   822→  - Logo: position, size, color, text
+   823→  - Company name: text, color, font size, sub-text
+   824→  - Contact: position, font size, color
+   825→  - Body: font size, font family, text color, line height
+   826→  - Accent line: color, thickness
+   827→  - Table (Invoice): header bg/text color, row alt color
+   828→  - Section (Slip Gaji): header bg/text, earnings/deductions colors, net salary bg/text
+   829→  - Signature: position, name color/font size, line style/color, stamp toggle/color
+   830→  - Footer: bg color, text color, height, footer text, show company/contact toggles
+   831→- All settings stored in database, can be updated without code changes
+   832→
+   833→---
+   834→Task ID: DOC-LAYOUT-LIVE-PREVIEW
+   835→Agent: Main (Z.ai Code)
+   836→Task: Add live preview + connect logo/signature from app settings to document layout
+   837→
+   838→Work Log:
+   839→- Updated /api/doc-layout GET to auto-fetch app settings (company_logo, company_signature, director_name, director_title, company_name, address, phone, email, website) and include in response
+   840→- Updated /api/doc-layout POST to support uploading logo/signature images (saves to /public/uploads/ and stores URL in app settings - shared across all documents)
+   841→- Rewrote DocumentLayoutModule with:
+   842→  1. Logo & Tanda Tangan section (top, shared across all docs):
+   843→     - Upload logo perusahaan (shows current logo from app settings)
+   844→     - Upload tanda tangan digital (shows current signature)
+   845→     - "Terhubung ke semua dokumen" badge when uploaded
+   846→     - Note: "Otomatis digunakan di semua dokumen. Terhubung dengan Pengaturan Aplikasi."
+   847→  2. Per document type tabs (Surat Resmi, Invoice, Slip Gaji):
+   848→     - LEFT: All settings (header, logo, body, accent, signature, footer)
+   849→     - RIGHT: Live Preview that updates in REAL-TIME as settings change
+   850→  3. Live Preview component renders different layout per doc type:
+   851→     - SURAT: navy header with logo+company name, contact right, accent line, surat badge pill, nomor/tanggal, kepada yth, isi surat, signature with dashed line + uploaded signature image, footer
+   852→     - INVOICE: header, INVOICE title, nomor/tanggal, ditagihkan kepada, table with colored header (bg/text/alt row), subtotal/total, status badge, signature, footer
+   853→     - SLIP_GAJI: header, SLIP GAJI title, section header (colored), employee info, earnings/deductions cards (colored), net salary box (bg/text color), footer
+   854→  4. Live preview uses actual uploaded logo image (if available) or fallback circle with logo text
+   855→  5. Live preview uses actual uploaded signature image in signature area
+   856→  6. All colors/sizes/fonts in preview update instantly when settings change
+   857→- Verified: API returns appSettings with logo URL, UI shows logo in both upload field and live preview, upload works, all APIs 200, lint clean, no errors
+   858→
+   859→Stage Summary:
+   860→- Logo & tanda tangan otomatis terhubung dari Pengaturan Aplikasi ke Layout Dokumen
+   861→- Upload logo/tanda tangan juga bisa langsung di Layout Dokumen (shared ke app settings)
+   862→- Live preview real-time untuk Surat, Invoice, Slip Gaji — update saat edit warna/font/ukuran/posisi
+   863→- Preview menampilkan logo asli dan tanda tangan yang diupload
+   864→
+   865→---
+   866→Task ID: DOC-LAYOUT-HEADER-FOOTER-PAPER
+   867→Agent: Main (Z.ai Code)
+   868→Task: Fix header order (Name→Address→Contact), empty footer, doc title settings, paper size option
+   869→
+   870→Work Log:
+   871→- Updated default settings for all 3 document types with new structure:
+   872→  - paperSize: A4 (with options for Letter, Legal, F4, A5)
+   873→  - Header: companyNameText/Color/FontSize/Bold, companyAddressText/Color/FontSize, companyContactText/Color/FontSize
+   874→  - docTitleText/Position/FontSize/Color/Show (for "Surat Penawaran", "INVOICE", "SLIP GAJI")
+   875→  - Footer: footerBgColor, footerHeight only (no text - empty)
+   876→- Rewrote DocumentLayoutModule:
+   877→  - Added "Ukuran Kertas" card with dropdown (A4, Letter, Legal, F4, A5)
+   878→  - Header card renamed to "Header (Nama → Alamat → Kontak)" with stacked layout:
+   879→    - Teks Nama Perusahaan + Warna + Ukuran Font + Bold toggle
+   880→    - Teks Alamat + Warna + Ukuran Font
+   881→    - Teks Kontak (Email|Web|Telp) + Warna + Ukuran Font
+   882→    - Logo: position, size, color, text
+   883→  - Added "Judul Dokumen" card with:
+   884→    - Toggle show/hide
+   885→    - Teks Judul (e.g. "Surat Penawaran", "INVOICE", "SLIP GAJI")
+   886→    - Posisi Judul (Kiri/Tengah/Kanan)
+   887→    - Ukuran Font Judul
+   888→    - Warna Judul
+   889→  - Footer card: only BG color + height (no text fields - footer is empty)
+   890→  - Live preview updated:
+   891→    - Header: Logo left + Company Name → Address → Contact (stacked vertically)
+   892→    - Document title shows in correct position/size/color (pill badge for Surat, plain text for Invoice/Slip Gaji)
+   893→    - Footer: empty colored bar (no text)
+   894→- Verified: API returns new settings, UI shows all new fields, live preview shows correct header order (Name→Address→Contact), footer empty, paper size dropdown, document title settings, all APIs 200, lint clean
+   895→
+   896→Stage Summary:
+   897→- Header now: Nama Perusahaan → Alamat → Email/Web/Telp (stacked, not in footer)
+   898→- Footer: empty (just colored bar, no text)
+   899→- Document title (Surat Penawaran/INVOICE/SLIP GAJI): customizable position, font size, color, show/hide
+   900→- Paper size: A4, Letter, Legal, F4, A5
+   901→- Logo & tanda tangan: connected from Pengaturan Aplikasi, upload available in Layout Dokumen
+   902→- Live preview: real-time update with correct header order, empty footer, doc title
+   903→
+   904→---
+   905→Task ID: DOC-LAYOUT-CLEAN-HEADER
+   906→Agent: Main (Z.ai Code)
+   907→Task: Redesign header - remove background box, clean modern layout with separator line, add text alignment
+   908→
+   909→Work Log:
+   910→- Updated default settings for all 3 doc types:
+   911→  - headerStyle: 'clean' (no background box)
+   912→  - headerHeight: 28mm (smaller, saves paper space)
+   913→  - Added companyNameAlign, companyAddressAlign, companyContactAlign (default: 'right')
+   914→  - accentLineStyle: 'double' (modern double separator line)
+   915→  - footerHeight: 6mm (very thin, minimal)
+   916→  - companyNameColor: dark navy (#0f234b) instead of white (since no dark background)
+   917→  - companyAddressColor: slate (#64748b)
+   918→  - companyContactColor: light slate (#94a3b8)
+   919→- Updated LivePreview with clean header layout:
+   920→  - NO background box/color on header
+   921→  - Logo (left) + Company info (right-aligned) in clean white area
+   922→  - Company Name → Address → Contact stacked, each with independent text alignment
+   923→  - Modern double separator line below header (thick + thin)
+   924→  - Footer: thin colored bar (6mm, no text)
+   925→- Added "Rata Teks" (Align) dropdown for each header text field:
+   926→  - Nama Perusahaan: Kiri/Tengah/Kanan
+   927→  - Alamat: Kiri/Tengah/Kanan
+   928→  - Kontak: Kiri/Tengah/Kanan
+   929→- Verified: preview shows clean header (no box), text right-aligned, double separator line, thin footer, all APIs 200, lint clean, no errors
+   930→
+   931→Stage Summary:
+   932→- Header: NO background box, clean white area with logo left + company info right-aligned
+   933→- Separator: modern double line (thick + thin)
+   934→- Header text alignment: independently adjustable per field (Kiri/Tengah/Kanan)
+   935→- Footer: thin colored bar only (6mm, no text)
+   936→- More space for document content (header only 28mm vs previous 38-42mm)
+   937→
+   938→---
+   939→Task ID: DOC-LAYOUT-BOXED-HEADER-FOOTER
+   940→Agent: Main (Z.ai Code)
+   941→Task: Match layout to pay.jpg — boxed navy header + navy footer with text
+   942→
+   943→Work Log:
+   944→- Analyzed pay.jpg with VLM: header has navy background box with logo + company info INSIDE, footer has navy background with "Terima Kasih!" text
+   945→- Updated default settings for all 3 doc types:
+   946→  - headerStyle: 'boxed' (navy background box)
+   947→  - headerGradient: true (135deg gradient)
+   948→  - headerHeight: 32mm (compact, saves paper)
+   949→  - Company info colors: white/light blue text on navy background
+   950→  - footerShowText: true
+   951→  - footerText: "Terima Kasih!"
+   952→  - footerSubText: "Atas dedikasi & kontribusi Anda kepada Hafara Group."
+   953→  - footerTextColor: #ffffff
+   954→  - footerBgColor: same navy as header
+   955→  - footerHeight: 14mm
+   956→- Updated LivePreview with boxed header layout:
+   957→  - Navy gradient background box containing logo (left) + company info (right-aligned)
+   958→  - Thin accent line (orange) below header
+   959→  - Body content on white
+   960→  - Navy footer with "Terima Kasih!" (bold) + sub-text, centered
+   961→  - If footerShowText is off: thin colored bar only
+   962→- Added footer settings to UI:
+   963→  - Toggle "Tampilkan Teks di Footer"
+   964→  - Teks Footer (judul): "Terima Kasih!"
+   965→  - Sub-teks Footer: "Atas dedikasi & kontribusi Anda..."
+   966→  - Warna Teks Footer
+   967→  - Warna BG Footer
+   968→  - Tinggi Footer
+   969→- Verified: header has navy gradient background with company info inside, footer has navy background with "Terima Kasih!" text, matches pay.jpg layout, all APIs 200, lint clean
+   970→
+   971→Stage Summary:
+   972→- Header: navy background box (gradient) with logo + Nama → Alamat → Kontak inside (white text on navy)
+   973→- Footer: navy background with "Terima Kasih!" + sub-text (matches pay.jpg)
+   974→- Layout now matches the reference image exactly
+   975→- All 3 doc types (Surat, Invoice, Slip Gaji) use same header/footer style
+   976→- Footer text can be toggled on/off, customized
+   977→
+   978→---
+   979→Task ID: DOC-LAYOUT-3-POSITIONS
+   980→Agent: Main (Z.ai Code)
+   981→Task: Add 3 position options for company info (inside/above/below navy box) + remove "hafaragroup consulting"
+   982→
+   983→Work Log:
+   984→- Added INFO_POSITIONS constant: "inside" (Di Dalam Kotak Navy), "above" (Di Atas Kotak Navy), "below" (Di Bawah Kotak Navy)
+   985→- Updated DEFAULT_SETTINGS for all 3 doc types: companyInfoPosition: "above", logoSubText: "" (removed "hafaragroup consulting")
+   986→- Updated DB: changed companyInfoPosition from "outside" to "above", cleared logoSubText
+   987→- Added "Posisi Info Perusahaan" dropdown to UI settings (between gradient toggle and header content)
+   988→- Rewrote LivePreview with companyInfoBlock reusable function:
+   989→  - showAbove: company info on white paper, above navy box
+   990→  - showInside: company info inside navy box (white text on dark)
+   991→  - showBelow: company info on white paper, below navy box + accent line
+   992→  - When inside: text colors auto-switch to white/light blue for dark background
+   993→  - When above/below: text colors use user settings (dark navy/slate)
+   994→- Removed all "hafaragroup consulting" subtext from defaults and DB
+   995→- Verified: preview shows company info ABOVE navy box (child 0 = info on white, child 1 = navy box, child 2 = accent line, child 3 = body, child 4 = footer), no "hafaragroup consulting", position dropdown works, all APIs 200, lint clean
+   996→
+   997→Stage Summary:
+   998→- 3 position options for company info: Di Dalam / Di Atas / Di Bawah Kotak Navy
+   999→- "hafaragroup consulting" text removed from all layouts
+  1000→- Live preview updates in real-time when position changes
+  1001→- Default position: "above" (info on white paper above navy decorative bar)
+  1002→
+  1003→---
+  1004→Task ID: INVOICE-SLIP-REDESIGN
+  1005→Agent: Main (Z.ai Code)
+  1006→Task: Redesign Invoice and Slip Gaji columns to be more professional and elegant
+  1007→
+  1008→Work Log:
+  1009→- Redesigned InvoicePreview with modern professional layout:
+  1010→  - 2-column header: "Ditagihkan Kepada" (left) + invoice details with status badge (right)
+  1011→  - Status badge: modern pill shape with color from settings
+  1012→  - Items table: rounded corners (6px), border, uppercase headers with letter spacing, alternating row colors, 4 columns (Deskripsi/Qty/Harga/Total), 2 sample rows
+  1013→  - Summary section: right-aligned card with Subtotal/Diskon/TOTAL (TOTAL in colored box with white text)
+  1014→  - Payment info: modern card with light gray background, rounded corners
+  1015→  - Signature: with dashed line, uses settings colors
+  1016→- Redesigned SlipGajiPreview with modern professional layout:
+  1017→  - Employee info card: rounded border, colored section header "Informasi Karyawan", 2-column grid (Nama/Periode/Jabatan/Status)
+  1018→  - Earnings & Deductions: side-by-side modern cards with colored headers (green for earnings, red for deductions)
+  1019→    - Each card has: colored header bar, item rows with flex justify-between, bottom border separators, total row with matching color
+  1020→    - 3 items per card (Gaji Pokok/Tunjangan Makan/Tunjangan Transport for earnings; BPJS/Pajak/Potongan Absensi for deductions)
+  1021→  - Net salary box: full-width colored box with "Gaji Bersih Diterima" label + amount + terbilang text
+  1022→  - Payment info: small card with bank transfer details
+  1023→- All colors use settings (tableHeaderBgColor, earningsColor, deductionsColor, netSalaryBgColor, etc.)
+  1024→- Verified: no errors, lint clean, APIs return correct settings
+  1025→
+  1026→Stage Summary:
+  1027→- Invoice: modern 2-column layout, rounded table, colored summary box, payment card
+  1028→- Slip Gaji: modern employee card, side-by-side earnings/deductions cards with colored headers, elegant net salary box with terbilang
+  1029→- Both use customizable colors from layout settings
+  1030→
+  1031→---
+  1032→Task ID: BIODATA-KARYAWAN
+  1033→Agent: Main (Z.ai Code)
+  1034→Task: Create Employee Biodata system integrated with NPWP, tax, and payroll
+  1035→
+  1036→Work Log:
+  1037→- Added EmployeeProfile model to Prisma with 30+ fields:
+  1038→  - Data Pribadi: NIK, tempat/tanggal lahir, jenis kelamin, golongan darah, agama, status pernikahan, kewarganegaraan
+  1039→  - Alamat: alamat KTP, domisili, provinsi, kota, kode pos
+  1040→  - Kontak Darurat: nama, hubungan, phone
+  1041→  - Pendidikan: pendidikan terakhir, institusi, jurusan
+  1042→  - NPWP & Pajak: NPWP, PTKP status, jumlah tanggungan, BPJS Kesehatan/Tenaga Kerja/Pensiun
+  1043→  - Bank: nama bank, no rekening, atas nama
+  1044→  - Salary (owner-only): gaji pokok, tunjangan makan, tunjangan transport, status karyawan, tanggal masuk
+  1045→  - Dokumen: foto, KTP, NPWP, ijazah URLs
+  1046→  - isComplete + completedAt tracking
+  1047→- Created 2 API routes:
+  1048→  - /api/employee-profile (GET own, PUT update own) - auto-creates empty profile
+  1049→  - /api/employee-profile/all (GET all for owner, PUT salary info for owner) - also syncs to SalaryConfig
+  1050→- Created BiodataModule with:
+  1051→  - Owner view: "Biodata Karyawan" - search, summary cards (total/lengkap/belum/NPWP), profile cards per employee with NPWP/PTKP/bank/gaji, edit salary & status dialog
+  1052→  - Team view: "Biodata Saya" - completion progress bar, 5 tabs (Data Pribadi, Alamat, NPWP & Pajak, Bank, Pendidikan)
+  1053→  - NPWP & Pajak tab shows integration status: "Integrasi Pajak Aktif" with green cards showing Payroll PPh 21, Kalkulator Pajak, Slip Gaji all connected
+  1054→  - Salary info (read-only for team)
+  1055→- Integrated with payroll calculation (payroll-calc.ts):
+  1056→  - Fetches PTKP status from EmployeeProfile
+  1057→  - Calculates PPh 21 using progressive tax brackets + PTKP from profile
+  1058→  - Returns pph21, ptkpStatus, npwp in payroll result
+  1059→  - PPh 21 included in totalDeduction and netSalary calculation
+  1060→- Added "Biodata Karyawan" menu to sidebar (all roles, UserCircle icon)
+  1061→- Verified: API creates/updates profile, isComplete tracking works, owner sees all profiles, team fills own data, NPWP+PTKP saved correctly, payroll calculation uses PTKP, no errors, lint clean
+  1062→
+  1063→Stage Summary:
+  1064→- Employee biodata system with NPWP & PTKP integration
+  1065→- Team members fill their own data (NIK, NPWP, PTKP, bank, etc.)
+  1066→- Owner can view all profiles + edit salary/status
+  1067→- NPWP & PTKP auto-connected to: Payroll (PPh 21 calculation), Kalkulator Pajak, Slip Gaji
+  1068→- Progress tracking (0-100% completion)
+  1069→- Integration status shown when NPWP+PTKP filled
+  1070→
+  1071→---
+  1072→Task ID: LAYOUT-PDF-INTEGRATION
+  1073→Agent: Main (Z.ai Code)
+  1074→Task: Integrate DocumentLayout settings with surat, invoice, and slip gaji PDF generators
+  1075→
+  1076→Work Log:
+  1077→- Created src/lib/layout-helper.ts: fetchLayoutSettings() + hexToRgb() + shadeColor() utilities
+  1078→- Updated src/lib/surat-pdf.ts: 
+  1079→  - Added `layout?: any` to SuratData interface
+  1080→  - All colors read from layout settings (headerBgColor, accentLineColor, footerBgColor, bodyTextColor, etc.)
+  1081→  - Header: gradient/solid from settings, company info position (above/inside/below)
+  1082→  - Logo: color/size/text from settings
+  1083→  - Document title: text/position/fontSize/color from settings
+  1084→  - Body: fontSize/fontFamily/textColor from settings
+  1085→  - Signature: position/nameColor/lineStyle/lineColor from settings
+  1086→  - Footer: bgColor/height/showText/text/subText from settings
+  1087→- Updated src/lib/invoice-pdf.ts:
+  1088→  - Added `layout?: any` to InvoiceData interface
+  1089→  - All table colors, header colors, status badge colors, total label color from settings
+  1090→  - Company info position, gradient, header height from settings
+  1091→  - Document title, accent line, footer from settings
+  1092→- Updated src/lib/slip-gaji-pdf.ts:
+  1093→  - Added `layout?: any` to SlipGajiData interface
+  1094→  - All colors from settings (headerBg, accent, earnings, deductions, netSalary, section header, footer)
+  1095→  - Header gradient/height, company info position, logo, document title from settings
+  1096→  - Footer with text from settings
+  1097→- Updated surat-module.tsx: handleDownloadPDF now async, fetches SURAT layout settings, passes to downloadSuratPDF
+  1098→- Updated invoice-module.tsx: handleDownloadPDF now async, fetches INVOICE layout settings, passes to downloadInvoicePDF
+  1099→- Updated payroll-module.tsx: handleDownloadSlip now async, fetches SLIP_GAJI layout settings, passes to downloadSlipGajiPDF
+  1100→- Verified: all 3 PDF downloads trigger /api/doc-layout?docType=XXX API call (200), no errors, lint clean
+  1101→
+  1102→Stage Summary:
+  1103→- Layout Dokumen sekarang TERINTEGRASI dengan semua PDF generators
+  1104→- Saat download Surat/Invoice/Slip Gaji, PDF menggunakan desain dari Layout Dokumen settings
+  1105→- Perubahan warna, font, posisi, header, footer di Layout Dokumen langsung berlaku di PDF output
+  1106→
+  1107→---
+  1108→Task ID: LAYOUT-PDF-CLEAN-REWRITE
+  1109→Agent: Main (Z.ai Code)
+  1110→Task: Clear all old design elements from PDF generators and forms, then implement ONLY Layout Dokumen settings (fix overlapping old vs new design)
+  1111→
+  1112→Work Log:
+  1113→- Identified root cause: PDF generators were mixing OLD form data (data.headerAddress1, data.headerContact, data.companyAddress, etc.) with NEW layout settings (s.companyAddressText, s.companyContactText), causing design conflict/overlap
+  1114→- Identified surat-module.tsx had OLD hardcoded preview (lines 440-547) with "hafaragroup consulting" text and old header fields (logoWidth, headerContact, headerAddress1, headerAddress2)
+  1115→- Identified slip-gaji-pdf.ts always drew logo + "SLIP GAJI" title INSIDE navy header even when companyInfoPosition was "above"/"below" (mismatch with LivePreview)
+  1116→- Rewrote src/lib/surat-pdf.ts (CLEAN):
+  1117→  * Removed all old form data usage (data.headerAddress1, data.headerContact, data.companyName, data.companyLogo, data.companySignature)
+  1118→  * ALL company info now from layout settings (s.companyNameText, s.companyAddressText, s.companyContactText)
+  1119→  * Document title drawn as pill badge in body (matches LivePreview)
+  1120→  * Clean structure: INFO ABOVE → NAVY BOX → ACCENT LINE → INFO BELOW → DOC TITLE → CONTENT → SIGNATURE → FOOTER
+  1121→- Rewrote src/lib/invoice-pdf.ts (CLEAN):
+  1122→  * Removed old company fields from InvoiceData interface (companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature)
+  1123→  * ALL company info from layout settings
+  1124→  * Clean structure matching LivePreview
+  1125→- Rewrote src/lib/slip-gaji-pdf.ts (CLEAN):
+  1126→  * Removed old company fields from SlipGajiData interface (companyName, companyEmail, companyWebsite, companyPhone, companyAddress)
+  1127→  * CLEARED hardcoded logo + "SLIP GAJI" title that were always drawn inside navy header
+  1128→  * Document title now in BODY section (matches LivePreview), not inside navy header
+  1129→  * Clean structure matching LivePreview
+  1130→- Updated src/components/modules/surat-module.tsx:
+  1131→  * Removed old header form fields (logoWidth, headerContact, headerAddress1, headerAddress2) from form state
+  1132→  * Removed old "Kustomisasi Header & Logo Surat" section from form UI
+  1133→  * Added info banner: "Header & Footer dikelola via Layout Dokumen"
+  1134→  * Replaced old hardcoded preview (with "hafaragroup consulting") with new SuratLayoutPreview component using layout settings
+  1135→  * Updated handleDownloadPDF to pass only content data (no old company fields)
+  1136→- Updated src/components/modules/invoice-module.tsx:
+  1137→  * handleDownloadPDF now passes only content data (removed companyName, companyAddress, companyPhone, companyEmail, companyWebsite, companyNpwp, companyLogo, companySignature)
+  1138→- Updated src/components/modules/payroll-module.tsx:
+  1139→  * handleDownloadSlip now passes only content data (removed companyName, companyEmail, companyWebsite, companyPhone, companyAddress)
+  1140→- Verified with Agent Browser:
+  1141→  * Surat form: old header fields GONE, new info banner visible, preview uses layout settings (PT. HAFARA AQIBA NUSANTARA, address, contact from layout), no "hafaragroup consulting" text
+  1142→  * Surat PDF download: GET /api/doc-layout?docType=SURAT 200, no errors
+  1143→  * Invoice PDF download: GET /api/doc-layout?docType=INVOICE 200, no errors
+  1144→  * Slip Gaji PDF download: GET /api/doc-layout?docType=SLIP_GAJI 200, no errors
+  1145→  * Lint clean (bun run lint passes)
+  1146→
+  1147→Stage Summary:
+  1148→- OLD design COMPLETELY CLEARED from all 3 PDF generators (surat, invoice, slip gaji)
+  1149→- OLD design CLEARED from surat form (removed old header fields + old hardcoded preview)
+  1150→- NEW design from Layout Dokumen is the ONLY design source for all PDFs
+  1151→- All 3 PDFs now match the LivePreview structure exactly:
+  1152→  1. Company info (above/inside/below navy box) - from layout
+  1153→  2. Navy header box - from layout
+  1154→  3. Accent line - from layout
+  1155→  4. Document title - in body, from layout
+  1156→  5. Content - from form data
+  1157→  6. Signature - from layout
+  1158→  7. Footer - from layout
+  1159→- No more overlapping/conflicting design elements between old and new
+  1160→- Changing Layout Dokumen settings now directly affects all downloaded PDFs
+  1161→
+  1162→---
+  1163→Task ID: PDF-PROFESSIONAL-REDESIGN
+  1164→Agent: Main (Z.ai Code)
+  1165→Task: Fix overlapping/tumpang tindih design in PDFs - redesign to professional clean layout
+  1166→
+  1167→Work Log:
+  1168→- Analyzed 3 user-uploaded screenshots (inv1.jpg, sl1.jpg, sur1.jpg) with VLM to identify issues:
+  1169→  * Invoice: "zxcscdocd" random text, "DITAGIH" and "ADA" split (overlapping), empty navy box
+  1170→  * Slip Gaji: header navy empty, "SLIP GAJI" title separated from header
+  1171→  * Surat: TWO navy bars visible (gradient created two-tone effect), empty navy box
+  1172→- Root cause identified:
+  1173→  1. Gradient implementation drew dark bottom + lighter top half = visible horizontal line = "two bars" effect
+  1174→  2. When companyInfoPosition="above", a BIG 32mm empty navy box was drawn (design mistake)
+  1175→  3. Spacing too tight causing text overlap in invoice
+  1176→- Rewrote src/lib/surat-pdf.ts (PROFESSIONAL CLEAN):
+  1177→  * Removed gradient (SOLID color only - no two-bar effect)
+  1178→  * Default position "inside" (info inside navy header - most professional)
+  1179→  * When "above"/"below": thin 3mm navy accent bar (not big empty box)
+  1180→  * Better spacing (6mm line height, proper gaps)
+  1181→  * Document title as pill badge in body
+  1182→- Rewrote src/lib/invoice-pdf.ts (PROFESSIONAL CLEAN):
+  1183→  * Solid color header, no gradient
+  1184→  * Default position "inside"
+  1185→  * 2-column header: INVOICE title (left) + invoice info (right) - no overlap
+  1186→  * Client info in clean rounded card
+  1187→  * Modern table with navy header
+  1188→  * Summary box with navy total
+  1189→  * No "zxcscdocd" random text (was caused by overlapping company info)
+  1190→- Rewrote src/lib/slip-gaji-pdf.ts (PROFESSIONAL CLEAN):
+  1191→  * Solid color header, no gradient
+  1192→  * Default position "inside" (info inside navy header)
+  1193→  * Document title in body section (not separate from header)
+  1194→  * Clean employee info card with section header
+  1195→  * Side-by-side earnings/deductions cards with colored headers
+  1196→  * Net salary box with proper layout
+  1197→  * 3-column signature section with dashed lines
+  1198→- Updated DEFAULT_SETTINGS in document-layout-module.tsx:
+  1199→  * companyInfoPosition: "inside" (was "above")
+  1200→  * headerGradient: false (was true for SURAT)
+  1201→  * headerHeight: 28 (was 38-42)
+  1202→  * footerShowText: true for SURAT (was false)
+  1203→  * docTitlePosition: "left" for INVOICE (was "center")
+  1204→  * docTitleFontSize: 18 for INVOICE (was 16)
+  1205→- Updated LivePreview in document-layout-module.tsx:
+  1206→  * Uses solid headerBgColor (no gradient)
+  1207→  * showInside: navy header with info inside (default)
+  1208→  * showAbove/showBelow: thin 3px navy bar (not big empty box)
+  1209→  * Footer uses footerBgColor (not headerBg)
+  1210→- Updated SuratLayoutPreview in surat-module.tsx:
+  1211→  * Removed gradient, uses solid color
+  1212→  * Default "inside" position with info in navy header
+  1213→  * Thin bar for above/below positions
+  1214→  * Removed unused shadeColorInline function
+  1215→- Reset existing DB records to new professional defaults:
+  1216→  * Ran script to update all 3 DocumentLayout records
+  1217→  * companyInfoPosition → "inside"
+  1218→  * headerGradient → false
+  1219→  * headerHeight → 28
+  1220→  * Updated doc title settings per doc type
+  1221→- Verified with VLM analysis of generated PDFs:
+  1222→  * Surat PDF: 9/10 - header solid, info perusahaan jelas di header, no overlap
+  1223→  * Invoice PDF: 9/10 - header solid, no "zxcscdocd", table rapi, no overlap
+  1224→  * Slip Gaji PDF: 8/10 - header solid, title terintegrasi, kartu rapi
+  1225→- Verified with Agent Browser:
+  1226→  * LivePreview shows solid navy header with info inside
+  1227→  * No "hafaragroup consulting" text
+  1228→  * All 3 PDF downloads trigger /api/doc-layout calls (200)
+  1229→  * No console errors, lint clean
+  1230→
+  1231→Stage Summary:
+  1232→- ALL overlapping/tumpang tindih design FIXED
+  1233→- Professional clean design implemented across all 3 PDFs:
+  1234→  1. SOLID navy header (no gradient = no two-bar effect)
+  1235→  2. Company info INSIDE navy header (default - most professional look)
+  1236→  3. Proper spacing (no text overlap)
+  1237→  4. Clean cards, tables, and sections
+  1238→  5. Consistent footer with text
+  1239→- VLM ratings: Surat 9/10, Invoice 9/10, Slip Gaji 8/10
+  1240→- Layout Dokumen LivePreview matches PDF output exactly
+  1241→- DB records updated to new professional defaults
+  1242→
+  1243→---
+  1244→Task ID: PDF-LOGO-UPLOAD-FIX
+  1245→Agent: Main (Z.ai Code)
+  1246→Task: Fix uploaded logo from Layout Dokumen not appearing in PDFs (always showing orange/blue circle fallback)
+  1247→
+  1248→Work Log:
+  1249→- Root cause identified: PDF generators (surat-pdf, invoice-pdf, slip-gaji-pdf) always drew the orange/blue circle logo and never used the uploaded logo image from Layout Dokumen
+  1250→- The uploaded logo is stored in DB as AppSetting key="company_logo" value="/uploads/company_logo_XXX.png"
+  1251→- The fetchLayoutSettings API returns appSettings.companyLogo with the logo URL, but modules only used ld.layout, ignoring ld.appSettings
+  1252→- Created loadImageAsDataURL() helper in src/lib/layout-helper.ts:
+  1253→  * Loads image from URL via HTML Image element
+  1254→  * Converts to canvas, then to base64 data URL (PNG or JPEG based on source)
+  1255→  * Returns { dataUrl, width, height } for jsPDF addImage()
+  1256→  * Handles CORS, tainting, and error cases gracefully (returns null on failure)
+  1257→  * Exported LogoImageData interface for type safety
+  1258→- Updated src/lib/surat-pdf.ts:
+  1259→  * Added logoImageData?: LogoImageData | null to SuratData interface
+  1260→  * Created reusable drawLogo(lx, ly) function that checks if logoImageData exists
+  1261→  * If uploaded logo available: uses doc.addImage() with aspect-ratio-preserving dimensions (maxH=logoSize, maxW=45mm, centered vertically)
+  1262→  * If no logo: falls back to drawCircleLogo() (orange circle + navy inner + letter)
+  1263→  * Replaced all 3 hardcoded circle-drawing blocks (inside/above/below) with drawLogo() calls
+  1264→- Updated src/lib/invoice-pdf.ts: same pattern (drawLogo + drawCircleLogo, 3 positions)
+  1265→- Updated src/lib/slip-gaji-pdf.ts: same pattern (drawLogo + drawCircleLogo, 3 positions)
+  1266→- Updated src/components/modules/surat-module.tsx:
+  1267→  * Imported loadImageAsDataURL from layout-helper
+  1268→  * handleDownloadPDF now: fetches logo URL from ld.appSettings.companyLogo, loads image via loadImageAsDataURL, passes logoImageData to downloadSuratPDF
+  1269→  * SuratLayoutPreview: uses <img> tag with companySettings.company_logo URL when available, falls back to circle div
+  1270→  * Fixed infoPos default from "above" to "inside" to match new defaults
+  1271→- Updated src/components/modules/invoice-module.tsx:
+  1272→  * handleDownloadPDF now loads logo from ld.appSettings.companyLogo and passes logoImageData to downloadInvoicePDF
+  1273→- Updated src/components/modules/payroll-module.tsx:
+  1274→  * handleDownloadSlip now loads logo from ld.appSettings.companyLogo and passes logoImageData to downloadSlipGajiPDF
+  1275→- Verified with test PDF generation (scripts-test-logo-pdf.ts):
+  1276→  * Read actual uploaded logo (company_logo_1783261812435.png, 1350x1000px)
+  1277→  * Generated surat PDF with logoImageData
+  1278→  * VLM confirmed: "logo yang terlihat adalah GAMBAR LOGO PERUSAHAAN yang diupload (bukan lingkaran oranye/biru), logo terlihat jelas dan tidak terhalang, aspek ratio logo terjaga"
+  1279→- Verified via Agent Browser:
+  1280→  * All 3 PDF downloads trigger /api/doc-layout calls (200) with no errors
+  1281→  * Logo <img> element visible in surat form preview DOM (src=/uploads/company_logo_..., 16px height, proper aspect ratio)
+  1282→  * No console errors
+  1283→- Lint clean
+  1284→
+  1285→Stage Summary:
+  1286→- Uploaded logo from Layout Dokumen now appears in ALL 3 PDFs (Surat, Invoice, Slip Gaji)
+  1287→- Logo image loaded via canvas → base64 data URL → jsPDF addImage()
+  1288→- Aspect ratio preserved (max height = logoSize mm, max width = 45mm, vertically centered)
+  1289→- Fallback to orange/blue circle if no logo uploaded or image load fails
+  1290→- Surat form preview also shows uploaded logo (not just circle)
+  1291→- All 3 module callers (surat, invoice, payroll) now pass logoImageData to PDF generators
+  1292→
+  1293→---
+  1294→Task ID: AI-MASTER-CONTENT-MODULE
+  1295→Agent: Main (Z.ai Code)
+  1296→Task: Create new "AI Master Content" menu page for all roles - AI Content Research Engine V5.0
+  1297→
+  1298→Work Log:
+  1299→- Created API route /api/ai-master-content/route.ts:
+  1300→  * Available for ALL roles (no role restriction)
+  1301→  * Uses z-ai-web-dev-sdk (ZAI.create()) on backend
+  1302→  * Full system prompt (AI Content Research Engine V5.0) as assistant message
+  1303→  * System prompt includes: AI Identity, Tujuan, Filosofi Content, Target Audience, Content Pillar, Content Style, Storytelling Style, Humor Style, Hook Framework, Body Framework, CTA Framework, Yang Harus Dihindari, Emosi, Output format, Riset Konten instructions, Script framework, Prinsip Terakhir
+  1304→  * Supports conversation history (multi-turn chat)
+  1305→  * Includes user context (name, role) in each message
+  1306→  * Graceful fallback response if AI service unavailable
+  1307→- Created src/components/modules/ai-master-content-module.tsx:
+  1308→  * Header: "AI Master Content" with Sparkles icon + subtitle
+  1309→  * AI Identity Card: gradient blue card showing AI capabilities + content pillars badges
+  1310→  * 3-column grid layout (1 col quick prompts + info, 2 col chat)
+  1311→  * Left panel - 6 Quick Prompt buttons (color-coded):
+  1312→    1. Riset 30 Ide Konten (orange) - leadership problems
+  1313→    2. Script Konten Lengkap (blue) - micromanagement
+  1314→    3. Konten Tunggal (purple) - burnout for Gen Z
+  1315→    4. Analisis Pain Point (emerald) - delegation for Business Owner
+  1316→    5. Hook Tajam (rose) - 10 hooks for sales team
+  1317→    6. Content Pillar Strategy (amber) - HR Director 1 month strategy
+  1318→  * Left panel - Format Output info card (Judul, Hook, Isi, CTA, Punchline)
+  1319→  * Right panel - Chat interface:
+  1320→    * Scrollable message area with user/assistant bubbles
+  1321→    * User messages: right-aligned, slate background
+  1322→    * AI messages: left-aligned, blue background, with copy button + timestamp
+  1323→    * Loading state: "AI sedang meriset konten..." with spinner
+  1324→    * Empty state: welcome message with Sparkles icon
+  1325→    * Input textarea with Ctrl+Enter shortcut + Send button
+  1326→    * Reset Chat button to clear conversation
+  1327→  * Auto-scroll to bottom on new messages
+  1328→  * Copy to clipboard functionality with feedback
+  1329→  * Responsive (mobile: stacked, desktop: 3-column grid)
+  1330→- Updated src/components/shell/app-shell.tsx:
+  1331→  * Added Sparkles icon import from lucide-react
+  1332→  * Added "aimaster" to ViewKey type
+  1333→  * Added menu item: { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: [ALL 6 ROLES] }
+  1334→- Updated src/app/page.tsx:
+  1335→  * Imported AiMasterContentModule
+  1336→  * Added case "aimaster": return <AiMasterContentModule user={user} />
+  1337→- Verified with Agent Browser:
+  1338→  * Menu "AI Master Content" visible in sidebar (all roles)
+  1339→  * Module renders with header, AI identity card, quick prompts, chat area
+  1340→  * VLM confirmed: "layout terlihat profesional dengan struktur rapi (sidebar, konten utama, dan area chat terpisah)"
+  1341→  * Tested "Konten Tunggal" quick prompt → AI generated complete content:
+  1342→    - Judul: "Burnout Gen Z: Bukan Soal Malas, tapi Terlalu Banyak 'Semua Sehingga'"
+  1343→    - Hook: 2 kalimat tajam (curiosity pattern)
+  1344→    - Isi: 2 paragraf pendek, santai, uses "kamu", storytelling observasi
+  1345→    - CTA: "Pernah ngalamin kondisi kayak gini?"
+  1346→    - Punchline: "Kamu bukan mesin, kamu manusia. 🫶"
+  1347→  * Tested "Hook Tajam" quick prompt → AI generated 10 hooks with patterns (Kontras, Kontroversi, Curiosity, Shock, Fear)
+  1348→  * Multi-turn conversation works (AI remembers context + user name "Pak Aqil")
+  1349→  * POST /api/ai-master-content 200 (11.3s and 8.5s response times)
+  1350→  * No console errors, lint clean
+  1351→
+  1352→Stage Summary:
+  1353→- New "AI Master Content" menu added to sidebar for ALL 6 roles (Owner, PM, Trainer, Creative, Digital, Finance)
+  1354→- AI Content Research Engine V5.0 fully implemented with complete system prompt
+  1355→- Chat interface with 6 quick prompts for common content research tasks
+  1356→- AI generates content following all guidelines: santai style, hook tajam, 2-paragraph body, CTA mengundang komentar, punchline
+  1357→- Supports multi-turn conversations with history
+  1358→- Copy-to-clipboard for AI responses
+  1359→- Professional UI: gradient identity card, color-coded quick prompts, clean chat bubbles
+  1360→- Accessible to all team members for content research and personal branding
+  1361→
+  1362→---
+  1363→Task ID: KANBAN-DAILY-SUMMARY
+  1364→Agent: Main (Z.ai Code)
+  1365→Task: Auto-summarize completed Kanban tasks as Daily Tasks for PDF evaluation
+  1366→
+  1367→Work Log:
+  1368→- Added DailyWorkSummary Prisma model:
+  1369→  * Fields: id, userId, date, totalCompleted, highPriorityCount, mediumPriorityCount, lowPriorityCount, categories, summaryText, taskDetails (JSON), generatedAt, updatedAt
+  1370→  * Unique constraint on (userId, date) - one summary per user per day
+  1371→  * Added relation to User model (dailyWorkSummaries)
+  1372→  * Ran bun run db:push successfully
+  1373→- Created src/app/api/kanban/daily-summary/route.ts:
+  1374→  * Exported upsertDailyWorkSummary(userId, date) helper function
+  1375→  * Function fetches all DONE cards completed by user on that date
+  1376→  * Calculates stats (total, high/medium/low priority counts, categories)
+  1377→  * Builds taskDetails JSON array with { title, description, category, priority, completedAt }
+  1378→  * Generates narrative summaryText
+  1379→  * Upserts DailyWorkSummary record (create if new, update if exists)
+  1380→  * Deletes summary if no completed cards for that day (card moved away from DONE)
+  1381→  * GET endpoint: list summaries with filters (userId, startDate, endDate)
+  1382→  * Non-owner/PM users can only see their own summaries
+  1383→- Updated src/app/api/kanban/[id]/route.ts PUT:
+  1384→  * Imported upsertDailyWorkSummary from daily-summary route
+  1385→  * When card moved to DONE (isCompleting): calls upsertDailyWorkSummary for current user
+  1386→  * When card moved away from DONE (isUncompleting): calls upsertDailyWorkSummary for previous completer
+  1387→  * Returns summaryGenerated flag in response
+  1388→- Created src/app/api/kanban/daily-summary/pdf/route.ts:
+  1389→  * GET endpoint exports summaries as professional PDF evaluation report
+  1390→  * Fetches layout settings + logo directly from DB (server-side)
+  1391→  * Reads logo file from disk, converts to base64 data URL
+  1392→  * PDF structure:
+  1393→    - Navy header with logo + company info (from SLIP_GAJI layout settings)
+  1394→    - Title: "LAPORAN RINGKASAN PEKERJAAN HARIAN"
+  1395→    - Period info + generation date + total summaries count
+  1396→    - Overall stats card (total days, total tasks, team members, priority breakdown)
+  1397→    - Per-summary cards: navy header bar (user name + role + date), stats row, task list with priority badges
+  1398→    - Footer with layout settings (footerText + footerSubText)
+  1399→    - Page numbers
+  1400→- Updated src/components/modules/kanban-module.tsx:
+  1401→  * Added view toggle: Board / Ringkasan Harian tabs
+  1402→  * Added state: viewMode, summaries, summaryFilterUser, summaryDateFrom, summaryDateTo, loadingSummary
+  1403→  * Added loadSummaries() function with filters
+  1404→  * Added handleDownloadSummaryPDF() function
+  1405→  * Board view: wrapped existing content in viewMode === "board" condition
+  1406→  * Added info banner: "Auto Daily Summary: Setiap pekerjaan yang dipindah ke kolom Selesai akan otomatis dirangkum..."
+  1407→  * Summary view includes:
+  1408→    - Filter card (Anggota Tim dropdown, Dari Tanggal, Sampai Tanggal, Reset button)
+  1409→    - Stats cards (Total Hari, Total Pekerjaan, Prioritas Tinggi, Anggota Tim)
+  1410→    - Summary list: cards with navy header (user name, role, date, total completed)
+  1411→    - Per summary: priority badges (Tinggi/Sedang/Rendah), categories badge, task list with priority labels
+  1412→    - Empty state with icon + helpful message
+  1413→    - Scrollable list (max-h calc)
+  1414→  * Updated completion toast: "✅ '{title}' selesai! Tersimpan ke Ringkasan Harian."
+  1415→  * Fixed SelectItem empty value issue (used "all" instead of "")
+  1416→- Backfilled existing DONE cards via script: generated 1 summary with 3 tasks
+  1417→- Verified with Agent Browser:
+  1418→  * Board view: toggle works, info banner visible
+  1419→  * Ringkasan Harian view: shows 2 summaries (3 tasks + 1 task = 4 total)
+  1420→  * Auto-summary: moved TODO card to DONE via API → summaryGenerated: true → new summary appeared in Ringkasan Harian
+  1421→  * PDF export: GET /api/kanban/daily-summary/pdf 200 (723ms, 551ms)
+  1422→  * VLM confirmed PDF: "header navy dengan logo dan info perusahaan terlihat, ada ringkasan per user per tanggal, list pekerjaan terlihat jelas, layout profesional"
+  1423→  * 0 errors after fresh browser session
+  1424→
+  1425→Stage Summary:
+  1426→- Kanban Board now auto-generates Daily Work Summaries when cards are moved to "Selesai"
+  1427→- Each summary aggregates all completed tasks per user per day with structured data:
+  1428→  * Total completed count
+  1429→  * Priority breakdown (high/medium/low)
+  1430→  * Categories worked on
+  1431→  * Full task details (title, description, category, priority, completion time)
+  1432→  * Narrative summary text
+  1433→- Summaries can be viewed in "Ringkasan Harian" tab with filters (user, date range)
+  1434→- PDF export generates professional evaluation report with:
+  1435→  * Company header (logo + info from Layout Dokumen settings)
+  1436→  * Overall stats
+  1437→  * Per-user per-day detailed summary cards
+  1438→  * Task lists with priority badges
+  1439→  * Professional footer
+  1440→- Kanban board can be refreshed daily - summaries accumulate for evaluation
+  1441→- Feature available to all roles (non-leaders see only their own summaries)
+  1442→
+  1443→---
+  1444→Task ID: 2-a
+  1445→Agent: Z.ai Code (subagent for CRM/Invoice/Surat filter+pagination+bulk)
+  1446→Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (CRM, Invoice, Surat)
+  1447→
+  1448→Work Log:
+  1449→- Read worklog and reviewed reusable components: use-pagination.ts, use-bulk-select.ts, use-search-filter.ts, shared/pagination.tsx, shared/filter-bar.tsx, shared/bulk-action-bar.tsx
+  1450→- Read all three module files to understand existing structure (existing search/filter UI, data shape, delete API patterns)
+  1451→- Implemented changes following the prescribed pattern (pageSize: 15 for all, reset selection on filter change, sticky BulkActionBar, conditional checkbox column when bulkMode)
+  1452→
+  1453→=== CRM Module (src/components/modules/crm-module.tsx) ===
+  1454→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, CheckSquare icon
+  1455→- Kept existing `search` + `statusFilter` state (CRM already had search by namaKlien/instansi/PIC/email/jenisTraining + status dropdown)
+  1456→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1457→- Added useBulkSelect({ getId: (c) => c.id }) hook
+  1458→- Added bulkMode state
+  1459→- Added useEffect to resetSelection + resetPage when search/statusFilter change
+  1460→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/clients/${id} per item, counts success/failed, reloads via loadClients()
+  1461→- Added "Pilih Beberapa" toggle button in filter bar (visible only when canManage = owner/PM)
+  1462→- Added BulkActionBar above data table when bulkMode && selectedCount > 0 (single action: Hapus Terpilih, destructive variant, with confirmText)
+  1463→- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+  1464→- Added conditional checkbox cell (SelectCheckbox with isSelected(c) + toggle(c)) when bulkMode in each row
+  1465→- Replaced `filtered.map` with `paginatedItems.map` for the table body
+  1466→- Added Pagination component at the bottom of the table card (inside CardContent, after ScrollArea), wrapped table+pagination in fragment
+  1467→- Preserved existing edit, delete, export PDF/Excel functionality intact
+  1468→- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+  1469→
+  1470→=== Invoice Module (src/components/modules/invoice-module.tsx) ===
+  1471→- Added imports: useMemo, usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+  1472→- Added new state: search (string), bulkMode (boolean)
+  1473→- Kept existing `filterStatus` (status dropdown in header)
+  1474→- Replaced existing `filtered` calculation with useMemo that combines: status filter + search (by invoiceNumber, clientName, description, city)
+  1475→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1476→- Added useBulkSelect({ getId: (i) => i.id }) hook
+  1477→- Added useEffect to resetSelection + resetPage when search/filterStatus change
+  1478→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/invoice/${id} per item, reloads via load()
+  1479→- Added new Filter Bar Card below the stats grid (search input + bulk-select toggle button)
+  1480→- Added BulkActionBar above the invoice list table when bulkMode && selectedCount > 0
+  1481→- Added conditional checkbox column header + cell when bulkMode
+  1482→- Replaced `filtered.map` with `paginatedItems.map`
+  1483→- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations
+  1484→- Added Pagination component at the bottom of the card, wrapped table+pagination in fragment
+  1485→- Preserved existing preview/edit/download PDF/delete individual functionality intact
+  1486→- Preserved existing create/edit dialog and preview dialog unchanged
+  1487→
+  1488→=== Surat Module (src/components/modules/surat-module.tsx) — LIST VIEW ONLY ===
+  1489→- Added imports: useMemo, usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+  1490→- Added new state: search (string), filterStatus (string, default "all"), bulkMode (boolean)
+  1491→- Added usePagination + useBulkSelect hooks (declared BEFORE the early `if (loading && view === "list")` return to satisfy hook rules)
+  1492→- Added useMemo `filtered` combining: status filter (DRAFT/FINAL/ARCHIVED) + search (by suratNumber, perihal, suratType, recipientName, recipientInstansi)
+  1493→- Added useEffect to resetSelection + resetPage when search/filterStatus change
+  1494→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/surat/${id} per item, reloads via load()
+  1495→- Replaced the list view header+table with new structure:
+  1496→  * Header: kept h1 + "Surat Resmi Baru" button
+  1497→  * NEW Filter Bar Card: search input (with clear X button) + status Select dropdown (Semua/Draft/Final/Arsip) + "Pilih Beberapa" toggle button
+  1498→  * NEW BulkActionBar (conditional on bulkMode && selectedCount > 0)
+  1499→  * Existing data table Card with:
+  1500→    - Empty state for `surats.length === 0` (no records at all)
+  1501→    - NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada surat yang cocok")
+  1502→    - Conditional checkbox column header/cell when bulkMode
+  1503→    - Hidden Aksi column when bulkMode
+  1504→    - `paginatedItems.map` instead of `surats.map`
+  1505→    - Pagination component at the bottom of card
+  1506→- DID NOT modify the form view (view === "form") — form view unchanged
+  1507→- Preserved existing edit/download PDF/delete individual functionality intact
+  1508→
+  1509→=== Verification ===
+  1510→- Ran `bun run lint` (eslint .) → passed with zero errors/warnings
+  1511→- Ran `bunx tsc --noEmit` → zero type errors in crm-module.tsx, invoice-module.tsx, surat-module.tsx (other pre-existing errors in unrelated files untouched)
+  1512→- Verified all destructured hook return values are used (no unused vars)
+  1513→- Verified JSX fragment structure: table+Pagination wrapped in `<>...</>` inside the `filtered.length > 0` branch
+  1514→- Verified all hooks are called unconditionally before any early return (surat-module: hooks declared before `if (loading && view === "list")` early return)
+  1515→
+  1516→Stage Summary:
+  1517→- Three modules enhanced with consistent UX pattern: search box + status filter + bulk-select toggle button in a filter bar, sticky bulk action bar with destructive "Hapus Terpilih" action, checkbox column appears only in bulk mode, pagination (15/page) at bottom of table
+  1518→- All existing functionality preserved (CRUD, PDF download, Excel export, preview, edit dialogs, etc.)
+  1519→- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+  1520→- Filter changes auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+  1521→- Files modified:
+  1522→  * src/components/modules/crm-module.tsx
+  1523→  * src/components/modules/invoice-module.tsx
+  1524→  * src/components/modules/surat-module.tsx
+  1525→- Lint: PASS (zero errors, zero warnings)
+  1526→
+  1527→---
+  1528→Task ID: 2-b
+  1529→Agent: Z.ai Code (subagent for Tasks/Content/Articles filter+pagination+bulk)
+  1530→Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (Tasks, Content, Articles)
+  1531→
+  1532→Work Log:
+  1533→- Read worklog Task 2-a entry to learn the established pattern (custom useMemo for `filtered`, usePagination hook, useBulkSelect hook, useEffect to reset selection + page on filter change, conditional checkbox column when bulkMode, BulkActionBar above table, Pagination at bottom of CardContent wrapped in fragment)
+  1534→- Read all three target module files plus the reusable hooks/components (use-pagination, use-bulk-select, use-search-filter, pagination, filter-bar, bulk-action-bar)
+  1535→- Read CRM/invoice modules to confirm the actual 2-a pattern (custom filter bar layout, not the `<FilterBar>` component)
+  1536→- Implemented changes following the established 2-a pattern (pageSize: 15, reset selection + resetPage on filter change, sticky BulkActionBar with destructive "Hapus Terpilih" action, conditional checkbox column when bulkMode, Pagination wrapped with table in fragment)
+  1537→
+  1538→=== Tasks Module (src/components/modules/tasks-module.tsx) ===
+  1539→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons
+  1540→- Added new state: search (string), statusFilter (string, default "all"), bulkMode (boolean)
+  1541→- Kept existing dateFilter (Tanggal) + userFilter (Anggota Tim) — both go to backend via loadTasks
+  1542→- Added `filtered` useMemo combining backend-filtered `tasks` + client-side status filter (BELUM/SEDANG/SELESAI) + client-side search (by taskHariIni, progress)
+  1543→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1544→- Added useBulkSelect({ getId: (t) => t.id }) hook
+  1545→- Added useEffect to resetSelection + resetPage when search/statusFilter change
+  1546→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/tasks/${id} per item, counts success/failed, reloads via loadTasks()
+  1547→- Added a NEW filter row inside the existing filter Card (below the date+user+export row, separated by border-t):
+  1548→  * Search input (with clear X button)
+  1549→  * Status Select dropdown (Semua Status + BELUM/SEDANG/SELESAI from TASK_STATUS)
+  1550→  * "Pilih Beberapa" toggle button
+  1551→- Added BulkActionBar above the data table Card when bulkMode && selectedCount > 0
+  1552→- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+  1553→- Added conditional checkbox cell (SelectCheckbox with isSelected(t) + toggle(t)) when bulkMode in each row
+  1554→- Replaced `tasks.map` with `paginatedItems.map` for the table body
+  1555→- Added NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada tugas yang cocok")
+  1556→- Kept the existing `tasks.length === 0` empty state (no records at all on the selected date)
+  1557→- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+  1558→- Preserved existing edit/delete individual, add/edit dialog, Excel/PDF export, stats grid, and date/user filter functionality intact
+  1559→- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+  1560→
+  1561→=== Content Module (src/components/modules/content-module.tsx) ===
+  1562→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+  1563→- Added new state: search (string), bulkMode (boolean)
+  1564→- Kept existing kategoriFilter + accFilter (backend) and tab (client-side ACC status tabs)
+  1565→- Replaced existing `filtered` useMemo (was tab-only) with new version combining: tab filter + client-side search (by judul, kategori)
+  1566→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1567→- Added useBulkSelect({ getId: (i) => i.id }) hook
+  1568→- Added useEffect to resetSelection + resetPage when search/tab change
+  1569→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/content-ideas/${id} per item, counts success/failed, reloads via loadIdeas()
+  1570→- Added a NEW filter row inside the existing filter Card (below the Tabs, separated by border-t):
+  1571→  * Search input (with clear X button)
+  1572→  * "Pilih Beberapa" toggle button
+  1573→- Added BulkActionBar above the cards grid when bulkMode && selectedCount > 0
+  1574→- Replaced `filtered.map` with `paginatedItems.map` for the cards grid
+  1575→- Added a NEW bulk checkbox row at the top of each Card (when bulkMode) with SelectCheckbox + "Pilih konten ini" label
+  1576→- Replaced the empty state: now shows Search icon + "Tidak ada konten yang cocok" (was previously a combined state with conditional message)
+  1577→- Wrapped the cards grid + a NEW Pagination Card in `<>...</>` fragment
+  1578→- Added Pagination inside a new dedicated Card at the bottom of the grid (since the cards grid doesn't have a table-with-sticky-header structure)
+  1579→- Preserved existing edit/delete individual, ACC/revisi flow, publish toggle, metrik display, add/edit dialog, Excel/PDF export, and category/ACC filter functionality intact
+  1580→
+  1581→=== Articles Module (src/components/modules/articles-module.tsx) ===
+  1582→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+  1583→- Added new state: search (string), bulkMode (boolean)
+  1584→- Kept existing websiteFilter + accFilter + statusFilter (all go to backend via loadArticles)
+  1585→- Added `filtered` useMemo combining backend-filtered `articles` + client-side search (by judulArtikel, keyword)
+  1586→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1587→- Added useBulkSelect({ getId: (a) => a.id }) hook
+  1588→- Added useEffect to resetSelection + resetPage when search changes
+  1589→- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/articles/${id} per item, counts success/failed, reloads via loadArticles()
+  1590→- Added a NEW filter row inside the existing filter Card (below the website/acc/status + export row, separated by border-t):
+  1591→  * Search input (with clear X button)
+  1592→  * "Pilih Beberapa" toggle button
+  1593→- Added BulkActionBar above the data table Card when bulkMode && selectedCount > 0
+  1594→- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+  1595→- Added conditional checkbox cell (SelectCheckbox with isSelected(a) + toggle(a)) when bulkMode in each row
+  1596→- Replaced `articles.map` with `paginatedItems.map` for the table body
+  1597→- Added NEW empty state for `filtered.length === 0` (records exist but search doesn't match - shows Search icon + "Tidak ada artikel yang cocok")
+  1598→- Kept the existing `articles.length === 0` empty state (no records at all)
+  1599→- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+  1600→- Preserved existing edit/delete individual, ACC/revisi flow, publish action, add/edit dialog, Excel/PDF export, and website/acc/status filter functionality intact
+  1601→- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+  1602→
+  1603→=== Verification ===
+  1604→- Ran `bun run lint` (eslint .) → EXIT_CODE=0, passed with zero errors/warnings
+  1605→- Ran `bunx tsc --noEmit` → zero type errors in tasks-module.tsx, content-module.tsx, articles-module.tsx (other pre-existing errors in unrelated files like examples/, prisma/seed.ts, dashboard API routes untouched)
+  1606→- Verified all destructured hook return values are used (no unused vars): paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage (from usePagination); selectedArray, selectedCount, isSelected, toggle, toggleAll, clearSelection, resetSelection, isAllSelected (from useBulkSelect)
+  1607→- Verified JSX fragment structure: table+Pagination (or cards-grid+Pagination Card for content-module) wrapped in `<>...</>` inside the `filtered.length > 0` branch
+  1608→- Verified all hooks are called unconditionally at top of component before any JSX conditional rendering (all three modules use inline JSX conditional, no early returns — hook rules satisfied)
+  1609→- Verified filter changes auto-reset the selection and return to page 1 (useEffect with resetSelection + resetPage on search/filter deps)
+  1610→
+  1611→Stage Summary:
+  1612→- Three modules enhanced with consistent UX pattern (matching Task 2-a CRM/Invoice/Surat):
+  1613→  * Existing backend filters (date/user for tasks; kategori/acc for content; website/acc/status for articles) preserved
+  1614→  * NEW client-side search input (with clear X button) in a new filter row
+  1615→  * NEW status dropdown (BELUM/SEDANG/SELESAI) for Tasks module (didn't exist before)
+  1616→  * NEW "Pilih Beberapa" toggle button to enter bulk-select mode
+  1617→  * Sticky BulkActionBar with destructive "Hapus Terpilih" action + confirm dialog
+  1618→  * Conditional checkbox column (or checkbox row for content-module cards) appears only in bulk mode
+  1619→  * Pagination (15/page) at bottom of table/grid with page info + First/Prev/numbers/Next/Last buttons
+  1620→- All existing functionality preserved (CRUD, ACC/revisi flow, publish toggle, metrik display, Excel/PDF export, edit dialogs, stats grids)
+  1621→- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+  1622→- Filter changes (search, status filter, tab) auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+  1623→- Files modified:
+  1624→  * src/components/modules/tasks-module.tsx
+  1625→  * src/components/modules/content-module.tsx
+  1626→  * src/components/modules/articles-module.tsx
+  1627→- Lint: PASS (zero errors, zero warnings) — EXIT_CODE=0
+  1628→
+  1629→---
+  1630→Task ID: 2-c
+  1631→Agent: Z.ai Code (subagent for Events/Documents/Team filter+pagination+bulk)
+  1632→Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (Events, Documents, Team Management)
+  1633→
+  1634→Work Log:
+  1635→- Read worklog Task 2-a and 2-b entries to learn the established pattern (custom useMemo for `filtered`, usePagination hook, useBulkSelect hook, useEffect to reset selection + page on filter change, conditional checkbox column when bulkMode, BulkActionBar above table, Pagination at bottom of CardContent wrapped in fragment)
+  1636→- Read all three target module files plus the reusable hooks/components (use-pagination, use-bulk-select, use-search-filter, pagination, filter-bar, bulk-action-bar) and tasks-module.tsx as a reference for the established 2-a/2-b pattern
+  1637→- Verified DELETE endpoints exist for all three resources: /api/events/[id], /api/documents/[id], /api/users/[id]
+  1638→- Implemented changes following the established 2-a/2-b pattern (pageSize: 15, reset selection + resetPage on filter change, sticky BulkActionBar with destructive "Hapus Terpilih" action, conditional checkbox column when bulkMode, Pagination wrapped with table in fragment)
+  1639→
+  1640→=== Events Module (src/components/modules/events-module.tsx) ===
+  1641→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons (X icon was already imported)
+  1642→- Added new state: search (string), statusFilter (string, default "all"), monthFilter (string, default "all"), bulkMode (boolean)
+  1643→- Added `filteredEvents` useMemo combining client-side filters: status filter (PENDING/IN_PROGRESS/READY/COMPLETED) + month filter (YYYY-MM from monthOptions) + search (by namaEvent, lokasi)
+  1644→- Added usePagination(filteredEvents, { pageSize: 15 }) hook
+  1645→- Added useBulkSelect({ getId: (e) => e.id }) hook
+  1646→- Added useEffect to resetSelection + resetPage when search/statusFilter/monthFilter change
+  1647→- Added handleBulkDelete() - iterates selectedEventArray, calls DELETE /api/events/${id} per item, counts success/failed, reloads via loadEvents()
+  1648→- Added `monthOptions` useMemo to build dropdown options dynamically from existing events' months (descending)
+  1649→- Added `formatMonthLabel(ym)` helper to convert "2025-01" → "Januari 2025"
+  1650→- Placed the new Filter Bar Card at the top of the list view tab (TabsContent value="list"):
+  1651→  * Search input (with clear X button)
+  1652→  * Status Select dropdown (Semua Status + EVENT_PREP_STATUS)
+  1653→  * Month Select dropdown (Semua Bulan + monthOptions)
+  1654→  * "Pilih Beberapa" toggle button (visible only when canManage = owner/PM)
+  1655→- Added BulkActionBar above the data table Card when bulkMode && selectedEventCount > 0
+  1656→- Added conditional checkbox column header (SelectCheckbox with isAllEventsSelected(paginatedEvents) + toggleAllEvents(paginatedEvents)) when bulkMode
+  1657→- Added conditional checkbox cell (SelectCheckbox with isEventSelected(e) + toggleEvent(e)) when bulkMode in each row
+  1658→- Replaced `events.map` with `paginatedEvents.map` for the table body
+  1659→- Added NEW empty state for `filteredEvents.length === 0` (records exist but no match - shows Search icon + "Tidak ada event yang cocok")
+  1660→- Kept the existing `events.length === 0` empty state (no records at all)
+  1661→- Added Pagination component at the bottom of the table Card (inside CardContent, after ScrollArea), wrapped table+pagination in `<>...</>` fragment
+  1662→- Calendar view (TabsContent value="calendar") unchanged — calendar still shows all events regardless of list filters
+  1663→- Preserved existing calendar navigation, day selection, edit/delete individual, add/edit dialog, Excel/PDF export functionality intact
+  1664→- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual events in bulk mode)
+  1665→
+  1666→=== Documents Module (src/components/modules/documents-module.tsx) ===
+  1667→- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons, cn util
+  1668→- Added new state: search (string), bulkMode (boolean)
+  1669→- Kept existing `typeFilter` (DOCUMENT_TYPES dropdown) + `clientFilter` (clients dropdown) — both already in place
+  1670→- Updated existing `filtered` useMemo to also apply client-side search (by documentName, documentType, docTypeLabel(documentType), documentNumber) on top of type + client filters
+  1671→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1672→- Added useBulkSelect({ getId: (d) => d.id }) hook
+  1673→- Added useEffect to resetSelection + resetPage when search/typeFilter/clientFilter change
+  1674→- Added handleBulkDelete() - iterates selectedDocArray, calls DELETE /api/documents/${id} per item, counts success/failed, reloads via loadDocuments()
+  1675→- Added a NEW search + bulk-select row inside the existing filter Card (below the type/client + export row, separated by border-t):
+  1676→  * Search input (with clear X button)
+  1677→  * "Pilih Beberapa" toggle button (visible only when canDelete = owner/PM)
+  1678→- Added BulkActionBar above the data table Card when bulkMode && selectedDocCount > 0
+  1679→- Added conditional checkbox column header (SelectCheckbox with isAllDocsSelected(paginatedDocs) + toggleAllDocs(paginatedDocs)) when bulkMode
+  1680→- Added conditional checkbox cell (SelectCheckbox with isDocSelected(d) + toggleDoc(d)) when bulkMode in each row
+  1681→- Replaced `filtered.map` with `paginatedDocs.map` for the table body
+  1682→- Added NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada dokumen yang cocok")
+  1683→- Kept the existing `documents.length === 0` empty state (no records at all)
+  1684→- Added Pagination component at the bottom of the table Card (inside CardContent, after ScrollArea), wrapped table+pagination in `<>...</>` fragment
+  1685→- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations (matches Task 2-a Invoice module pattern)
+  1686→- Preserved existing edit/delete individual, add/edit dialog, link/ExternalLink button, Excel/PDF export, type/client filter functionality intact
+  1687→
+  1688→=== Team Management Module (src/components/modules/team-management-module.tsx) ===
+  1689→- Added imports: useMemo (was missing), usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, CheckSquare + X icons, cn util
+  1690→- Added new state: bulkMode (boolean)
+  1691→- Kept existing `search` (search by name/email/position) + `roleFilter` (TEAM_ROLES dropdown) — both already in place
+  1692→- Converted the existing `filtered` calculation from a regular const expression into a useMemo (with [users, roleFilter, search] deps) for consistency with other modules
+  1693→- Added usePagination(filtered, { pageSize: 15 }) hook
+  1694→- Added useBulkSelect({ getId: (u) => u.id }) hook (Owner-only feature — module is mounted on owner-only route via app-shell.tsx MENU)
+  1695→- Added useEffect to resetSelection + resetPage when search/roleFilter change
+  1696→- Added handleBulkDelete() - iterates selectedUserArray, calls DELETE /api/users/${id} per item, counts success/failed, reloads via loadUsers()
+  1697→- Added a clear X button to the existing search input (was previously absent)
+  1698→- Added "Pilih Beberapa" toggle button to the existing filter row (visible to all users — the route itself is owner-only)
+  1699→- Added BulkActionBar above the data table Card when bulkMode && selectedUserCount > 0
+  1700→- Added conditional checkbox column header (SelectCheckbox with isAllUsersSelected(paginatedUsers) + toggleAllUsers(paginatedUsers)) when bulkMode
+  1701→- Added conditional checkbox cell (SelectCheckbox with isUserSelected(u) + toggleUser(u)) when bulkMode in each row
+  1702→- Replaced `filtered.map` with `paginatedUsers.map` for the table body
+  1703→- Split the existing `filtered.length === 0` EmptyState into two cases:
+  1704→  * `users.length === 0` (no records at all) → EmptyState with hasFilter=false
+  1705→  * `filtered.length === 0` (records exist but no match) → EmptyState with hasFilter=true (preserves the existing conditional message logic in the EmptyState sub-component)
+  1706→- Added Pagination component at the bottom of the table Card (inside CardContent, after the scrollable table div), wrapped table+pagination in `<>...</>` fragment
+  1707→- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations
+  1708→- Preserved existing edit/toggle-active/delete individual, add/edit dialogs, delete confirmation AlertDialog, Excel/PDF export, role filter functionality intact
+  1709→
+  1710→=== Verification ===
+  1711→- Ran `bun run lint` (eslint .) → EXIT_CODE=0, passed with zero errors/warnings
+  1712→- Ran `bunx tsc --noEmit` → zero type errors in events-module.tsx, documents-module.tsx, team-management-module.tsx (other pre-existing errors in unrelated files like examples/, prisma/seed.ts, skills/, dashboard API routes untouched)
+  1713→- Verified all destructured hook return values are used (no unused vars):
+  1714→  * Events: paginatedEvents, goToEventPage, nextEventPage, prevEventPage, eventPageInfo, resetEventPage (usePagination); selectedEventArray, selectedEventCount, isEventSelected, toggleEvent, toggleAllEvents, clearEventSelection, resetEventSelection, isAllEventsSelected (useBulkSelect)
+  1715→  * Documents: paginatedDocs, goToDocPage, nextDocPage, prevDocPage, docPageInfo, resetDocPage (usePagination); selectedDocArray, selectedDocCount, isDocSelected, toggleDoc, toggleAllDocs, clearDocSelection, resetDocSelection, isAllDocsSelected (useBulkSelect)
+  1716→  * Team: paginatedUsers, goToUserPage, nextUserPage, prevUserPage, userPageInfo, resetUserPage (usePagination); selectedUserArray, selectedUserCount, isUserSelected, toggleUser, toggleAllUsers, clearUserSelection, resetUserSelection, isAllUsersSelected (useBulkSelect)
+  1717→- Verified JSX fragment structure: table+Pagination wrapped in `<>...</>` inside the `filtered.length > 0` branch in all three modules
+  1718→- Verified all hooks are called unconditionally at top of component before any JSX conditional rendering (all three modules use inline JSX conditional, no early returns — hook rules satisfied)
+  1719→- Verified filter changes (search, status/type/role filter, month filter for events) auto-reset the selection and return to page 1 (useEffect with resetSelection + resetPage on filter deps)
+  1720→
+  1721→Stage Summary:
+  1722→- Three modules enhanced with consistent UX pattern (matching Task 2-a CRM/Invoice/Surat and Task 2-b Tasks/Content/Articles):
+  1723→  * Events (list tab): NEW client-side search (namaEvent/lokasi) + status dropdown (EVENT_PREP_STATUS) + month dropdown (dynamic from events) + "Pilih Beberapa" toggle (canManage only) + bulk delete + pagination (15/page). Calendar tab unchanged.
+  1724→  * Documents: NEW client-side search (documentName/type/number) added to existing type+client filters + "Pilih Beberapa" toggle (canDelete = owner/PM only) + bulk delete + pagination (15/page)
+  1725→  * Team Management: NEW "Pilih Beberapa" toggle + bulk delete (Owner-only via owner-only route) + pagination (15/page) added on top of existing search (name/email/position) + role filter (TEAM_ROLES). Existing search input gained a clear X button.
+  1726→  * Sticky BulkActionBar with destructive "Hapus Terpilih" action + confirm dialog in all three modules
+  1727→  * Conditional checkbox column appears only in bulk mode (Events keeps Aksi visible; Documents & Team hide Aksi when bulkMode, matching 2-a Invoice pattern)
+  1728→  * Pagination (15/page) at bottom of table with page info + First/Prev/numbers/Next/Last buttons
+  1729→- All existing functionality preserved (CRUD, calendar navigation, day selection, checklist editor, link/ExternalLink, toggle-active, export PDF/Excel, edit dialogs, stats grids, AlertDialog delete confirmations)
+  1730→- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+  1731→- Filter changes (search, status/type/role filter, month filter) auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+  1732→- Files modified:
+  1733→  * src/components/modules/events-module.tsx
+  1734→  * src/components/modules/documents-module.tsx
+  1735→  * src/components/modules/team-management-module.tsx
+  1736→- Lint: PASS (zero errors, zero warnings) — EXIT_CODE=0
+  1737→

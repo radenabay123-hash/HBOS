@@ -1,0 +1,619 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import { Checkbox } from "@/components/ui/checkbox";
+    12→import { Separator } from "@/components/ui/separator";
+    13→import {
+    14→  FileText, Plus, Download, Edit3, Trash2, RefreshCw, X, Eye, Save,
+    15→  Calendar, MapPin, User, Building2, FileSignature, Settings as SettingsIcon,
+    16→} from "lucide-react";
+    17→import { api } from "@/lib/api-client";
+    18→import { formatDate } from "@/lib/constants";
+    19→import { downloadSuratPDF } from "@/lib/surat-pdf";
+    20→import { fetchLayoutSettings, loadImageAsDataURL } from "@/lib/layout-helper";
+    21→import { RichTextEditor } from "@/components/shared/rich-text-editor";
+    22→import { toast } from "sonner";
+    23→import { cn } from "@/lib/utils";
+    24→import type { SafeUser } from "@/lib/auth";
+    25→
+    26→const SURAT_TYPES = [
+    27→  "Surat Penawaran", "Surat Perjanjian Kerjasama", "Surat Tugas",
+    28→  "Surat Keterangan", "Surat Undangan", "Surat Pemberitahuan",
+    29→  "Surat Pengantar", "Surat Permohonan", "Surat Edaran", "Surat Lainnya",
+    30→];
+    31→
+    32→const STATUS_LABELS: Record<string, string> = { DRAFT: "Draft", FINAL: "Final", ARCHIVED: "Arsip" };
+    33→const STATUS_COLORS: Record<string, string> = {
+    34→  DRAFT: "bg-slate-100 text-slate-700 border-slate-200",
+    35→  FINAL: "bg-blue-100 text-blue-700 border-blue-200",
+    36→  ARCHIVED: "bg-amber-100 text-amber-700 border-amber-200",
+    37→};
+    38→
+    39→export function SuratModule({ user }: { user: SafeUser }) {
+    40→  const [view, setView] = useState<"list" | "form">("list");
+    41→  const [surats, setSurats] = useState<any[]>([]);
+    42→  const [loading, setLoading] = useState(true);
+    43→  const [editId, setEditId] = useState<string | null>(null);
+    44→  const [companySettings, setCompanySettings] = useState<Record<string, string>>({});
+    45→  const [layoutSettings, setLayoutSettings] = useState<any>(null);
+    46→
+    47→  // Form state - OLD header fields (logoWidth, headerContact, headerAddress1, headerAddress2) REMOVED
+    48→  // Header design now comes entirely from Layout Dokumen settings
+    49→  const [form, setForm] = useState({
+    50→    suratType: "Surat Penawaran",
+    51→    suratNumber: "",
+    52→    issueDate: new Date().toISOString().slice(0, 10),
+    53→    city: "Jombang",
+    54→    perihal: "",
+    55→    lampiran: "",
+    56→    recipientName: "",
+    57→    recipientInstansi: "",
+    58→    recipientAddress: "",
+    59→    body: "",
+    60→    includeActivity: false,
+    61→    activityDate: "",
+    62→    activityLocation: "",
+    63→    activityTime: "",
+    64→    includePayment: false,
+    65→    paymentAmount: "",
+    66→    paymentAmountText: "",
+    67→    bookingAmount: "",
+    68→    bookingAmountText: "",
+    69→    bankName: "",
+    70→    bankAccount: "",
+    71→    accountName: "",
+    72→    signatoryName: "M. Aqil Baihaqi",
+    73→    signatoryTitle: "Direktur Utama",
+    74→    status: "DRAFT",
+    75→  });
+    76→
+    77→  const load = useCallback(async () => {
+    78→    setLoading(true);
+    79→    try {
+    80→      const [d, settings] = await Promise.all([
+    81→        api<{ surats: any[] }>("/api/surat").catch(() => ({ surats: [] })),
+    82→        api<{ settings: any[] }>("/api/settings").catch(() => ({ settings: [] })),
+    83→      ]);
+    84→      setSurats(d.surats || []);
+    85→      const sMap: Record<string, string> = {};
+    86→      for (const s of settings.settings || []) sMap[s.key] = s.value;
+    87→      setCompanySettings(sMap);
+    88→      if (sMap.director_name) setForm((f) => ({ ...f, signatoryName: sMap.director_name }));
+    89→      if (sMap.director_title) setForm((f) => ({ ...f, signatoryTitle: sMap.director_title }));
+    90→      // Fetch layout settings for preview
+    91→      try {
+    92→        const ld = await fetchLayoutSettings("SURAT");
+    93→        setLayoutSettings(ld.layout);
+    94→      } catch {}
+    95→    } catch (e: any) { toast.error(e.message); }
+    96→    finally { setLoading(false); }
+    97→  }, []);
+    98→
+    99→  useEffect(() => { load(); }, [load]);
+   100→
+   101→  function generateSuratNumber() {
+   102→    const now = new Date();
+   103→    const romanMonths = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+   104→    const seq = String(surats.length + 1).padStart(3, "0");
+   105→    return `${seq}/SP/HAN/${romanMonths[now.getMonth()]}/${now.getFullYear()}`;
+   106→  }
+   107→
+   108→  function openCreate() {
+   109→    setForm({
+   110→      suratType: "Surat Penawaran",
+   111→      suratNumber: generateSuratNumber(),
+   112→      issueDate: new Date().toISOString().slice(0, 10),
+   113→      city: "Jombang",
+   114→      perihal: "", lampiran: "", recipientName: "", recipientInstansi: "", recipientAddress: "",
+   115→      body: "", includeActivity: false, activityDate: "", activityLocation: "", activityTime: "",
+   116→      includePayment: false, paymentAmount: "", paymentAmountText: "", bookingAmount: "", bookingAmountText: "",
+   117→      bankName: "", bankAccount: "", accountName: "",
+   118→      signatoryName: companySettings.director_name || "M. Aqil Baihaqi",
+   119→      signatoryTitle: companySettings.director_title || "Direktur Utama",
+   120→      status: "DRAFT",
+   121→    });
+   122→    setEditId(null);
+   123→    setView("form");
+   124→  }
+   125→
+   126→  function openEdit(s: any) {
+   127→    setForm({
+   128→      suratType: s.suratType || "Surat Penawaran",
+   129→      suratNumber: s.suratNumber || "",
+   130→      issueDate: new Date(s.issueDate).toISOString().slice(0, 10),
+   131→      city: s.city || "Jombang",
+   132→      perihal: s.perihal || "",
+   133→      lampiran: s.lampiran || "",
+   134→      recipientName: s.recipientName || "",
+   135→      recipientInstansi: s.recipientInstansi || "",
+   136→      recipientAddress: s.recipientAddress || "",
+   137→      body: s.body || "",
+   138→      includeActivity: s.includeActivity || false,
+   139→      activityDate: s.activityDate || "",
+   140→      activityLocation: s.activityLocation || "",
+   141→      activityTime: s.activityTime || "",
+   142→      includePayment: s.includePayment || false,
+   143→      paymentAmount: s.paymentAmount ? String(s.paymentAmount) : "",
+   144→      paymentAmountText: s.paymentAmountText || "",
+   145→      bookingAmount: s.bookingAmount ? String(s.bookingAmount) : "",
+   146→      bookingAmountText: s.bookingAmountText || "",
+   147→      bankName: s.bankName || "",
+   148→      bankAccount: s.bankAccount || "",
+   149→      accountName: s.accountName || "",
+   150→      signatoryName: s.signatoryName || "M. Aqil Baihaqi",
+   151→      signatoryTitle: s.signatoryTitle || "Direktur Utama",
+   152→      status: s.status || "DRAFT",
+   153→    });
+   154→    setEditId(s.id);
+   155→    setView("form");
+   156→  }
+   157→
+   158→  async function handleSave() {
+   159→    if (!form.suratNumber || !form.perihal) { toast.error("Nomor surat dan perihal wajib diisi"); return; }
+   160→    try {
+   161→      if (editId) {
+   162→        await api(`/api/surat/${editId}`, { method: "PUT", body: JSON.stringify(form) });
+   163→        toast.success("Surat diperbarui");
+   164→      } else {
+   165→        await api("/api/surat", { method: "POST", body: JSON.stringify(form) });
+   166→        toast.success("Surat disimpan ke arsip");
+   167→      }
+   168→      setView("list");
+   169→      load();
+   170→    } catch (e: any) { toast.error(e.message); }
+   171→  }
+   172→
+   173→  async function handleDelete(id: string) {
+   174→    if (!confirm("Hapus surat ini?")) return;
+   175→    try { await api(`/api/surat/${id}`, { method: "DELETE" }); toast.success("Dihapus"); load(); }
+   176→    catch (e: any) { toast.error(e.message); }
+   177→  }
+   178→
+   179→  async function handleDownloadPDF(s: any) {
+   180→    let lSettings: any = null;
+   181→    let logoUrl = "";
+   182→    try {
+   183→      const ld = await fetchLayoutSettings("SURAT");
+   184→      lSettings = ld.layout;
+   185→      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+   186→    } catch {}
+   187→    // Load logo image as data URL for jsPDF
+   188→    const logoImageData = await loadImageAsDataURL(logoUrl);
+   189→    // CLEAN: only pass content data, all design comes from layout settings
+   190→    downloadSuratPDF({
+   191→      suratType: s.suratType,
+   192→      suratNumber: s.suratNumber,
+   193→      issueDate: formatDate(s.issueDate),
+   194→      city: s.city,
+   195→      perihal: s.perihal,
+   196→      lampiran: s.lampiran,
+   197→      recipientName: s.recipientName,
+   198→      recipientInstansi: s.recipientInstansi,
+   199→      recipientAddress: s.recipientAddress,
+   200→      body: s.body,
+   201→      includeActivity: s.includeActivity,
+   202→      activityDate: s.activityDate,
+   203→      activityLocation: s.activityLocation,
+   204→      activityTime: s.activityTime,
+   205→      includePayment: s.includePayment,
+   206→      paymentAmount: Number(s.paymentAmount) || 0,
+   207→      paymentAmountText: s.paymentAmountText,
+   208→      bookingAmount: Number(s.bookingAmount) || 0,
+   209→      bookingAmountText: s.bookingAmountText,
+   210→      bankName: s.bankName,
+   211→      bankAccount: s.bankAccount,
+   212→      accountName: s.accountName,
+   213→      signatoryName: s.signatoryName,
+   214→      signatoryTitle: s.signatoryTitle,
+   215→      logoImageData,
+   216→      layout: lSettings,
+   217→    });
+   218→    toast.success("Surat PDF diunduh");
+   219→  }
+   220→
+   221→  if (loading && view === "list") {
+   222→    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-blue-600" /></div>;
+   223→  }
+   224→
+   225→  // ===== LIST VIEW =====
+   226→  if (view === "list") {
+   227→    return (
+   228→      <div className="space-y-5">
+   229→        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   230→          <div>
+   231→            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><FileText className="w-6 h-6 text-blue-600" /> Surat Resmi</h1>
+   232→            <p className="text-sm text-slate-500 mt-1">Buat dan kelola surat resmi perusahaan</p>
+   233→          </div>
+   234→          <Button size="sm" onClick={openCreate} className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-1" /> Surat Resmi Baru</Button>
+   235→        </div>
+   236→
+   237→        <Card className="shadow-sm">
+   238→          <CardContent className="p-0">
+   239→            {surats.length === 0 ? (
+   240→              <div className="py-16 text-center">
+   241→                <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+   242→                <p className="text-sm text-slate-400">Belum ada surat</p>
+   243→                <p className="text-xs text-slate-400 mt-1">Klik "Surat Resmi Baru" untuk membuat</p>
+   244→              </div>
+   245→            ) : (
+   246→              <div className="max-h-[500px] overflow-y-auto">
+   247→                <table className="w-full text-sm">
+   248→                  <thead className="sticky top-0 bg-slate-50 z-10">
+   249→                    <tr className="border-b text-left text-xs text-slate-500">
+   250→                      <th className="py-3 px-4 font-medium">Nomor Surat</th>
+   251→                      <th className="py-3 px-3 font-medium">Jenis</th>
+   252→                      <th className="py-3 px-3 font-medium">Perihal</th>
+   253→                      <th className="py-3 px-3 font-medium">Tanggal</th>
+   254→                      <th className="py-3 px-3 font-medium text-center">Status</th>
+   255→                      <th className="py-3 px-3 font-medium text-center">Aksi</th>
+   256→                    </tr>
+   257→                  </thead>
+   258→                  <tbody>
+   259→                    {surats.map((s) => (
+   260→                      <tr key={s.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+   261→                        <td className="py-2.5 px-4 font-medium text-slate-900 text-xs">{s.suratNumber}</td>
+   262→                        <td className="py-2.5 px-3 text-slate-600 text-xs">{s.suratType}</td>
+   263→                        <td className="py-2.5 px-3 text-slate-600 text-xs max-w-[200px] truncate">{s.perihal || "-"}</td>
+   264→                        <td className="py-2.5 px-3 text-slate-500 text-xs">{formatDate(s.issueDate)}</td>
+   265→                        <td className="py-2.5 px-3 text-center"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[s.status])}>{STATUS_LABELS[s.status] || s.status}</Badge></td>
+   266→                        <td className="py-2.5 px-3">
+   267→                          <div className="flex gap-0.5 justify-center">
+   268→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" title="Download PDF" onClick={() => handleDownloadPDF(s)}><Download className="w-3.5 h-3.5" /></Button>
+   269→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" title="Edit" onClick={() => openEdit(s)}><Edit3 className="w-3.5 h-3.5" /></Button>
+   270→                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" title="Hapus" onClick={() => handleDelete(s.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+   271→                          </div>
+   272→                        </td>
+   273→                      </tr>
+   274→                    ))}
+   275→                  </tbody>
+   276→                </table>
+   277→              </div>
+   278→            )}
+   279→          </CardContent>
+   280→        </Card>
+   281→      </div>
+   282→    );
+   283→  }
+   284→
+   285→  // ===== FORM VIEW (2-column: form left + preview right) =====
+   286→  return (
+   287→    <div className="space-y-4">
+   288→      {/* Header */}
+   289→      <div className="flex items-center justify-between">
+   290→        <div className="flex items-center gap-3">
+   291→          <Button variant="outline" size="sm" onClick={() => setView("list")} className="bg-white">
+   292→            <X className="w-4 h-4 mr-1" /> Kembali
+   293→          </Button>
+   294→          <h1 className="text-xl font-bold text-blue-900">Surat Resmi Baru</h1>
+   295→        </div>
+   296→        <Button size="sm" onClick={handleSave} className="bg-blue-900 hover:bg-blue-800">
+   297→          <Save className="w-4 h-4 mr-1" /> Simpan Surat Ke Arsip
+   298→        </Button>
+   299→      </div>
+   300→
+   301→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   302→        {/* ===== LEFT: Form ===== */}
+   303→        <Card className="shadow-sm">
+   304→          <CardContent className="p-5 space-y-3 max-h-[80vh] overflow-y-auto">
+   305→            {/* Jenis Surat + Tanggal */}
+   306→            <div className="grid grid-cols-2 gap-3">
+   307→              <div className="space-y-1.5">
+   308→                <Label className="text-xs font-semibold text-slate-600">Jenis Surat</Label>
+   309→                <Select value={form.suratType} onValueChange={(v) => setForm({ ...form, suratType: v })}>
+   310→                  <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   311→                  <SelectContent>{SURAT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+   312→                </Select>
+   313→              </div>
+   314→              <div className="space-y-1.5">
+   315→                <Label className="text-xs font-semibold text-slate-600">Tanggal Surat</Label>
+   316→                <Input type="date" value={form.issueDate} onChange={(e) => setForm({ ...form, issueDate: e.target.value })} className="bg-white" />
+   317→              </div>
+   318→            </div>
+   319→
+   320→            {/* Kota + Nomor */}
+   321→            <div className="grid grid-cols-2 gap-3">
+   322→              <div className="space-y-1.5">
+   323→                <Label className="text-xs font-semibold text-slate-600">Kota Penerbitan</Label>
+   324→                <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="bg-white" placeholder="Jombang" />
+   325→              </div>
+   326→              <div className="space-y-1.5">
+   327→                <Label className="text-xs font-semibold text-slate-600">Nomor Surat (Otomatis/Edit)</Label>
+   328→                <Input value={form.suratNumber} onChange={(e) => setForm({ ...form, suratNumber: e.target.value })} className="bg-white" placeholder="116/SP/HAN/VII/2026" />
+   329→              </div>
+   330→            </div>
+   331→
+   332→            {/* Perihal + Lampiran */}
+   333→            <div className="grid grid-cols-2 gap-3">
+   334→              <div className="space-y-1.5">
+   335→                <Label className="text-xs font-semibold text-slate-600">Perihal</Label>
+   336→                <Input value={form.perihal} onChange={(e) => setForm({ ...form, perihal: e.target.value })} className="bg-white" placeholder="e.g. Penawaran Kerjasama Training" />
+   337→              </div>
+   338→              <div className="space-y-1.5">
+   339→                <Label className="text-xs font-semibold text-slate-600">Lampiran</Label>
+   340→                <Input value={form.lampiran} onChange={(e) => setForm({ ...form, lampiran: e.target.value })} className="bg-white" placeholder="1 Berkas" />
+   341→              </div>
+   342→            </div>
+   343→
+   344→            {/* Kepada Yth + Instansi */}
+   345→            <div className="grid grid-cols-2 gap-3">
+   346→              <div className="space-y-1.5">
+   347→                <Label className="text-xs font-semibold text-slate-600">Kepada Yth. (Nama Orang)</Label>
+   348→                <Input value={form.recipientName} onChange={(e) => setForm({ ...form, recipientName: e.target.value })} className="bg-white" placeholder="e.g. Bapak Budi Santoso" />
+   349→              </div>
+   350→              <div className="space-y-1.5">
+   351→                <Label className="text-xs font-semibold text-slate-600">Nama Instansi / Perusahaan</Label>
+   352→                <Input value={form.recipientInstansi} onChange={(e) => setForm({ ...form, recipientInstansi: e.target.value })} className="bg-white" placeholder="e.g. PT Maju Jaya" />
+   353→              </div>
+   354→            </div>
+   355→
+   356→            {/* Alamat Instansi */}
+   357→            <div className="space-y-1.5">
+   358→              <Label className="text-xs font-semibold text-slate-600">Alamat Instansi</Label>
+   359→              <Input value={form.recipientAddress} onChange={(e) => setForm({ ...form, recipientAddress: e.target.value })} className="bg-white" placeholder="e.g. Jl. Jenderal Sudirman No. 45, Jakarta" />
+   360→            </div>
+   361→
+   362→            {/* Isi Surat - Rich Text Editor */}
+   363→            <div className="space-y-1.5">
+   364→              <Label className="text-xs font-semibold text-slate-600">Isi Surat / Pesan Utama</Label>
+   365→              <RichTextEditor
+   366→                value={form.body}
+   367→                onChange={(html) => setForm({ ...form, body: html })}
+   368→                placeholder="Tulis isi surat resmi di sini..."
+   369→                minHeight={180}
+   370→              />
+   371→            </div>
+   372→
+   373→            {/* Checkboxes */}
+   374→            <div className="space-y-2 pt-1">
+   375→              <div className="flex items-center space-x-2">
+   376→                <Checkbox id="activity" checked={form.includeActivity} onCheckedChange={(v) => setForm({ ...form, includeActivity: !!v })} />
+   377→                <Label htmlFor="activity" className="text-xs font-semibold text-blue-900 cursor-pointer">SERTAKAN DETAIL KEGIATAN</Label>
+   378→              </div>
+   379→              <div className="flex items-center space-x-2">
+   380→                <Checkbox id="payment" checked={form.includePayment} onCheckedChange={(v) => setForm({ ...form, includePayment: !!v })} />
+   381→                <Label htmlFor="payment" className="text-xs font-semibold text-blue-900 cursor-pointer">SERTAKAN INFORMASI PEMBAYARAN</Label>
+   382→              </div>
+   383→            </div>
+   384→
+   385→            {/* Detail Kegiatan */}
+   386→            {form.includeActivity && (
+   387→              <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+   388→                <p className="text-xs font-semibold text-slate-500 uppercase">Detail Kegiatan</p>
+   389→                <div className="grid grid-cols-1 gap-2">
+   390→                  <div className="space-y-1"><Label className="text-[10px]">Tanggal Kegiatan</Label><Input value={form.activityDate} onChange={(e) => setForm({ ...form, activityDate: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. 4/11/18 Juli 2026" /></div>
+   391→                  <div className="space-y-1"><Label className="text-[10px]">Lokasi</Label><Input value={form.activityLocation} onChange={(e) => setForm({ ...form, activityLocation: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. Zoom Meet" /></div>
+   392→                  <div className="space-y-1"><Label className="text-[10px]">Waktu</Label><Input value={form.activityTime} onChange={(e) => setForm({ ...form, activityTime: e.target.value })} className="bg-white h-8 text-sm" placeholder="e.g. 08.00 – 14.00 WITA" /></div>
+   393→                </div>
+   394→              </div>
+   395→            )}
+   396→
+   397→            {/* Informasi Pembayaran */}
+   398→            {form.includePayment && (
+   399→              <div className="border border-slate-200 rounded-lg p-3 space-y-2 bg-slate-50/50">
+   400→                <p className="text-xs font-semibold text-slate-500 uppercase">Informasi Pembayaran</p>
+   401→                <div className="grid grid-cols-2 gap-2">
+   402→                  <div className="space-y-1"><Label className="text-[10px]">Total Biaya (Rp)</Label><Input type="number" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className="bg-white h-8 text-sm" placeholder="8000000" /></div>
+   403→                  <div className="space-y-1"><Label className="text-[10px]">Terbilang</Label><Input value={form.paymentAmountText} onChange={(e) => setForm({ ...form, paymentAmountText: e.target.value })} className="bg-white h-8 text-sm" placeholder="Delapan Juta Rupiah" /></div>
+   404→                  <div className="space-y-1"><Label className="text-[10px]">Booking (Rp)</Label><Input type="number" value={form.bookingAmount} onChange={(e) => setForm({ ...form, bookingAmount: e.target.value })} className="bg-white h-8 text-sm" placeholder="3000000" /></div>
+   405→                  <div className="space-y-1"><Label className="text-[10px]">Terbilang</Label><Input value={form.bookingAmountText} onChange={(e) => setForm({ ...form, bookingAmountText: e.target.value })} className="bg-white h-8 text-sm" placeholder="Tiga Juta Rupiah" /></div>
+   406→                  <div className="space-y-1"><Label className="text-[10px]">Bank</Label><Input value={form.bankName} onChange={(e) => setForm({ ...form, bankName: e.target.value })} className="bg-white h-8 text-sm" placeholder="BNI" /></div>
+   407→                  <div className="space-y-1"><Label className="text-[10px]">No. Rekening</Label><Input value={form.bankAccount} onChange={(e) => setForm({ ...form, bankAccount: e.target.value })} className="bg-white h-8 text-sm" placeholder="3023555310" /></div>
+   408→                  <div className="space-y-1 col-span-2"><Label className="text-[10px]">Atas Nama</Label><Input value={form.accountName} onChange={(e) => setForm({ ...form, accountName: e.target.value })} className="bg-white h-8 text-sm" placeholder="PT HAFARA AQIBA NUSANTARA" /></div>
+   409→                </div>
+   410→              </div>
+   411→            )}
+   412→
+   413→            <Separator />
+   414→
+   415→            {/* Info: Header design comes from Layout Dokumen */}
+   416→            <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3 flex items-start gap-2">
+   417→              <SettingsIcon className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+   418→              <div className="text-xs text-blue-900">
+   419→                <p className="font-semibold">Header &amp; Footer dikelola via Layout Dokumen</p>
+   420→                <p className="text-blue-700 mt-0.5">Nama perusahaan, alamat, kontak, logo, warna header, dan footer sudah diatur di menu <strong>Layout Dokumen</strong>. Desain PDF otomatis mengikuti pengaturan tersebut.</p>
+   421→              </div>
+   422→            </div>
+   423→
+   424→            {/* Penandatangan + Status */}
+   425→            <div className="grid grid-cols-2 gap-3">
+   426→              <div className="space-y-1.5">
+   427→                <Label className="text-xs font-semibold text-slate-600">Penandatangan</Label>
+   428→                <Input value={form.signatoryName} onChange={(e) => setForm({ ...form, signatoryName: e.target.value })} className="bg-white" />
+   429→              </div>
+   430→              <div className="space-y-1.5">
+   431→                <Label className="text-xs font-semibold text-slate-600">Jabatan Penandatangan</Label>
+   432→                <Input value={form.signatoryTitle} onChange={(e) => setForm({ ...form, signatoryTitle: e.target.value })} className="bg-white" />
+   433→              </div>
+   434→            </div>
+   435→
+   436→            <div className="space-y-1.5">
+   437→              <Label className="text-xs font-semibold text-slate-600">Status Dokumen</Label>
+   438→              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+   439→                <SelectTrigger className="bg-white"><SelectValue /></SelectTrigger>
+   440→                <SelectContent>
+   441→                  <SelectItem value="DRAFT">Draft</SelectItem>
+   442→                  <SelectItem value="FINAL">Final</SelectItem>
+   443→                  <SelectItem value="ARCHIVED">Arsip</SelectItem>
+   444→                </SelectContent>
+   445→              </Select>
+   446→            </div>
+   447→          </CardContent>
+   448→        </Card>
+   449→
+   450→        {/* ===== RIGHT: Realtime Preview (uses Layout Dokumen settings) ===== */}
+   451→        <Card className="shadow-sm self-start sticky top-4">
+   452→          <CardHeader className="pb-2 bg-slate-50">
+   453→            <CardTitle className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-1">
+   454→              <Eye className="w-3.5 h-3.5" /> Preview (Mengikuti Layout Dokumen)
+   455→            </CardTitle>
+   456→            <p className="text-[10px] text-slate-400">Desain header &amp; footer dari pengaturan Layout Dokumen</p>
+   457→          </CardHeader>
+   458→          <CardContent className="p-4">
+   459→            <SuratLayoutPreview form={form} layout={layoutSettings} companySettings={companySettings} />
+   460→          </CardContent>
+   461→        </Card>
+   462→      </div>
+   463→    </div>
+   464→  );
+   465→}
+   466→
+   467→// ===== Layout-driven Preview Component (matches PDF output) =====
+   468→function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layout: any; companySettings: any }) {
+   469→  const s = layout || {};
+   470→  const infoPos = s.companyInfoPosition || "inside";
+   471→  const headerBg = s.headerBgColor || "#0f234b";
+   472→  const accentLine = s.accentLineColor || "#ff8000";
+   473→  const footerBg = s.footerBgColor || "#0f234b";
+   474→  const docTitleColor = s.docTitleColor || "#0f234b";
+   475→  const footerTextColor = s.footerTextColor || "#ffffff";
+   476→  const logoColor = s.logoColor || "#ff8000";
+   477→  const logoUrl = companySettings.company_logo || "";
+   478→
+   479→  const companyNameText = s.companyNameText || companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
+   480→  const companyAddressText = s.companyAddressText || "";
+   481→  const companyContactText = s.companyContactText || "";
+   482→
+   483→  // Company info block renderer (function, not component - to avoid lint error)
+   484→  const renderCompanyInfo = (onDark: boolean) => {
+   485→    const nameColor = onDark ? "#ffffff" : (s.companyNameColor || "#0f234b");
+   486→    const addrColor = onDark ? "#dce6f5" : (s.companyAddressColor || "#64748b");
+   487→    const contactColor = onDark ? "#b4c8e6" : (s.companyContactColor || "#94a3b8");
+   488→    const nameAlign = s.companyNameAlign === "left" ? "left" : s.companyNameAlign === "center" ? "center" : "right";
+   489→    const addrAlign = s.companyAddressAlign === "left" ? "left" : s.companyAddressAlign === "center" ? "center" : "right";
+   490→    const contactAlign = s.companyContactAlign === "left" ? "left" : s.companyContactAlign === "center" ? "center" : "right";
+   491→    return (
+   492→      <div className="flex items-center gap-1.5 px-2 py-1">
+   493→        {/* Logo - use uploaded image if available, otherwise circle fallback */}
+   494→        <div className="shrink-0">
+   495→          {logoUrl ? (
+   496→            <img src={logoUrl} alt="Logo" style={{ maxHeight: "16px", maxWidth: "40px", objectFit: "contain" }} />
+   497→          ) : (
+   498→            <div className="rounded-full flex items-center justify-center text-white font-bold relative" style={{ width: "16px", height: "16px", backgroundColor: logoColor, fontSize: "8px" }}>
+   499→              {s.logoText || "H"}
+   500→              <div className="absolute inset-0 rounded-full" style={{ backgroundColor: headerBg, opacity: 0.35, clipPath: "circle(50% at 65% 65%)" }} />
+   501→            </div>
+   502→          )}
+   503→        </div>
+   504→        {/* Info */}
+   505→        <div className="flex-1 min-w-0">
+   506→          <p style={{ color: nameColor, fontWeight: s.companyNameBold ? "bold" : "normal", fontSize: "8px", lineHeight: "1.3", textAlign: nameAlign }}>{companyNameText}</p>
+   507→          <p style={{ color: addrColor, fontSize: "5px", lineHeight: "1.3", textAlign: addrAlign }}>{companyAddressText}</p>
+   508→          <p style={{ color: contactColor, fontSize: "4.5px", lineHeight: "1.3", textAlign: contactAlign }}>{companyContactText}</p>
+   509→        </div>
+   510→      </div>
+   511→    );
+   512→  };
+   513→
+   514→  return (
+   515→    <div className="bg-white border-2 border-slate-200 rounded-lg mx-auto overflow-hidden shadow-md flex flex-col" style={{ maxWidth: "210px", minHeight: "297px" }}>
+   516→      {/* 1. INFO INSIDE NAVY HEADER (default - professional) */}
+   517→      {infoPos === "inside" && (
+   518→        <>
+   519→          <div style={{ background: headerBg, minHeight: "24px", padding: "0 6px", display: "flex", alignItems: "center" }}>
+   520→            {renderCompanyInfo(true)}
+   521→          </div>
+   522→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   523→        </>
+   524→      )}
+   525→
+   526→      {/* 2. INFO ABOVE + thin navy bar */}
+   527→      {infoPos === "above" && (
+   528→        <>
+   529→          {renderCompanyInfo(false)}
+   530→          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+   531→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   532→        </>
+   533→      )}
+   534→
+   535→      {/* 3. INFO BELOW: thin navy bar first, then info */}
+   536→      {infoPos === "below" && (
+   537→        <>
+   538→          <div style={{ height: "2px", backgroundColor: headerBg }}></div>
+   539→          <div style={{ height: `${s.accentLineHeight || 1.5}px`, backgroundColor: accentLine }}></div>
+   540→          {renderCompanyInfo(false)}
+   541→        </>
+   542→      )}
+   543→
+   544→      {/* 5. BODY */}
+   545→      <div className="px-2.5 py-2 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6 }}>
+   546→        {/* Document title (pill badge) */}
+   547→        {s.docTitleShow !== false && (
+   548→          <div className="mb-1.5" style={{ textAlign: s.docTitlePosition || "left" }}>
+   549→            <span style={{ display: "inline-block", backgroundColor: docTitleColor, color: "#fff", padding: "1px 6px", borderRadius: "8px", fontSize: "5px", fontWeight: "bold" }}>
+   550→              {s.docTitleText || form.suratType || "Surat Penawaran"}
+   551→            </span>
+   552→          </div>
+   553→        )}
+   554→
+   555→        {/* Nomor / Lampiran / Perihal */}
+   556→        <div className="space-y-0.5 mb-2">
+   557→          <div className="flex justify-between">
+   558→            <p>Nomor&nbsp;&nbsp;&nbsp;: {form.suratNumber || "—"}</p>
+   559→            <p className="text-slate-500">{form.city}, {formatDate(form.issueDate)}</p>
+   560→          </div>
+   561→          {form.lampiran && <p>Lampiran : {form.lampiran}</p>}
+   562→          <p>Perihal&nbsp;&nbsp;: {form.perihal || "—"}</p>
+   563→        </div>
+   564→
+   565→        {/* Kepada Yth */}
+   566→        <div className="space-y-0.5 mb-2">
+   567→          <p>Kepada Yth,</p>
+   568→          {form.recipientName && <p className="font-bold">{form.recipientName}</p>}
+   569→          {form.recipientInstansi && <p>{form.recipientInstansi}</p>}
+   570→          {form.recipientAddress && <p className="text-slate-600">{form.recipientAddress}</p>}
+   571→        </div>
+   572→
+   573→        {/* Isi Surat */}
+   574→        <div
+   575→          className="leading-relaxed mb-2"
+   576→          dangerouslySetInnerHTML={{ __html: form.body || '<p style="color:#cbd5e1;font-style:italic">Silakan tulis isi surat resmi Anda di form sebelah kiri...</p>' }}
+   577→        />
+   578→
+   579→        {/* Detail Kegiatan */}
+   580→        {form.includeActivity && (
+   581→          <div className="mt-1 space-y-0.5 mb-2">
+   582→            {form.activityDate && <p>Tanggal&nbsp;&nbsp;&nbsp;: {form.activityDate}</p>}
+   583→            {form.activityLocation && <p>Lokasi&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityLocation}</p>}
+   584→            {form.activityTime && <p>Waktu&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;: {form.activityTime}</p>}
+   585→          </div>
+   586→        )}
+   587→
+   588→        {/* Tanda Tangan */}
+   589→        <div className="mt-3" style={{ textAlign: s.sigPosition || "right" }}>
+   590→          <p>Hormat kami,</p>
+   591→          <div className="h-6"></div>
+   592→          {s.sigLineStyle !== "none" && (
+   593→            <div style={{
+   594→              width: "45%",
+   595→              marginLeft: s.sigPosition === "right" ? "auto" : s.sigPosition === "center" ? "auto" : "0",
+   596→              borderTop: s.sigLineStyle === "dashed" ? "1px dashed" : "1px solid",
+   597→              borderColor: s.sigLineColor || "#d1d5db",
+   598→              marginBottom: "2px",
+   599→            }} />
+   600→          )}
+   601→          <p className="font-bold" style={{ color: s.sigNameColor || "#0f234b" }}>{form.signatoryName}</p>
+   602→          <p className="text-slate-500" style={{ fontSize: "4.5px" }}>{form.signatoryTitle}</p>
+   603→        </div>
+   604→      </div>
+   605→
+   606→      {/* 6. FOOTER */}
+   607→      {s.footerShowText ? (
+   608→        <div style={{ background: footerBg, padding: "4px 8px", textAlign: "center" }}>
+   609→          <p style={{ color: footerTextColor, fontWeight: "bold", fontSize: "6px" }}>{s.footerText || "Terima Kasih!"}</p>
+   610→          {s.footerSubText && <p style={{ color: footerTextColor, fontSize: "4px", opacity: 0.8 }}>{s.footerSubText}</p>}
+   611→        </div>
+   612→      ) : (
+   613→        <div style={{ backgroundColor: footerBg, height: `${s.footerHeight || 6}px` }}></div>
+   614→      )}
+   615→    </div>
+   616→  );
+   617→}
+   618→
+   619→

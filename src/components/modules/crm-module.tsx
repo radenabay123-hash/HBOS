@@ -45,6 +45,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 import {
   ROLES,
   CLIENT_STATUS,
@@ -71,6 +76,7 @@ import {
   XCircle,
   Inbox,
   Loader2,
+  CheckSquare,
 } from "lucide-react";
 
 interface ClientItem {
@@ -212,6 +218,57 @@ export function CrmModule({ user }: CrmModuleProps) {
       return true;
     });
   }, [clients, statusFilter, search]);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems,
+    goToPage,
+    nextPage,
+    prevPage,
+    pageInfo,
+    resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray,
+    selectedCount,
+    isSelected,
+    toggle,
+    toggleAll,
+    clearSelection,
+    resetSelection,
+    isAllSelected,
+  } = useBulkSelect({ getId: (c: ClientItem) => c.id });
+  const [bulkMode, setBulkMode] = useState(false);
+
+  // Reset selection + go back to page 1 when filter changes
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, statusFilter, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} klien terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/clients/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadClients();
+    if (failed === 0) {
+      toast.success(`${success} klien berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   const stats = useMemo(() => {
     const total = clients.length;
@@ -449,6 +506,18 @@ export function CrmModule({ user }: CrmModuleProps) {
               </SelectContent>
             </Select>
             <div className="flex gap-2">
+              {canManage && (
+                <Button
+                  variant={bulkMode ? "default" : "outline"}
+                  onClick={() => {
+                    setBulkMode(!bulkMode);
+                    if (bulkMode) clearSelection();
+                  }}
+                  className={bulkMode ? "bg-blue-600 hover:bg-blue-700" : ""}
+                >
+                  <CheckSquare className="w-4 h-4" /> {bulkMode ? "Selesai" : "Pilih Beberapa"}
+                </Button>
+              )}
               <Button variant="outline" onClick={handleExportPDF} className="flex-1 sm:flex-none">
                 <FileText className="w-4 h-4" /> PDF
               </Button>
@@ -459,6 +528,23 @@ export function CrmModule({ user }: CrmModuleProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} klien terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
 
       {/* Data Table */}
       <Card>
@@ -481,10 +567,19 @@ export function CrmModule({ user }: CrmModuleProps) {
               </p>
             </div>
           ) : (
+            <>
             <ScrollArea className="max-h-[600px]">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
+                    {bulkMode && (
+                      <TableHead className="w-[40px]">
+                        <SelectCheckbox
+                          checked={isAllSelected(paginatedItems)}
+                          onChange={() => toggleAll(paginatedItems)}
+                        />
+                      </TableHead>
+                    )}
                     <TableHead className="min-w-[180px]">Nama Klien</TableHead>
                     <TableHead className="min-w-[160px]">Instansi</TableHead>
                     <TableHead className="min-w-[140px]">PIC</TableHead>
@@ -497,8 +592,16 @@ export function CrmModule({ user }: CrmModuleProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((c) => (
+                  {paginatedItems.map((c) => (
                     <TableRow key={c.id} className="hover:bg-slate-50/50">
+                      {bulkMode && (
+                        <TableCell>
+                          <SelectCheckbox
+                            checked={isSelected(c)}
+                            onChange={() => toggle(c)}
+                          />
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div className="font-medium text-slate-900">{c.namaKlien}</div>
                         {c.email && <div className="text-xs text-slate-500">{c.email}</div>}
@@ -553,6 +656,19 @@ export function CrmModule({ user }: CrmModuleProps) {
                 </TableBody>
               </Table>
             </ScrollArea>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

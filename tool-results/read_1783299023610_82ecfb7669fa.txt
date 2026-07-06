@@ -1,0 +1,1091 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback, useMemo } from "react";
+     4→import { Button } from "@/components/ui/button";
+     5→import { Card, CardContent } from "@/components/ui/card";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Badge } from "@/components/ui/badge";
+     9→import { Checkbox } from "@/components/ui/checkbox";
+    10→import { Progress } from "@/components/ui/progress";
+    11→import {
+    12→  Dialog,
+    13→  DialogContent,
+    14→  DialogDescription,
+    15→  DialogFooter,
+    16→  DialogHeader,
+    17→  DialogTitle,
+    18→} from "@/components/ui/dialog";
+    19→import {
+    20→  AlertDialog,
+    21→  AlertDialogAction,
+    22→  AlertDialogCancel,
+    23→  AlertDialogContent,
+    24→  AlertDialogDescription,
+    25→  AlertDialogFooter,
+    26→  AlertDialogHeader,
+    27→  AlertDialogTitle,
+    28→} from "@/components/ui/alert-dialog";
+    29→import {
+    30→  Select,
+    31→  SelectContent,
+    32→  SelectItem,
+    33→  SelectTrigger,
+    34→  SelectValue,
+    35→} from "@/components/ui/select";
+    36→import {
+    37→  Table,
+    38→  TableBody,
+    39→  TableCell,
+    40→  TableHead,
+    41→  TableHeader,
+    42→  TableRow,
+    43→} from "@/components/ui/table";
+    44→import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    45→import { ScrollArea } from "@/components/ui/scroll-area";
+    46→import { Skeleton } from "@/components/ui/skeleton";
+    47→import { StatCard, SectionHeader } from "@/components/shared/stat-card";
+    48→import { api } from "@/lib/api-client";
+    49→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    50→import {
+    51→  ROLES,
+    52→  EVENT_PREP_STATUS,
+    53→  EVENT_PREP_LABELS,
+    54→  formatDate,
+    55→  formatDateTime,
+    56→} from "@/lib/constants";
+    57→import type { SafeUser } from "@/lib/auth";
+    58→import { toast } from "sonner";
+    59→import { cn } from "@/lib/utils";
+    60→import {
+    61→  CalendarDays,
+    62→  Plus,
+    63→  FileText,
+    64→  FileSpreadsheet,
+    65→  Pencil,
+    66→  Trash2,
+    67→  ChevronLeft,
+    68→  ChevronRight,
+    69→  CalendarCheck2,
+    70→  Clock,
+    71→  CheckCircle2,
+    72→  Inbox,
+    73→  Loader2,
+    74→  X,
+    75→  PlusCircle,
+    76→  ListChecks,
+    77→} from "lucide-react";
+    78→
+    79→interface EventItem {
+    80→  id: string;
+    81→  namaEvent: string;
+    82→  clientId?: string | null;
+    83→  tanggal: string;
+    84→  lokasi?: string | null;
+    85→  trainer?: string | null;
+    86→  assistantTrainerId?: string | null;
+    87→  statusPersiapan: string;
+    88→  checklist?: string | null;
+    89→  client?: { id: string; namaKlien: string; instansi?: string | null } | null;
+    90→  assistantTrainer?: { id: string; name: string } | null;
+    91→  createdAt: string;
+    92→}
+    93→
+    94→interface ClientOption {
+    95→  id: string;
+    96→  namaKlien: string;
+    97→  instansi?: string | null;
+    98→}
+    99→
+   100→interface UserOption {
+   101→  id: string;
+   102→  name: string;
+   103→  role: string;
+   104→}
+   105→
+   106→interface ChecklistItem {
+   107→  item: string;
+   108→  done: boolean;
+   109→}
+   110→
+   111→interface EventsModuleProps {
+   112→  user: SafeUser;
+   113→}
+   114→
+   115→const ASSISTANT_TRAINER_ROLE = "ASSISTANT_TRAINER";
+   116→
+   117→const EVENT_PREP_BADGE_COLORS: Record<string, string> = {
+   118→  PENDING: "bg-slate-100 text-slate-700 border-slate-200",
+   119→  IN_PROGRESS: "bg-amber-100 text-amber-700 border-amber-200",
+   120→  READY: "bg-cyan-100 text-cyan-700 border-cyan-200",
+   121→  COMPLETED: "bg-blue-100 text-blue-700 border-blue-200",
+   122→};
+   123→
+   124→const EMPTY_FORM = {
+   125→  namaEvent: "",
+   126→  clientId: "",
+   127→  tanggal: "",
+   128→  lokasi: "",
+   129→  trainer: "",
+   130→  assistantTrainerId: "",
+   131→  statusPersiapan: "PENDING",
+   132→};
+   133→
+   134→function toDateTimeInput(d?: string | null): string {
+   135→  if (!d) return "";
+   136→  try {
+   137→    const date = new Date(d);
+   138→    if (isNaN(date.getTime())) return "";
+   139→    const y = date.getFullYear();
+   140→    const m = String(date.getMonth() + 1).padStart(2, "0");
+   141→    const day = String(date.getDate()).padStart(2, "0");
+   142→    const hh = String(date.getHours()).padStart(2, "0");
+   143→    const mm = String(date.getMinutes()).padStart(2, "0");
+   144→    return `${y}-${m}-${day}T${hh}:${mm}`;
+   145→  } catch {
+   146→    return "";
+   147→  }
+   148→}
+   149→
+   150→function parseChecklist(raw?: string | null): ChecklistItem[] {
+   151→  if (!raw) return [];
+   152→  try {
+   153→    const parsed = JSON.parse(raw);
+   154→    if (!Array.isArray(parsed)) return [];
+   155→    return parsed
+   156→      .filter((x) => x && typeof x === "object")
+   157→      .map((x) => ({
+   158→        item: String(x.item ?? ""),
+   159→        done: Boolean(x.done),
+   160→      }));
+   161→  } catch {
+   162→    return [];
+   163→  }
+   164→}
+   165→
+   166→function checklistProgress(items: ChecklistItem[]): { done: number; total: number; pct: number } {
+   167→  const total = items.length;
+   168→  if (total === 0) return { done: 0, total: 0, pct: 0 };
+   169→  const done = items.filter((i) => i.done).length;
+   170→  return { done, total, pct: Math.round((done / total) * 100) };
+   171→}
+   172→
+   173→const WEEKDAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+   174→const MONTH_LABELS = [
+   175→  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+   176→  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+   177→];
+   178→
+   179→export function EventsModule({ user }: EventsModuleProps) {
+   180→  const canManage = user.role === ROLES.OWNER || user.role === ROLES.PROJECT_MANAGER;
+   181→
+   182→  const [events, setEvents] = useState<EventItem[]>([]);
+   183→  const [clients, setClients] = useState<ClientOption[]>([]);
+   184→  const [users, setUsers] = useState<UserOption[]>([]);
+   185→  const [loading, setLoading] = useState(true);
+   186→
+   187→  const [calendarMonth, setCalendarMonth] = useState(() => {
+   188→    const d = new Date();
+   189→    return { year: d.getFullYear(), month: d.getMonth() };
+   190→  });
+   191→  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+   192→
+   193→  const [dialogOpen, setDialogOpen] = useState(false);
+   194→  const [editing, setEditing] = useState<EventItem | null>(null);
+   195→  const [form, setForm] = useState({ ...EMPTY_FORM });
+   196→  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+   197→  const [newChecklistItem, setNewChecklistItem] = useState("");
+   198→  const [submitting, setSubmitting] = useState(false);
+   199→
+   200→  const [deleteId, setDeleteId] = useState<string | null>(null);
+   201→  const [deleting, setDeleting] = useState(false);
+   202→
+   203→  const assistantTrainerOptions = useMemo(
+   204→    () => users.filter((u) => u.role === ASSISTANT_TRAINER_ROLE),
+   205→    [users]
+   206→  );
+   207→
+   208→  const loadEvents = useCallback(async () => {
+   209→    setLoading(true);
+   210→    try {
+   211→      const data = await api<{ events: EventItem[] }>("/api/events");
+   212→      setEvents(data.events || []);
+   213→    } catch (e: any) {
+   214→      toast.error(e?.message || "Gagal memuat data event");
+   215→    } finally {
+   216→      setLoading(false);
+   217→    }
+   218→  }, []);
+   219→
+   220→  const loadClients = useCallback(async () => {
+   221→    try {
+   222→      const data = await api<{ clients: ClientOption[] }>("/api/clients");
+   223→      setClients(data.clients || []);
+   224→    } catch {
+   225→      // ignore
+   226→    }
+   227→  }, []);
+   228→
+   229→  const loadUsers = useCallback(async () => {
+   230→    if (!canManage) return;
+   231→    try {
+   232→      const data = await api<{ users: UserOption[] }>("/api/users");
+   233→      setUsers(data.users || []);
+   234→    } catch {
+   235→      // Owner-only endpoint; silently ignore (PM cannot fetch users)
+   236→    }
+   237→  }, [canManage]);
+   238→
+   239→  useEffect(() => {
+   240→    loadEvents();
+   241→    loadClients();
+   242→    loadUsers();
+   243→  }, [loadEvents, loadClients, loadUsers]);
+   244→
+   245→  // Stats: this month
+   246→  const stats = useMemo(() => {
+   247→    const now = new Date();
+   248→    const monthEvents = events.filter((e) => {
+   249→      try {
+   250→        const d = new Date(e.tanggal);
+   251→        return (
+   252→          d.getFullYear() === now.getFullYear() &&
+   253→          d.getMonth() === now.getMonth()
+   254→        );
+   255→      } catch {
+   256→        return false;
+   257→      }
+   258→    });
+   259→    const totalThisMonth = monthEvents.length;
+   260→    const completed = monthEvents.filter((e) => e.statusPersiapan === "COMPLETED").length;
+   261→    const pending = monthEvents.filter((e) => e.statusPersiapan === "PENDING").length;
+   262→    const ready = monthEvents.filter((e) => e.statusPersiapan === "READY").length;
+   263→    return { totalThisMonth, completed, pending, ready };
+   264→  }, [events]);
+   265→
+   266→  // Calendar grid: events grouped by date (YYYY-MM-DD)
+   267→  const eventsByDate = useMemo(() => {
+   268→    const map = new Map<string, EventItem[]>();
+   269→    for (const e of events) {
+   270→      try {
+   271→        const d = new Date(e.tanggal);
+   272→        if (isNaN(d.getTime())) continue;
+   273→        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+   274→        const arr = map.get(key) || [];
+   275→        arr.push(e);
+   276→        map.set(key, arr);
+   277→      } catch {}
+   278→    }
+   279→    return map;
+   280→  }, [events]);
+   281→
+   282→  const calendarCells = useMemo(() => {
+   283→    const { year, month } = calendarMonth;
+   284→    const firstDay = new Date(year, month, 1);
+   285→    const startWeekday = firstDay.getDay(); // 0 = Sunday
+   286→    const daysInMonth = new Date(year, month + 1, 0).getDate();
+   287→
+   288→    const cells: { date: Date | null; key: string | null }[] = [];
+   289→    // leading blanks
+   290→    for (let i = 0; i < startWeekday; i++) {
+   291→      cells.push({ date: null, key: null });
+   292→    }
+   293→    for (let day = 1; day <= daysInMonth; day++) {
+   294→      const date = new Date(year, month, day);
+   295→      const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+   296→      cells.push({ date, key });
+   297→    }
+   298→    // trailing blanks to fill weeks (multiple of 7)
+   299→    while (cells.length % 7 !== 0) {
+   300→      cells.push({ date: null, key: null });
+   301→    }
+   302→    return cells;
+   303→  }, [calendarMonth]);
+   304→
+   305→  const selectedDayEvents = useMemo(() => {
+   306→    if (!selectedDay) return [];
+   307→    return eventsByDate.get(selectedDay) || [];
+   308→  }, [selectedDay, eventsByDate]);
+   309→
+   310→  function prevMonth() {
+   311→    setCalendarMonth((prev) => {
+   312→      const m = prev.month - 1;
+   313→      if (m < 0) return { year: prev.year - 1, month: 11 };
+   314→      return { ...prev, month: m };
+   315→    });
+   316→  }
+   317→
+   318→  function nextMonth() {
+   319→    setCalendarMonth((prev) => {
+   320→      const m = prev.month + 1;
+   321→      if (m > 11) return { year: prev.year + 1, month: 0 };
+   322→      return { ...prev, month: m };
+   323→    });
+   324→  }
+   325→
+   326→  function goToday() {
+   327→    const d = new Date();
+   328→    setCalendarMonth({ year: d.getFullYear(), month: d.getMonth() });
+   329→  }
+   330→
+   331→  function openCreate() {
+   332→    setEditing(null);
+   333→    setForm({ ...EMPTY_FORM });
+   334→    setChecklist([]);
+   335→    setNewChecklistItem("");
+   336→    setDialogOpen(true);
+   337→  }
+   338→
+   339→  function openEdit(e: EventItem) {
+   340→    setEditing(e);
+   341→    setForm({
+   342→      namaEvent: e.namaEvent || "",
+   343→      clientId: e.clientId || "",
+   344→      tanggal: toDateTimeInput(e.tanggal),
+   345→      lokasi: e.lokasi || "",
+   346→      trainer: e.trainer || "",
+   347→      assistantTrainerId: e.assistantTrainerId || "",
+   348→      statusPersiapan: e.statusPersiapan || "PENDING",
+   349→    });
+   350→    setChecklist(parseChecklist(e.checklist));
+   351→    setNewChecklistItem("");
+   352→    setDialogOpen(true);
+   353→  }
+   354→
+   355→  function addChecklistItem() {
+   356→    const val = newChecklistItem.trim();
+   357→    if (!val) return;
+   358→    setChecklist((prev) => [...prev, { item: val, done: false }]);
+   359→    setNewChecklistItem("");
+   360→  }
+   361→
+   362→  function removeChecklistItem(idx: number) {
+   363→    setChecklist((prev) => prev.filter((_, i) => i !== idx));
+   364→  }
+   365→
+   366→  function toggleChecklistItem(idx: number) {
+   367→    setChecklist((prev) =>
+   368→      prev.map((it, i) => (i === idx ? { ...it, done: !it.done } : it))
+   369→    );
+   370→  }
+   371→
+   372→  function updateChecklistItemText(idx: number, text: string) {
+   373→    setChecklist((prev) =>
+   374→      prev.map((it, i) => (i === idx ? { ...it, item: text } : it))
+   375→    );
+   376→  }
+   377→
+   378→  async function handleSubmit(e: React.FormEvent) {
+   379→    e.preventDefault();
+   380→    if (!form.namaEvent.trim()) {
+   381→      toast.error("Nama event wajib diisi");
+   382→      return;
+   383→    }
+   384→    if (!form.tanggal) {
+   385→      toast.error("Tanggal event wajib diisi");
+   386→      return;
+   387→    }
+   388→    setSubmitting(true);
+   389→    try {
+   390→      const payload = {
+   391→        namaEvent: form.namaEvent.trim(),
+   392→        clientId: form.clientId || null,
+   393→        tanggal: form.tanggal,
+   394→        lokasi: form.lokasi.trim() || null,
+   395→        trainer: form.trainer.trim() || null,
+   396→        assistantTrainerId: form.assistantTrainerId || null,
+   397→        statusPersiapan: form.statusPersiapan,
+   398→        checklist: checklist.filter((c) => c.item.trim() !== "").map((c) => ({ item: c.item.trim(), done: c.done })),
+   399→      };
+   400→
+   401→      if (editing) {
+   402→        await api(`/api/events/${editing.id}`, {
+   403→          method: "PUT",
+   404→          body: JSON.stringify(payload),
+   405→        });
+   406→        toast.success("Event berhasil diperbarui");
+   407→      } else {
+   408→        await api("/api/events", {
+   409→          method: "POST",
+   410→          body: JSON.stringify(payload),
+   411→        });
+   412→        toast.success("Event baru ditambahkan");
+   413→      }
+   414→      setDialogOpen(false);
+   415→      await loadEvents();
+   416→    } catch (e: any) {
+   417→      toast.error(e?.message || "Gagal menyimpan event");
+   418→    } finally {
+   419→      setSubmitting(false);
+   420→    }
+   421→  }
+   422→
+   423→  async function handleDelete() {
+   424→    if (!deleteId) return;
+   425→    setDeleting(true);
+   426→    try {
+   427→      await api(`/api/events/${deleteId}`, { method: "DELETE" });
+   428→      toast.success("Event berhasil dihapus");
+   429→      setDeleteId(null);
+   430→      await loadEvents();
+   431→    } catch (e: any) {
+   432→      toast.error(e?.message || "Gagal menghapus event");
+   433→    } finally {
+   434→      setDeleting(false);
+   435→    }
+   436→  }
+   437→
+   438→  function handleExportExcel() {
+   439→    if (events.length === 0) {
+   440→      toast.error("Tidak ada data untuk diekspor");
+   441→      return;
+   442→    }
+   443→    const rows = events.map((e) => {
+   444→      const cl = parseChecklist(e.checklist);
+   445→      const prog = checklistProgress(cl);
+   446→      return {
+   447→        "Nama Event": e.namaEvent || "",
+   448→        Klien: e.client?.namaKlien || "-",
+   449→        Tanggal: e.tanggal ? formatDateTime(e.tanggal) : "-",
+   450→        Lokasi: e.lokasi || "-",
+   451→        Trainer: e.trainer || "-",
+   452→        "Asst Trainer": e.assistantTrainer?.name || "-",
+   453→        "Status Persiapan": EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan,
+   454→        "Checklist Selesai": `${prog.done}/${prog.total}`,
+   455→        "Progress (%)": prog.pct,
+   456→      };
+   457→    });
+   458→    exportToExcel(rows, `Events-${new Date().toISOString().slice(0, 10)}`, "Events");
+   459→    toast.success("Excel berhasil diekspor");
+   460→  }
+   461→
+   462→  function handleExportPDF() {
+   463→    if (events.length === 0) {
+   464→      toast.error("Tidak ada data untuk diekspor");
+   465→      return;
+   466→    }
+   467→    const columns = [
+   468→      "Nama Event", "Klien", "Tanggal", "Lokasi", "Trainer",
+   469→      "Status", "Checklist",
+   470→    ];
+   471→    const rows = events.map((e) => {
+   472→      const cl = parseChecklist(e.checklist);
+   473→      const prog = checklistProgress(cl);
+   474→      return [
+   475→        e.namaEvent || "-",
+   476→        e.client?.namaKlien || "-",
+   477→        e.tanggal ? formatDate(e.tanggal) : "-",
+   478→        e.lokasi || "-",
+   479→        e.trainer || "-",
+   480→        EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan,
+   481→        `${prog.done}/${prog.total} (${prog.pct}%)`,
+   482→      ];
+   483→    });
+   484→    exportToPDF(
+   485→      "Event Management",
+   486→      columns,
+   487→      rows,
+   488→      `Events-${new Date().toISOString().slice(0, 10)}.pdf`,
+   489→      `Total: ${events.length} event`
+   490→    );
+   491→    toast.success("PDF berhasil diekspor");
+   492→  }
+   493→
+   494→  return (
+   495→    <div className="space-y-6">
+   496→      <SectionHeader
+   497→        title="Event Management"
+   498→        description="Kelola jadwal event training, persiapan, checklist, dan penugasan trainer."
+   499→        action={
+   500→          canManage ? (
+   501→            <Button onClick={openCreate} className="bg-blue-600 hover:bg-blue-700">
+   502→              <Plus className="w-4 h-4" /> Tambah Event
+   503→            </Button>
+   504→          ) : undefined
+   505→        }
+   506→      />
+   507→
+   508→      {/* Stat Cards */}
+   509→      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   510→        <StatCard
+   511→          title="Event Bulan Ini"
+   512→          value={stats.totalThisMonth}
+   513→          icon={CalendarDays}
+   514→          indicator="neutral"
+   515→          subtitle="Total event bulan berjalan"
+   516→          accent="bg-slate-100 text-slate-600"
+   517→        />
+   518→        <StatCard
+   519→          title="Event Selesai"
+   520→          value={stats.completed}
+   521→          icon={CheckCircle2}
+   522→          indicator="green"
+   523→          subtitle="Status: Completed"
+   524→          accent="bg-blue-50 text-blue-600"
+   525→        />
+   526→        <StatCard
+   527→          title="Event Pending"
+   528→          value={stats.pending}
+   529→          icon={Clock}
+   530→          indicator="yellow"
+   531→          subtitle="Belum diproses"
+   532→          accent="bg-amber-50 text-amber-600"
+   533→        />
+   534→        <StatCard
+   535→          title="Event Siap"
+   536→          value={stats.ready}
+   537→          icon={CalendarCheck2}
+   538→          indicator="neutral"
+   539→          subtitle="Siap pelaksanaan"
+   540→          accent="bg-cyan-50 text-cyan-600"
+   541→        />
+   542→      </div>
+   543→
+   544→      <Tabs defaultValue="calendar" className="w-full">
+   545→        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+   546→          <TabsList>
+   547→            <TabsTrigger value="calendar">
+   548→              <CalendarDays className="w-4 h-4" /> Kalender
+   549→            </TabsTrigger>
+   550→            <TabsTrigger value="list">
+   551→              <ListChecks className="w-4 h-4" /> Daftar Event
+   552→            </TabsTrigger>
+   553→          </TabsList>
+   554→          <div className="flex gap-2">
+   555→            <Button variant="outline" onClick={handleExportPDF} size="sm">
+   556→              <FileText className="w-4 h-4" /> PDF
+   557→            </Button>
+   558→            <Button variant="outline" onClick={handleExportExcel} size="sm">
+   559→              <FileSpreadsheet className="w-4 h-4" /> Excel
+   560→            </Button>
+   561→          </div>
+   562→        </div>
+   563→
+   564→        {/* Calendar View */}
+   565→        <TabsContent value="calendar">
+   566→          <Card>
+   567→            <CardContent className="p-4">
+   568→              {loading ? (
+   569→                <div className="space-y-3">
+   570→                  <Skeleton className="h-10 w-full" />
+   571→                  <Skeleton className="h-64 w-full" />
+   572→                </div>
+   573→              ) : (
+   574→                <div className="space-y-4">
+   575→                  {/* Calendar header */}
+   576→                  <div className="flex items-center justify-between gap-2">
+   577→                    <div className="flex items-center gap-2">
+   578→                      <Button variant="outline" size="icon" onClick={prevMonth} aria-label="Bulan sebelumnya">
+   579→                        <ChevronLeft className="w-4 h-4" />
+   580→                      </Button>
+   581→                      <Button variant="outline" size="icon" onClick={nextMonth} aria-label="Bulan berikutnya">
+   582→                        <ChevronRight className="w-4 h-4" />
+   583→                      </Button>
+   584→                      <h3 className="text-lg font-semibold text-slate-900 ml-2">
+   585→                        {MONTH_LABELS[calendarMonth.month]} {calendarMonth.year}
+   586→                      </h3>
+   587→                    </div>
+   588→                    <Button variant="ghost" size="sm" onClick={goToday}>
+   589→                      Hari Ini
+   590→                    </Button>
+   591→                  </div>
+   592→
+   593→                  {/* Calendar grid */}
+   594→                  <div className="grid grid-cols-7 gap-1">
+   595→                    {WEEKDAY_LABELS.map((d) => (
+   596→                      <div
+   597→                        key={d}
+   598→                        className="text-center text-xs font-semibold text-slate-500 py-2"
+   599→                      >
+   600→                        {d}
+   601→                      </div>
+   602→                    ))}
+   603→                    {calendarCells.map((cell, idx) => {
+   604→                      if (!cell.date || !cell.key) {
+   605→                        return <div key={`b-${idx}`} className="min-h-[80px] sm:min-h-[100px] rounded-md bg-slate-50/40" />;
+   606→                      }
+   607→                      const dayEvents = eventsByDate.get(cell.key) || [];
+   608→                      const isToday =
+   609→                        cell.date.toDateString() === new Date().toDateString();
+   610→                      const isSelected = selectedDay === cell.key;
+   611→                      return (
+   612→                        <button
+   613→                          key={cell.key}
+   614→                          type="button"
+   615→                          onClick={() => setSelectedDay(isSelected ? null : cell.key)}
+   616→                          className={cn(
+   617→                            "min-h-[80px] sm:min-h-[100px] rounded-md border p-1.5 text-left transition-colors flex flex-col gap-1",
+   618→                            isSelected
+   619→                              ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+   620→                              : isToday
+   621→                              ? "border-blue-300 bg-blue-50/30"
+   622→                              : "border-slate-200 bg-white hover:bg-slate-50"
+   623→                          )}
+   624→                        >
+   625→                          <span
+   626→                            className={cn(
+   627→                              "text-xs font-semibold",
+   628→                              isToday ? "text-blue-700" : "text-slate-700"
+   629→                            )}
+   630→                          >
+   631→                            {cell.date.getDate()}
+   632→                          </span>
+   633→                          <div className="space-y-0.5 overflow-hidden">
+   634→                            {dayEvents.slice(0, 3).map((e) => (
+   635→                              <div
+   636→                                key={e.id}
+   637→                                className={cn(
+   638→                                  "text-[10px] truncate px-1 py-0.5 rounded",
+   639→                                  e.statusPersiapan === "COMPLETED"
+   640→                                    ? "bg-blue-100 text-blue-700"
+   641→                                    : e.statusPersiapan === "READY"
+   642→                                    ? "bg-cyan-100 text-cyan-700"
+   643→                                    : e.statusPersiapan === "IN_PROGRESS"
+   644→                                    ? "bg-amber-100 text-amber-700"
+   645→                                    : "bg-slate-100 text-slate-600"
+   646→                                )}
+   647→                              >
+   648→                                {e.namaEvent}
+   649→                              </div>
+   650→                            ))}
+   651→                            {dayEvents.length > 3 && (
+   652→                              <div className="text-[10px] text-slate-500 px-1">
+   653→                                +{dayEvents.length - 3} lainnya
+   654→                              </div>
+   655→                            )}
+   656→                          </div>
+   657→                        </button>
+   658→                      );
+   659→                    })}
+   660→                  </div>
+   661→
+   662→                  {/* Selected day events */}
+   663→                  {selectedDay && (
+   664→                    <div className="mt-2 p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+   665→                      <div className="flex items-center justify-between mb-3">
+   666→                        <h4 className="font-semibold text-slate-900">
+   667→                          Event pada {formatDate(selectedDay)}
+   668→                        </h4>
+   669→                        <Button
+   670→                          variant="ghost"
+   671→                          size="icon"
+   672→                          className="h-7 w-7"
+   673→                          onClick={() => setSelectedDay(null)}
+   674→                        >
+   675→                          <X className="w-4 h-4" />
+   676→                        </Button>
+   677→                      </div>
+   678→                      {selectedDayEvents.length === 0 ? (
+   679→                        <p className="text-sm text-slate-500 py-2">
+   680→                          Tidak ada event pada tanggal ini.
+   681→                        </p>
+   682→                      ) : (
+   683→                        <div className="space-y-2">
+   684→                          {selectedDayEvents.map((e) => {
+   685→                            const prog = checklistProgress(parseChecklist(e.checklist));
+   686→                            return (
+   687→                              <div
+   688→                                key={e.id}
+   689→                                className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-md bg-white border border-slate-200"
+   690→                              >
+   691→                                <div className="flex-1 min-w-0">
+   692→                                  <p className="font-medium text-slate-900 truncate">
+   693→                                    {e.namaEvent}
+   694→                                  </p>
+   695→                                  <p className="text-xs text-slate-500">
+   696→                                    {e.client?.namaKlien || "Tanpa klien"} • {e.lokasi || "-"} •{" "}
+   697→                                    {formatDateTime(e.tanggal)}
+   698→                                  </p>
+   699→                                  {prog.total > 0 && (
+   700→                                    <p className="text-xs text-slate-500 mt-0.5">
+   701→                                      Checklist: {prog.done}/{prog.total} selesai
+   702→                                    </p>
+   703→                                  )}
+   704→                                </div>
+   705→                                <Badge
+   706→                                  variant="outline"
+   707→                                  className={EVENT_PREP_BADGE_COLORS[e.statusPersiapan] || "bg-slate-100 text-slate-700 border-slate-200"}
+   708→                                >
+   709→                                  {EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan}
+   710→                                </Badge>
+   711→                              </div>
+   712→                            );
+   713→                          })}
+   714→                        </div>
+   715→                      )}
+   716→                    </div>
+   717→                  )}
+   718→                </div>
+   719→              )}
+   720→            </CardContent>
+   721→          </Card>
+   722→        </TabsContent>
+   723→
+   724→        {/* List View */}
+   725→        <TabsContent value="list">
+   726→          <Card>
+   727→            <CardContent className="p-0">
+   728→              {loading ? (
+   729→                <div className="p-4 space-y-3">
+   730→                  <Skeleton className="h-10 w-full" />
+   731→                  {Array.from({ length: 5 }).map((_, i) => (
+   732→                    <Skeleton key={i} className="h-12 w-full" />
+   733→                  ))}
+   734→                </div>
+   735→              ) : events.length === 0 ? (
+   736→                <div className="flex flex-col items-center justify-center py-16 text-center">
+   737→                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+   738→                    <Inbox className="w-8 h-8 text-slate-400" />
+   739→                  </div>
+   740→                  <p className="text-slate-600 font-medium">Belum ada event</p>
+   741→                  <p className="text-sm text-slate-400 mt-1">
+   742→                    {canManage ? "Klik tombol Tambah Event untuk membuat event baru." : "Belum ada event yang tersedia."}
+   743→                  </p>
+   744→                </div>
+   745→              ) : (
+   746→                <ScrollArea className="max-h-[600px]">
+   747→                  <Table>
+   748→                    <TableHeader>
+   749→                      <TableRow className="bg-slate-50/50">
+   750→                        <TableHead className="min-w-[200px]">Nama Event</TableHead>
+   751→                        <TableHead className="min-w-[160px]">Klien</TableHead>
+   752→                        <TableHead className="min-w-[140px]">Tanggal</TableHead>
+   753→                        <TableHead className="min-w-[140px]">Lokasi</TableHead>
+   754→                        <TableHead className="min-w-[140px]">Trainer</TableHead>
+   755→                        <TableHead className="min-w-[140px]">Asst Trainer</TableHead>
+   756→                        <TableHead className="min-w-[120px]">Status</TableHead>
+   757→                        <TableHead className="min-w-[160px]">Checklist</TableHead>
+   758→                        {canManage && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+   759→                      </TableRow>
+   760→                    </TableHeader>
+   761→                    <TableBody>
+   762→                      {events.map((e) => {
+   763→                        const cl = parseChecklist(e.checklist);
+   764→                        const prog = checklistProgress(cl);
+   765→                        return (
+   766→                          <TableRow key={e.id} className="hover:bg-slate-50/50">
+   767→                            <TableCell>
+   768→                              <div className="font-medium text-slate-900">{e.namaEvent}</div>
+   769→                            </TableCell>
+   770→                            <TableCell className="text-slate-700">
+   771→                              {e.client?.namaKlien || "-"}
+   772→                            </TableCell>
+   773→                            <TableCell className="text-slate-700">
+   774→                              {formatDateTime(e.tanggal)}
+   775→                            </TableCell>
+   776→                            <TableCell className="text-slate-700">{e.lokasi || "-"}</TableCell>
+   777→                            <TableCell className="text-slate-700">{e.trainer || "-"}</TableCell>
+   778→                            <TableCell className="text-slate-700">
+   779→                              {e.assistantTrainer?.name || "-"}
+   780→                            </TableCell>
+   781→                            <TableCell>
+   782→                              <Badge
+   783→                                variant="outline"
+   784→                                className={EVENT_PREP_BADGE_COLORS[e.statusPersiapan] || "bg-slate-100 text-slate-700 border-slate-200"}
+   785→                              >
+   786→                                {EVENT_PREP_LABELS[e.statusPersiapan] || e.statusPersiapan}
+   787→                              </Badge>
+   788→                            </TableCell>
+   789→                            <TableCell>
+   790→                              {prog.total === 0 ? (
+   791→                                <span className="text-xs text-slate-400">Belum ada checklist</span>
+   792→                              ) : (
+   793→                                <div className="space-y-1 min-w-[120px]">
+   794→                                  <div className="flex justify-between text-xs text-slate-600">
+   795→                                    <span>{prog.done}/{prog.total} selesai</span>
+   796→                                    <span>{prog.pct}%</span>
+   797→                                  </div>
+   798→                                  <Progress
+   799→                                    value={prog.pct}
+   800→                                    className={cn(
+   801→                                      "h-1.5",
+   802→                                      prog.pct >= 100 && "[&>[data-slot=progress-indicator]]:bg-blue-500"
+   803→                                    )}
+   804→                                  />
+   805→                                </div>
+   806→                              )}
+   807→                            </TableCell>
+   808→                            {canManage && (
+   809→                              <TableCell>
+   810→                                <div className="flex items-center justify-center gap-1">
+   811→                                  <Button
+   812→                                    variant="ghost"
+   813→                                    size="icon"
+   814→                                    className="h-8 w-8 text-slate-500 hover:text-blue-600"
+   815→                                    onClick={() => openEdit(e)}
+   816→                                  >
+   817→                                    <Pencil className="w-4 h-4" />
+   818→                                  </Button>
+   819→                                  <Button
+   820→                                    variant="ghost"
+   821→                                    size="icon"
+   822→                                    className="h-8 w-8 text-slate-500 hover:text-rose-600"
+   823→                                    onClick={() => setDeleteId(e.id)}
+   824→                                  >
+   825→                                    <Trash2 className="w-4 h-4" />
+   826→                                  </Button>
+   827→                                </div>
+   828→                              </TableCell>
+   829→                            )}
+   830→                          </TableRow>
+   831→                        );
+   832→                      })}
+   833→                    </TableBody>
+   834→                  </Table>
+   835→                </ScrollArea>
+   836→              )}
+   837→            </CardContent>
+   838→          </Card>
+   839→        </TabsContent>
+   840→      </Tabs>
+   841→
+   842→      {/* Add/Edit Dialog */}
+   843→      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+   844→        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+   845→          <DialogHeader>
+   846→            <DialogTitle>{editing ? "Edit Event" : "Tambah Event Baru"}</DialogTitle>
+   847→            <DialogDescription>
+   848→              {editing
+   849→                ? "Perbarui informasi event dan checklist persiapan."
+   850→                : "Lengkapi data event dan checklist persiapan."}
+   851→            </DialogDescription>
+   852→          </DialogHeader>
+   853→          <form onSubmit={handleSubmit} className="space-y-4">
+   854→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   855→              <div className="space-y-1.5 sm:col-span-2">
+   856→                <Label htmlFor="namaEvent">Nama Event *</Label>
+   857→                <Input
+   858→                  id="namaEvent"
+   859→                  value={form.namaEvent}
+   860→                  onChange={(e) => setForm({ ...form, namaEvent: e.target.value })}
+   861→                  required
+   862→                  placeholder="Leadership Training Batch 1"
+   863→                />
+   864→              </div>
+   865→              <div className="space-y-1.5">
+   866→                <Label htmlFor="clientId">Klien</Label>
+   867→                <Select
+   868→                  value={form.clientId}
+   869→                  onValueChange={(v) => setForm({ ...form, clientId: v === "__none__" ? "" : v })}
+   870→                >
+   871→                  <SelectTrigger id="clientId" className="w-full">
+   872→                    <SelectValue placeholder="Pilih klien (opsional)" />
+   873→                  </SelectTrigger>
+   874→                  <SelectContent>
+   875→                    <SelectItem value="__none__">— Tanpa klien —</SelectItem>
+   876→                    {clients.map((c) => (
+   877→                      <SelectItem key={c.id} value={c.id}>
+   878→                        {c.namaKlien}{c.instansi ? ` (${c.instansi})` : ""}
+   879→                      </SelectItem>
+   880→                    ))}
+   881→                  </SelectContent>
+   882→                </Select>
+   883→              </div>
+   884→              <div className="space-y-1.5">
+   885→                <Label htmlFor="tanggal">Tanggal & Jam *</Label>
+   886→                <Input
+   887→                  id="tanggal"
+   888→                  type="datetime-local"
+   889→                  value={form.tanggal}
+   890→                  onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+   891→                  required
+   892→                />
+   893→              </div>
+   894→              <div className="space-y-1.5">
+   895→                <Label htmlFor="lokasi">Lokasi</Label>
+   896→                <Input
+   897→                  id="lokasi"
+   898→                  value={form.lokasi}
+   899→                  onChange={(e) => setForm({ ...form, lokasi: e.target.value })}
+   900→                  placeholder="Hotel Bidakara, Jakarta"
+   901→                />
+   902→              </div>
+   903→              <div className="space-y-1.5">
+   904→                <Label htmlFor="trainer">Trainer</Label>
+   905→                <Input
+   906→                  id="trainer"
+   907→                  value={form.trainer}
+   908→                  onChange={(e) => setForm({ ...form, trainer: e.target.value })}
+   909→                  placeholder="Nama trainer utama"
+   910→                />
+   911→              </div>
+   912→              <div className="space-y-1.5">
+   913→                <Label htmlFor="assistantTrainerId">Assistant Trainer</Label>
+   914→                {assistantTrainerOptions.length > 0 ? (
+   915→                  <Select
+   916→                    value={form.assistantTrainerId}
+   917→                    onValueChange={(v) =>
+   918→                      setForm({ ...form, assistantTrainerId: v === "__none__" ? "" : v })
+   919→                    }
+   920→                  >
+   921→                    <SelectTrigger id="assistantTrainerId" className="w-full">
+   922→                      <SelectValue placeholder="Pilih assistant trainer" />
+   923→                    </SelectTrigger>
+   924→                    <SelectContent>
+   925→                      <SelectItem value="__none__">— Tidak ada —</SelectItem>
+   926→                      {assistantTrainerOptions.map((u) => (
+   927→                        <SelectItem key={u.id} value={u.id}>
+   928→                          {u.name}
+   929→                        </SelectItem>
+   930→                      ))}
+   931→                    </SelectContent>
+   932→                  </Select>
+   933→                ) : (
+   934→                  <Input
+   935→                    id="assistantTrainerId"
+   936→                    value={form.assistantTrainerId ? form.assistantTrainerId : ""}
+   937→                    onChange={(e) => setForm({ ...form, assistantTrainerId: e.target.value })}
+   938→                    placeholder="ID assistant trainer (opsional)"
+   939→                  />
+   940→                )}
+   941→              </div>
+   942→              <div className="space-y-1.5">
+   943→                <Label htmlFor="statusPersiapan">Status Persiapan</Label>
+   944→                <Select
+   945→                  value={form.statusPersiapan}
+   946→                  onValueChange={(v) => setForm({ ...form, statusPersiapan: v })}
+   947→                >
+   948→                  <SelectTrigger id="statusPersiapan" className="w-full">
+   949→                    <SelectValue placeholder="Pilih status" />
+   950→                  </SelectTrigger>
+   951→                  <SelectContent>
+   952→                    {EVENT_PREP_STATUS.map((s) => (
+   953→                      <SelectItem key={s} value={s}>
+   954→                        {EVENT_PREP_LABELS[s]}
+   955→                      </SelectItem>
+   956→                    ))}
+   957→                  </SelectContent>
+   958→                </Select>
+   959→              </div>
+   960→            </div>
+   961→
+   962→            {/* Checklist Editor */}
+   963→            <div className="space-y-2">
+   964→              <div className="flex items-center justify-between">
+   965→                <Label>Checklist Persiapan</Label>
+   966→                <span className="text-xs text-slate-500">
+   967→                  {checklistProgress(checklist).done}/{checklist.length} selesai
+   968→                </span>
+   969→              </div>
+   970→              <div className="flex gap-2">
+   971→                <Input
+   972→                  value={newChecklistItem}
+   973→                  onChange={(e) => setNewChecklistItem(e.target.value)}
+   974→                  placeholder="Tambah item checklist..."
+   975→                  onKeyDown={(e) => {
+   976→                    if (e.key === "Enter") {
+   977→                      e.preventDefault();
+   978→                      addChecklistItem();
+   979→                    }
+   980→                  }}
+   981→                />
+   982→                <Button
+   983→                  type="button"
+   984→                  variant="outline"
+   985→                  onClick={addChecklistItem}
+   986→                  disabled={!newChecklistItem.trim()}
+   987→                >
+   988→                  <PlusCircle className="w-4 h-4" /> Tambah
+   989→                </Button>
+   990→              </div>
+   991→              {checklist.length > 0 ? (
+   992→                <div className="space-y-2 max-h-48 overflow-y-auto p-1">
+   993→                  {checklist.map((it, idx) => (
+   994→                    <div
+   995→                      key={idx}
+   996→                      className={cn(
+   997→                        "flex items-center gap-2 p-2 rounded-md border",
+   998→                        it.done ? "bg-blue-50/50 border-blue-100" : "bg-white border-slate-200"
+   999→                      )}
+  1000→                    >
+  1001→                      <Checkbox
+  1002→                        checked={it.done}
+  1003→                        onCheckedChange={() => toggleChecklistItem(idx)}
+  1004→                      />
+  1005→                      <Input
+  1006→                        value={it.item}
+  1007→                        onChange={(e) => updateChecklistItemText(idx, e.target.value)}
+  1008→                        className={cn(
+  1009→                          "h-8 border-0 bg-transparent px-1 shadow-none focus-visible:ring-1",
+  1010→                          it.done && "line-through text-slate-400"
+  1011→                        )}
+  1012→                      />
+  1013→                      <Button
+  1014→                        type="button"
+  1015→                        variant="ghost"
+  1016→                        size="icon"
+  1017→                        className="h-7 w-7 text-slate-400 hover:text-rose-600 shrink-0"
+  1018→                        onClick={() => removeChecklistItem(idx)}
+  1019→                      >
+  1020→                        <X className="w-3.5 h-3.5" />
+  1021→                      </Button>
+  1022→                    </div>
+  1023→                  ))}
+  1024→                </div>
+  1025→              ) : (
+  1026→                <p className="text-xs text-slate-400 py-2">
+  1027→                  Belum ada item checklist. Tambahkan untuk melacak persiapan event.
+  1028→                </p>
+  1029→              )}
+  1030→            </div>
+  1031→
+  1032→            <DialogFooter>
+  1033→              <Button
+  1034→                type="button"
+  1035→                variant="outline"
+  1036→                onClick={() => setDialogOpen(false)}
+  1037→                disabled={submitting}
+  1038→              >
+  1039→                Batal
+  1040→              </Button>
+  1041→              <Button
+  1042→                type="submit"
+  1043→                disabled={submitting}
+  1044→                className="bg-blue-600 hover:bg-blue-700"
+  1045→              >
+  1046→                {submitting ? (
+  1047→                  <>
+  1048→                    <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...
+  1049→                  </>
+  1050→                ) : editing ? (
+  1051→                  "Simpan Perubahan"
+  1052→                ) : (
+  1053→                  "Tambah Event"
+  1054→                )}
+  1055→              </Button>
+  1056→            </DialogFooter>
+  1057→          </form>
+  1058→        </DialogContent>
+  1059→      </Dialog>
+  1060→
+  1061→      {/* Delete Confirmation */}
+  1062→      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
+  1063→        <AlertDialogContent>
+  1064→          <AlertDialogHeader>
+  1065→            <AlertDialogTitle>Hapus Event?</AlertDialogTitle>
+  1066→            <AlertDialogDescription>
+  1067→              Tindakan ini tidak dapat dibatalkan. Data event akan dihapus permanen.
+  1068→            </AlertDialogDescription>
+  1069→          </AlertDialogHeader>
+  1070→          <AlertDialogFooter>
+  1071→            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+  1072→            <AlertDialogAction
+  1073→              onClick={handleDelete}
+  1074→              disabled={deleting}
+  1075→              className="bg-rose-600 hover:bg-rose-700"
+  1076→            >
+  1077→              {deleting ? (
+  1078→                <>
+  1079→                  <Loader2 className="w-4 h-4 animate-spin" /> Menghapus...
+  1080→                </>
+  1081→              ) : (
+  1082→                "Ya, Hapus"
+  1083→              )}
+  1084→            </AlertDialogAction>
+  1085→          </AlertDialogFooter>
+  1086→        </AlertDialogContent>
+  1087→      </AlertDialog>
+  1088→    </div>
+  1089→  );
+  1090→}
+  1091→

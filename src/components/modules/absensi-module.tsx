@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Clock, LogIn, LogOut, Calendar, CheckCircle2, AlertCircle, Users,
   RefreshCw, FileText, Timer, CalendarDays, TrendingUp,
+  Trash2, Search, CheckSquare, X,
 } from "lucide-react";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -21,6 +23,11 @@ import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 interface AttendanceRecord {
   id: string;
@@ -62,6 +69,9 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
   const [users, setUsers] = useState<{ id: string; name: string; role: string }[]>([]);
   const [editStatus, setEditStatus] = useState("");
   const [editNote, setEditNote] = useState("");
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [bulkMode, setBulkMode] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -164,12 +174,62 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
     toast.success("PDF diunduh");
   }
 
-  const filtered = filterUserId === "all" ? records : records.filter((r) => r.userId === filterUserId);
+  const filtered = useMemo(() => {
+    let r = filterUserId === "all" ? records : records.filter((r) => r.userId === filterUserId);
+    if (statusFilter !== "all") r = r.filter((r) => r.status === statusFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((r) =>
+        (r.user?.name || "").toLowerCase().includes(q) ||
+        (r.note || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [records, filterUserId, statusFilter, search]);
   const hadir = filtered.filter((r) => r.status === "HADIR").length;
   const terlambat = filtered.filter((r) => r.status === "TERLAMBAT").length;
   const izinSakit = filtered.filter((r) => ["IZIN", "SAKIT", "CUTI"].includes(r.status)).length;
   const alpha = filtered.filter((r) => r.status === "ALPHA").length;
   const totalJam = filtered.reduce((s, r) => s + (r.workHours || 0), 0);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection (Owner-only feature)
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect<AttendanceRecord>({ getId: (r) => r.id });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, statusFilter, filterUserId, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} data absensi terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/attendance/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await loadData();
+    if (failed === 0) {
+      toast.success(`${success} data absensi berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   const nowTime = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
   const isCheckedIn = todayRecord?.checkIn && !todayRecord?.checkOut;
@@ -273,17 +333,79 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
 
       {/* Owner filter */}
       {isOwner && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-500">Filter:</span>
-          <Select value={filterUserId} onValueChange={setFilterUserId}>
-            <SelectTrigger className="w-[200px] h-9"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Tim</SelectItem>
-              {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-slate-400 ml-auto">Total jam kerja: <span className="font-semibold text-slate-700">{Math.round(totalJam)} jam</span></span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500">Filter:</span>
+            <Select value={filterUserId} onValueChange={setFilterUserId}>
+              <SelectTrigger className="w-[200px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Tim</SelectItem>
+                {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px] h-9 bg-white"><SelectValue placeholder="Semua Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Cari nama atau catatan..."
+                className="pl-9 h-9 bg-white text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <Button
+              variant={bulkMode ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                if (bulkMode) clearSelection();
+              }}
+              className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+            </Button>
+          </div>
         </div>
+      )}
+
+      {/* Owner: total jam kerja summary line */}
+      {isOwner && (
+        <div className="text-sm text-slate-400">Total jam kerja (filter aktif): <span className="font-semibold text-slate-700">{Math.round(totalJam)} jam</span></div>
+      )}
+
+      {/* Bulk Action Bar (Owner-only) */}
+      {isOwner && bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} data absensi terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
       )}
 
       {/* Attendance history table */}
@@ -292,37 +414,66 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
           <CardTitle className="text-base flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-600" /> Riwayat Absensi {monthNames[month - 1]} {year}</CardTitle>
         </CardHeader>
         <CardContent>
-          {filtered.length === 0 ? (
+          {records.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">Belum ada data absensi</p>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">Tidak ada absensi yang cocok</p>
+              <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter status</p>
+            </div>
           ) : (
+            <>
             <div className="max-h-96 overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b text-left text-xs text-slate-500">
+                    {isOwner && bulkMode && <th className="py-2 px-2 w-10"></th>}
                     <th className="py-2 pr-2 font-medium">Tanggal</th>
                     {isOwner && <th className="py-2 px-2 font-medium">Nama</th>}
                     <th className="py-2 px-2 font-medium">Check In</th>
                     <th className="py-2 px-2 font-medium">Check Out</th>
                     <th className="py-2 px-2 font-medium">Jam</th>
                     <th className="py-2 px-2 font-medium">Status</th>
-                    {isOwner && <th className="py-2 pl-2 font-medium">Aksi</th>}
+                    {isOwner && !bulkMode && <th className="py-2 pl-2 font-medium">Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r) => (
+                  {paginatedItems.map((r) => (
                     <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                      {isOwner && bulkMode && (
+                        <td className="py-2 px-2">
+                          <SelectCheckbox
+                            checked={isSelected(r)}
+                            onChange={() => toggle(r)}
+                          />
+                        </td>
+                      )}
                       <td className="py-2 pr-2 font-medium text-slate-700">{formatDate(r.date)}</td>
                       {isOwner && <td className="py-2 px-2 text-slate-600">{r.user.name}</td>}
                       <td className="py-2 px-2 text-slate-600">{r.checkIn ? new Date(r.checkIn).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
                       <td className="py-2 px-2 text-slate-600">{r.checkOut ? new Date(r.checkOut).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-"}</td>
                       <td className="py-2 px-2 text-slate-600">{r.workHours ? `${r.workHours}j` : "-"}</td>
                       <td className="py-2 px-2"><Badge variant="outline" className={cn("text-[10px]", STATUS_COLORS[r.status])}>{STATUS_LABELS[r.status] || r.status}</Badge></td>
-                      {isOwner && <td className="py-2 pl-2"><Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => handleEdit(r)}>Edit</Button></td>}
+                      {isOwner && !bulkMode && <td className="py-2 pl-2"><Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => handleEdit(r)}>Edit</Button></td>}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

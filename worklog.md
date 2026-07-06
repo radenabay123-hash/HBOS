@@ -1439,3 +1439,506 @@ Stage Summary:
   * Professional footer
 - Kanban board can be refreshed daily - summaries accumulate for evaluation
 - Feature available to all roles (non-leaders see only their own summaries)
+
+---
+Task ID: 2-a
+Agent: Z.ai Code (subagent for CRM/Invoice/Surat filter+pagination+bulk)
+Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (CRM, Invoice, Surat)
+
+Work Log:
+- Read worklog and reviewed reusable components: use-pagination.ts, use-bulk-select.ts, use-search-filter.ts, shared/pagination.tsx, shared/filter-bar.tsx, shared/bulk-action-bar.tsx
+- Read all three module files to understand existing structure (existing search/filter UI, data shape, delete API patterns)
+- Implemented changes following the prescribed pattern (pageSize: 15 for all, reset selection on filter change, sticky BulkActionBar, conditional checkbox column when bulkMode)
+
+=== CRM Module (src/components/modules/crm-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, CheckSquare icon
+- Kept existing `search` + `statusFilter` state (CRM already had search by namaKlien/instansi/PIC/email/jenisTraining + status dropdown)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (c) => c.id }) hook
+- Added bulkMode state
+- Added useEffect to resetSelection + resetPage when search/statusFilter change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/clients/${id} per item, counts success/failed, reloads via loadClients()
+- Added "Pilih Beberapa" toggle button in filter bar (visible only when canManage = owner/PM)
+- Added BulkActionBar above data table when bulkMode && selectedCount > 0 (single action: Hapus Terpilih, destructive variant, with confirmText)
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(c) + toggle(c)) when bulkMode in each row
+- Replaced `filtered.map` with `paginatedItems.map` for the table body
+- Added Pagination component at the bottom of the table card (inside CardContent, after ScrollArea), wrapped table+pagination in fragment
+- Preserved existing edit, delete, export PDF/Excel functionality intact
+- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+
+=== Invoice Module (src/components/modules/invoice-module.tsx) ===
+- Added imports: useMemo, usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+- Added new state: search (string), bulkMode (boolean)
+- Kept existing `filterStatus` (status dropdown in header)
+- Replaced existing `filtered` calculation with useMemo that combines: status filter + search (by invoiceNumber, clientName, description, city)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (i) => i.id }) hook
+- Added useEffect to resetSelection + resetPage when search/filterStatus change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/invoice/${id} per item, reloads via load()
+- Added new Filter Bar Card below the stats grid (search input + bulk-select toggle button)
+- Added BulkActionBar above the invoice list table when bulkMode && selectedCount > 0
+- Added conditional checkbox column header + cell when bulkMode
+- Replaced `filtered.map` with `paginatedItems.map`
+- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations
+- Added Pagination component at the bottom of the card, wrapped table+pagination in fragment
+- Preserved existing preview/edit/download PDF/delete individual functionality intact
+- Preserved existing create/edit dialog and preview dialog unchanged
+
+=== Surat Module (src/components/modules/surat-module.tsx) — LIST VIEW ONLY ===
+- Added imports: useMemo, usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+- Added new state: search (string), filterStatus (string, default "all"), bulkMode (boolean)
+- Added usePagination + useBulkSelect hooks (declared BEFORE the early `if (loading && view === "list")` return to satisfy hook rules)
+- Added useMemo `filtered` combining: status filter (DRAFT/FINAL/ARCHIVED) + search (by suratNumber, perihal, suratType, recipientName, recipientInstansi)
+- Added useEffect to resetSelection + resetPage when search/filterStatus change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/surat/${id} per item, reloads via load()
+- Replaced the list view header+table with new structure:
+  * Header: kept h1 + "Surat Resmi Baru" button
+  * NEW Filter Bar Card: search input (with clear X button) + status Select dropdown (Semua/Draft/Final/Arsip) + "Pilih Beberapa" toggle button
+  * NEW BulkActionBar (conditional on bulkMode && selectedCount > 0)
+  * Existing data table Card with:
+    - Empty state for `surats.length === 0` (no records at all)
+    - NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada surat yang cocok")
+    - Conditional checkbox column header/cell when bulkMode
+    - Hidden Aksi column when bulkMode
+    - `paginatedItems.map` instead of `surats.map`
+    - Pagination component at the bottom of card
+- DID NOT modify the form view (view === "form") — form view unchanged
+- Preserved existing edit/download PDF/delete individual functionality intact
+
+=== Verification ===
+- Ran `bun run lint` (eslint .) → passed with zero errors/warnings
+- Ran `bunx tsc --noEmit` → zero type errors in crm-module.tsx, invoice-module.tsx, surat-module.tsx (other pre-existing errors in unrelated files untouched)
+- Verified all destructured hook return values are used (no unused vars)
+- Verified JSX fragment structure: table+Pagination wrapped in `<>...</>` inside the `filtered.length > 0` branch
+- Verified all hooks are called unconditionally before any early return (surat-module: hooks declared before `if (loading && view === "list")` early return)
+
+Stage Summary:
+- Three modules enhanced with consistent UX pattern: search box + status filter + bulk-select toggle button in a filter bar, sticky bulk action bar with destructive "Hapus Terpilih" action, checkbox column appears only in bulk mode, pagination (15/page) at bottom of table
+- All existing functionality preserved (CRUD, PDF download, Excel export, preview, edit dialogs, etc.)
+- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+- Filter changes auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+- Files modified:
+  * src/components/modules/crm-module.tsx
+  * src/components/modules/invoice-module.tsx
+  * src/components/modules/surat-module.tsx
+- Lint: PASS (zero errors, zero warnings)
+
+---
+Task ID: 2-b
+Agent: Z.ai Code (subagent for Tasks/Content/Articles filter+pagination+bulk)
+Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (Tasks, Content, Articles)
+
+Work Log:
+- Read worklog Task 2-a entry to learn the established pattern (custom useMemo for `filtered`, usePagination hook, useBulkSelect hook, useEffect to reset selection + page on filter change, conditional checkbox column when bulkMode, BulkActionBar above table, Pagination at bottom of CardContent wrapped in fragment)
+- Read all three target module files plus the reusable hooks/components (use-pagination, use-bulk-select, use-search-filter, pagination, filter-bar, bulk-action-bar)
+- Read CRM/invoice modules to confirm the actual 2-a pattern (custom filter bar layout, not the `<FilterBar>` component)
+- Implemented changes following the established 2-a pattern (pageSize: 15, reset selection + resetPage on filter change, sticky BulkActionBar with destructive "Hapus Terpilih" action, conditional checkbox column when bulkMode, Pagination wrapped with table in fragment)
+
+=== Tasks Module (src/components/modules/tasks-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons
+- Added new state: search (string), statusFilter (string, default "all"), bulkMode (boolean)
+- Kept existing dateFilter (Tanggal) + userFilter (Anggota Tim) — both go to backend via loadTasks
+- Added `filtered` useMemo combining backend-filtered `tasks` + client-side status filter (BELUM/SEDANG/SELESAI) + client-side search (by taskHariIni, progress)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (t) => t.id }) hook
+- Added useEffect to resetSelection + resetPage when search/statusFilter change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/tasks/${id} per item, counts success/failed, reloads via loadTasks()
+- Added a NEW filter row inside the existing filter Card (below the date+user+export row, separated by border-t):
+  * Search input (with clear X button)
+  * Status Select dropdown (Semua Status + BELUM/SEDANG/SELESAI from TASK_STATUS)
+  * "Pilih Beberapa" toggle button
+- Added BulkActionBar above the data table Card when bulkMode && selectedCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(t) + toggle(t)) when bulkMode in each row
+- Replaced `tasks.map` with `paginatedItems.map` for the table body
+- Added NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada tugas yang cocok")
+- Kept the existing `tasks.length === 0` empty state (no records at all on the selected date)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+- Preserved existing edit/delete individual, add/edit dialog, Excel/PDF export, stats grid, and date/user filter functionality intact
+- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+
+=== Content Module (src/components/modules/content-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+- Added new state: search (string), bulkMode (boolean)
+- Kept existing kategoriFilter + accFilter (backend) and tab (client-side ACC status tabs)
+- Replaced existing `filtered` useMemo (was tab-only) with new version combining: tab filter + client-side search (by judul, kategori)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (i) => i.id }) hook
+- Added useEffect to resetSelection + resetPage when search/tab change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/content-ideas/${id} per item, counts success/failed, reloads via loadIdeas()
+- Added a NEW filter row inside the existing filter Card (below the Tabs, separated by border-t):
+  * Search input (with clear X button)
+  * "Pilih Beberapa" toggle button
+- Added BulkActionBar above the cards grid when bulkMode && selectedCount > 0
+- Replaced `filtered.map` with `paginatedItems.map` for the cards grid
+- Added a NEW bulk checkbox row at the top of each Card (when bulkMode) with SelectCheckbox + "Pilih konten ini" label
+- Replaced the empty state: now shows Search icon + "Tidak ada konten yang cocok" (was previously a combined state with conditional message)
+- Wrapped the cards grid + a NEW Pagination Card in `<>...</>` fragment
+- Added Pagination inside a new dedicated Card at the bottom of the grid (since the cards grid doesn't have a table-with-sticky-header structure)
+- Preserved existing edit/delete individual, ACC/revisi flow, publish toggle, metrik display, add/edit dialog, Excel/PDF export, and category/ACC filter functionality intact
+
+=== Articles Module (src/components/modules/articles-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons
+- Added new state: search (string), bulkMode (boolean)
+- Kept existing websiteFilter + accFilter + statusFilter (all go to backend via loadArticles)
+- Added `filtered` useMemo combining backend-filtered `articles` + client-side search (by judulArtikel, keyword)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (a) => a.id }) hook
+- Added useEffect to resetSelection + resetPage when search changes
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/articles/${id} per item, counts success/failed, reloads via loadArticles()
+- Added a NEW filter row inside the existing filter Card (below the website/acc/status + export row, separated by border-t):
+  * Search input (with clear X button)
+  * "Pilih Beberapa" toggle button
+- Added BulkActionBar above the data table Card when bulkMode && selectedCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(a) + toggle(a)) when bulkMode in each row
+- Replaced `articles.map` with `paginatedItems.map` for the table body
+- Added NEW empty state for `filtered.length === 0` (records exist but search doesn't match - shows Search icon + "Tidak ada artikel yang cocok")
+- Kept the existing `articles.length === 0` empty state (no records at all)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+- Preserved existing edit/delete individual, ACC/revisi flow, publish action, add/edit dialog, Excel/PDF export, and website/acc/status filter functionality intact
+- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual items in bulk mode)
+
+=== Verification ===
+- Ran `bun run lint` (eslint .) → EXIT_CODE=0, passed with zero errors/warnings
+- Ran `bunx tsc --noEmit` → zero type errors in tasks-module.tsx, content-module.tsx, articles-module.tsx (other pre-existing errors in unrelated files like examples/, prisma/seed.ts, dashboard API routes untouched)
+- Verified all destructured hook return values are used (no unused vars): paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage (from usePagination); selectedArray, selectedCount, isSelected, toggle, toggleAll, clearSelection, resetSelection, isAllSelected (from useBulkSelect)
+- Verified JSX fragment structure: table+Pagination (or cards-grid+Pagination Card for content-module) wrapped in `<>...</>` inside the `filtered.length > 0` branch
+- Verified all hooks are called unconditionally at top of component before any JSX conditional rendering (all three modules use inline JSX conditional, no early returns — hook rules satisfied)
+- Verified filter changes auto-reset the selection and return to page 1 (useEffect with resetSelection + resetPage on search/filter deps)
+
+Stage Summary:
+- Three modules enhanced with consistent UX pattern (matching Task 2-a CRM/Invoice/Surat):
+  * Existing backend filters (date/user for tasks; kategori/acc for content; website/acc/status for articles) preserved
+  * NEW client-side search input (with clear X button) in a new filter row
+  * NEW status dropdown (BELUM/SEDANG/SELESAI) for Tasks module (didn't exist before)
+  * NEW "Pilih Beberapa" toggle button to enter bulk-select mode
+  * Sticky BulkActionBar with destructive "Hapus Terpilih" action + confirm dialog
+  * Conditional checkbox column (or checkbox row for content-module cards) appears only in bulk mode
+  * Pagination (15/page) at bottom of table/grid with page info + First/Prev/numbers/Next/Last buttons
+- All existing functionality preserved (CRUD, ACC/revisi flow, publish toggle, metrik display, Excel/PDF export, edit dialogs, stats grids)
+- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+- Filter changes (search, status filter, tab) auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+- Files modified:
+  * src/components/modules/tasks-module.tsx
+  * src/components/modules/content-module.tsx
+  * src/components/modules/articles-module.tsx
+- Lint: PASS (zero errors, zero warnings) — EXIT_CODE=0
+
+---
+Task ID: 2-c
+Agent: Z.ai Code (subagent for Events/Documents/Team filter+pagination+bulk)
+Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to THREE modules (Events, Documents, Team Management)
+
+Work Log:
+- Read worklog Task 2-a and 2-b entries to learn the established pattern (custom useMemo for `filtered`, usePagination hook, useBulkSelect hook, useEffect to reset selection + page on filter change, conditional checkbox column when bulkMode, BulkActionBar above table, Pagination at bottom of CardContent wrapped in fragment)
+- Read all three target module files plus the reusable hooks/components (use-pagination, use-bulk-select, use-search-filter, pagination, filter-bar, bulk-action-bar) and tasks-module.tsx as a reference for the established 2-a/2-b pattern
+- Verified DELETE endpoints exist for all three resources: /api/events/[id], /api/documents/[id], /api/users/[id]
+- Implemented changes following the established 2-a/2-b pattern (pageSize: 15, reset selection + resetPage on filter change, sticky BulkActionBar with destructive "Hapus Terpilih" action, conditional checkbox column when bulkMode, Pagination wrapped with table in fragment)
+
+=== Events Module (src/components/modules/events-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare icons (X icon was already imported)
+- Added new state: search (string), statusFilter (string, default "all"), monthFilter (string, default "all"), bulkMode (boolean)
+- Added `filteredEvents` useMemo combining client-side filters: status filter (PENDING/IN_PROGRESS/READY/COMPLETED) + month filter (YYYY-MM from monthOptions) + search (by namaEvent, lokasi)
+- Added usePagination(filteredEvents, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (e) => e.id }) hook
+- Added useEffect to resetSelection + resetPage when search/statusFilter/monthFilter change
+- Added handleBulkDelete() - iterates selectedEventArray, calls DELETE /api/events/${id} per item, counts success/failed, reloads via loadEvents()
+- Added `monthOptions` useMemo to build dropdown options dynamically from existing events' months (descending)
+- Added `formatMonthLabel(ym)` helper to convert "2025-01" → "Januari 2025"
+- Placed the new Filter Bar Card at the top of the list view tab (TabsContent value="list"):
+  * Search input (with clear X button)
+  * Status Select dropdown (Semua Status + EVENT_PREP_STATUS)
+  * Month Select dropdown (Semua Bulan + monthOptions)
+  * "Pilih Beberapa" toggle button (visible only when canManage = owner/PM)
+- Added BulkActionBar above the data table Card when bulkMode && selectedEventCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllEventsSelected(paginatedEvents) + toggleAllEvents(paginatedEvents)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isEventSelected(e) + toggleEvent(e)) when bulkMode in each row
+- Replaced `events.map` with `paginatedEvents.map` for the table body
+- Added NEW empty state for `filteredEvents.length === 0` (records exist but no match - shows Search icon + "Tidak ada event yang cocok")
+- Kept the existing `events.length === 0` empty state (no records at all)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after ScrollArea), wrapped table+pagination in `<>...</>` fragment
+- Calendar view (TabsContent value="calendar") unchanged — calendar still shows all events regardless of list filters
+- Preserved existing calendar navigation, day selection, edit/delete individual, add/edit dialog, Excel/PDF export functionality intact
+- Kept the "Aksi" column visible in both modes (so users can still edit/delete individual events in bulk mode)
+
+=== Documents Module (src/components/modules/documents-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons, cn util
+- Added new state: search (string), bulkMode (boolean)
+- Kept existing `typeFilter` (DOCUMENT_TYPES dropdown) + `clientFilter` (clients dropdown) — both already in place
+- Updated existing `filtered` useMemo to also apply client-side search (by documentName, documentType, docTypeLabel(documentType), documentNumber) on top of type + client filters
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (d) => d.id }) hook
+- Added useEffect to resetSelection + resetPage when search/typeFilter/clientFilter change
+- Added handleBulkDelete() - iterates selectedDocArray, calls DELETE /api/documents/${id} per item, counts success/failed, reloads via loadDocuments()
+- Added a NEW search + bulk-select row inside the existing filter Card (below the type/client + export row, separated by border-t):
+  * Search input (with clear X button)
+  * "Pilih Beberapa" toggle button (visible only when canDelete = owner/PM)
+- Added BulkActionBar above the data table Card when bulkMode && selectedDocCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllDocsSelected(paginatedDocs) + toggleAllDocs(paginatedDocs)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isDocSelected(d) + toggleDoc(d)) when bulkMode in each row
+- Replaced `filtered.map` with `paginatedDocs.map` for the table body
+- Added NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada dokumen yang cocok")
+- Kept the existing `documents.length === 0` empty state (no records at all)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after ScrollArea), wrapped table+pagination in `<>...</>` fragment
+- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations (matches Task 2-a Invoice module pattern)
+- Preserved existing edit/delete individual, add/edit dialog, link/ExternalLink button, Excel/PDF export, type/client filter functionality intact
+
+=== Team Management Module (src/components/modules/team-management-module.tsx) ===
+- Added imports: useMemo (was missing), usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, CheckSquare + X icons, cn util
+- Added new state: bulkMode (boolean)
+- Kept existing `search` (search by name/email/position) + `roleFilter` (TEAM_ROLES dropdown) — both already in place
+- Converted the existing `filtered` calculation from a regular const expression into a useMemo (with [users, roleFilter, search] deps) for consistency with other modules
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect({ getId: (u) => u.id }) hook (Owner-only feature — module is mounted on owner-only route via app-shell.tsx MENU)
+- Added useEffect to resetSelection + resetPage when search/roleFilter change
+- Added handleBulkDelete() - iterates selectedUserArray, calls DELETE /api/users/${id} per item, counts success/failed, reloads via loadUsers()
+- Added a clear X button to the existing search input (was previously absent)
+- Added "Pilih Beberapa" toggle button to the existing filter row (visible to all users — the route itself is owner-only)
+- Added BulkActionBar above the data table Card when bulkMode && selectedUserCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllUsersSelected(paginatedUsers) + toggleAllUsers(paginatedUsers)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isUserSelected(u) + toggleUser(u)) when bulkMode in each row
+- Replaced `filtered.map` with `paginatedUsers.map` for the table body
+- Split the existing `filtered.length === 0` EmptyState into two cases:
+  * `users.length === 0` (no records at all) → EmptyState with hasFilter=false
+  * `filtered.length === 0` (records exist but no match) → EmptyState with hasFilter=true (preserves the existing conditional message logic in the EmptyState sub-component)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after the scrollable table div), wrapped table+pagination in `<>...</>` fragment
+- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations
+- Preserved existing edit/toggle-active/delete individual, add/edit dialogs, delete confirmation AlertDialog, Excel/PDF export, role filter functionality intact
+
+=== Verification ===
+- Ran `bun run lint` (eslint .) → EXIT_CODE=0, passed with zero errors/warnings
+- Ran `bunx tsc --noEmit` → zero type errors in events-module.tsx, documents-module.tsx, team-management-module.tsx (other pre-existing errors in unrelated files like examples/, prisma/seed.ts, skills/, dashboard API routes untouched)
+- Verified all destructured hook return values are used (no unused vars):
+  * Events: paginatedEvents, goToEventPage, nextEventPage, prevEventPage, eventPageInfo, resetEventPage (usePagination); selectedEventArray, selectedEventCount, isEventSelected, toggleEvent, toggleAllEvents, clearEventSelection, resetEventSelection, isAllEventsSelected (useBulkSelect)
+  * Documents: paginatedDocs, goToDocPage, nextDocPage, prevDocPage, docPageInfo, resetDocPage (usePagination); selectedDocArray, selectedDocCount, isDocSelected, toggleDoc, toggleAllDocs, clearDocSelection, resetDocSelection, isAllDocsSelected (useBulkSelect)
+  * Team: paginatedUsers, goToUserPage, nextUserPage, prevUserPage, userPageInfo, resetUserPage (usePagination); selectedUserArray, selectedUserCount, isUserSelected, toggleUser, toggleAllUsers, clearUserSelection, resetUserSelection, isAllUsersSelected (useBulkSelect)
+- Verified JSX fragment structure: table+Pagination wrapped in `<>...</>` inside the `filtered.length > 0` branch in all three modules
+- Verified all hooks are called unconditionally at top of component before any JSX conditional rendering (all three modules use inline JSX conditional, no early returns — hook rules satisfied)
+- Verified filter changes (search, status/type/role filter, month filter for events) auto-reset the selection and return to page 1 (useEffect with resetSelection + resetPage on filter deps)
+
+Stage Summary:
+- Three modules enhanced with consistent UX pattern (matching Task 2-a CRM/Invoice/Surat and Task 2-b Tasks/Content/Articles):
+  * Events (list tab): NEW client-side search (namaEvent/lokasi) + status dropdown (EVENT_PREP_STATUS) + month dropdown (dynamic from events) + "Pilih Beberapa" toggle (canManage only) + bulk delete + pagination (15/page). Calendar tab unchanged.
+  * Documents: NEW client-side search (documentName/type/number) added to existing type+client filters + "Pilih Beberapa" toggle (canDelete = owner/PM only) + bulk delete + pagination (15/page)
+  * Team Management: NEW "Pilih Beberapa" toggle + bulk delete (Owner-only via owner-only route) + pagination (15/page) added on top of existing search (name/email/position) + role filter (TEAM_ROLES). Existing search input gained a clear X button.
+  * Sticky BulkActionBar with destructive "Hapus Terpilih" action + confirm dialog in all three modules
+  * Conditional checkbox column appears only in bulk mode (Events keeps Aksi visible; Documents & Team hide Aksi when bulkMode, matching 2-a Invoice pattern)
+  * Pagination (15/page) at bottom of table with page info + First/Prev/numbers/Next/Last buttons
+- All existing functionality preserved (CRUD, calendar navigation, day selection, checklist editor, link/ExternalLink, toggle-active, export PDF/Excel, edit dialogs, stats grids, AlertDialog delete confirmations)
+- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+- Filter changes (search, status/type/role filter, month filter) auto-reset the selection and return to page 1 (prevents stale selections across filtered views)
+- Files modified:
+  * src/components/modules/events-module.tsx
+  * src/components/modules/documents-module.tsx
+  * src/components/modules/team-management-module.tsx
+- Lint: PASS (zero errors, zero warnings) — EXIT_CODE=0
+
+---
+Task ID: 2-d
+Agent: Z.ai Code (subagent for Payroll/Finance/Absensi/Biodata filter+pagination+bulk)
+Task: Add filtering, pagination (max 15/page), and bulk-select with bulk actions to FOUR modules (Payroll, Finance ArusKas, Absensi, Biodata)
+
+Work Log:
+- Read worklog Task 2-a, 2-b, and 2-c entries to learn the established pattern (custom useMemo for `filtered`, usePagination hook, useBulkSelect hook, useEffect to reset selection + page on filter change, conditional checkbox column when bulkMode, BulkActionBar above table, Pagination at bottom of CardContent wrapped in fragment)
+- Read all four target module files plus the reusable hooks/components (use-pagination, use-bulk-select, pagination, filter-bar, bulk-action-bar) and tasks-module.tsx as a reference for the established 2-a/2-b/2-c pattern
+- Verified DELETE endpoints exist for all four resources: /api/payroll/[id], /api/finance/[id], /api/attendance/[id] (biodata skipped bulk per spec — employee data is sensitive)
+- Implemented changes following the established 2-a/2-b/2-c pattern (pageSize: 15, reset selection + resetPage on filter change, sticky BulkActionBar with destructive "Hapus Terpilih" action, conditional checkbox column when bulkMode, Pagination wrapped with table/cards in fragment)
+
+=== Payroll Module (src/components/modules/payroll-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons (added useMemo to react imports)
+- Added new state: search (string), statusFilter (string, default "all"), bulkMode (boolean) — placed alongside existing state declarations BEFORE the `if (loading)` early return
+- Added `filtered` useMemo combining existing `archive` data + client-side status filter (DRAFT/APPROVED/PAID) + client-side search (by user.name, userName, jabatan)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect<Payroll>({ getId: (p) => p.id || "" }) hook
+- Added useEffect to resetSelection + resetPage when search/statusFilter change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/payroll/${id} per item, counts success/failed, reloads via loadData()
+- Added a NEW filter row inside the Arsip Card (below the title header, separated by border-b border-slate-100) with:
+  * Search input (with clear X button)
+  * Status Select dropdown (Semua Status + DRAFT/APPROVED/PAID labels)
+  * "Pilih Beberapa" toggle button
+- Added BulkActionBar above the Arsip Card when bulkMode && selectedCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(p) + toggle(p)) when bulkMode in each row
+- Replaced `archive.map` with `paginatedItems.map` for the table body — row numbers now reflect pagination offset via `(pageInfo.currentPage - 1) * 15 + i + 1`
+- Added NEW empty state for `filtered.length === 0` (records exist but no match - shows Search icon + "Tidak ada slip gaji yang cocok")
+- Kept the existing `archive.length === 0` empty state (no records at all)
+- Added Pagination component at the bottom of the CardContent (replacing the old "Menampilkan X dari Y data" text), wrapped table+Pagination in `<>...</>` fragment
+- Updated the footer to show "Total {archive.length} slip gaji (filter: {filtered.length})" + "Total Net: ..." summary
+- Preserved existing preview/download-PDF/approve/mark-paid/delete individual, generate manual slip, Excel export, payslip detail dialog functionality intact
+- Kept the "Aksi" column visible in both modes (so users can still preview/approve/mark-paid/delete individual items in bulk mode — matches Tasks/Articles pattern from 2-b)
+- Team view (non-owner) unchanged — only the owner's Arsip section was modified
+
+=== Finance Module - ArusKas (src/components/modules/finance-advanced-module.tsx) ===
+- NOTE: src/components/modules/finance-module.tsx is a 2-line re-export wrapper to FinanceModule from finance-advanced-module.tsx. All edits applied to finance-advanced-module.tsx inside the ArusKas sub-component (the transactions list view).
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Search + CheckSquare + X icons (added useMemo to react imports)
+- Added new state: search (string), bulkMode (boolean) — placed alongside existing state declarations inside ArusKas BEFORE the `if (loading)` early return
+- Converted existing `const filtered = txns.filter(...)` (regular const) into a useMemo that combines the existing type filter + account filter + NEW client-side search (by description, category, vendorName)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect<any>({ getId: (t) => t.id as string }) hook
+- Added useEffect to resetSelection + resetPage when search/filterType/filterAccount change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/finance/${id} per item, counts success/failed, reloads via load()
+- Added a NEW "Pilih Beberapa" toggle button to the existing actions row (next to Excel + Input Uang Masuk/Keluar buttons)
+- Added a NEW dedicated search row below the actions row (with clear X button, max-w-md)
+- Added BulkActionBar above the table Card when bulkMode && selectedCount > 0
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(t) + toggle(t)) when bulkMode in each row
+- Replaced `filtered.map` with `paginatedItems.map` for the table body
+- Split the empty state: `txns.length === 0` (no records) → "Belum ada transaksi"; `filtered.length === 0` (records exist but no match) → Search icon + "Tidak ada transaksi yang cocok"
+- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations (matches Task 2-c Documents & Team pattern)
+- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+- Preserved existing edit/delete individual, add dialog (PEMASUKAN/PENGELUARAN with full form: nominal, OCR, tanggal, akun, deskripsi, kategori, kontak, pajak, etc.), Excel export, type/account filter functionality intact
+- Other finance sub-components (Dashboard, Kategori, Neraca, Inventaris, Pajak, Kalkulator, Laporan, SPT, TaxConfig, AI) untouched
+- Pre-existing TS error on inline-edit onClick (form object literal missing fields) was at line 448 before my edits; now at line 585 due to the additional lines I added above it. NOT introduced by my changes — same pre-existing issue noted in Task 2-b/2-c worklog entries.
+
+=== Absensi Module (src/components/modules/absensi-module.tsx) ===
+- Added imports: usePagination, useBulkSelect, Pagination, SelectCheckbox, BulkActionBar, Trash2 + Search + CheckSquare + X icons (added Input to ui imports, added useMemo to react imports)
+- Added new state: search (string), statusFilter (string, default "all"), bulkMode (boolean) — placed alongside existing state declarations BEFORE the `if (loading)` early return
+- Converted existing `const filtered = filterUserId === "all" ? records : records.filter(...)` (regular const) into a useMemo that combines existing filterUserId + NEW client-side status filter (HADIR/TERLAMBAT/IZIN/SAKIT/ALPHA/CUTI) + NEW client-side search (by user.name, note)
+- Added usePagination(filtered, { pageSize: 15 }) hook
+- Added useBulkSelect<AttendanceRecord>({ getId: (r) => r.id }) hook
+- Added useEffect to resetSelection + resetPage when search/statusFilter/filterUserId change
+- Added handleBulkDelete() - iterates selectedArray, calls DELETE /api/attendance/${id} per item, counts success/failed, reloads via loadData()
+- Updated the Owner filter section: added a status Select dropdown (Semua Status + STATUS_LABELS) next to existing team filter, added search input (with clear X button), added "Pilih Beberapa" toggle button (Owner-only)
+- Moved "Total jam kerja" summary to its own line below the filter row (was previously inline on the same row)
+- Added BulkActionBar above the table Card when isOwner && bulkMode && selectedCount > 0 (Owner-only feature)
+- Added conditional checkbox column header (SelectCheckbox with isAllSelected(paginatedItems) + toggleAll(paginatedItems)) when isOwner && bulkMode
+- Added conditional checkbox cell (SelectCheckbox with isSelected(r) + toggle(r)) when isOwner && bulkMode in each row
+- Replaced `filtered.map` with `paginatedItems.map` for the table body
+- Split the empty state: `records.length === 0` (no records) → "Belum ada data absensi"; `filtered.length === 0` (records exist but no match) → Search icon + "Tidak ada absensi yang cocok"
+- Hidden the "Aksi" column header + cells when bulkMode (!bulkMode condition) - focuses on bulk operations
+- Added Pagination component at the bottom of the table Card (inside CardContent, after the table div), wrapped table+pagination in `<>...</>` fragment
+- Preserved existing check-in/check-out card (team members), summary stats grid, edit dialog (Owner-only), Excel/PDF export functionality intact
+
+=== Biodata Module (src/components/modules/biodata-module.tsx) ===
+- Per spec: employee data is sensitive → NO bulk-select. Only added search + filter + pagination.
+- Added imports: usePagination, Pagination, X icon (added useMemo to react imports)
+- Added new state: completionFilter (string, default "all"), npwpFilter (string, default "all") — placed alongside existing state declarations
+- Moved the existing `filtered` calculation OUT of the owner-view early return block (was previously inside the `if (isOwner && view === "all") { ... }` block) into a top-level useMemo so that hooks can be called unconditionally before the `if (loading)` early return
+- New `filtered` useMemo combines existing search (by name/NPWP/NIK) + NEW completion filter (complete/incomplete via isComplete boolean) + NEW NPWP filter (with/without via npwp presence)
+- Added usePagination(filtered, { pageSize: 15 }) hook — called unconditionally before any early return (rules of hooks satisfied: hooks run every render regardless of view)
+- Added useEffect to resetPage when search/completionFilter/npwpFilter change
+- Updated the Search row to a 3-column layout: search input (with clear X button) + completion Select dropdown (Semua Kelengkapan + Lengkap + Belum Lengkap) + NPWP Select dropdown (Semua NPWP + Punya NPWP + Tanpa NPWP)
+- Replaced `filtered.map` with `paginatedItems.map` for the profile cards grid
+- Split the cards render into three branches: `allProfiles.length === 0` (no records at all → Users icon + "Belum ada biodata karyawan"), `filtered.length === 0` (records exist but no match → Search icon + "Tidak ada karyawan yang cocok"), otherwise grid + Pagination Card wrapped in `<>...</>` fragment
+- Added Pagination inside a new dedicated Card at the bottom of the grid (since the cards grid doesn't have a table-with-sticky-header structure — matches Task 2-b Content module pattern)
+- Preserved existing edit-gaji inline dialog, summary cards (Total/Lengkap/Belum Lengkap/Punya NPWP), Biodata Saya view toggle, team-view (own biodata) tabs (Personal/Address/Tax/Bank/Education) functionality intact
+
+=== Verification ===
+- Ran `bun run lint` (eslint .) → EXIT_CODE=0, passed with zero errors/warnings
+- Ran `bunx tsc --noEmit` → only ONE pre-existing TS error in finance-advanced-module.tsx (line 585, inline edit form missing fields), confirmed pre-existing via `git stash` test (was at line 448 before my edits, same root cause: form object literal in onClick doesn't include all 19 fields). NOT introduced by my changes — zero new TS errors in payroll-module.tsx, absensi-module.tsx, biodata-module.tsx, or any new lines in finance-advanced-module.tsx
+- Verified all destructured hook return values are used (no unused vars):
+  * Payroll: paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage (usePagination); selectedArray, selectedCount, isSelected, toggle, toggleAll, clearSelection, resetSelection, isAllSelected (useBulkSelect)
+  * Finance ArusKas: same set of return values from both hooks
+  * Absensi: same set of return values from both hooks
+  * Biodata: paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage (usePagination only — no useBulkSelect per spec)
+- Verified JSX fragment structure: table+Pagination (or cards-grid+Pagination Card for biodata) wrapped in `<>...</>` inside the `filtered.length > 0` branch in all four modules
+- Verified all hooks are called unconditionally at top of component before any early return:
+  * Payroll: hooks declared before `if (loading)` early return — hook rules satisfied
+  * Finance ArusKas: hooks declared before `if (loading) return <Loading />` — hook rules satisfied
+  * Absensi: hooks declared before `if (loading)` early return — hook rules satisfied
+  * Biodata: hooks declared before `if (loading)` early return AND before `if (isOwner && view === "all")` early return — moved `filtered` useMemo + usePagination + useEffect for resetPage OUT of the owner-view block to satisfy hook rules
+- Verified filter changes (search, status/completion/NPWP filter, type/account filter for finance, user filter for absensi) auto-reset the selection (where applicable) and return to page 1 (useEffect with resetSelection + resetPage on filter deps)
+
+Stage Summary:
+- Four modules enhanced with consistent UX pattern (matching Task 2-a CRM/Invoice/Surat, Task 2-b Tasks/Content/Articles, Task 2-c Events/Documents/Team):
+  * Payroll (Owner Arsip): NEW client-side search (karyawan/jabatan) + status dropdown (DRAFT/APPROVED/PAID) + "Pilih Beberapa" toggle + bulk delete + pagination (15/page). Generator form, payslip preview/download, individual approve/mark-paid/delete, Excel export preserved.
+  * Finance ArusKas: NEW client-side search (description/category/vendor) added to existing type+account filters + "Pilih Beberapa" toggle + bulk delete + pagination (15/page). Add/edit dialog (PEMASUKAN/PENGELUARAN), individual edit/delete, Excel export, summary cards preserved. Other finance sub-modules (Dashboard, Kategori, Neraca, Inventaris, Pajak, Kalkulator, Laporan, SPT, TaxConfig, AI) untouched.
+  * Absensi: NEW client-side search (name/note) + status dropdown (HADIR/TERLAMBAT/IZIN/SAKIT/ALPHA/CUTI) added to existing team filter + "Pilih Beberapa" toggle (Owner-only) + bulk delete (Owner-only) + pagination (15/page). Check-in/out card (team), summary stats, edit dialog (Owner), Excel/PDF export preserved.
+  * Biodata (Owner view all): NEW client-side search (name/NPWP/NIK) with clear button + completion dropdown (Lengkap/Belum Lengkap) + NPWP dropdown (Punya/Tanpa NPWP) + pagination (15/page). NO bulk-select per spec (employee data is sensitive). Edit-gaji inline dialog, summary cards, Biodata Saya toggle, team-view tabs preserved.
+  * Sticky BulkActionBar with destructive "Hapus Terpilih" action + confirm dialog in Payroll, Finance, Absensi (Biodata skipped bulk)
+  * Conditional checkbox column appears only in bulk mode (Payroll keeps Aksi visible; Finance & Absensi hide Aksi when bulkMode, matching 2-c Documents & Team pattern)
+  * Pagination (15/page) at bottom of table/cards with page info + First/Prev/numbers/Next/Last buttons
+- All existing functionality preserved (CRUD, generate slip, approve/mark-paid, check-in/out, edit attendance, edit salary, generate payslip PDF, Excel/PDF export, edit dialogs, stats grids, view toggles, etc.)
+- Bulk delete iterates selected IDs sequentially, calls the existing DELETE API per item, then reloads data and shows success/failure toast
+- Filter changes (search, status/completion/NPWP filter, type/account filter, user filter) auto-reset the selection (where applicable) and return to page 1 (prevents stale selections across filtered views)
+- Files modified:
+  * src/components/modules/payroll-module.tsx
+  * src/components/modules/finance-advanced-module.tsx (re-exported by src/components/modules/finance-module.tsx)
+  * src/components/modules/absensi-module.tsx
+  * src/components/modules/biodata-module.tsx
+- Lint: PASS (zero errors, zero warnings) — EXIT_CODE=0
+
+---
+Task ID: GLOBAL-FILTER-PAGINATION-BULK-SUMMARY
+Agent: Main (Z.ai Code)
+Task: Summary - Global filter/pagination/bulk-select implementation across all modules
+
+Work Log:
+- Created 3 reusable hooks in src/lib/hooks/:
+  * use-pagination.ts — `usePagination(items, { pageSize: 15 })` returns paginatedItems, totalPages, goToPage, nextPage, prevPage, pageInfo
+  * use-bulk-select.ts — `useBulkSelect({ getId })` returns selectedIds, isSelected, toggle, toggleAll, clearSelection, resetSelection, selectedCount
+  * use-search-filter.ts — `useSearchFilter(items, { searchFields })` returns query, setQuery, filtered, clearFilters, hasActiveFilters
+- Created 3 reusable components in src/components/shared/:
+  * pagination.tsx — <Pagination {...pageInfo} onPageChange onNext onPrev /> with first/prev/numbers/next/last buttons
+  * filter-bar.tsx — <FilterBar query onQueryChange searchPlaceholder showBulkSelectButton onToggleBulkSelect bulkSelectMode /> + <SelectCheckbox checked onChange />
+  * bulk-action-bar.tsx — <BulkActionBar selectedCount actions={[{label, icon, onClick, variant, confirmText}]} onClearSelection />
+- 4 parallel subagents applied the pattern to 13 modules:
+  * Task 2-a: CRM, Invoice, Surat (list view)
+  * Task 2-b: Tasks, Content, Articles
+  * Task 2-c: Events, Documents, Team Management
+  * Task 2-d: Payroll, Finance (ArusKas), Absensi, Biodata
+- All modules now have:
+  * Search input (free-text search across relevant fields)
+  * Filter dropdowns (status, type, role, etc. as appropriate)
+  * Pagination (max 15 per page, with first/prev/numbers/next/last)
+  * "Pilih Beberapa" toggle button for bulk-select mode
+  * Checkbox column when in bulk mode (header select-all + per-row)
+  * BulkActionBar with "Hapus Terpilih" (bulk delete) action
+  * useEffect to reset selection when filters change
+
+Pattern for Future Pages (IMPORTANT - use this when creating new list pages):
+```tsx
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { FilterBar, SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
+
+// Inside component:
+const [query, setQuery] = useState("");
+const [filterVal, setFilterVal] = useState("");
+const [bulkMode, setBulkMode] = useState(false);
+
+const filtered = useMemo(() => items.filter(...), [items, query, filterVal]);
+const { page, paginatedItems, goToPage, nextPage, prevPage, pageInfo } = usePagination(filtered, { pageSize: 15 });
+const { selectedArray, selectedCount, isSelected, toggle, toggleAll, clearSelection, resetSelection, isAllSelected } = useBulkSelect({ getId: (x) => x.id });
+
+useEffect(() => { resetSelection(); }, [query, filterVal]);
+
+async function handleBulkDelete() {
+  if (!confirm(`Hapus ${selectedCount} data terpilih?`)) return;
+  for (const id of selectedArray) { try { await api(`/api/xxx/${id}`, { method: "DELETE" }); } catch {} }
+  clearSelection(); setBulkMode(false); load();
+  toast.success(`${selectedCount} data dihapus`);
+}
+
+// JSX:
+<FilterBar query={query} onQueryChange={setQuery} searchPlaceholder="Cari..." showBulkSelectButton onToggleBulkSelect={() => setBulkMode(!bulkMode)} bulkSelectMode={bulkMode} />
+{bulkMode && selectedCount > 0 && (
+  <BulkActionBar selectedCount={selectedCount} actions={[{ label: "Hapus Terpilih", icon: Trash2, onClick: handleBulkDelete, variant: "destructive" }]} onClearSelection={clearSelection} />
+)}
+<table>
+  <thead><tr>{bulkMode && <th><SelectCheckbox checked={isAllSelected(paginatedItems)} onChange={() => toggleAll(paginatedItems)} /></th>}...</tr></thead>
+  <tbody>{paginatedItems.map(item => <tr key={item.id}>{bulkMode && <td><SelectCheckbox checked={isSelected(item)} onChange={() => toggle(item)} /></td>}...</tr>)}</tbody>
+</table>
+<Pagination {...pageInfo} onPageChange={goToPage} onNext={nextPage} onPrev={prevPage} />
+```
+
+Stage Summary:
+- ALL list-based modules now have filter + pagination (15/page) + bulk-select with bulk delete
+- 13 modules updated: CRM, Invoice, Surat, Tasks, Content, Articles, Events, Documents, Team, Payroll, Finance, Absensi, Biodata
+- Reusable hooks + components created for future pages (just import and use)
+- Verified with Agent Browser (0 errors):
+  * CRM: 8 clients, Pilih Beberapa + bulk delete works
+  * Articles: 60 articles → "Menampilkan 1-15 dari 60 data", pages 1-2-3-4, page 2 shows 16-30
+  * Team: 6 users with pagination
+  * Payroll: 6 slips with pagination
+  * Finance ArusKas: 12 transactions with pagination
+  * Absensi: 18 records → "Menampilkan 1-15 dari 18 data", pages 1-2
+  * Biodata: 2 employees with pagination
+  * Documents: 9 docs with pagination
+  * Surat: 1 surat with pagination
+  * Tugas Konten: 40 ideas → "Menampilkan 1-15 dari 40 data", pages 1-2-3
+- Lint clean (0 errors)

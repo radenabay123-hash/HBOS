@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
   Banknote, PiggyBank, Landmark, Smartphone, Tag, Plus, Edit3, Trash2,
   Building2, Package, Calendar, Calculator, Sparkles, ArrowUpRight, ArrowDownRight,
   AlertTriangle, QrCode, MapPin, User, Wrench, BarChart3, PieChart, FileSpreadsheet, ChevronRight, Printer, Camera,
+  Search, CheckSquare, X,
 } from "lucide-react";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard } from "@/components/shared/charts";
 import { api } from "@/lib/api-client";
@@ -28,6 +29,11 @@ import { exportToExcel, exportToPDF, exportReportPDF } from "@/lib/export-utils"
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { SafeUser } from "@/lib/auth";
+import { usePagination } from "@/lib/hooks/use-pagination";
+import { useBulkSelect } from "@/lib/hooks/use-bulk-select";
+import { Pagination } from "@/components/shared/pagination";
+import { SelectCheckbox } from "@/components/shared/filter-bar";
+import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -306,6 +312,8 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   const [filterAccount, setFilterAccount] = useState("all");
   const [categories, setCategories] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [bulkMode, setBulkMode] = useState(false);
   const [form, setForm] = useState({
     type: "PEMASUKAN", amount: "", description: "", category: "", accountType: "BANK", accountName: "",
     date: new Date().toISOString().slice(0, 10), vendorName: "", isPaid: true, dueDate: "", attachmentUrl: "",
@@ -366,9 +374,60 @@ function ArusKas({ year, month }: { year: number; month: number }) {
     toast.success("Excel diunduh");
   }
 
-  const filtered = txns.filter((t) => (filterType === "all" || t.type === filterType) && (filterAccount === "all" || t.accountType === filterAccount));
+  // Client-side search + existing type/account filter
+  const filtered = useMemo(() => {
+    let r = txns.filter((t) => (filterType === "all" || t.type === filterType) && (filterAccount === "all" || t.accountType === filterAccount));
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      r = r.filter((t) =>
+        (t.description || "").toLowerCase().includes(q) ||
+        (t.category || "").toLowerCase().includes(q) ||
+        (t.vendorName || "").toLowerCase().includes(q)
+      );
+    }
+    return r;
+  }, [txns, filterType, filterAccount, search]);
   const totalIn = filtered.filter((t) => t.type === "PEMASUKAN" && t.isPaid).reduce((s, t) => s + t.amount, 0);
   const totalOut = filtered.filter((t) => t.type === "PENGELUARAN" && t.isPaid).reduce((s, t) => s + t.amount, 0);
+
+  // Pagination (max 15 per page)
+  const {
+    paginatedItems, goToPage, nextPage, prevPage, pageInfo, resetPage,
+  } = usePagination(filtered, { pageSize: 15 });
+
+  // Bulk selection
+  const {
+    selectedArray, selectedCount, isSelected, toggle, toggleAll,
+    clearSelection, resetSelection, isAllSelected,
+  } = useBulkSelect<any>({ getId: (t) => t.id as string });
+
+  // Reset selection + page when client-side filters change
+  useEffect(() => {
+    resetSelection();
+    resetPage();
+  }, [search, filterType, filterAccount, resetSelection, resetPage]);
+
+  async function handleBulkDelete() {
+    if (!confirm(`Hapus ${selectedCount} transaksi terpilih?`)) return;
+    let success = 0;
+    let failed = 0;
+    for (const id of selectedArray) {
+      try {
+        await api(`/api/finance/${id}`, { method: "DELETE" });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    clearSelection();
+    setBulkMode(false);
+    await load();
+    if (failed === 0) {
+      toast.success(`${success} transaksi berhasil dihapus`);
+    } else {
+      toast.error(`${success} dihapus, ${failed} gagal`);
+    }
+  }
 
   // Filter categories by transaction type
   const formCategories = categories.filter((c) => c.type === (form.type === "PEMASUKAN" ? "PEMASUKAN" : "PENGELUARAN"));
@@ -404,6 +463,18 @@ function ArusKas({ year, month }: { year: number; month: number }) {
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={handleExportExcel} className="bg-white"><FileSpreadsheet className="w-4 h-4 mr-1" /> Excel</Button>
+        <Button
+          variant={bulkMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => {
+            setBulkMode(!bulkMode);
+            if (bulkMode) clearSelection();
+          }}
+          className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+        >
+          <CheckSquare className="w-3.5 h-3.5" />
+          {bulkMode ? "Selesai Pilih" : "Pilih Beberapa"}
+        </Button>
         <Button size="sm" onClick={() => { setForm({ ...form, type: "PEMASUKAN" }); setDialog({ open: true, txn: null }); }} className="bg-blue-600 hover:bg-blue-700 ml-auto">
           <Plus className="w-4 h-4 mr-1" /> Input Uang Masuk
         </Button>
@@ -412,49 +483,129 @@ function ArusKas({ year, month }: { year: number; month: number }) {
         </Button>
       </div>
 
+      {/* Search row */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari deskripsi, kategori, atau vendor..."
+            className="pl-9 h-9 bg-white text-sm"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bulk Action Bar */}
+      {bulkMode && selectedCount > 0 && (
+        <BulkActionBar
+          selectedCount={selectedCount}
+          actions={[
+            {
+              label: "Hapus Terpilih",
+              icon: Trash2,
+              onClick: handleBulkDelete,
+              variant: "destructive",
+              confirmText: `Hapus ${selectedCount} transaksi terpilih? Tindakan ini tidak dapat dibatalkan.`,
+            },
+          ]}
+          onClearSelection={clearSelection}
+        />
+      )}
+
       {/* Table */}
       <Card className="shadow-sm">
         <CardContent className="p-0">
-          <div className="max-h-[500px] overflow-y-auto">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-slate-50 z-10">
-                <tr className="border-b text-left text-xs text-slate-500">
-                  <th className="py-3 px-4 font-medium">Tanggal</th>
-                  <th className="py-3 px-3 font-medium">Tipe</th>
-                  <th className="py-3 px-3 font-medium">Deskripsi</th>
-                  <th className="py-3 px-3 font-medium">Kategori</th>
-                  <th className="py-3 px-3 font-medium">Akun</th>
-                  <th className="py-3 px-3 font-medium text-right">Jumlah</th>
-                  <th className="py-3 px-3 font-medium text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((t) => (
-                  <tr key={t.id} className="border-b border-slate-50 hover:bg-blue-50/30">
-                    <td className="py-2.5 px-4 text-slate-600 text-xs">{formatDate(t.date)}</td>
-                    <td className="py-2.5 px-3">
-                      <Badge variant="outline" className={cn("text-[10px]", t.type === "PEMASUKAN" ? "bg-green-50 text-green-700 border-green-200" : "bg-rose-50 text-rose-700 border-rose-200")}>
-                        {t.type === "PEMASUKAN" ? "Masuk" : "Keluar"}
-                      </Badge>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-900 text-xs max-w-[200px] truncate">{t.description || t.vendorName || "-"}</td>
-                    <td className="py-2.5 px-3 text-slate-600 text-xs">{t.category || "-"}</td>
-                    <td className="py-2.5 px-3 text-slate-600 text-xs">{t.accountType}</td>
-                    <td className={cn("py-2.5 px-3 text-right font-semibold text-xs", t.type === "PEMASUKAN" ? "text-green-600" : "text-rose-600")}>
-                      {t.type === "PEMASUKAN" ? "+" : "-"}{formatCurrency(t.amount)}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex gap-0.5 justify-center">
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setForm({ type: t.type, amount: String(t.amount), description: t.description || "", category: t.category || "", accountType: t.accountType, accountName: t.accountName || "", date: new Date(t.date).toISOString().slice(0, 10), vendorName: t.vendorName || "", isPaid: t.isPaid, dueDate: t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : "", attachmentUrl: t.attachmentUrl || "" }); setDialog({ open: true, txn: t }); }}><Edit3 className="w-3 h-3" /></Button>
-                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" onClick={() => handleDelete(t.id)}><Trash2 className="w-3 h-3" /></Button>
-                      </div>
-                    </td>
+          {txns.length === 0 ? (
+            <p className="text-center text-slate-400 py-8 text-sm">Belum ada transaksi</p>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">Tidak ada transaksi yang cocok</p>
+              <p className="text-xs text-slate-400 mt-1">Coba ubah kata kunci atau filter</p>
+            </div>
+          ) : (
+            <>
+            <div className="max-h-[500px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-slate-50 z-10">
+                  <tr className="border-b text-left text-xs text-slate-500">
+                    {bulkMode && (
+                      <th className="py-3 px-3 w-10">
+                        <SelectCheckbox
+                          checked={isAllSelected(paginatedItems)}
+                          onChange={() => toggleAll(paginatedItems)}
+                        />
+                      </th>
+                    )}
+                    <th className="py-3 px-4 font-medium">Tanggal</th>
+                    <th className="py-3 px-3 font-medium">Tipe</th>
+                    <th className="py-3 px-3 font-medium">Deskripsi</th>
+                    <th className="py-3 px-3 font-medium">Kategori</th>
+                    <th className="py-3 px-3 font-medium">Akun</th>
+                    <th className="py-3 px-3 font-medium text-right">Jumlah</th>
+                    {!bulkMode && <th className="py-3 px-3 font-medium text-center">Aksi</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && <p className="text-center text-slate-400 py-8 text-sm">Belum ada transaksi</p>}
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedItems.map((t) => (
+                    <tr key={t.id} className="border-b border-slate-50 hover:bg-blue-50/30">
+                      {bulkMode && (
+                        <td className="py-2.5 px-3">
+                          <SelectCheckbox
+                            checked={isSelected(t)}
+                            onChange={() => toggle(t)}
+                          />
+                        </td>
+                      )}
+                      <td className="py-2.5 px-4 text-slate-600 text-xs">{formatDate(t.date)}</td>
+                      <td className="py-2.5 px-3">
+                        <Badge variant="outline" className={cn("text-[10px]", t.type === "PEMASUKAN" ? "bg-green-50 text-green-700 border-green-200" : "bg-rose-50 text-rose-700 border-rose-200")}>
+                          {t.type === "PEMASUKAN" ? "Masuk" : "Keluar"}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-900 text-xs max-w-[200px] truncate">{t.description || t.vendorName || "-"}</td>
+                      <td className="py-2.5 px-3 text-slate-600 text-xs">{t.category || "-"}</td>
+                      <td className="py-2.5 px-3 text-slate-600 text-xs">{t.accountType}</td>
+                      <td className={cn("py-2.5 px-3 text-right font-semibold text-xs", t.type === "PEMASUKAN" ? "text-green-600" : "text-rose-600")}>
+                        {t.type === "PEMASUKAN" ? "+" : "-"}{formatCurrency(t.amount)}
+                      </td>
+                      {!bulkMode && (
+                        <td className="py-2.5 px-3">
+                          <div className="flex gap-0.5 justify-center">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setForm({ type: t.type, amount: String(t.amount), description: t.description || "", category: t.category || "", accountType: t.accountType, accountName: t.accountName || "", date: new Date(t.date).toISOString().slice(0, 10), vendorName: t.vendorName || "", isPaid: t.isPaid, dueDate: t.dueDate ? new Date(t.dueDate).toISOString().slice(0, 10) : "", attachmentUrl: t.attachmentUrl || "" }); setDialog({ open: true, txn: t }); }}><Edit3 className="w-3 h-3" /></Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-rose-500" onClick={() => handleDelete(t.id)}><Trash2 className="w-3 h-3" /></Button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Pagination
+              currentPage={pageInfo.currentPage}
+              totalPages={pageInfo.totalPages}
+              totalItems={pageInfo.totalItems}
+              startIndex={pageInfo.startIndex}
+              endIndex={pageInfo.endIndex}
+              hasNext={pageInfo.hasNext}
+              hasPrev={pageInfo.hasPrev}
+              onPageChange={goToPage}
+              onNext={nextPage}
+              onPrev={prevPage}
+            />
+            </>
+          )}
         </CardContent>
       </Card>
 

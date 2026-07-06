@@ -1,0 +1,439 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Input } from "@/components/ui/input";
+     7→import { Label } from "@/components/ui/label";
+     8→import { Textarea } from "@/components/ui/textarea";
+     9→import { Badge } from "@/components/ui/badge";
+    10→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+    11→import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    12→import { Separator } from "@/components/ui/separator";
+    13→import { Switch } from "@/components/ui/switch";
+    14→import {
+    15→  User, Save, RefreshCw, CheckCircle2, AlertCircle, FileText, Wallet,
+    16→  Calendar, MapPin, Phone, GraduationCap, Building2, Hash, Banknote,
+    17→  Users, Search, Edit3, Lock,
+    18→} from "lucide-react";
+    19→import { api } from "@/lib/api-client";
+    20→import { ROLES, ROLE_LABELS, formatCurrency, formatDate } from "@/lib/constants";
+    21→import { toast } from "sonner";
+    22→import { cn } from "@/lib/utils";
+    23→import type { SafeUser } from "@/lib/auth";
+    24→
+    25→const PTKP_OPTIONS = [
+    26→  { value: "TK0", label: "TK0 - Tidak Kawin, 0 Tanggungan" },
+    27→  { value: "TK1", label: "TK1 - Tidak Kawin, 1 Tanggungan" },
+    28→  { value: "TK2", label: "TK2 - Tidak Kawin, 2 Tanggungan" },
+    29→  { value: "TK3", label: "TK3 - Tidak Kawin, 3 Tanggungan" },
+    30→  { value: "K0", label: "K0 - Kawin, 0 Tanggungan" },
+    31→  { value: "K1", label: "K1 - Kawin, 1 Tanggungan" },
+    32→  { value: "K2", label: "K2 - Kawin, 2 Tanggungan" },
+    33→  { value: "K3", label: "K3 - Kawin, 3 Tanggungan" },
+    34→];
+    35→
+    36→export function BiodataModule({ user }: { user: SafeUser }) {
+    37→  const isOwner = user.role === ROLES.OWNER;
+    38→  const [view, setView] = useState<"my" | "all">(isOwner ? "all" : "my");
+    39→  const [profile, setProfile] = useState<any>(null);
+    40→  const [allProfiles, setAllProfiles] = useState<any[]>([]);
+    41→  const [loading, setLoading] = useState(true);
+    42→  const [saving, setSaving] = useState(false);
+    43→  const [search, setSearch] = useState("");
+    44→  const [editSalaryUser, setEditSalaryUser] = useState<string | null>(null);
+    45→  const [salaryForm, setSalaryForm] = useState({ gajiPokok: "", tunjanganMakan: "", tunjanganTransport: "", statusKaryawan: "", tanggalMasuk: "" });
+    46→
+    47→  const [form, setForm] = useState<Record<string, any>>({});
+    48→
+    49→  const loadOwn = useCallback(async () => {
+    50→    setLoading(true);
+    51→    try {
+    52→      const d = await api<{ profile: any; user: any }>("/api/employee-profile");
+    53→      setProfile(d.profile);
+    54→      setForm(d.profile || {});
+    55→    } catch (e: any) { toast.error(e.message); }
+    56→    finally { setLoading(false); }
+    57→  }, []);
+    58→
+    59→  const loadAll = useCallback(async () => {
+    60→    setLoading(true);
+    61→    try {
+    62→      const d = await api<{ profiles: any[] }>("/api/employee-profile/all");
+    63→      setAllProfiles(d.profiles || []);
+    64→    } catch (e: any) { toast.error(e.message); }
+    65→    finally { setLoading(false); }
+    66→  }, []);
+    67→
+    68→  useEffect(() => {
+    69→    if (view === "my") loadOwn();
+    70→    else loadAll();
+    71→  }, [view, loadOwn, loadAll]);
+    72→
+    73→  async function handleSave() {
+    74→    setSaving(true);
+    75→    try {
+    76→      await api("/api/employee-profile", { method: "PUT", body: JSON.stringify(form) });
+    77→      toast.success("Biodata tersimpan");
+    78→      loadOwn();
+    79→    } catch (e: any) { toast.error(e.message); }
+    80→    finally { setSaving(false); }
+    81→  }
+    82→
+    83→  async function handleSaveSalary(userId: string) {
+    84→    setSaving(true);
+    85→    try {
+    86→      await api("/api/employee-profile/all", { method: "PUT", body: JSON.stringify({ userId, ...salaryForm }) });
+    87→      toast.success("Data gaji & status diperbarui");
+    88→      setEditSalaryUser(null);
+    89→      loadAll();
+    90→    } catch (e: any) { toast.error(e.message); }
+    91→    finally { setSaving(false); }
+    92→  }
+    93→
+    94→  function openEditSalary(p: any) {
+    95→    setSalaryForm({
+    96→      gajiPokok: p.gajiPokok ? String(p.gajiPokok) : "",
+    97→      tunjanganMakan: p.tunjanganMakan ? String(p.tunjanganMakan) : "",
+    98→      tunjanganTransport: p.tunjanganTransport ? String(p.tunjanganTransport) : "",
+    99→      statusKaryawan: p.statusKaryawan || "",
+   100→      tanggalMasuk: p.tanggalMasuk ? new Date(p.tanggalMasuk).toISOString().slice(0, 10) : "",
+   101→    });
+   102→    setEditSalaryUser(p.userId);
+   103→  }
+   104→
+   105→  function updateForm(key: string, value: any) {
+   106→    setForm({ ...form, [key]: value });
+   107→  }
+   108→
+   109→  if (loading) {
+   110→    return <div className="flex items-center justify-center py-20"><RefreshCw className="w-6 h-6 animate-spin text-blue-600" /></div>;
+   111→  }
+   112→
+   113→  // ===== OWNER: VIEW ALL =====
+   114→  if (isOwner && view === "all") {
+   115→    const filtered = allProfiles.filter((p) => {
+   116→      const q = search.toLowerCase();
+   117→      return !q || p.user?.name?.toLowerCase().includes(q) || p.npwp?.includes(q) || p.nik?.includes(q);
+   118→    });
+   119→
+   120→    return (
+   121→      <div className="space-y-5">
+   122→        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   123→          <div>
+   124→            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><Users className="w-6 h-6 text-blue-600" /> Biodata Karyawan</h1>
+   125→            <p className="text-sm text-slate-500 mt-1">Pantau biodata, NPWP, dan data pajak seluruh karyawan</p>
+   126→          </div>
+   127→          <div className="flex gap-2">
+   128→            <Button variant="outline" size="sm" onClick={() => setView("my")} className="bg-white"><User className="w-4 h-4 mr-1" /> Biodata Saya</Button>
+   129→          </div>
+   130→        </div>
+   131→
+   132→        {/* Search */}
+   133→        <div className="flex items-center gap-2">
+   134→          <div className="relative flex-1 max-w-xs">
+   135→            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+   136→            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama, NPWP, NIK..." className="pl-9 bg-white" />
+   137→          </div>
+   138→        </div>
+   139→
+   140→        {/* Summary */}
+   141→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+   142→          <SummaryCard label="Total Karyawan" value={String(allProfiles.length)} icon={Users} color="blue" />
+   143→          <SummaryCard label="Biodata Lengkap" value={String(allProfiles.filter((p) => p.isComplete).length)} icon={CheckCircle2} color="green" />
+   144→          <SummaryCard label="Belum Lengkap" value={String(allProfiles.filter((p) => !p.isComplete).length)} icon={AlertCircle} color="amber" />
+   145→          <SummaryCard label="Punya NPWP" value={String(allProfiles.filter((p) => p.npwp).length)} icon={Hash} color="violet" />
+   146→        </div>
+   147→
+   148→        {/* Profile cards */}
+   149→        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+   150→          {filtered.map((p) => (
+   151→            <Card key={p.id} className="shadow-sm hover:shadow-md transition-shadow">
+   152→              <CardContent className="p-4">
+   153→                <div className="flex items-start justify-between mb-3">
+   154→                  <div className="flex items-center gap-3">
+   155→                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+   156→                      {p.user?.name?.split(" ").map((n: string) => n[0]).slice(0, 2).join("")}
+   157→                    </div>
+   158→                    <div>
+   159→                      <p className="font-semibold text-slate-900 text-sm">{p.user?.name}</p>
+   160→                      <p className="text-xs text-slate-500">{ROLE_LABELS[p.user?.role] || p.user?.role}</p>
+   161→                    </div>
+   162→                  </div>
+   163→                  {p.isComplete ? (
+   164→                    <Badge className="bg-green-100 text-green-700 border-green-200 text-[10px]"><CheckCircle2 className="w-3 h-3 mr-0.5" /> Lengkap</Badge>
+   165→                  ) : (
+   166→                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]"><AlertCircle className="w-3 h-3 mr-0.5" /> Belum Lengkap</Badge>
+   167→                  )}
+   168→                </div>
+   169→
+   170→                <div className="grid grid-cols-2 gap-2 text-xs">
+   171→                  <InfoRow label="NIK" value={p.nik || "-"} />
+   172→                  <InfoRow label="NPWP" value={p.npwp || "-"} />
+   173→                  <InfoRow label="PTKP" value={p.ptkpStatus || "-"} />
+   174→                  <InfoRow label="Bank" value={p.bankName ? `${p.bankName} (${p.bankAccount})` : "-"} />
+   175→                  <InfoRow label="Gaji Pokok" value={p.gajiPokok ? formatCurrency(p.gajiPokok) : "-"} />
+   176→                  <InfoRow label="Status" value={p.statusKaryawan || "-"} />
+   177→                </div>
+   178→
+   179→                {p.npwp && (
+   180→                  <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5 text-[10px] text-blue-600">
+   181→                    <FileText className="w-3 h-3" />
+   182→                    <span>NPWP terhubung ke sistem pajak & payroll PPh 21</span>
+   183→                  </div>
+   184→                )}
+   185→
+   186→                <Button size="sm" variant="outline" className="w-full mt-3 text-xs bg-white" onClick={() => openEditSalary(p)}>
+   187→                  <Edit3 className="w-3 h-3 mr-1" /> Edit Gaji & Status
+   188→                </Button>
+   189→
+   190→                {/* Edit salary dialog inline */}
+   191→                {editSalaryUser === p.userId && (
+   192→                  <div className="mt-3 p-3 border border-blue-200 rounded-lg bg-blue-50/30 space-y-2">
+   193→                    <p className="text-xs font-semibold text-blue-900">Edit Gaji & Status: {p.user?.name}</p>
+   194→                    <div className="grid grid-cols-2 gap-2">
+   195→                      <div className="space-y-1"><Label className="text-[10px]">Gaji Pokok</Label><Input type="number" value={salaryForm.gajiPokok} onChange={(e) => setSalaryForm({ ...salaryForm, gajiPokok: e.target.value })} className="bg-white h-8 text-xs" /></div>
+   196→                      <div className="space-y-1"><Label className="text-[10px]">Tunjangan Makan</Label><Input type="number" value={salaryForm.tunjanganMakan} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganMakan: e.target.value })} className="bg-white h-8 text-xs" /></div>
+   197→                      <div className="space-y-1"><Label className="text-[10px]">Tunjangan Transport</Label><Input type="number" value={salaryForm.tunjanganTransport} onChange={(e) => setSalaryForm({ ...salaryForm, tunjanganTransport: e.target.value })} className="bg-white h-8 text-xs" /></div>
+   198→                      <div className="space-y-1"><Label className="text-[10px]">Status Karyawan</Label>
+   199→                        <Select value={salaryForm.statusKaryawan} onValueChange={(v) => setSalaryForm({ ...salaryForm, statusKaryawan: v })}>
+   200→                          <SelectTrigger className="bg-white h-8 text-xs"><SelectValue /></SelectTrigger>
+   201→                          <SelectContent><SelectItem value="TETAP">Tetap</SelectItem><SelectItem value="KONTRAK">Kontrak</SelectItem><SelectItem value="PROBATION">Probation</SelectItem><SelectItem value="MAGANG">Magang</SelectItem></SelectContent>
+   202→                        </Select>
+   203→                      </div>
+   204→                    </div>
+   205→                    <div className="flex gap-2">
+   206→                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs flex-1" onClick={() => handleSaveSalary(p.userId)} disabled={saving}>Simpan</Button>
+   207→                      <Button size="sm" variant="outline" className="text-xs" onClick={() => setEditSalaryUser(null)}>Batal</Button>
+   208→                    </div>
+   209→                  </div>
+   210→                )}
+   211→              </CardContent>
+   212→            </Card>
+   213→          ))}
+   214→        </div>
+   215→      </div>
+   216→    );
+   217→  }
+   218→
+   219→  // ===== TEAM: OWN BIODATA =====
+   220→  const completeness = profile?.isComplete;
+   221→  const requiredFields = ["nik", "tempatLahir", "tanggalLahir", "jenisKelamin", "alamatKtp", "npwp", "ptkpStatus", "bankName", "bankAccount", "bankAccountName"];
+   222→  const filledCount = requiredFields.filter((f) => form[f]).length;
+   223→
+   224→  return (
+   225→    <div className="space-y-5">
+   226→      {/* Header */}
+   227→      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+   228→        <div>
+   229→          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2"><User className="w-6 h-6 text-blue-600" /> Biodata Saya</h1>
+   230→          <p className="text-sm text-slate-500 mt-1">Lengkapi data Anda. NPWP & PTKP terhubung otomatis ke sistem pajak & payroll.</p>
+   231→        </div>
+   232→        {isOwner && (
+   233→          <Button variant="outline" size="sm" onClick={() => setView("all")} className="bg-white"><Users className="w-4 h-4 mr-1" /> Lihat Semua Karyawan</Button>
+   234→        )}
+   235→      </div>
+   236→
+   237→      {/* Completion status */}
+   238→      <Card className={cn("border-2", completeness ? "border-green-300 bg-green-50/30" : "border-amber-300 bg-amber-50/30")}>
+   239→        <CardContent className="p-4 flex items-center gap-3">
+   240→          {completeness ? <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0" /> : <AlertCircle className="w-6 h-6 text-amber-600 shrink-0" />}
+   241→          <div className="flex-1">
+   242→            <p className="text-sm font-semibold text-slate-900">{completeness ? "Biodata Lengkap!" : "Biodata Belum Lengkap"}</p>
+   243→            <p className="text-xs text-slate-500">{filledCount}/{requiredFields.length} field wajib terisi. {completeness ? "Data Anda siap untuk payroll & pelaporan pajak." : "Lengkapi semua field wajib untuk mengaktifkan integrasi pajak."}</p>
+   244→          </div>
+   245→          <div className="w-24">
+   246→            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+   247→              <div className={cn("h-full rounded-full transition-all", completeness ? "bg-green-500" : "bg-amber-500")} style={{ width: `${(filledCount / requiredFields.length) * 100}%` }} />
+   248→            </div>
+   249→            <p className="text-[10px] text-center text-slate-500 mt-1">{Math.round((filledCount / requiredFields.length) * 100)}%</p>
+   250→          </div>
+   251→        </CardContent>
+   252→      </Card>
+   253→
+   254→      <Tabs defaultValue="personal">
+   255→        <TabsList className="flex-wrap h-auto gap-1">
+   256→          <TabsTrigger value="personal" className="text-xs"><User className="w-3.5 h-3.5 mr-1" /> Data Pribadi</TabsTrigger>
+   257→          <TabsTrigger value="address" className="text-xs"><MapPin className="w-3.5 h-3.5 mr-1" /> Alamat</TabsTrigger>
+   258→          <TabsTrigger value="tax" className="text-xs"><Hash className="w-3.5 h-3.5 mr-1" /> NPWP & Pajak</TabsTrigger>
+   259→          <TabsTrigger value="bank" className="text-xs"><Banknote className="w-3.5 h-3.5 mr-1" /> Bank</TabsTrigger>
+   260→          <TabsTrigger value="education" className="text-xs"><GraduationCap className="w-3.5 h-3.5 mr-1" /> Pendidikan</TabsTrigger>
+   261→        </TabsList>
+   262→
+   263→        {/* Data Pribadi */}
+   264→        <TabsContent value="personal" className="mt-4">
+   265→          <Card className="shadow-sm"><CardContent className="p-5 space-y-3">
+   266→            <div className="grid grid-cols-2 gap-3">
+   267→              <Field label="NIK (16 digit)" required value={form.nik} onChange={(v) => updateForm("nik", v)} placeholder="1234567890123456" />
+   268→              <Field label="Tempat Lahir" required value={form.tempatLahir} onChange={(v) => updateForm("tempatLahir", v)} placeholder="Jombang" />
+   269→              <DateField label="Tanggal Lahir" required value={form.tanggalLahir ? new Date(form.tanggalLahir).toISOString().slice(0, 10) : ""} onChange={(v) => updateForm("tanggalLahir", v)} />
+   270→              <SelectField label="Jenis Kelamin" required value={form.jenisKelamin} onChange={(v) => updateForm("jenisKelamin", v)} options={[{ value: "LAKI_LAKI", label: "Laki-laki" }, { value: "PEREMPUAN", label: "Perempuan" }]} />
+   271→              <SelectField label="Golongan Darah" value={form.golonganDarah} onChange={(v) => updateForm("golonganDarah", v)} options={[{ value: "A", label: "A" }, { value: "B", label: "B" }, { value: "AB", label: "AB" }, { value: "O", label: "O" }]} />
+   272→              <SelectField label="Agama" value={form.agama} onChange={(v) => updateForm("agama", v)} options={[{ value: "Islam", label: "Islam" }, { value: "Kristen", label: "Kristen" }, { value: "Katolik", label: "Katolik" }, { value: "Hindu", label: "Hindu" }, { value: "Buddha", label: "Buddha" }, { value: "Konghucu", label: "Konghucu" }]} />
+   273→              <SelectField label="Status Pernikahan" value={form.statusPernikahan} onChange={(v) => updateForm("statusPernikahan", v)} options={[{ value: "BELUM_KAWIN", label: "Belum Kawin" }, { value: "KAWIN", label: "Kawin" }, { value: "CERAI", label: "Cerai" }]} />
+   274→              <Field label="Kewarganegaraan" value={form.kewarganegaraan || "WNI"} onChange={(v) => updateForm("kewarganegaraan", v)} />
+   275→            </div>
+   276→            <Separator className="my-2" />
+   277→            <p className="text-xs font-semibold text-slate-500">Kontak Darurat</p>
+   278→            <div className="grid grid-cols-3 gap-3">
+   279→              <Field label="Nama Kontak Darurat" value={form.kontakDaruratNama} onChange={(v) => updateForm("kontakDaruratNama", v)} placeholder="Nama keluarga" />
+   280→              <Field label="Hubungan" value={form.kontakDaruratHubungan} onChange={(v) => updateForm("kontakDaruratHubungan", v)} placeholder="Suami/Istri/Anak" />
+   281→              <Field label="No. HP" value={form.kontakDaruratPhone} onChange={(v) => updateForm("kontakDaruratPhone", v)} placeholder="0812xxxx" />
+   282→            </div>
+   283→          </CardContent></Card>
+   284→        </TabsContent>
+   285→
+   286→        {/* Alamat */}
+   287→        <TabsContent value="address" className="mt-4">
+   288→          <Card className="shadow-sm"><CardContent className="p-5 space-y-3">
+   289→            <div className="space-y-1.5"><Label className="text-xs font-semibold">Alamat KTP <span className="text-rose-500">*</span></Label><Textarea value={form.alamatKtp || ""} onChange={(e) => updateForm("alamatKtp", e.target.value)} className="bg-white resize-none" rows={2} placeholder="Alamat sesuai KTP" /></div>
+   290→            <div className="space-y-1.5"><Label className="text-xs font-semibold">Alamat Domisili</Label><Textarea value={form.alamatDomisili || ""} onChange={(e) => updateForm("alamatDomisili", e.target.value)} className="bg-white resize-none" rows={2} placeholder="Alamat tempat tinggal saat ini" /></div>
+   291→            <div className="grid grid-cols-3 gap-3">
+   292→              <Field label="Provinsi" value={form.provinsi} onChange={(v) => updateForm("provinsi", v)} placeholder="Jawa Timur" />
+   293→              <Field label="Kota" value={form.kota} onChange={(v) => updateForm("kota", v)} placeholder="Jombang" />
+   294→              <Field label="Kode Pos" value={form.kodePos} onChange={(v) => updateForm("kodePos", v)} placeholder="61411" />
+   295→            </div>
+   296→          </CardContent></Card>
+   297→        </TabsContent>
+   298→
+   299→        {/* NPWP & Pajak */}
+   300→        <TabsContent value="tax" className="mt-4 space-y-4">
+   301→          <Card className="shadow-sm border-blue-200"><CardContent className="p-5 space-y-3">
+   302→            <div className="flex items-center gap-2 mb-2"><Hash className="w-5 h-5 text-blue-600" /><p className="text-sm font-semibold text-blue-900">Data NPWP & Pajak</p></div>
+   303→            <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-700 flex items-start gap-2">
+   304→              <FileText className="w-4 h-4 shrink-0 mt-0.5" />
+   305→              <p>NPWP & PTKP Anda akan <strong>otomatis terhubung</strong> ke sistem Payroll (perhitungan PPh 21), Kalkulator Pajak, dan pelaporan SPT Badan. Pastikan data benar.</p>
+   306→            </div>
+   307→            <Field label="NPWP (15 digit)" required value={form.npwp} onChange={(v) => updateForm("npwp", v)} placeholder="01.234.567.8-091.000" />
+   308→            <SelectField label="Status PTKP" required value={form.ptkpStatus} onChange={(v) => updateForm("ptkpStatus", v)} options={PTKP_OPTIONS} />
+   309→            <div className="grid grid-cols-1 gap-3">
+   310→              <Field label="Jumlah Tanggungan" value={String(form.jumlahTanggungan || 0)} onChange={(v) => updateForm("jumlahTanggungan", Number(v))} placeholder="0" type="number" />
+   311→            </div>
+   312→            <Separator className="my-2" />
+   313→            <p className="text-xs font-semibold text-slate-500">BPJS</p>
+   314→            <div className="grid grid-cols-3 gap-3">
+   315→              <Field label="BPJS Kesehatan" value={form.noBPJSKesehatan} onChange={(v) => updateForm("noBPJSKesehatan", v)} placeholder="0001xxxx" />
+   316→              <Field label="BPJS Tenaga Kerja" value={form.noBPJSTenagaKerja} onChange={(v) => updateForm("noBPJSTenagaKerja", v)} placeholder="0001xxxx" />
+   317→              <Field label="BPJS Pensiun" value={form.noBPJSPensiun} onChange={(v) => updateForm("noBPJSPensiun", v)} placeholder="0001xxxx" />
+   318→            </div>
+   319→          </CardContent></Card>
+   320→
+   321→          {/* Integration info */}
+   322→          {form.npwp && form.ptkpStatus && (
+   323→            <Card className="shadow-sm border-green-200 bg-green-50/30">
+   324→              <CardContent className="p-4">
+   325→                <div className="flex items-center gap-2 mb-2"><CheckCircle2 className="w-5 h-5 text-green-600" /><p className="text-sm font-semibold text-green-800">Integrasi Pajak Aktif</p></div>
+   326→                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+   327→                  <div className="bg-white rounded-lg p-2 border border-green-100"><p className="text-slate-400">Payroll PPh 21</p><p className="font-semibold text-green-700">✓ Terhubung</p><p className="text-[10px] text-slate-500">PTKP: {form.ptkpStatus}</p></div>
+   328→                  <div className="bg-white rounded-lg p-2 border border-green-100"><p className="text-slate-400">Kalkulator Pajak</p><p className="font-semibold text-green-700">✓ Terhubung</p><p className="text-[10px] text-slate-500">NPWP: {form.npwp?.slice(0, 8)}...</p></div>
+   329→                  <div className="bg-white rounded-lg p-2 border border-green-100"><p className="text-slate-400">Slip Gaji</p><p className="font-semibold text-green-700">✓ Terhubung</p><p className="text-[10px] text-slate-500">Auto potong PPh 21</p></div>
+   330→                </div>
+   331→              </CardContent>
+   332→            </Card>
+   333→          )}
+   334→        </TabsContent>
+   335→
+   336→        {/* Bank */}
+   337→        <TabsContent value="bank" className="mt-4">
+   338→          <Card className="shadow-sm"><CardContent className="p-5 space-y-3">
+   339→            <div className="flex items-center gap-2 mb-2"><Banknote className="w-5 h-5 text-blue-600" /><p className="text-sm font-semibold text-blue-900">Rekening Bank untuk Pembayaran Gaji</p></div>
+   340→            <div className="grid grid-cols-3 gap-3">
+   341→              <Field label="Nama Bank" required value={form.bankName} onChange={(v) => updateForm("bankName", v)} placeholder="Bank Mandiri" />
+   342→              <Field label="Nomor Rekening" required value={form.bankAccount} onChange={(v) => updateForm("bankAccount", v)} placeholder="1234567890" />
+   343→              <Field label="Atas Nama" required value={form.bankAccountName} onChange={(v) => updateForm("bankAccountName", v)} placeholder="Nama Sesuai Buku" />
+   344→            </div>
+   345→          </CardContent></Card>
+   346→        </TabsContent>
+   347→
+   348→        {/* Pendidikan */}
+   349→        <TabsContent value="education" className="mt-4">
+   350→          <Card className="shadow-sm"><CardContent className="p-5 space-y-3">
+   351→            <div className="grid grid-cols-2 gap-3">
+   352→              <SelectField label="Pendidikan Terakhir" value={form.pendidikanTerakhir} onChange={(v) => updateForm("pendidikanTerakhir", v)} options={[{ value: "SD", label: "SD" }, { value: "SMP", label: "SMP" }, { value: "SMA/SMK", label: "SMA/SMK" }, { value: "D3", label: "Diploma (D3)" }, { value: "S1", label: "Sarjana (S1)" }, { value: "S2", label: "Magister (S2)" }, { value: "S3", label: "Doktor (S3)" }]} />
+   353→              <Field label="Institusi Pendidikan" value={form.institusiPendidikan} onChange={(v) => updateForm("institusiPendidikan", v)} placeholder="Universitas..." />
+   354→            </div>
+   355→            <Field label="Jurusan" value={form.jurusan} onChange={(v) => updateForm("jurusan", v)} placeholder="Manajemen / Teknik / dll" />
+   356→            <SelectField label="Status Karyawan" value={form.statusKaryawan} onChange={(v) => updateForm("statusKaryawan", v)} options={[{ value: "TETAP", label: "Karyawan Tetap" }, { value: "KONTRAK", label: "Karyawan Kontrak" }, { value: "PROBATION", label: "Probation" }, { value: "MAGANG", label: "Magang" }]} />
+   357→          </CardContent></Card>
+   358→        </TabsContent>
+   359→      </Tabs>
+   360→
+   361→      {/* Salary info (read-only for team, editable for owner) */}
+   362→      {!isOwner && profile?.gajiPokok != null && (
+   363→        <Card className="shadow-sm border-slate-200">
+   364→          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Lock className="w-4 h-4 text-slate-400" /> Informasi Gaji (Read-only)</CardTitle></CardHeader>
+   365→          <CardContent>
+   366→            <div className="grid grid-cols-3 gap-3 text-sm">
+   367→              <div><p className="text-xs text-slate-400">Gaji Pokok</p><p className="font-bold text-slate-700">{formatCurrency(profile.gajiPokok || 0)}</p></div>
+   368→              <div><p className="text-xs text-slate-400">Tunjangan Makan</p><p className="font-bold text-slate-700">{formatCurrency(profile.tunjanganMakan || 0)}</p></div>
+   369→              <div><p className="text-xs text-slate-400">Tunjangan Transport</p><p className="font-bold text-slate-700">{formatCurrency(profile.tunjanganTransport || 0)}</p></div>
+   370→            </div>
+   371→            <p className="text-[10px] text-slate-400 mt-2">Data gaja diatur oleh Owner. NPWP & PTKP Anda otomatis digunakan untuk perhitungan PPh 21 pada slip gaji.</p>
+   372→          </CardContent>
+   373→        </Card>
+   374→      )}
+   375→
+   376→      {/* Save button */}
+   377→      <div className="flex justify-end">
+   378→        <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+   379→          {saving ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+   380→          {saving ? "Menyimpan..." : "Simpan Biodata"}
+   381→        </Button>
+   382→      </div>
+   383→    </div>
+   384→  );
+   385→}
+   386→
+   387→// ===== Helper Components =====
+   388→function Field({ label, value, onChange, placeholder, required, type }: { label: string; value: any; onChange: (v: string) => void; placeholder?: string; required?: boolean; type?: string }) {
+   389→  return (
+   390→    <div className="space-y-1">
+   391→      <Label className="text-xs font-semibold text-slate-600">{label} {required && <span className="text-rose-500">*</span>}</Label>
+   392→      <Input type={type || "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="bg-white h-8 text-sm" />
+   393→    </div>
+   394→  );
+   395→}
+   396→
+   397→function DateField({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+   398→  return (
+   399→    <div className="space-y-1">
+   400→      <Label className="text-xs font-semibold text-slate-600">{label} {required && <span className="text-rose-500">*</span>}</Label>
+   401→      <Input type="date" value={value} onChange={(e) => onChange(e.target.value)} className="bg-white h-8 text-sm" />
+   402→    </div>
+   403→  );
+   404→}
+   405→
+   406→function SelectField({ label, value, onChange, options, required }: { label: string; value: any; onChange: (v: string) => void; options: { value: string; label: string }[]; required?: boolean }) {
+   407→  return (
+   408→    <div className="space-y-1">
+   409→      <Label className="text-xs font-semibold text-slate-600">{label} {required && <span className="text-rose-500">*</span>}</Label>
+   410→      <Select value={value || ""} onValueChange={onChange}>
+   411→        <SelectTrigger className="bg-white h-8 text-sm"><SelectValue placeholder="Pilih..." /></SelectTrigger>
+   412→        <SelectContent>{options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
+   413→      </Select>
+   414→    </div>
+   415→  );
+   416→}
+   417→
+   418→function InfoRow({ label, value }: { label: string; value: string }) {
+   419→  return (
+   420→    <div>
+   421→      <p className="text-[10px] text-slate-400">{label}</p>
+   422→      <p className="text-xs font-medium text-slate-700 truncate">{value}</p>
+   423→    </div>
+   424→  );
+   425→}
+   426→
+   427→function SummaryCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: any; color: string }) {
+   428→  const colorMap: Record<string, string> = {
+   429→    blue: "bg-blue-50 text-blue-600", green: "bg-green-50 text-green-600",
+   430→    amber: "bg-amber-50 text-amber-600", violet: "bg-violet-50 text-violet-600",
+   431→  };
+   432→  return (
+   433→    <Card className="shadow-sm"><CardContent className="p-3 flex items-center gap-3">
+   434→      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", colorMap[color])}><Icon className="w-4.5 h-4.5" /></div>
+   435→      <div><p className="text-xs text-slate-500">{label}</p><p className="text-lg font-bold text-slate-900">{value}</p></div>
+   436→    </CardContent></Card>
+   437→  );
+   438→}
+   439→
