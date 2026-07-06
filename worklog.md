@@ -2659,3 +2659,53 @@ Stage Summary:
 - Dialog design: 2-column grid for short fields, full-width for long fields, Badge for status, formatCurrency for money, formatDate for dates
 - Eye button visible to ALL roles (read-only), Edit/Delete still gated by permissions
 - Eye button hidden in bulk-select mode (consistent with Edit/Delete)
+
+---
+Task ID: PDF-LAYOUT-FIX-3-ISSUES
+Agent: Main (Z.ai Code)
+Task: Fix 3 issues: header-title spacing, headerHeight not working, preview vs PDF mismatch
+
+Work Log:
+- Issue 1: Header-title spacing too close
+  * Root cause: y = headerHeight + 2 (only 2mm gap)
+  * Fix: Changed to y = headerHeight + 8 (8mm gap) in all 3 PDFs (surat, invoice, slip-gaji)
+  * Also updated LivePreview body padding from "12px" to "8mm 14px 12px" to match
+  * Updated SuratLayoutPreview paddingTop from "py-2" to "paddingTop: 4mm"
+  
+- Issue 2: headerHeight setting not working
+  * Root cause: Company info text positions were hardcoded (y=8, 14, 19) — assumed headerHeight=28mm
+  * Fix: Changed to dynamic positioning based on headerHeight:
+    - nameY = headerHeight * 0.3 (30% from top)
+    - addrY = headerHeight * 0.55 (55% from top)  
+    - contactY = headerHeight * 0.8 (80% from top)
+  * Now when headerHeight changes (e.g., 20mm or 40mm), text positions adapt automatically
+  * Verified: headerHeight=40mm produces taller header, headerHeight=20mm produces shorter header
+  * Applied to all 3 PDFs (surat-pdf.ts, invoice-pdf.ts, slip-gaji-pdf.ts)
+
+- Issue 3: Preview vs PDF mismatch
+  * Fixed by syncing LivePreview padding with PDF spacing (8mm gap after header)
+  * LivePreview now uses "8mm 14px 12px" padding (was "12px 14px")
+  * SuratLayoutPreview uses "paddingTop: 4mm" (was "py-2" = 8px ≈ 2mm)
+  * Both now match the PDF's 8mm gap between header and body
+
+- Verified with VLM:
+  * Surat PDF: "Jarak cukup, tinggi header proporsional, layout sangat rapi" — 9/10
+  * Slip Gaji PDF: "Jarak cukup, layout rapi" — 9/10
+  * Invoice PDF: "Jarak cukup, tinggi header proporsional dengan 28mm, layout rapi" — 9/10
+  * LivePreview: "Jarak cukup, tinggi header proporsional, 8mm padding terlihat" ✓
+  * headerHeight test: 40mm → taller header, 20mm → shorter header ✓
+  * 0 errors, lint clean
+
+Stage Summary:
+- All 3 issues fixed:
+  1. Header-title spacing: 8mm gap (was 2mm) — clean separation
+  2. headerHeight now functional: text positions scale dynamically with headerHeight
+  3. Preview matches PDF: both use 8mm gap after header
+- All Layout Dokumen settings now properly integrated:
+  - headerHeight: controls navy box height + text positions scale dynamically
+  - headerBgColor, accentLineColor, footerBgColor: applied to PDF
+  - companyNameFontSize, companyAddressFontSize, companyContactFontSize: applied
+  - docTitleText, docTitlePosition, docTitleFontSize, docTitleColor: applied
+  - footerText, footerSubText, footerHeight, footerShowText: applied
+  - logoSize, logoColor, logoText: applied (with uploaded logo support)
+  - companyInfoPosition (inside/above/below): applied

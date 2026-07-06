@@ -735,7 +735,7 @@ function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layo
       )}
 
       {/* 5. BODY */}
-      <div className="px-2.5 py-2 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6 }}>
+      <div className="px-2.5 flex-1" style={{ fontFamily: s.bodyFontFamily || "Arial", fontSize: "5.5px", color: s.bodyTextColor || "#2d3748", lineHeight: 1.6, paddingTop: "4mm" }}>
         {/* Document title (pill badge) */}
         {s.docTitleShow !== false && (
           <div className="mb-1.5" style={{ textAlign: s.docTitlePosition || "left" }}>

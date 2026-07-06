@@ -427,7 +427,7 @@ function LivePreview({ docType, settings, appSettings }: { docType: string; sett
       )}
 
       {/* ===== BODY ===== */}
-      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "12px 14px", flex: 1 }}>
+      <div style={{ fontFamily: s.bodyFontFamily, fontSize: `${s.bodyFontSize}pt`, color: s.bodyTextColor, lineHeight: s.bodyLineHeight || 1.6, padding: "8mm 14px 12px", flex: 1 }}>
         {s.docTitleShow && (
           <p style={{ textAlign: s.docTitlePosition, color: s.docTitleColor, fontWeight: "bold", marginBottom: "8px" }}>
             {docType === "SURAT" ? (

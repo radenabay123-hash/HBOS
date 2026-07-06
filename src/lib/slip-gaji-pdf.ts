@@ -105,23 +105,26 @@ export function generateSlipGajiPDF(data: SlipGajiData): jsPDF {
     const logoY = (headerHeight - logoSize) / 2;
     drawLogo(margin, logoY);
 
-    // Company info (right, white text)
+    // Company info (right, white text) — positioned dynamically based on headerHeight
     const infoX = pageWidth - margin;
+    const nameY = headerHeight * 0.3;
+    const addrY = headerHeight * 0.55;
+    const contactY = headerHeight * 0.8;
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(s.companyNameFontSize || 12);
     doc.setFont("helvetica", s.companyNameBold ? "bold" : "normal");
-    doc.text(companyName, infoX, 8, { align: "right" });
+    doc.text(companyName, infoX, nameY, { align: "right" });
 
     doc.setFontSize(s.companyAddressFontSize || 7.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(220, 230, 245);
-    doc.text(companyAddress, infoX, 14, { align: "right" });
+    doc.text(companyAddress, infoX, addrY, { align: "right" });
 
     doc.setFontSize(s.companyContactFontSize || 7);
     doc.setTextColor(180, 200, 230);
-    doc.text(companyContact, infoX, 19, { align: "right" });
+    doc.text(companyContact, infoX, contactY, { align: "right" });
 
-    y = headerHeight + 2;
+    y = headerHeight + 8; // 8mm gap after header for clean spacing
   } else if (infoPos === "above") {
     // INFO ABOVE + thin navy bar
     drawLogo(margin, y);
