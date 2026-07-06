@@ -39,7 +39,7 @@ const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Jul
 
 export function FinanceModule({ user }: { user: SafeUser }) {
   const [view, setView] = useState("menu");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState(2026); // default to current year
   const [month, setMonth] = useState(0); // 0 = Semua Bulan (show all months by default)
 
   const menus = [
@@ -142,20 +142,21 @@ export function FinanceModule({ user }: { user: SafeUser }) {
         </div>
         {(view === "dashboard" || view === "aruskas" || view === "neraca" || view === "laporan" || view === "pajak" || view === "spt") && (
           <div className="flex gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
-              <SelectTrigger className="w-[130px] h-9 bg-white"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Semua Bulan</SelectItem>
-                {monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-[100px] h-9 bg-white"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Semua Tahun</SelectItem>
-                {[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select
+              value={String(month)}
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="0">Semua Bulan</option>
+              {monthNames.map((m, i) => <option key={i} value={String(i + 1)}>{m}</option>)}
+            </select>
+            <select
+              value={String(year)}
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {[2026, 2025, 2024, 2023, 2022, 2021].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+            </select>
           </div>
         )}
       </div>
