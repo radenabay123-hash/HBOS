@@ -50,7 +50,7 @@ const DEFAULT_CONFIGS = [
   },
 ];
 
-// GET tax config - returns exactly 4 configs (one per taxType), auto-seeds defaults if missing
+// GET tax config - returns all 4 configs (including inactive PPN for toggle display)
 export async function GET(req: Request) {
   return handleApi(async () => {
     const user = await getCurrentUser();
@@ -60,12 +60,11 @@ export async function GET(req: Request) {
     const taxType = searchParams.get("taxType");
 
     if (taxType) {
-      // Return single config for a specific taxType (used by payroll, tax-calculator, etc.)
+      // Return single config for a specific taxType (only if active)
       let config = await db.taxConfig.findFirst({
         where: { taxType, isActive: true },
         orderBy: { updatedAt: "desc" },
       });
-      // Auto-seed default if missing
       if (!config) {
         const def = DEFAULT_CONFIGS.find((d) => d.taxType === taxType);
         if (def) {
@@ -75,11 +74,11 @@ export async function GET(req: Request) {
       return ok({ config });
     }
 
-    // Return all 4 configs (ensure all exist via upsert)
+    // Return all 4 configs (including inactive ones — for Tax Settings UI to show toggle)
     const result: any[] = [];
     for (const def of DEFAULT_CONFIGS) {
       let config = await db.taxConfig.findFirst({
-        where: { taxType: def.taxType, isActive: true },
+        where: { taxType: def.taxType },
         orderBy: { updatedAt: "desc" },
       });
       if (!config) {
@@ -99,12 +98,12 @@ export async function PUT(req: Request) {
     if (user.role !== ROLES.OWNER) return err("Forbidden: hanya owner", 403);
 
     const body = await req.json();
-    const { taxType, name, rate, description, brackets, ptkp } = body;
+    const { taxType, name, rate, description, brackets, ptkp, isActive } = body;
     if (!taxType) return err("taxType wajib diisi", 400);
 
-    // Find existing active config for this taxType
+    // Find existing config for this taxType (regardless of isActive, to allow reactivation)
     const existing = await db.taxConfig.findFirst({
-      where: { taxType, isActive: true },
+      where: { taxType },
       orderBy: { updatedAt: "desc" },
     });
 
@@ -115,7 +114,7 @@ export async function PUT(req: Request) {
       description: description ?? existing?.description ?? "",
       brackets: brackets ?? existing?.brackets ?? "",
       ptkp: ptkp ?? existing?.ptkp ?? "",
-      isActive: true,
+      isActive: isActive !== undefined ? isActive : true,
     };
 
     let config;

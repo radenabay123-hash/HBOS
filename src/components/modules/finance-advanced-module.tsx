@@ -14,6 +14,7 @@ import { generateNeracaPDF, generateLabaRugiPDF, generateBuktiPotongPDF, generat
 import { generateLabaRugiSesuaiFormat, formatRupiahID } from "@/lib/laba-rugi-pdf";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Wallet, TrendingUp, TrendingDown, Clock, AlertCircle, FileText, RefreshCw,
   Download, CheckCircle2, DollarSign, Settings, Zap, Bot, Send, Receipt,
@@ -328,6 +329,7 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   const [clients, setClients] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [bulkMode, setBulkMode] = useState(false);
+  const [ppnActive, setPpnActive] = useState(true);
   const [form, setForm] = useState({
     type: "PEMASUKAN", amount: "", description: "", category: "", accountType: "BANK", accountName: "",
     date: new Date().toISOString().slice(0, 10), vendorName: "", isPaid: true, dueDate: "", attachmentUrl: "",
@@ -341,14 +343,18 @@ function ArusKas({ year, month }: { year: number; month: number }) {
       const params = new URLSearchParams();
       if (year > 0) params.set("year", String(year));
       if (year > 0 && month > 0) params.set("month", String(month));
-      const [d, cats, cls] = await Promise.all([
+      const [d, cats, cls, taxCfg] = await Promise.all([
         api(`/api/finance${params.toString() ? "?" + params.toString() : ""}`),
         api("/api/finance/categories"),
         api("/api/clients").catch(() => ({ clients: [] })),
+        api("/api/finance/tax-config").catch(() => ({ configs: [] })),
       ]);
       setTxns(d.transactions || []);
       setCategories(cats.categories || []);
       setClients(cls.clients || []);
+      // Check PPN active status
+      const ppnCfg = (taxCfg.configs || []).find((c: any) => c.taxType === "PPN");
+      setPpnActive(ppnCfg ? ppnCfg.isActive : true);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, [year, month]);
@@ -730,7 +736,7 @@ function ArusKas({ year, month }: { year: number; month: number }) {
                     <SelectItem value="PPH21">PPh 21</SelectItem>
                     <SelectItem value="PPH23">PPh 23</SelectItem>
                     <SelectItem value="PPH_BADAN">PPh Badan</SelectItem>
-                    <SelectItem value="PPN">PPN</SelectItem>
+                    {ppnActive && <SelectItem value="PPN">PPN</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -1061,11 +1067,20 @@ function PajakModule({ year, month }: { year: number; month: number }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [taxChat, setTaxChat] = useState<{ open: boolean }>({ open: false });
+  const [ppnActive, setPpnActive] = useState(true);
 
   const load = useCallback(async () => {
      
     setLoading(true);
-    try { const d = await api(`/api/finance/tax?year=${year}`); setData(d); }
+    try {
+      const [d, taxCfg] = await Promise.all([
+        api(`/api/finance/tax?year=${year}`),
+        api("/api/finance/tax-config").catch(() => ({ configs: [] })),
+      ]);
+      setData(d);
+      const ppnCfg = (taxCfg.configs || []).find((c: any) => c.taxType === "PPN");
+      setPpnActive(ppnCfg ? ppnCfg.isActive : true);
+    }
     catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   }, [year]);
@@ -1182,9 +1197,12 @@ function PajakModule({ year, month }: { year: number; month: number }) {
               <p className="font-semibold text-slate-900">PPh Badan</p>
               <p className="text-xs text-slate-500 mt-1">Tarif 22% dari laba perusahaan (UU HPP 2022).</p>
             </div>
-            <div className="p-3 rounded-lg bg-slate-50 border border-slate-100">
-              <p className="font-semibold text-slate-900">PPN</p>
-              <p className="text-xs text-slate-500 mt-1">Tarif 11% (UU HPP 2022). Pajak pertambahan nilai atas penjualan.</p>
+            <div className={cn("p-3 rounded-lg border", ppnActive ? "bg-slate-50 border-slate-100" : "bg-slate-50/50 border-slate-100 opacity-50")}>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-slate-900">PPN</p>
+                {!ppnActive && <Badge variant="outline" className="text-[9px] bg-slate-100 text-slate-500 border-slate-200">Nonaktif</Badge>}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">Tarif 11% (UU HPP 2022). Pajak pertambahan nilai atas penjualan.{!ppnActive && " (Dinonaktifkan — tidak berlaku di sistem)"}</p>
             </div>
           </div>
         </CardContent>
@@ -1414,11 +1432,21 @@ function KalkulatorPajakModule() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [ppnActive, setPpnActive] = useState(true);
 
   useEffect(() => {
-    api<{ taxTypes: any[]; ptkpOptions: any[] }>("/api/finance/tax-calculator")
-      .then((d) => { setTaxTypes(d.taxTypes || []); setPtkpOptions(d.ptkpOptions || []); setDataLoaded(true); })
-      .catch((e) => toast.error(e.message));
+    Promise.all([
+      api<{ taxTypes: any[]; ptkpOptions: any[] }>("/api/finance/tax-calculator"),
+      api("/api/finance/tax-config").catch(() => ({ configs: [] })),
+    ]).then(([d, taxCfg]) => {
+      // Filter out PPN if inactive
+      const ppnCfg = (taxCfg.configs || []).find((c: any) => c.taxType === "PPN");
+      const ppnIsActive = ppnCfg ? ppnCfg.isActive : true;
+      setPpnActive(ppnIsActive);
+      setTaxTypes((d.taxTypes || []).filter((t: any) => t.type !== "PPN" || ppnIsActive));
+      setPtkpOptions(d.ptkpOptions || []);
+      setDataLoaded(true);
+    }).catch((e) => toast.error(e.message));
   }, []);
 
   async function handleCalculate() {
@@ -1632,6 +1660,7 @@ function SptBadanModule({ year, month }: { year: number; month: number }) {
   const [taxPayments, setTaxPayments] = useState<any[]>([]);
   const [buktiDialog, setBuktiDialog] = useState(false);
   const [sspDialog, setSspDialog] = useState(false);
+  const [ppnActive, setPpnActive] = useState(true);
   const [buktiForm, setBuktiForm] = useState({
     formNumber: "", taxType: "PPh 23", masaPajak: monthNames[month - 1], tahun: String(year),
     pemotongName: "", pemotongNpwp: "", wpName: COMPANY_INFO.name, wpNpwp: COMPANY_INFO.npwp, wpAddress: COMPANY_INFO.address,
@@ -1647,9 +1676,17 @@ function SptBadanModule({ year, month }: { year: number; month: number }) {
   useEffect(() => {
     let active = true;
     Promise.resolve().then(() => setLoading(true));
-    api(`/api/finance/laporan?year=${year}&month=${month}`)
-      .then((d) => { if (active) { setData(d); setTaxPayments(d.taxPayments || []); } })
-      .catch((e) => { if (active) toast.error(e.message); })
+    Promise.all([
+      api(`/api/finance/laporan?year=${year}&month=${month}`),
+      api("/api/finance/tax-config").catch(() => ({ configs: [] })),
+    ]).then(([d, taxCfg]) => {
+      if (active) {
+        setData(d);
+        setTaxPayments(d.taxPayments || []);
+        const ppnCfg = (taxCfg.configs || []).find((c: any) => c.taxType === "PPN");
+        setPpnActive(ppnCfg ? ppnCfg.isActive : true);
+      }
+    }).catch((e) => { if (active) toast.error(e.message); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [year, month]);
@@ -1864,7 +1901,7 @@ function SptBadanModule({ year, month }: { year: number; month: number }) {
             <DialogDescription>Isi data setoran pajak untuk generate PDF SSP dengan kop perusahaan</DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-2 max-h-[60vh] overflow-y-auto">
-            <div className="space-y-1.5"><Label className="text-xs">Jenis Pajak</Label><Select value={sspForm.jenisPajak} onValueChange={(v) => setSspForm({ ...sspForm, jenisPajak: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPh Badan">PPh Badan</SelectItem><SelectItem value="PPh 21">PPh 21</SelectItem><SelectItem value="PPh 23">PPh 23</SelectItem><SelectItem value="PPN">PPN</SelectItem></SelectContent></Select></div>
+            <div className="space-y-1.5"><Label className="text-xs">Jenis Pajak</Label><Select value={sspForm.jenisPajak} onValueChange={(v) => setSspForm({ ...sspForm, jenisPajak: v })}><SelectTrigger className="bg-white"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="PPh Badan">PPh Badan</SelectItem><SelectItem value="PPh 21">PPh 21</SelectItem><SelectItem value="PPh 23">PPh 23</SelectItem>{ppnActive && <SelectItem value="PPN">PPN</SelectItem>}</SelectContent></Select></div>
             <div className="space-y-1.5"><Label className="text-xs">Masa Pajak</Label><Input value={sspForm.masaPajak} onChange={(e) => setSspForm({ ...sspForm, masaPajak: e.target.value })} className="bg-white" /></div>
             <div className="space-y-1.5"><Label className="text-xs">Kode Akun</Label><Input value={sspForm.kodeAkun} onChange={(e) => setSspForm({ ...sspForm, kodeAkun: e.target.value })} placeholder="Mis. 411250" className="bg-white" /></div>
             <div className="space-y-1.5"><Label className="text-xs">Kode Jenis Setoran</Label><Input value={sspForm.kodeJenisSetoran} onChange={(e) => setSspForm({ ...sspForm, kodeJenisSetoran: e.target.value })} placeholder="Mis. 100" className="bg-white" /></div>
@@ -1912,6 +1949,21 @@ function TaxConfigModule() {
     finally { setSaving(false); }
   }
 
+  async function togglePPN(active: boolean) {
+    setSaving(true);
+    try {
+      const ppnConfig = configs.find((c) => c.taxType === "PPN");
+      if (!ppnConfig) return;
+      await api("/api/finance/tax-config", {
+        method: "PUT",
+        body: JSON.stringify({ taxType: "PPN", isActive: active }),
+      });
+      toast.success(active ? "PPN diaktifkan — sinkron ke semua sistem" : "PPN dinonaktifkan — semua sistem tidak menggunakan PPN");
+      load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setSaving(false); }
+  }
+
   if (loading) return <Loading />;
 
   const taxTypeColors: Record<string, string> = {
@@ -1953,14 +2005,20 @@ function TaxConfigModule() {
       {/* 4 Tax Cards - exactly PPh 21, PPh 23, PPh Badan, PPN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {configs.map((c) => (
-          <Card key={c.id} className="shadow-sm hover:shadow-md transition-shadow">
+          <Card key={c.id} className={cn("shadow-sm hover:shadow-md transition-shadow", c.taxType === "PPN" && !c.isActive && "opacity-60")}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className={cn("text-[10px] font-semibold", taxTypeColors[c.taxType] || "bg-slate-50")}>{c.taxType}</Badge>
-                  <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
-                    <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" /> Aktif
-                  </Badge>
+                  {c.isActive ? (
+                    <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200">
+                      <CheckCircle2 className="w-2.5 h-2.5 mr-0.5" /> Aktif
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] bg-slate-100 text-slate-500 border-slate-200">
+                      Nonaktif
+                    </Badge>
+                  )}
                 </div>
                 <Button
                   size="sm"
@@ -2026,10 +2084,25 @@ function TaxConfigModule() {
                 <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1.5">Terintegrasi ke:</p>
                 <div className="flex flex-wrap gap-1">
                   {(taxTypeIntegrations[c.taxType] || []).map((int, i) => (
-                    <Badge key={i} variant="outline" className="text-[9px] bg-slate-50 text-slate-600 border-slate-200">{int}</Badge>
+                    <Badge key={i} variant="outline" className={cn("text-[9px]", c.isActive ? "bg-slate-50 text-slate-600 border-slate-200" : "bg-slate-50 text-slate-300 border-slate-100 line-through")}>{int}</Badge>
                   ))}
                 </div>
               </div>
+
+              {/* PPN toggle (only for PPN) */}
+              {c.taxType === "PPN" && (
+                <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">Aktifkan PPN</p>
+                    <p className="text-[10px] text-slate-400">Jika nonaktif, PPN tidak muncul di Arus Kas, Kalkulator, Invoice, & SPT</p>
+                  </div>
+                  <Switch
+                    checked={c.isActive}
+                    onCheckedChange={(v) => togglePPN(v)}
+                    disabled={saving}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
