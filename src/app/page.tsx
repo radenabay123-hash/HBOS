@@ -29,6 +29,7 @@ import { BiodataModule } from "@/components/modules/biodata-module";
 import { AiMasterContentModule } from "@/components/modules/ai-master-content-module";
 import { ImportDataModule } from "@/components/modules/import-data-module";
 import { SubscriptionManagerModule } from "@/components/modules/subscription-manager-module";
+import { TeamStructureModule } from "@/components/modules/team-structure-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -152,6 +153,8 @@ export default function Home() {
         return <ImportDataModule />;
       case "subscriptions":
         return <SubscriptionManagerModule />;
+      case "teamstructure":
+        return <TeamStructureModule user={user} />;
       default:
         return null;
     }

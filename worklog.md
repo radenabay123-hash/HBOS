@@ -2872,3 +2872,50 @@ Stage Summary:
   - Footer with page numbers
 - Pajak: Download PDF button generates daftar pajak report
 - Both support: Semua Tahun (akumulasi), specific year, specific month
+
+---
+Task ID: TEAM-STRUCTURE-MODULE
+Agent: Main (Z.ai Code)
+Task: Create Struktur Tim page with role responsibilities for owner monitoring
+
+Work Log:
+- Created src/components/modules/team-structure-module.tsx:
+  * Org chart visual: Owner (crown icon, blue) at top → 5 team roles below (clickable cards)
+  * Each role has icon: Crown (Owner), Briefcase (PM), GraduationCap (Trainer), PenTool (Creative), Monitor (Digital/IT), Wallet (Finance)
+  * Click a role → detail panel shows:
+    - Role description
+    - Tanggung Jawab Utama (10 responsibilities per role, with checkmark icons)
+    - Target KPI with weight bars (visual progress bars showing weight %)
+    - Laporan yang Dihasilkan (badges listing reports)
+    - Anggota Tim (team members in that role with avatar, status, join date)
+  * Full team overview grid (all members, clickable to filter by role)
+  * Color-coded per role (blue, violet, amber, pink, cyan, sky)
+  * ROLE_DEFINITIONS constant with full data for all 6 roles:
+    - OWNER: 10 responsibilities (strategi, keputusan, approve, branding)
+    - PROJECT_MANAGER: 10 responsibilities (CRM, proposal, event, dokumen, follow up)
+    - ASSISTANT_TRAINER: 10 responsibilities (materi, event, kanban, riset)
+    - CONTENT_CREATIVE: 10 responsibilities (reels, desain, CMS, artikel, editing)
+    - DIGITAL_MARKETING_IT: 10 responsibilities (ads, SEO, website, media sosial, IT)
+    - FINANCE: 10 responsibilities (arus kas, payroll, pajak, neraca, SPT)
+  * Each role has KPI targets with weights (totaling 100%)
+  * Each role has list of reports they produce
+- Added "Struktur Tim" menu (all roles can access)
+- Added routing in page.tsx
+- Verified with Agent Browser:
+  * Org chart displays Owner + 5 roles with member counts
+  * Click Project Manager → shows 10 responsibilities, KPI bars (30/25/25/20%), 4 reports, 1 team member (Siti Rahma)
+  * All 10 team members visible in overview grid
+  * VLM rating: 9/10
+  * 0 errors, lint clean
+
+Stage Summary:
+- Struktur Tim page complete with:
+  1. Visual org chart (Owner → 5 roles)
+  2. Clickable role cards → detailed responsibilities
+  3. 10 responsibilities per role (60 total across 6 roles)
+  4. KPI targets with weighted bars
+  5. Reports each role produces
+  6. Team member list per role
+  7. Full team overview grid
+- Owner can now monitor what each role is responsible for
+- All roles can see this page (team members can see their own + others' responsibilities)

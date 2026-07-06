@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions" | "teamstructure";
 
 interface MenuItem {
   key: ViewKey;
@@ -34,6 +34,7 @@ const MENU: MenuItem[] = [
   { key: "absensi", label: "Absensi", icon: Clock, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "kanban", label: "Kanban Board", icon: KanbanSquare, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
+  { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
   { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
   { key: "invoice", label: "Invoice", icon: InvoiceIcon, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
