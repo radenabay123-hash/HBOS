@@ -40,7 +40,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -568,34 +567,33 @@ export function CrmModule({ user }: CrmModuleProps) {
             </div>
           ) : (
             <>
-            <ScrollArea className="max-h-[600px]">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
                     {bulkMode && (
-                      <TableHead className="w-[40px]">
+                      <TableHead className="w-[40px] sticky left-0 bg-slate-50/50 z-10">
                         <SelectCheckbox
                           checked={isAllSelected(paginatedItems)}
                           onChange={() => toggleAll(paginatedItems)}
                         />
                       </TableHead>
                     )}
-                    <TableHead className="min-w-[180px]">Nama Klien</TableHead>
-                    <TableHead className="min-w-[160px]">Instansi</TableHead>
-                    <TableHead className="min-w-[140px]">PIC</TableHead>
-                    <TableHead className="min-w-[160px]">Jenis Training</TableHead>
-                    <TableHead className="text-center">Peserta</TableHead>
-                    <TableHead className="text-right min-w-[140px]">Budget</TableHead>
-                    <TableHead className="min-w-[120px]">Status</TableHead>
-                    <TableHead className="min-w-[120px]">Tanggal Event</TableHead>
-                    {canManage && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+                    <TableHead className="min-w-[160px]">Klien</TableHead>
+                    <TableHead className="min-w-[140px]">PIC & Kontak</TableHead>
+                    <TableHead className="min-w-[140px]">Training</TableHead>
+                    <TableHead className="text-center min-w-[70px]">Peserta</TableHead>
+                    <TableHead className="text-right min-w-[110px]">Budget</TableHead>
+                    <TableHead className="min-w-[100px]">Status</TableHead>
+                    <TableHead className="min-w-[90px]">Tgl Event</TableHead>
+                    {canManage && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedItems.map((c) => (
                     <TableRow key={c.id} className="hover:bg-slate-50/50">
                       {bulkMode && (
-                        <TableCell>
+                        <TableCell className="sticky left-0 bg-white z-10">
                           <SelectCheckbox
                             checked={isSelected(c)}
                             onChange={() => toggle(c)}
@@ -604,9 +602,9 @@ export function CrmModule({ user }: CrmModuleProps) {
                       )}
                       <TableCell>
                         <div className="font-medium text-slate-900">{c.namaKlien}</div>
-                        {c.email && <div className="text-xs text-slate-500">{c.email}</div>}
+                        {c.instansi && <div className="text-xs text-slate-500">{c.instansi}</div>}
+                        {c.email && <div className="text-xs text-blue-600">{c.email}</div>}
                       </TableCell>
-                      <TableCell className="text-slate-700">{c.instansi || "-"}</TableCell>
                       <TableCell>
                         <div className="text-slate-700">{c.pic || "-"}</div>
                         {c.nomorWA && <div className="text-xs text-slate-500">{c.nomorWA}</div>}
@@ -615,7 +613,7 @@ export function CrmModule({ user }: CrmModuleProps) {
                       <TableCell className="text-center text-slate-700">
                         {c.jumlahPeserta ?? "-"}
                       </TableCell>
-                      <TableCell className="text-right font-medium text-slate-900">
+                      <TableCell className="text-right font-medium text-slate-900 whitespace-nowrap">
                         {c.budget != null ? formatCurrency(c.budget) : "-"}
                       </TableCell>
                       <TableCell>
@@ -626,25 +624,27 @@ export function CrmModule({ user }: CrmModuleProps) {
                           {CLIENT_STATUS_LABELS[c.status] || c.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-slate-700">
+                      <TableCell className="text-slate-700 text-xs whitespace-nowrap">
                         {c.tanggalEvent ? formatDate(c.tanggalEvent) : "-"}
                       </TableCell>
                       {canManage && (
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
+                        <TableCell className="sticky right-0 bg-white z-10">
+                          <div className="flex items-center justify-center gap-0.5">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                              className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                               onClick={() => openEdit(c)}
+                              title="Edit Klien"
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-rose-600"
+                              className="h-8 w-8 text-rose-600 hover:bg-rose-50"
                               onClick={() => setDeleteId(c.id)}
+                              title="Hapus Klien"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -655,7 +655,7 @@ export function CrmModule({ user }: CrmModuleProps) {
                   ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            </div>
             <Pagination
               currentPage={pageInfo.currentPage}
               totalPages={pageInfo.totalPages}

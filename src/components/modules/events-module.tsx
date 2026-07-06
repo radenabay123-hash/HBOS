@@ -42,7 +42,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -943,27 +942,26 @@ export function EventsModule({ user }: EventsModuleProps) {
                 </div>
               ) : (
                 <>
-                <ScrollArea className="max-h-[600px]">
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50/50">
                         {bulkMode && (
-                          <TableHead className="w-[40px]">
+                          <TableHead className="w-[40px] sticky left-0 bg-slate-50/50 z-10">
                             <SelectCheckbox
                               checked={isAllEventsSelected(paginatedEvents)}
                               onChange={() => toggleAllEvents(paginatedEvents)}
                             />
                           </TableHead>
                         )}
-                        <TableHead className="min-w-[200px]">Nama Event</TableHead>
-                        <TableHead className="min-w-[160px]">Klien</TableHead>
-                        <TableHead className="min-w-[140px]">Tanggal</TableHead>
-                        <TableHead className="min-w-[140px]">Lokasi</TableHead>
-                        <TableHead className="min-w-[140px]">Trainer</TableHead>
-                        <TableHead className="min-w-[140px]">Asst Trainer</TableHead>
-                        <TableHead className="min-w-[120px]">Status</TableHead>
-                        <TableHead className="min-w-[160px]">Checklist</TableHead>
-                        {canManage && <TableHead className="text-center min-w-[100px]">Aksi</TableHead>}
+                        <TableHead className="min-w-[180px]">Nama Event</TableHead>
+                        <TableHead className="min-w-[120px]">Klien</TableHead>
+                        <TableHead className="min-w-[110px]">Tanggal</TableHead>
+                        <TableHead className="min-w-[100px]">Lokasi</TableHead>
+                        <TableHead className="min-w-[100px]">Trainer</TableHead>
+                        <TableHead className="min-w-[100px]">Status</TableHead>
+                        <TableHead className="min-w-[120px]">Checklist</TableHead>
+                        {canManage && <TableHead className="text-center min-w-[80px] sticky right-0 bg-slate-50/50 z-10">Aksi</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -973,7 +971,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                         return (
                           <TableRow key={e.id} className="hover:bg-slate-50/50">
                             {bulkMode && (
-                              <TableCell>
+                              <TableCell className="sticky left-0 bg-white z-10">
                                 <SelectCheckbox
                                   checked={isEventSelected(e)}
                                   onChange={() => toggleEvent(e)}
@@ -982,18 +980,16 @@ export function EventsModule({ user }: EventsModuleProps) {
                             )}
                             <TableCell>
                               <div className="font-medium text-slate-900">{e.namaEvent}</div>
+                              {e.assistantTrainer?.name && <div className="text-xs text-slate-500">Asst: {e.assistantTrainer.name}</div>}
                             </TableCell>
-                            <TableCell className="text-slate-700">
+                            <TableCell className="text-slate-700 text-sm">
                               {e.client?.namaKlien || "-"}
                             </TableCell>
-                            <TableCell className="text-slate-700">
+                            <TableCell className="text-slate-700 text-xs whitespace-nowrap">
                               {formatDateTime(e.tanggal)}
                             </TableCell>
-                            <TableCell className="text-slate-700">{e.lokasi || "-"}</TableCell>
-                            <TableCell className="text-slate-700">{e.trainer || "-"}</TableCell>
-                            <TableCell className="text-slate-700">
-                              {e.assistantTrainer?.name || "-"}
-                            </TableCell>
+                            <TableCell className="text-slate-700 text-sm">{e.lokasi || "-"}</TableCell>
+                            <TableCell className="text-slate-700 text-sm">{e.trainer || "-"}</TableCell>
                             <TableCell>
                               <Badge
                                 variant="outline"
@@ -1004,11 +1000,11 @@ export function EventsModule({ user }: EventsModuleProps) {
                             </TableCell>
                             <TableCell>
                               {prog.total === 0 ? (
-                                <span className="text-xs text-slate-400">Belum ada checklist</span>
+                                <span className="text-xs text-slate-400">Belum ada</span>
                               ) : (
-                                <div className="space-y-1 min-w-[120px]">
+                                <div className="space-y-1 min-w-[100px]">
                                   <div className="flex justify-between text-xs text-slate-600">
-                                    <span>{prog.done}/{prog.total} selesai</span>
+                                    <span>{prog.done}/{prog.total}</span>
                                     <span>{prog.pct}%</span>
                                   </div>
                                   <Progress
@@ -1022,21 +1018,23 @@ export function EventsModule({ user }: EventsModuleProps) {
                               )}
                             </TableCell>
                             {canManage && (
-                              <TableCell>
-                                <div className="flex items-center justify-center gap-1">
+                              <TableCell className="sticky right-0 bg-white z-10">
+                                <div className="flex items-center justify-center gap-0.5">
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                                    className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                                     onClick={() => openEdit(e)}
+                                    title="Edit Event"
                                   >
                                     <Pencil className="w-4 h-4" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-slate-500 hover:text-rose-600"
+                                    className="h-8 w-8 text-rose-600 hover:bg-rose-50"
                                     onClick={() => setDeleteId(e.id)}
+                                    title="Hapus Event"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -1048,7 +1046,7 @@ export function EventsModule({ user }: EventsModuleProps) {
                       })}
                     </TableBody>
                   </Table>
-                </ScrollArea>
+                </div>
                 <Pagination
                   currentPage={eventPageInfo.currentPage}
                   totalPages={eventPageInfo.totalPages}

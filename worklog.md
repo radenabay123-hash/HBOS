@@ -1942,3 +1942,53 @@ Stage Summary:
   * Surat: 1 surat with pagination
   * Tugas Konten: 40 ideas → "Menampilkan 1-15 dari 40 data", pages 1-2-3
 - Lint clean (0 errors)
+
+---
+Task ID: CRM-EVENTS-EDIT-FIX
+Agent: Main (Z.ai Code)
+Task: Fix CRM Client truncated display + verify Events edit functionality
+
+Work Log:
+- Identified root cause: Both CRM and Events modules ALREADY had edit functionality (openEdit function + Pencil button in Aksi column), but the table display was truncated/cut-off because:
+  1. Tables had 8-9 columns with large min-width values (180px-200px each)
+  2. Used ScrollArea component which doesn't handle horizontal scroll well
+  3. The Aksi column (last column with edit/delete buttons) was cut off on the right side
+  4. Users couldn't see the edit button → thought edit was missing
+
+- Fixed CRM Client table (src/components/modules/crm-module.tsx):
+  * Removed ScrollArea wrapper, replaced with `<div className="overflow-x-auto">` for proper horizontal scroll
+  * Consolidated columns: merged "Instansi" into "Klien" column (nama + instansi + email), merged "Nomor WA" into "PIC & Kontak" column
+  * Reduced from 9 columns to 8: Klien, PIC & Kontak, Training, Peserta, Budget, Status, Tgl Event, Aksi
+  * Reduced min-width values (160px→140px→100px instead of 180px→160px→140px)
+  * Added `sticky right-0 bg-white z-10` to Aksi column (header + cells) so edit/delete buttons are ALWAYS visible
+  * Added `sticky left-0 bg-white z-10` to checkbox column in bulk mode
+  * Enhanced edit button visibility: `text-blue-600 hover:bg-blue-50` (was `text-slate-500`)
+  * Enhanced delete button visibility: `text-rose-600 hover:bg-rose-50` (was `text-slate-500`)
+  * Added `title="Edit Klien"` and `title="Hapus Klien"` tooltips
+  * Added `whitespace-nowrap` to Budget and Tgl Event cells
+  * Removed unused ScrollArea import
+
+- Fixed Events list table (src/components/modules/events-module.tsx):
+  * Same fix: removed ScrollArea, replaced with `<div className="overflow-x-auto">`
+  * Consolidated columns: merged "Asst Trainer" into "Nama Event" column
+  * Reduced from 9 columns to 8: Nama Event, Klien, Tanggal, Lokasi, Trainer, Status, Checklist, Aksi
+  * Added `sticky right-0 bg-white z-10` to Aksi column
+  * Enhanced button visibility (blue/rose colors)
+  * Added tooltips
+  * Removed unused ScrollArea import
+
+- Verified with Agent Browser:
+  * CRM: 8 clients visible, all 8 columns visible, edit (pencil blue) + delete (trash red) buttons visible for every row
+  * VLM confirmed CRM: "Semua kolom terlihat, tombol edit/delete terlihat untuk setiap baris, tidak ada yang terpotong, 9/10 kerapian"
+  * CRM edit dialog opens correctly with all fields (Nama Klien, Instansi, PIC, Nomor WA, Email, Jenis Training, Jumlah Peserta, Budget, Lokasi, Tanggal Event, Status, Ditugaskan Kepada, Reminder, Catatan)
+  * Events: 3 events visible in Daftar Event tab, all 8 columns visible including Aksi
+  * VLM confirmed Events: "Tabel lengkap, kolom Aksi dengan tombol edit/delete terlihat, tidak ada yang terpotong"
+  * Events edit dialog opens correctly with all fields (Nama Event, Klien, Tanggal, Lokasi, Trainer, Status, Checklist)
+  * 0 errors, lint clean
+
+Stage Summary:
+- CRM Client display FIXED: no more truncation, all columns visible, edit/delete buttons always visible (sticky right column)
+- Events list display FIXED: same treatment, all columns visible, edit/delete always visible
+- Both modules already had edit functionality - the issue was display truncation hiding the buttons
+- Sticky column pattern ensures Aksi column (edit/delete) is ALWAYS visible regardless of screen width
+- Removed ScrollArea (which didn't handle horizontal scroll) in favor of native overflow-x-auto
