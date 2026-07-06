@@ -153,30 +153,9 @@ function renderElement(doc: jsPDF, elem: LayoutElement, logoImageData?: LogoImag
   }
 
   else if (elem.type === "signature") {
-    const fontSize = elem.fontSize || 10;
-    const color = hexToRgb(elem.color || "#000000");
-    doc.setFontSize(fontSize);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(...color);
-
-    // "Hormat kami," text
-    let sigY = y + 5;
-    doc.text("Hormat kami,", x, sigY);
-    sigY += 18; // Space for signature
-
-    // Signature line
-    if (elem.lineStyle !== "none") {
-      const lineColor = hexToRgb(elem.lineColor || "#d1d5db");
-      doc.setDrawColor(...lineColor);
-      doc.setLineWidth(0.3);
-      if (elem.lineStyle === "dashed") doc.setLineDashPattern([1, 0.5], 0);
-      doc.line(x, sigY, x + w, sigY);
-      doc.setLineDashPattern([], 0);
-    }
-    sigY += 4;
-
-    // Name and title (will be overridden by actual content in renderContent)
-    // These are just placeholders; actual values come from DocumentContent
+    // Signature element is just a placeholder — actual rendering (Hormat kami, line, name, title)
+    // is done by the content renderers (renderSuratContent, renderInvoiceContent, renderSlipGajiContent)
+    // which have access to actual signatory data. Do NOT render anything here to avoid double text.
   }
 }
 
