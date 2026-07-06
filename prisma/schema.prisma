@@ -342,14 +342,19 @@ model Notification {
   userId          String
   title           String
   message         String
-  type            String   @default("INFO") // INFO, ACC, REVISI, TASK, REMINDER
+  type            String   @default("INFO") // INFO, ACC, REVISI, TASK, REMINDER, EVALUATION, URGENT_TASK, ANNOUNCEMENT, WARNING
+  priority        String   @default("normal") // normal, high, urgent
   read            Boolean  @default(false)
   link            String?
+  actionUrl       String?  // URL to navigate when notification clicked
+  senderId        String?  // who sent this notification (for broadcasts)
   createdAt       DateTime @default(now())
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([type])
+  @@index([read])
 }
 
 // ===================== KPI LOGS (Daily/Weekly/Monthly Achievement Tracking) =====================

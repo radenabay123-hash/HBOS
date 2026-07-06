@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
-  FileStack, Trophy, UserCog, FileBarChart, Bell, LogOut, Menu, Building2,
-  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle, Sparkles, Database, CreditCard,
+  FileStack, Trophy, UserCog, FileBarChart, Bell, BellOff, LogOut, Menu, Building2,
+  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle, Sparkles, Database, CreditCard, Megaphone,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions" | "teamstructure";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions" | "teamstructure" | "broadcast" | "mynotifs";
 
 interface MenuItem {
   key: ViewKey;
@@ -34,6 +34,7 @@ const MENU: MenuItem[] = [
   { key: "absensi", label: "Absensi", icon: Clock, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "kanban", label: "Kanban Board", icon: KanbanSquare, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
+  { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
   { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
@@ -51,6 +52,7 @@ const MENU: MenuItem[] = [
   { key: "pengaturan", label: "Pengaturan Aplikasi", icon: Settings, roles: ["OWNER"] },
   { key: "doclayout", label: "Layout Dokumen", icon: Layout, roles: ["OWNER"] },
   { key: "importdata", label: "Import Data", icon: Database, roles: ["OWNER"] },
+  { key: "broadcast", label: "Broadcast & Evaluasi", icon: Megaphone, roles: ["OWNER"] },
   { key: "subscriptions", label: "Manajemen Langganan", icon: CreditCard, roles: ["OWNER"] },
   { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
 ];
@@ -76,8 +78,94 @@ interface AppShellProps {
 export function AppShell({ user, activeView, onViewChange, onLogout, children, notifications, onMarkNotificationsRead }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("notif-sound-enabled");
+    return saved === null ? true : saved === "true";
+  });
+  const hasNotificationPermission = typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted";
+  const lastNotifCount = useRef(notifications.count);
   const menu = getMenuForRole(user.role);
   const isOwner = user.role === ROLES.OWNER;
+
+  // Request browser notification permission on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      try { Notification.requestPermission(); } catch {}
+    }
+  }, []);
+
+  // Play notification sound using Web Audio API (no file needed)
+  const playNotifSound = useCallback(() => {
+    if (!soundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = ctx.currentTime;
+
+      // Play a pleasant 2-tone notification sound
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.frequency.value = 880; // A5
+      osc1.type = "sine";
+      gain1.gain.setValueAtTime(0, now);
+      gain1.gain.linearRampToValueAtTime(0.3, now + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.3);
+
+      // Second tone (higher, after 150ms)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.frequency.value = 1320; // E6
+      osc2.type = "sine";
+      gain2.gain.setValueAtTime(0, now + 0.15);
+      gain2.gain.linearRampToValueAtTime(0.25, now + 0.17);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.45);
+    } catch {}
+  }, [soundEnabled]);
+
+  // Watch for new notifications → play sound + browser notification
+  useEffect(() => {
+    if (notifications.count > lastNotifCount.current) {
+      playNotifSound();
+      // Show browser notification if permission granted
+      if (hasNotificationPermission && notifications.items.length > 0) {
+        const latest = notifications.items[0];
+        try {
+          const notif = new Notification(latest.title, {
+            body: latest.message,
+            icon: "/uploads/company_logo_1783261812435.png",
+            tag: latest.id,
+          });
+          notif.onclick = () => {
+            window.focus();
+            if (latest.actionUrl) {
+              // Navigate to action URL
+              window.location.hash = latest.actionUrl;
+            }
+            notif.close();
+          };
+        } catch {}
+      }
+    }
+    lastNotifCount.current = notifications.count;
+  }, [notifications.count, notifications.items, playNotifSound, hasNotificationPermission]);
+
+  function toggleSound() {
+    const newVal = !soundEnabled;
+    setSoundEnabled(newVal);
+    localStorage.setItem("notif-sound-enabled", String(newVal));
+    if (newVal) {
+      // Play a test sound
+      playNotifSound();
+    }
+  }
 
   async function handleLogout() {
     try {
@@ -178,6 +266,16 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
             <h2 className="font-semibold text-slate-900 text-sm lg:text-base">{activeMenu?.label}</h2>
           </div>
           <div className="flex items-center gap-2">
+            {/* Sound mute/unmute toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={toggleSound}
+              title={soundEnabled ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
+            >
+              {soundEnabled ? <Bell className="w-4 h-4 text-blue-600" /> : <BellOff className="w-4 h-4 text-slate-400" />}
+            </Button>
             {/* Notifications */}
             <div className="relative">
               <Button

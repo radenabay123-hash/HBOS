@@ -2919,3 +2919,61 @@ Stage Summary:
   7. Full team overview grid
 - Owner can now monitor what each role is responsible for
 - All roles can see this page (team members can see their own + others' responsibilities)
+
+---
+Task ID: BROADCAST-NOTIFICATION-SYSTEM
+Agent: Main (Z.ai Code)
+Task: Build broadcast notification system with sound + mute/unmute + browser push
+
+Work Log:
+- Updated Notification Prisma model: added priority, actionUrl, senderId fields
+- Created /api/notifications/broadcast/route.ts (POST — Owner sends to team)
+  * Target: ALL team, specific role, or specific person
+  * Types: EVALUATION, URGENT_TASK, ANNOUNCEMENT, WARNING
+  * Priority: normal, high, urgent
+  * Creates notification records for each recipient
+- Updated /api/notifications/route.ts: added ?all=true param for Owner to see all broadcasts
+- Created src/components/modules/broadcast-module.tsx (Owner page):
+  * 4 notification type buttons (Evaluasi, Tugas Dadakan, Pengumuman, Peringatan) with icons
+  * Target selector: All Team / specific role / specific person dropdown
+  * Title + Message input fields
+  * Optional action URL (team redirected when clicking notification)
+  * Live preview card showing how notification will look
+  * Send button with loading state
+  * History panel showing recent broadcasts
+- Created src/components/modules/my-notifications-module.tsx (all roles):
+  * Filter tabs by type (All, Evaluasi, Tugas Dadakan, etc.)
+  * Sound On/Mute toggle button
+  * Mark all as read button
+  * Notification cards with: type icon, title, message, priority badge, "Dari Owner" badge
+  * Color-coded by type and priority
+  * Unread indicators (blue dot)
+- Updated AppShell with notification sound system:
+  * Web Audio API: generates 2-tone notification sound (880Hz + 1320Hz sine waves) — no audio file needed
+  * Mute/Unmute toggle button in header (Bell/BellOff icon) — saves to localStorage
+  * Browser Notification API: shows native push notification when new notification arrives
+  * Polling: every 60s, checks for new notifications → plays sound + shows browser notification
+  * Notification permission auto-requested on mount
+- Added menu items:
+  * "Broadcast & Evaluasi" (Owner only, Megaphone icon)
+  * "Notifikasi Saya" (all roles, Bell icon)
+- Verified with Agent Browser:
+  * Broadcast page: 4 types visible, target selector, form, send button, history — 9/10
+  * Notifikasi Saya: Sound On toggle, filter tabs, empty state — works
+  * 0 errors, lint clean
+
+Stage Summary:
+- Owner can send notifications to team with:
+  1. Type selection (Evaluasi/Tugas Dadakan/Pengumuman/Peringatan)
+  2. Target selection (All/Role/Specific person)
+  3. Priority (normal/high/urgent)
+  4. Optional action URL (redirect team to specific page)
+- Team receives:
+  1. In-app notification (bell icon, badge count)
+  2. Browser push notification (native, appears on desktop/HP)
+  3. Sound alert (Web Audio API, 2-tone chime)
+- Mute/Unmute:
+  * Toggle button in header (Bell icon = sound on, BellOff = muted)
+  * Persists in localStorage
+  * Also toggleable in Notifikasi Saya page
+- All roles can view their notifications in "Notifikasi Saya" page with filter by type

@@ -30,6 +30,8 @@ import { AiMasterContentModule } from "@/components/modules/ai-master-content-mo
 import { ImportDataModule } from "@/components/modules/import-data-module";
 import { SubscriptionManagerModule } from "@/components/modules/subscription-manager-module";
 import { TeamStructureModule } from "@/components/modules/team-structure-module";
+import { BroadcastModule } from "@/components/modules/broadcast-module";
+import { MyNotificationsModule } from "@/components/modules/my-notifications-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -155,6 +157,10 @@ export default function Home() {
         return <SubscriptionManagerModule />;
       case "teamstructure":
         return <TeamStructureModule user={user} />;
+      case "broadcast":
+        return <BroadcastModule />;
+      case "mynotifs":
+        return <MyNotificationsModule user={user} />;
       default:
         return null;
     }
