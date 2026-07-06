@@ -40,7 +40,7 @@ const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Jul
 export function FinanceModule({ user }: { user: SafeUser }) {
   const [view, setView] = useState("menu");
   const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [month, setMonth] = useState(0); // 0 = Semua Bulan (show all months by default)
 
   const menus = [
     { key: "dashboard", label: "Dashboard Keuangan", desc: "Ringkasan saldo, laba, grafik & AI insight", icon: Zap, color: "blue" },
@@ -144,11 +144,17 @@ export function FinanceModule({ user }: { user: SafeUser }) {
           <div className="flex gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
               <SelectTrigger className="w-[130px] h-9 bg-white"><SelectValue /></SelectTrigger>
-              <SelectContent>{monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="0">Semua Bulan</SelectItem>
+                {monthNames.map((m, i) => <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>)}
+              </SelectContent>
             </Select>
             <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-              <SelectTrigger className="w-[90px] h-9 bg-white"><SelectValue /></SelectTrigger>
-              <SelectContent>{[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
+              <SelectTrigger className="w-[100px] h-9 bg-white"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Semua Tahun</SelectItem>
+                {[2026, 2025, 2024].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
         )}
@@ -324,8 +330,11 @@ function ArusKas({ year, month }: { year: number; month: number }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      if (year > 0) params.set("year", String(year));
+      if (year > 0 && month > 0) params.set("month", String(month));
       const [d, cats, cls] = await Promise.all([
-        api(`/api/finance?year=${year}&month=${month}`),
+        api(`/api/finance${params.toString() ? "?" + params.toString() : ""}`),
         api("/api/finance/categories"),
         api("/api/clients").catch(() => ({ clients: [] })),
       ]);

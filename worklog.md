@@ -2180,3 +2180,34 @@ Stage Summary:
   * 14 payrolls
 - Data is real from Google Sheets, not seed/demo data
 - All modules working with real data, 0 errors
+
+---
+Task ID: FIX-DATA-VISIBILITY
+Agent: Main (Z.ai Code)
+Task: Fix imported data not showing - filter defaults hiding real data
+
+Work Log:
+- Root cause identified: 
+  * Finance/Arus Kas defaulted to current month (July 2026) — but real data spans 2022-2026 with NO July 2026 transactions
+  * Tugas Harian defaulted to today's date (06 Jul 2026) — but imported tasks are from June 2026
+  * Data WAS in database (1046 finance, 479 tasks, 19 invoices) but filters hid everything
+- Fix 1: Finance module — added "Semua Bulan" (value=0) and "Semua Tahun" (value=0) options to month/year selectors
+  * Changed default month from current month to 0 (Semua Bulan)
+  * Updated ArusKas API call to not send month param when month=0
+  * Now shows ALL transactions by default (101 for 2026, or all years if "Semua Tahun" selected)
+- Fix 2: Tugas Harian — changed default dateFilter from today to "" (empty = Semua Tanggal)
+  * Added "Semua Tanggal" / "Hari Ini" toggle button next to date input
+  * When dateFilter is empty, API returns all tasks (no date filter)
+  * Now shows ALL 479 tasks by default
+- Verified:
+  * Arus Kas: "Menampilkan 1-15 dari 101 data" (2026, semua bulan), 7 pages
+  * Tugas Harian: "Menampilkan 1-15 dari 479 data", 32 pages
+  * Invoice: "Menampilkan 1-15 dari 19 data", 2 pages
+  * 0 errors
+
+Stage Summary:
+- Data visibility FIXED: all imported data now visible by default
+- Finance: default "Semua Bulan" shows 101 transactions (2026), or "Semua Tahun" for all 1046
+- Tugas Harian: default "Semua Tanggal" shows all 479 tasks
+- Invoice: already showing 19 invoices (no date filter)
+- User can still filter by specific month/date using the selectors

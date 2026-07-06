@@ -74,7 +74,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateFilter, setDateFilter] = useState<string>(todayStr());
+  const [dateFilter, setDateFilter] = useState<string>(""); // empty = Semua Tanggal (show all by default)
   const [userFilter, setUserFilter] = useState<string>("all");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [search, setSearch] = useState("");
@@ -302,12 +302,23 @@ export function TasksModule({ user }: { user: SafeUser }) {
               <Label className="text-xs text-slate-500 mb-1.5 flex items-center gap-1.5">
                 <CalendarDays className="w-3.5 h-3.5" /> Tanggal
               </Label>
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="h-9"
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="h-9 flex-1"
+                  disabled={!dateFilter}
+                />
+                <Button
+                  variant={dateFilter ? "outline" : "default"}
+                  size="sm"
+                  className="h-9 whitespace-nowrap"
+                  onClick={() => setDateFilter(dateFilter ? "" : todayStr())}
+                >
+                  {dateFilter ? "Semua Tanggal" : "Hari Ini"}
+                </Button>
+              </div>
             </div>
             {isOwner && (
               <div className="flex-1 min-w-0">
