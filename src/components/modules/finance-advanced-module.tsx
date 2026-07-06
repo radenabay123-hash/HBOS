@@ -155,6 +155,7 @@ export function FinanceModule({ user }: { user: SafeUser }) {
               onChange={(e) => setYear(Number(e.target.value))}
               className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="0">Semua Tahun</option>
               {[2026, 2025, 2024, 2023, 2022, 2021].map((y) => <option key={y} value={String(y)}>{y}</option>)}
             </select>
           </div>

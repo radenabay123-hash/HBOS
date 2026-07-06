@@ -2211,3 +2211,36 @@ Stage Summary:
 - Tugas Harian: default "Semua Tanggal" shows all 479 tasks
 - Invoice: already showing 19 invoices (no date filter)
 - User can still filter by specific month/date using the selectors
+
+---
+Task ID: DASHBOARD-ALL-YEARS-FIX
+Agent: Main (Z.ai Code)
+Task: Fix dashboard keuangan - sync data + add "Semua Tahun" with year-to-year accumulation
+
+Work Log:
+- Root cause: getFinanceDashboard(year, month) always filtered by specific year/month. Default July 2026 had no data → dashboard showed 0 for everything. No "Semua Tahun" option existed.
+- Rewrote getFinanceDashboard in src/lib/finance-engine.ts:
+  * Added isAllYears (year=0) and isAllMonths (month=0) handling
+  * When isAllYears: periodStart/periodEnd = full range (2000-2100), chart shows yearly accumulation (2022, 2023, 2024, 2025, 2026)
+  * When isAllMonths (specific year): periodStart/periodEnd = full year, chart shows 12 months
+  * When specific month: same as before (month-specific data)
+  * Saldo (totalSaldo, kasSaldo, bankSaldo, ewalletSaldo) always accumulated from ALL transactions
+  * Period-specific data (monthPemasukan, monthPengeluaran, monthLaba) adapts to selected period
+  * Chart data adapts: yearly bars when "Semua Tahun", monthly bars when specific year
+- Updated dashboard API (src/app/api/finance/dashboard/route.ts):
+  * month defaults to 0 (Semua Bulan) instead of current month
+  * year=0 passes through to engine as "Semua Tahun"
+- Updated frontend year selector: added "Semua Tahun" (value=0) option
+- Verified with Agent Browser:
+  * "Semua Tahun": Total Saldo Rp 40.5M, Pendapatan Rp 2.31B, Pengeluaran Rp 2.27B, Laba Rp 47M, chart shows 2022-2026 yearly bars
+  * "2022": Pendapatan Rp 280.7M, Laba Rp 1.5M, chart shows Jan-Des 2022
+  * "2024": Pendapatan Rp 539.9M, Laba Rp 14.3M, chart shows Jan-Des 2024
+  * "2026": Pendapatan shows 2026 data, chart shows Jan-Des 2026
+  * 0 errors
+
+Stage Summary:
+- Dashboard keuangan sekarang TER-SYNC dengan data real
+- "Semua Tahun" menampilkan akumulasi dari 2022-2026 (chart tahun ke tahun)
+- Setiap tahun (2022, 2023, 2024, 2025, 2026) menampilkan data real dengan chart bulanan
+- "Semua Bulan" menampilkan akumulasi semua bulan dalam tahun tersebut
+- Saldo selalu akumulasi dari SEMUA transaksi (tidak terpengaruh filter)

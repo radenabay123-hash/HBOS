@@ -15,8 +15,11 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const now = new Date();
-    const year = Number(searchParams.get("year") || now.getFullYear());
-    const month = Number(searchParams.get("month") || (now.getMonth() + 1));
+    const yearParam = searchParams.get("year");
+    const monthParam = searchParams.get("month");
+    // year=0 or absent means current year; month=0 or absent means all months
+    const year = yearParam != null ? Number(yearParam) : now.getFullYear();
+    const month = monthParam != null ? Number(monthParam) : 0;
 
     const data = await getFinanceDashboard(year, month);
     return ok({ ...data, year, month });

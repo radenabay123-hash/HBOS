@@ -2,16 +2,32 @@
 import { db } from "./db";
 
 export async function getFinanceDashboard(year: number, month: number) {
-  const monthStart = new Date(year, month - 1, 1);
-  const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
   const now = new Date();
+  const isAllYears = year === 0; // year=0 means "Semua Tahun" (accumulate all years)
+  const isAllMonths = month === 0; // month=0 means "Semua Bulan" (accumulate all months in that year)
+
+  // Determine date range for month/period-specific data
+  let periodStart: Date, periodEnd: Date;
+  if (isAllYears) {
+    // All years: use full range
+    periodStart = new Date(2000, 0, 1);
+    periodEnd = new Date(2100, 11, 31, 23, 59, 59, 999);
+  } else if (isAllMonths) {
+    // All months in a specific year
+    periodStart = new Date(year, 0, 1);
+    periodEnd = new Date(year, 11, 31, 23, 59, 59, 999);
+  } else {
+    // Specific month in a specific year
+    periodStart = new Date(year, month - 1, 1);
+    periodEnd = new Date(year, month, 0, 23, 59, 59, 999);
+  }
 
   // ===== All transactions =====
   const allTxns = await db.financeTransaction.findMany({});
   const pemasukan = allTxns.filter((t) => t.type === "PEMASUKAN" && t.isPaid);
   const pengeluaran = allTxns.filter((t) => t.type === "PENGELUARAN" && t.isPaid);
 
-  // ===== Saldo by account type =====
+  // ===== Saldo by account type (always accumulated from ALL transactions) =====
   const totalSaldo = pemasukan.reduce((s, t) => s + t.amount, 0) - pengeluaran.reduce((s, t) => s + t.amount, 0);
   const kasSaldo = allTxns.filter((t) => t.accountType === "KAS" && t.isPaid).reduce((s, t) => s + (t.type === "PEMASUKAN" ? t.amount : t.type === "PENGELUARAN" ? -t.amount : 0), 0);
   const bankSaldo = allTxns.filter((t) => t.accountType === "BANK" && t.isPaid).reduce((s, t) => s + (t.type === "PEMASUKAN" ? t.amount : t.type === "PENGELUARAN" ? -t.amount : 0), 0);
@@ -23,37 +39,55 @@ export async function getFinanceDashboard(year: number, month: number) {
   const totalPiutang = piutangTxns.reduce((s, t) => s + t.amount, 0);
   const totalHutang = hutangTxns.reduce((s, t) => s + t.amount, 0);
 
-  // ===== Month-specific =====
-  const monthPemasukan = pemasukan.filter((t) => t.date >= monthStart && t.date <= monthEnd).reduce((s, t) => s + t.amount, 0);
-  const monthPengeluaran = pengeluaran.filter((t) => t.date >= monthStart && t.date <= monthEnd).reduce((s, t) => s + t.amount, 0);
-  const monthLaba = monthPemasukan - monthPengeluaran;
+  // ===== Period-specific (month or year or all) =====
+  const periodPemasukan = pemasukan.filter((t) => t.date >= periodStart && t.date <= periodEnd).reduce((s, t) => s + t.amount, 0);
+  const periodPengeluaran = pengeluaran.filter((t) => t.date >= periodStart && t.date <= periodEnd).reduce((s, t) => s + t.amount, 0);
+  const periodLaba = periodPemasukan - periodPengeluaran;
 
   // ===== Tax due =====
   const taxPayments = await db.taxPayment.findMany({});
   const taxDue = taxPayments.filter((t) => t.status === "TERUTANG").reduce((s, t) => s + (t.taxDue - t.taxPaid), 0);
   const taxPaid = taxPayments.filter((t) => t.status === "DIBAYAR").reduce((s, t) => s + t.taxPaid, 0);
 
-  // ===== Monthly chart (12 months) =====
+  // ===== Chart data =====
+  let chartData: { month: string; pemasukan: number; pengeluaran: number; laba: number }[] = [];
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-  const monthlyData = [];
-  for (let m = 0; m < 12; m++) {
-    const mStart = new Date(year, m, 1);
-    const mEnd = new Date(year, m + 1, 0, 23, 59, 59, 999);
-    const mPem = pemasukan.filter((t) => t.date >= mStart && t.date <= mEnd).reduce((s, t) => s + t.amount, 0);
-    const mPeng = pengeluaran.filter((t) => t.date >= mStart && t.date <= mEnd).reduce((s, t) => s + t.amount, 0);
-    monthlyData.push({ month: monthNames[m], pemasukan: mPem, pengeluaran: mPeng, laba: mPem - mPeng });
+
+  if (isAllYears) {
+    // Show yearly accumulation when "Semua Tahun" selected
+    const yearSet = new Set<number>();
+    for (const t of allTxns) {
+      yearSet.add(t.date.getFullYear());
+    }
+    const years = Array.from(yearSet).sort((a, b) => a - b);
+    for (const y of years) {
+      const yStart = new Date(y, 0, 1);
+      const yEnd = new Date(y, 11, 31, 23, 59, 59, 999);
+      const yPem = pemasukan.filter((t) => t.date >= yStart && t.date <= yEnd).reduce((s, t) => s + t.amount, 0);
+      const yPeng = pengeluaran.filter((t) => t.date >= yStart && t.date <= yEnd).reduce((s, t) => s + t.amount, 0);
+      chartData.push({ month: String(y), pemasukan: yPem, pengeluaran: yPeng, laba: yPem - yPeng });
+    }
+  } else {
+    // Show 12 months of the selected year
+    for (let m = 0; m < 12; m++) {
+      const mStart = new Date(year, m, 1);
+      const mEnd = new Date(year, m + 1, 0, 23, 59, 59, 999);
+      const mPem = pemasukan.filter((t) => t.date >= mStart && t.date <= mEnd).reduce((s, t) => s + t.amount, 0);
+      const mPeng = pengeluaran.filter((t) => t.date >= mStart && t.date <= mEnd).reduce((s, t) => s + t.amount, 0);
+      chartData.push({ month: monthNames[m], pemasukan: mPem, pengeluaran: mPeng, laba: mPem - mPeng });
+    }
   }
 
-  // ===== Expense by category =====
+  // ===== Expense by category (for selected period) =====
   const expenseByCat: Record<string, number> = {};
-  for (const t of pengeluaran.filter((t) => t.date >= monthStart && t.date <= monthEnd)) {
+  for (const t of pengeluaran.filter((t) => t.date >= periodStart && t.date <= periodEnd)) {
     const k = t.category || "Lainnya";
     expenseByCat[k] = (expenseByCat[k] || 0) + t.amount;
   }
 
-  // ===== Income by category =====
+  // ===== Income by category (for selected period) =====
   const incomeByCat: Record<string, number> = {};
-  for (const t of pemasukan.filter((t) => t.date >= monthStart && t.date <= monthEnd)) {
+  for (const t of pemasukan.filter((t) => t.date >= periodStart && t.date <= periodEnd)) {
     const k = t.category || "Lainnya";
     incomeByCat[k] = (incomeByCat[k] || 0) + t.amount;
   }
@@ -63,23 +97,22 @@ export async function getFinanceDashboard(year: number, month: number) {
   const upcomingPiutang = piutangTxns.filter((t) => t.dueDate && t.dueDate >= now).sort((a, b) => (a.dueDate?.getTime() || 0) - (b.dueDate?.getTime() || 0)).slice(0, 5);
   const upcomingHutang = hutangTxns.filter((t) => t.dueDate && t.dueDate >= now).sort((a, b) => (a.dueDate?.getTime() || 0) - (b.dueDate?.getTime() || 0)).slice(0, 5);
 
-  // ===== Forecast (simple linear: avg of last 3 months) =====
-  const last3 = monthlyData.slice(Math.max(0, now.getMonth() - 2), now.getMonth() + 1).filter((m) => now.getMonth() >= 0);
-  const avgPemasukan = last3.length > 0 ? last3.reduce((s, m) => s + m.pemasukan, 0) / Math.max(last3.length, 1) : monthPemasukan;
-  const avgPengeluaran = last3.length > 0 ? last3.reduce((s, m) => s + m.pengeluaran, 0) / Math.max(last3.length, 1) : monthPengeluaran;
+  // ===== Forecast =====
+  const recentData = isAllYears ? chartData.slice(-3) : chartData.slice(Math.max(0, now.getMonth() - 2), now.getMonth() + 1).filter((m) => now.getMonth() >= 0);
+  const avgPemasukan = recentData.length > 0 ? recentData.reduce((s, m) => s + m.pemasukan, 0) / Math.max(recentData.length, 1) : periodPemasukan;
+  const avgPengeluaran = recentData.length > 0 ? recentData.reduce((s, m) => s + m.pengeluaran, 0) / Math.max(recentData.length, 1) : periodPengeluaran;
   const avgLaba = avgPemasukan - avgPengeluaran;
   const forecastCashFlow = totalSaldo + avgLaba;
   const forecastProfit = avgLaba;
-  // Forecast pajak: estimate PPh Badan 22% of profit
-  const yearProfit = monthlyData.reduce((s, m) => s + m.laba, 0);
-  const forecastTax = Math.max(0, yearProfit) * 0.22;
+  const periodProfit = chartData.reduce((s, m) => s + m.laba, 0);
+  const forecastTax = Math.max(0, periodProfit) * 0.22;
 
   return {
     totalSaldo, kasSaldo, bankSaldo, ewalletSaldo,
     totalPiutang, totalHutang,
-    monthPemasukan, monthPengeluaran, monthLaba,
+    monthPemasukan: periodPemasukan, monthPengeluaran: periodPengeluaran, monthLaba: periodLaba,
     taxDue, taxPaid,
-    monthlyData, expenseByCat, incomeByCat,
+    monthlyData: chartData, expenseByCat, incomeByCat,
     reminders: { upcomingTax, upcomingPiutang, upcomingHutang },
     forecast: { cashFlow: forecastCashFlow, profit: forecastProfit, tax: forecastTax },
   };
