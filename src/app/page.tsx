@@ -32,6 +32,7 @@ import { SubscriptionManagerModule } from "@/components/modules/subscription-man
 import { TeamStructureModule } from "@/components/modules/team-structure-module";
 import { BroadcastModule } from "@/components/modules/broadcast-module";
 import { MyNotificationsModule } from "@/components/modules/my-notifications-module";
+import { ChatModule } from "@/components/modules/chat-module";
 import { ROLES } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
 import { getMe, api } from "@/lib/api-client";
@@ -161,6 +162,8 @@ export default function Home() {
         return <BroadcastModule />;
       case "mynotifs":
         return <MyNotificationsModule user={user} />;
+      case "chat":
+        return <ChatModule user={user} />;
       default:
         return null;
     }

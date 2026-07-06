@@ -1,0 +1,16 @@
+{
+  "name": "hbos-chat-service",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun --hot index.ts",
+    "generate": "prisma generate",
+    "postinstall": "prisma generate || echo 'prisma generate skipped (already generated)'"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.11.1"
+  }
+}

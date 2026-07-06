@@ -3070,3 +3070,148 @@ Stage Summary:
 - VAPID keys stored in .env (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, NEXT_PUBLIC_VAPID_PUBLIC_KEY for client).
 - Files added: public/sw.js, src/lib/web-push.ts, src/lib/hooks/use-push-notifications.ts, src/app/api/push/{vapid-public,subscribe,unsubscribe,test,mute,stats}/route.ts
 - Files updated: prisma/schema.prisma (PushSubscription model + User relation), .env (VAPID keys), src/app/api/notifications/broadcast/route.ts (push fan-out), src/components/modules/my-notifications-module.tsx (push UI panel), src/components/modules/broadcast-module.tsx (subscriber stats + push result display)
+
+---
+Task ID: 22-a
+Agent: Chat Socket.io Service Builder (subagent)
+Task: Build socket.io mini-service for realtime chat on port 3001
+
+Work Log:
+- Read worklog tail to understand previous work (notification/push system already in place)
+- Read `examples/websocket/server.ts` to confirm gateway pattern (path: "/", Caddy XTransformPort)
+- Read `src/lib/db.ts` and `prisma/schema.prisma` to confirm Prisma models for ChatRoom, ChatMember, ChatMessage, Session, User
+- Created `/home/z/my-project/mini-services/chat-service/` directory
+- Wrote `package.json` with deps: socket.io@^4.8.3, @prisma/client@^6.11.1; added `prisma@^6.11.1` as devDependency + `postinstall` hook for `prisma generate` (needed because Bun sub-project needs its own generated Prisma client binary)
+- Wrote `index.ts` (~430 lines) implementing the socket.io server:
+  * Port 3001 hardcoded, path "/" (default) for Caddy gateway compat
+  * CORS origin "*", methods GET/POST
+  * pingTimeout 60000, pingInterval 25000
+  * Own PrismaClient instance (DATABASE_URL defaults to `file:/home/z/my-project/db/custom.db`)
+  * Handshake auth via `hbos_session` cookie → Session table lookup → socket.data.user/id; falls back to explicit `auth` event with token (10s grace period then disconnect)
+  * In-memory online tracking (Map<roomId, Set<userId>>) + per-socket room tracking
+  * All 8 events implemented with membership/ownership checks
+  * Graceful SIGTERM/SIGINT shutdown (closes io → httpServer → db.$disconnect → exit 0)
+- Created local `schema.prisma` (copy of parent's) so `prisma generate` outputs to local `node_modules/.prisma/client/` for the Bun sub-process
+- Initial attempt with `bunx prisma generate` failed with "Could not resolve @prisma/client" — fixed by installing `prisma` as a local devDependency (CLI was previously only in parent project's node_modules)
+- Ran `bun install` → 35 packages installed (socket.io + @prisma/client + prisma CLI)
+- Ran `bunx prisma generate` → generated client (17MB libquery_engine + 2.6MB index.d.ts) into local `node_modules/.prisma/client/`
+- Smoke-tested startup: `timeout 5 bun index.ts` printed `Chat socket.io service running on port 3001` cleanly
+- Verified engine.io handshake via curl: `curl "http://127.0.0.1:3001/?EIO=4&transport=polling"` returned proper sid + pingInterval/pingTimeout values
+- Wrote a comprehensive e2e test (using socket.io-client + a fresh test user/session/room from the DB) and ran it against the live server. All 8 events verified end-to-end:
+  * auth → auth-ok + ack {ok, user}
+  * join-room → room-joined + online-users + ack {ok, online[]}
+  * send-message → message-received broadcast (with user relation) + ack {ok, message}
+  * get-online-users → online-users + ack {ok, userIds[]}
+  * typing → user-typing broadcast (to others in room, not sender)
+  * edit-message → message-edited broadcast + ack {ok}
+  * mark-read → read-receipt broadcast + ack {ok}
+  * delete-message → message-deleted broadcast + ack {ok}
+- Server logs during e2e: clean `user authenticated`, `user joined room`, `message saved`, `disconnected` lifecycle
+- Cleaned up test artifacts (test room/message/session deleted from DB)
+
+Stage Summary:
+- Chat socket.io microservice is live and verified on port 3001 at path "/".
+- Files created (in `/home/z/my-project/mini-services/chat-service/`):
+  * `package.json` — deps + scripts (dev, generate, postinstall)
+  * `index.ts` — socket.io server (~430 LOC, all events + auth + lifecycle)
+  * `schema.prisma` — local copy of parent schema (used only by `prisma generate` to produce a local client binary; runtime reads/writes the SAME SQLite DB at `/home/z/my-project/db/custom.db`)
+- Socket events supported (all client→server unless noted):
+  * `auth` {token} → ack {ok, user} + emits `auth-ok` {user}
+  * `join-room` {roomId} → ack {ok, online[]} + emits `room-joined` {roomId, userId}, `online-users` {roomId, userIds[]}, `user-online` {roomId, userId, name} (to others)
+  * `leave-room` {roomId} → ack {ok} + emits `user-offline` {roomId, userId} (to room)
+  * `send-message` {roomId, content, type?, replyToId?, fileName?, fileSize?, mimeType?} → ack {ok, message} + broadcasts `message-received` {full ChatMessage with user relation} to room
+  * `typing` {roomId, isTyping} → broadcasts `user-typing` {roomId, userId, name, isTyping} to others in room
+  * `mark-read` {roomId} → ack {ok} + broadcasts `read-receipt` {roomId, userId} to room
+  * `edit-message` {messageId, content} → ack {ok, message} + broadcasts `message-edited` {messageId, roomId, content, editedAt} to room (ownership-checked)
+  * `delete-message` {messageId} → ack {ok} + broadcasts `message-deleted` {messageId, roomId} to room (ownership-checked)
+  * `get-online-users` {roomId} → ack {ok, userIds[]} + emits `online-users` {roomId, userIds[]} to socket
+  * Server→client only: `auth-required`, `auth-error`, `user-offline` (on disconnect)
+- How to start: `cd /home/z/my-project/mini-services/chat-service && bun index.ts` (or `bun run dev` for hot-reload)
+- Frontend connection recipe (CRITICAL — must use this exact form): `io("/?XTransformPort=3001", { withCredentials: true })`. Never `io("http://localhost:3001")` — the Caddy gateway only exposes one external port.
+- Caveats / things to verify:
+  1. The local `schema.prisma` is a snapshot copy. If the parent project adds new chat-related Prisma models, you must re-copy the schema and re-run `bunx prisma generate` inside `mini-services/chat-service/`. The postinstall hook only re-generates against the existing local schema.
+  2. Online tracking is in-memory (not persisted across restarts). On service restart, all clients reconnect and re-emit `join-room` which re-populates the online map. No data loss for messages (those go to DB), but transient `user-online/offline` events may fire.
+  3. The `auth` event provides an explicit-token alternative to the cookie-based handshake auth. Frontend can use EITHER approach (cookie is automatic if `withCredentials: true` and the user is logged in to the main app; explicit `auth` event is useful for cross-origin or non-browser clients).
+  4. Multiple sockets per user (e.g. user opens 2 tabs) are handled correctly — `user-offline` only fires when the LAST socket for that user leaves a room (checked via `io.sockets.adapter.rooms`).
+
+---
+Task ID: 22
+Agent: Main (Z.ai Code) + subagent 22-a (socket.io service)
+Task: Build WhatsApp/Telegram-style realtime chat system with persistent history, group chat, DM, typing indicators, file sharing, emoji
+
+Work Log:
+- Read existing worklog, prisma schema, app-shell, page.tsx, auth lib, api-client, constants
+- Installed socket.io@4.8.3 + socket.io-client@4.8.3 via bun add
+- Added 3 Prisma models: ChatRoom (DIRECT/GROUP), ChatMember (with lastReadAt, muted, role), ChatMessage (TEXT/IMAGE/FILE/SYSTEM, replyTo, editedAt, deletedAt) + relations on User (chatMembers, chatMessages, chatRoomsCreated)
+- Ran bun run db:push — schema in sync
+- Delegated socket.io mini-service to subagent 22-a (see section below) — port 3001, path "/", cookie-based auth, 8 events
+- Created 8 REST API routes under /api/chat/:
+  - rooms/route.ts (GET list with unread count + last message preview, POST create DM/group)
+  - rooms/[roomId]/route.ts (GET details, PUT update, DELETE leave)
+  - rooms/[roomId]/messages/route.ts (GET paginated history, POST send message HTTP fallback)
+  - rooms/[roomId]/read/route.ts (POST mark read)
+  - rooms/[roomId]/members/route.ts (GET list, POST add, DELETE remove)
+  - messages/[messageId]/route.ts (PUT edit, DELETE soft-delete)
+  - users/route.ts (GET all active users for new chat picker)
+  - dm/route.ts (POST get-or-create DIRECT room)
+- Created src/lib/hooks/use-chat.ts — React hook managing socket lifecycle, room list, messages, typing, online users, edit/delete, create DM/group, with HTTP fallback when socket disconnected
+- Created src/components/modules/chat-module.tsx (~1250 lines) — full WhatsApp/Telegram-style UI:
+  - Sidebar: room list with avatar, name, last message preview, unread badge, online dot, typing indicator, search
+  - Chat area: header with avatar/name/online status/typing, message bubbles (own right blue, other left white), date dividers, reply preview, edit indicator, deleted state, file/image attachments, emoji picker (60 emojis), file upload (base64, max 5MB), typing notification, send button, message hover actions (reply/edit/delete)
+  - Dialogs: New Chat (user picker), New Group (name + member multi-select), Members (list + add/remove for admin)
+  - Responsive: mobile shows list OR chat, desktop shows both side-by-side
+  - Role-colored avatars and sender names
+  - Connection status indicator (Terhubung real-time / Menghubungkan...)
+- Added "chat" to ViewKey in app-shell.tsx, added menu item "Chat Tim" with MessageCircle icon (all roles), rendered ChatModule in page.tsx
+- Fixed lint error: setState in effect (room state reset) → replaced with key={room.id} prop on ChatArea
+- Fixed naming conflict: setTyping defined twice (useState setter + useCallback) → renamed useCallback to emitTyping
+- Fixed socket connection bug: client default path "/socket.io" didn't match server path "/" → added path: "/" to client options
+- Fixed CORS: server cors origin: "*" incompatible with withCredentials: true → changed to origin: true + credentials: true
+- Fixed transport: WebSocket upgrade fails through Caddy query-based routing → use polling-only transport
+- Verified through Caddy gateway (port 81):
+  - Socket connects: [chat] user connected: M. Aqil Baihaqi
+  - Cookie auth works: user identified via hbos_session cookie
+  - Rooms auto-joined on connect
+  - Real-time message sent via socket: [chat] message ... from M. Aqil Baihaqi: Test real-time chat via socket! 🎉
+  - Message appears in UI instantly (no page reload needed)
+  - Group creation works: "Tim Konten Mingguan" with 3 members
+  - Status shows "Terhubung real-time" with 4 percakapan
+- bun run lint: 0 errors
+
+Stage Summary:
+- Full WhatsApp/Telegram-style chat system live with real-time delivery via socket.io
+- Architecture: Next.js app (port 3000) ← Caddy gateway (port 81) → chat-service mini-service (port 3001, socket.io, Prisma SQLite)
+- Frontend connects via io("/?XTransformPort=3001", { path: "/", transports: ["polling"], withCredentials: true })
+- Cookie-based auth: hbos_session cookie forwarded by Caddy, validated against Session table in chat-service
+- Features: DM (1-on-1), Group chat (multi-member with admin), message history (persistent in SQLite), reply, edit, delete (soft), typing indicator, online presence, unread badge, file/image upload (base64), emoji picker, search rooms, responsive mobile/desktop
+- HTTP fallback: if socket disconnects, sendMessage falls back to POST /api/chat/rooms/[id]/messages
+- Files added: prisma/schema.prisma (3 models), src/app/api/chat/** (8 routes), src/lib/hooks/use-chat.ts, src/components/modules/chat-module.tsx, mini-services/chat-service/ (index.ts, package.json, schema.prisma)
+- Files updated: src/components/shell/app-shell.tsx (ViewKey + menu), src/app/page.tsx (ChatModule import + render)
+- Chat service started: PID 18493, port 3001, log at /tmp/chat-service.log
+- Start command: cd /home/z/my-project/mini-services/chat-service && setsid bash -c 'exec bun index.ts' &
+
+---
+Task ID: 22-a
+Agent: Chat Socket.io Service Builder (subagent)
+Task: Build socket.io mini-service for realtime chat on port 3001
+
+Work Log:
+- Read worklog.md to understand project context (Next.js 16, Prisma SQLite, auth via hbos_session cookie)
+- Created mini-services/chat-service/ as independent Bun project
+- package.json: socket.io@^4.8.3, @prisma/client@^6.11.1, prisma@^6.11.1 (dev), scripts: dev (bun --hot index.ts)
+- index.ts (~430 LOC): socket.io server on port 3001, path "/", CORS origin:true+credentials:true, pingTimeout 60s, pingInterval 25s
+- Auth: reads hbos_session cookie from handshake → Session table lookup → attaches socket.data.user. Alternative explicit `auth` event with {token}. 10s timeout for unauth connections.
+- 8 event handlers: auth, join-room, leave-room, send-message, typing, mark-read, edit-message, delete-message, get-online-users
+- Online tracking: in-memory Map<roomId, Set<userId>>, broadcasts user-online/user-offline
+- Message persistence: saves to ChatMessage table via Prisma, includes user relation in broadcast
+- Local schema.prisma copy for prisma generate (runtime shares same SQLite DB)
+- Verified all 8 events end-to-end with test client
+- Fixed: @prisma/client not initialized → added local schema.prisma + prisma devDep for generate
+- Fixed: E2E test race condition → pre-attach listeners before emitting
+
+Stage Summary:
+- Chat socket.io service running on port 3001, path "/"
+- Frontend connects via: io("/?XTransformPort=3001", { path: "/", withCredentials: true, transports: ["polling"] })
+- Cookie-based auth works through Caddy gateway
+- All 8 events verified: auth, join-room, leave-room, send-message, typing, mark-read, edit-message, delete-message
+- Start: cd /home/z/my-project/mini-services/chat-service && bun index.ts

@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, FileText, Film, Wallet,
   FileStack, Trophy, UserCog, FileBarChart, Bell, BellOff, LogOut, Menu, Building2,
-  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle, Sparkles, Database, CreditCard, Megaphone,
+  ChevronDown, X, Target, Clock, Receipt, FileText as InvoiceIcon, Settings, KanbanSquare, Layout, UserCircle, Sparkles, Database, CreditCard, Megaphone, MessageCircle,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 export type ViewKey =
   | "dashboard" | "crm" | "events" | "tasks" | "kpi" | "content" | "articles"
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
-  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions" | "teamstructure" | "broadcast" | "mynotifs";
+  | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban" | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions" | "teamstructure" | "broadcast" | "mynotifs" | "chat";
 
 interface MenuItem {
   key: ViewKey;
@@ -34,6 +34,7 @@ const MENU: MenuItem[] = [
   { key: "absensi", label: "Absensi", icon: Clock, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "kanban", label: "Kanban Board", icon: KanbanSquare, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
+  { key: "chat", label: "Chat Tim", icon: MessageCircle, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"] },
   { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
