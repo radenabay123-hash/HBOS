@@ -287,111 +287,73 @@ export function TasksModule({ user }: { user: SafeUser }) {
   }
 
   return (
-    <div className="space-y-4">
-      <SectionHeader
-        title="Tugas Harian"
-        description="Catat dan pantau tugas harian tim. Owner melihat semua, tim melihat tugas sendiri."
-        action={
-          <Button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4" /> Tambah Tugas
+    <div className="space-y-3">
+      {/* Header — compact, inline with stats */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900">Tugas Harian</h1>
+          {/* Inline stats — pills */}
+          <div className="flex items-center gap-1.5">
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium">{stats.total} Total</span>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-medium">{stats.selesai} Selesai</span>
+            {stats.sedang > 0 && <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-medium">{stats.sedang} Sedang</span>}
+            {stats.belum > 0 && <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-medium">{stats.belum} Belum</span>}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-8 text-xs bg-white"><FileSpreadsheet className="w-3.5 h-3.5" /></Button>
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-8 text-xs bg-white"><FileText className="w-3.5 h-3.5" /></Button>
+          <Button
+            variant={bulkMode ? "default" : "outline"} size="sm"
+            onClick={() => { setBulkMode(!bulkMode); if (bulkMode) clearSelection(); }}
+            className={cn("h-8 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
+          >
+            <CheckSquare className="w-3.5 h-3.5" />
           </Button>
-        }
-      />
-
-      {/* Stats — compact inline */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg border border-slate-200 p-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0"><ListTodo className="w-4 h-4 text-slate-500" /></div>
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-slate-900">{stats.total}</p>
-            <p className="text-[10px] text-slate-500 truncate">Total</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-green-200 p-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center shrink-0"><CheckCircle2 className="w-4 h-4 text-green-600" /></div>
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-green-700">{stats.selesai}</p>
-            <p className="text-[10px] text-slate-500 truncate">Selesai {stats.total ? `(${Math.round((stats.selesai / stats.total) * 100)}%)` : ""}</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-amber-200 p-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0"><Clock className="w-4 h-4 text-amber-600" /></div>
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-amber-700">{stats.sedang}</p>
-            <p className="text-[10px] text-slate-500 truncate">Sedang</p>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-rose-200 p-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center shrink-0"><CircleDashed className="w-4 h-4 text-rose-600" /></div>
-          <div className="min-w-0">
-            <p className="text-lg font-bold text-rose-700">{stats.belum}</p>
-            <p className="text-[10px] text-slate-500 truncate">Belum</p>
-          </div>
+          <Button onClick={openAdd} size="sm" className="bg-blue-600 hover:bg-blue-700 h-8">
+            <Plus className="w-3.5 h-3.5" /> Tambah
+          </Button>
         </div>
       </div>
 
-      {/* Filter bar — single row, clean */}
-      <Card className="border-slate-200">
-        <CardContent className="p-3">
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-            {/* Date */}
-            <div className="flex gap-2 sm:w-auto">
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="h-9 w-full sm:w-[140px] text-xs"
-                disabled={!dateFilter}
-              />
-              <Button
-                variant={dateFilter ? "outline" : "default"}
-                size="sm"
-                className="h-9 whitespace-nowrap text-xs"
-                onClick={() => setDateFilter(dateFilter ? "" : todayStr())}
-              >
-                {dateFilter ? "Semua" : "Hari Ini"}
-              </Button>
-            </div>
-            <Separator orientation="vertical" className="hidden sm:block h-8" />
-            {/* Team filter */}
-            {isOwner && (
-              <Select value={userFilter} onValueChange={setUserFilter}>
-                <SelectTrigger className="h-9 w-full sm:w-[160px] text-xs"><SelectValue placeholder="Semua Tim" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Tim</SelectItem>
-                  {teamMembers.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            )}
-            {/* Search */}
-            <div className="relative flex-1 min-w-[150px]">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <Input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari tugas..." className="pl-8 h-9 text-xs bg-white" />
-              {search && <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400"><X className="w-3.5 h-3.5" /></button>}
-            </div>
-            {/* Status */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-full sm:w-[130px] text-xs bg-white"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                {TASK_STATUS.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            {/* Actions */}
-            <div className="flex gap-1">
-              <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 text-xs bg-white"><FileSpreadsheet className="w-3.5 h-3.5" /></Button>
-              <Button variant="outline" size="sm" onClick={handleExportPDF} className="h-9 text-xs bg-white"><FileText className="w-3.5 h-3.5" /></Button>
-              <Button
-                variant={bulkMode ? "default" : "outline"} size="sm"
-                onClick={() => { setBulkMode(!bulkMode); if (bulkMode) clearSelection(); }}
-                className={cn("h-9 text-xs", bulkMode ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white")}
-              >
-                <CheckSquare className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filter bar — single row, minimal */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="h-8 w-[130px] text-xs"
+          disabled={!dateFilter}
+        />
+        <Button
+          variant={dateFilter ? "outline" : "default"}
+          size="sm"
+          className="h-8 whitespace-nowrap text-xs"
+          onClick={() => setDateFilter(dateFilter ? "" : todayStr())}
+        >
+          {dateFilter ? "Semua Tanggal" : "Hari Ini"}
+        </Button>
+        {isOwner && (
+          <Select value={userFilter} onValueChange={setUserFilter}>
+            <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue placeholder="Semua Tim" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Tim</SelectItem>
+              {teamMembers.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        <div className="relative flex-1 min-w-[120px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <Input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari tugas..." className="pl-8 h-8 text-xs bg-white" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 w-[120px] text-xs bg-white"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Status</SelectItem>
+            {TASK_STATUS.map((s) => <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Bulk Action Bar */}
       {bulkMode && selectedCount > 0 && (
@@ -402,88 +364,82 @@ export function TasksModule({ user }: { user: SafeUser }) {
         />
       )}
 
-      {/* Task list — card-based layout (no table) */}
+      {/* Task list — clean minimal cards */}
       {loading ? (
-        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-blue-600" /></div>
       ) : tasks.length === 0 ? (
-        <Card className="border-slate-200">
-          <CardContent className="py-16 text-center">
-            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3"><ListTodo className="w-7 h-7 text-slate-400" /></div>
-            <p className="text-slate-700 font-medium">Belum ada tugas</p>
-            <p className="text-sm text-slate-500 mt-1">{dateFilter ? `Tidak ada tugas pada ${formatDate(dateFilter)}` : "Belum ada tugas tercatat"}</p>
-            <Button onClick={openAdd} className="mt-4 bg-blue-600 hover:bg-blue-700" size="sm"><Plus className="w-4 h-4" /> Tambah Tugas</Button>
-          </CardContent>
-        </Card>
+        <div className="text-center py-12">
+          <ListTodo className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-700 font-medium">Belum ada tugas</p>
+          <p className="text-xs text-slate-500 mt-0.5">{dateFilter ? `Tidak ada tugas pada ${formatDate(dateFilter)}` : "Klik Tambah untuk membuat tugas"}</p>
+        </div>
       ) : filtered.length === 0 ? (
-        <Card className="border-slate-200">
-          <CardContent className="py-16 text-center">
-            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3"><Search className="w-7 h-7 text-slate-400" /></div>
-            <p className="text-slate-700 font-medium">Tidak ada tugas yang cocok</p>
-            <p className="text-sm text-slate-500 mt-1">Coba ubah kata kunci atau filter.</p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-12">
+          <Search className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-700 font-medium">Tidak ada tugas yang cocok</p>
+        </div>
       ) : (
         <>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {paginatedItems.map((t) => {
             const canEdit = isOwner || t.userId === user.id;
+            const statusColor = t.status === "SELESAI" ? "bg-emerald-500" : t.status === "SEDANG" ? "bg-amber-500" : "bg-rose-400";
             return (
-              <Card key={t.id} className="border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-3">
-                    {/* Checkbox (bulk mode) */}
-                    {bulkMode && (
-                      <div className="pt-1"><SelectCheckbox checked={isSelected(t)} onChange={() => toggle(t)} /></div>
-                    )}
-                    {/* Progress ring/bar */}
-                    <div className="shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: t.status === "SELESAI" ? "#dcfce7" : t.status === "SEDANG" ? "#fef9c3" : "#f1f5f9" }}>
-                      {t.status === "SELESAI" ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : t.status === "SEDANG" ? <Clock className="w-5 h-5 text-amber-600" /> : <CircleDashed className="w-5 h-5 text-slate-400" />}
-                    </div>
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{t.taskHariIni}</p>
-                          {t.progress && <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{t.progress}</p>}
-                        </div>
-                        <Badge variant="outline" className={cn("text-[10px] shrink-0", TASK_STATUS_COLORS[t.status])}>
-                          {TASK_STATUS_LABELS[t.status] || t.status}
-                        </Badge>
-                      </div>
-                      {/* Meta row */}
-                      <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-400 flex-wrap">
-                        {isOwner && t.user?.name && (
-                          <span className="flex items-center gap-1"><User className="w-2.5 h-2.5" />{t.user.name}</span>
-                        )}
-                        {t.jamMulai && (
-                          <span className="flex items-center gap-1"><Clock className="w-2.5 h-2.5" />{t.jamMulai}{t.jamSelesai ? ` - ${t.jamSelesai}` : ""}</span>
-                        )}
-                        {t.persentaseSelesai != null && t.persentaseSelesai > 0 && (
-                          <span className="font-semibold text-slate-600">{t.persentaseSelesai}%</span>
-                        )}
-                        {t.hambatan && (
-                          <span className="flex items-center gap-1 text-amber-500 truncate max-w-[200px]"><AlertCircle className="w-2.5 h-2.5" />{t.hambatan}</span>
-                        )}
-                      </div>
-                      {/* Progress bar */}
-                      {t.persentaseSelesai != null && t.persentaseSelesai > 0 && (
-                        <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className={cn("h-full rounded-full transition-all", t.persentaseSelesai >= 100 ? "bg-green-500" : t.persentaseSelesai >= 60 ? "bg-amber-500" : "bg-rose-500")} style={{ width: `${Math.min(t.persentaseSelesai, 100)}%` }} />
-                        </div>
+              <div key={t.id} className="group bg-white rounded-lg border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all overflow-hidden">
+                <div className="flex items-stretch">
+                  {/* Status accent bar */}
+                  <div className={cn("w-1 shrink-0", statusColor)} />
+                  {/* Checkbox */}
+                  {bulkMode && (
+                    <div className="flex items-center pl-2"><SelectCheckbox checked={isSelected(t)} onChange={() => toggle(t)} /></div>
+                  )}
+                  {/* Main content — clickable to expand */}
+                  <div className="flex-1 min-w-0 px-3 py-2.5">
+                    {/* Top row: task name + status + time */}
+                    <div className="flex items-center gap-2">
+                      <p className={cn("text-sm font-medium flex-1 min-w-0 truncate", t.status === "SELESAI" && "text-slate-400 line-through")}>
+                        {t.taskHariIni}
+                      </p>
+                      <span className={cn("text-[9px] font-semibold px-1.5 py-0.5 rounded-full shrink-0",
+                        t.status === "SELESAI" ? "bg-emerald-50 text-emerald-700" :
+                        t.status === "SEDANG" ? "bg-amber-50 text-amber-700" :
+                        "bg-rose-50 text-rose-700"
+                      )}>
+                        {TASK_STATUS_LABELS[t.status] || t.status}
+                      </span>
+                      {t.jamMulai && (
+                        <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">{t.jamMulai}{t.jamSelesai ? `→${t.jamSelesai}` : ""}</span>
+                      )}
+                      {isOwner && t.user?.name && (
+                        <span className="text-[10px] text-blue-600 font-medium shrink-0 hidden sm:inline">{t.user.name.split(" ")[0]}</span>
                       )}
                     </div>
-                    {/* Actions */}
-                    {!bulkMode && (
-                      <div className="flex items-center gap-0.5 shrink-0">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => setPreviewDialog({ open: true, item: t })} title="Preview"><Eye className="w-3.5 h-3.5" /></Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => openEdit(t)} disabled={!canEdit} title="Edit"><Pencil className="w-3.5 h-3.5" /></Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(t)} disabled={!canEdit} title="Hapus"><Trash2 className="w-3.5 h-3.5" /></Button>
+                    {/* Progress bar — inline */}
+                    {t.persentaseSelesai != null && t.persentaseSelesai > 0 && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={cn("h-full rounded-full", t.persentaseSelesai >= 100 ? "bg-emerald-500" : t.persentaseSelesai >= 60 ? "bg-amber-500" : "bg-rose-400")} style={{ width: `${Math.min(t.persentaseSelesai, 100)}%` }} />
+                        </div>
+                        <span className="text-[9px] text-slate-400 tabular-nums shrink-0">{t.persentaseSelesai}%</span>
                       </div>
                     )}
+                    {/* Hambatan — compact */}
+                    {t.hambatan && (
+                      <p className="text-[10px] text-amber-600 mt-1 flex items-center gap-1 truncate">
+                        <AlertCircle className="w-2.5 h-2.5 shrink-0" /> {t.hambatan}
+                      </p>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
+                  {/* Actions — appear on hover */}
+                  {!bulkMode && (
+                    <div className="flex items-center pr-2 gap-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-blue-600" onClick={() => setPreviewDialog({ open: true, item: t })} title="Preview"><Eye className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-blue-600" onClick={() => openEdit(t)} disabled={!canEdit} title="Edit"><Pencil className="w-3.5 h-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-slate-400 hover:text-rose-600" onClick={() => handleDelete(t)} disabled={!canEdit} title="Hapus"><Trash2 className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
