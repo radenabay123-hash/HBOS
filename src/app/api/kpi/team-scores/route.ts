@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   return handleApi(async () => {
     const user = await getCurrentUser();
     if (!user) return err("Unauthorized", 401);
-    if (user.role !== ROLES.OWNER) return err("Forbidden: hanya owner", 403);
+    // All authenticated users can view KPI scores (owner sees all, team sees all too for transparency)
 
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date");
