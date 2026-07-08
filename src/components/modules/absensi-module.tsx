@@ -283,9 +283,8 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
         }
       />
 
-      {/* Check-in/out card for team members */}
-      {!isOwner && (
-        <Card className={cn("border-2 overflow-hidden shadow-sm",
+      {/* Check-in/out card for all users (including owner) */}
+      <Card className={cn("border-2 overflow-hidden shadow-sm",
           isDone ? "border-blue-300" : isCheckedIn ? "border-amber-300" : "border-blue-200")}>
           <div className={cn("px-6 py-5",
             isDone ? "bg-gradient-to-r from-blue-600 to-blue-700" :
@@ -340,7 +339,6 @@ export function AbsensiModule({ user }: { user: SafeUser }) {
             </div>
           )}
         </Card>
-      )}
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
