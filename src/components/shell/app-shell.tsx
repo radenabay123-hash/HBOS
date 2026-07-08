@@ -158,7 +158,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
   const SidebarContent = (
     <div className="flex flex-col h-full">
       <div className={cn("flex items-center gap-3 px-5 py-5 border-b border-slate-100", isOwner ? "border-blue-100" : "border-slate-100")}>
-        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
           {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-white" />}
         </div>
         <div className="min-w-0">
@@ -293,7 +293,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-slate-200">
           <div className="flex items-center justify-between px-4 h-14">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
                 {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-5 h-5 text-white" />}
               </div>
               <div>
