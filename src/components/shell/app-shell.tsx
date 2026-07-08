@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
-import { logout } from "@/lib/api-client";
+import { logout, api } from "@/lib/api-client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +79,7 @@ interface AppShellProps {
 export function AppShell({ user, activeView, onViewChange, onLogout, children, notifications, onMarkNotificationsRead }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [appSettings, setAppSettings] = useState<Record<string, string>>({});
   const [soundEnabled, setSoundEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("notif-sound-enabled");
@@ -88,6 +89,20 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
   const lastNotifCount = useRef(notifications.count);
   const menu = getMenuForRole(user.role);
   const isOwner = user.role === ROLES.OWNER;
+
+  // Fetch app settings on mount
+  useEffect(() => {
+    api<{ settings: any[] }>("/api/settings").then((d) => {
+      const map: Record<string, string> = {};
+      (d.settings || []).forEach((s: any) => { map[s.key] = s.value; });
+      setAppSettings(map);
+    }).catch(() => {});
+  }, []);
+
+  const appName = appSettings.app_name || "HBOS";
+  const appFullName = appSettings.app_full_name || "Hafara Business Operating System";
+  const companyName = appSettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
+  const companyLogo = appSettings.company_logo || "";
 
   // Request browser notification permission on mount
   useEffect(() => {
@@ -179,12 +194,12 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-5 py-5 border-b", isOwner ? "border-blue-100" : "border-slate-100")}>
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
-          <Building2 className="w-6 h-6" />
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
+          {companyLogo ? <img src={companyLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6" />}
         </div>
         <div className="min-w-0">
-          <h1 className="font-bold text-slate-900 leading-tight">HBOS</h1>
-          <p className="text-[10px] text-slate-500 truncate">Hafara Business OS</p>
+          <h1 className="font-bold text-slate-900 leading-tight">{appName}</h1>
+          <p className="text-[10px] text-slate-500 truncate">{appFullName}</p>
         </div>
       </div>
 
@@ -331,7 +346,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         {/* Footer */}
         <footer className="mt-auto border-t border-slate-200 bg-white px-4 lg:px-6 py-3">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-1 text-xs text-slate-500">
-            <p>© {new Date().getFullYear()} Hafara Business Operating System (HBOS)</p>
+            <p>© {new Date().getFullYear()} {companyName}</p>
             <p className="hidden sm:block">Sistem Operasi Bisnis Terpadu</p>
           </div>
         </footer>

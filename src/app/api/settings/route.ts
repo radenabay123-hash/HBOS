@@ -7,16 +7,33 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-// GET all settings (Owner only)
+// GET all settings
+// Owner: all settings. Non-owner: public settings only (app_name, logo, company info for display).
+// Unauthenticated: public settings only (for login screen).
 export async function GET() {
   return handleApi(async () => {
     const user = await getCurrentUser();
-    if (!user) return err("Unauthorized", 401);
-    if (user.role !== ROLES.OWNER) return err("Forbidden: hanya owner", 403);
 
-    const settings = await db.appSetting.findMany({
-      orderBy: [{ category: "asc" }, { key: "asc" }],
-    });
+    // Public settings keys that anyone can see (for app header, login screen, etc.)
+    const PUBLIC_KEYS = [
+      "app_name", "app_full_name", "company_name", "company_logo",
+      "company_address", "company_phone", "company_email", "company_website",
+      "primary_color", "theme",
+    ];
+
+    let settings;
+    if (user?.role === ROLES.OWNER) {
+      // Owner sees all settings
+      settings = await db.appSetting.findMany({
+        orderBy: [{ category: "asc" }, { key: "asc" }],
+      });
+    } else {
+      // Non-owner or unauthenticated: only public keys
+      settings = await db.appSetting.findMany({
+        where: { key: { in: PUBLIC_KEYS } },
+        orderBy: [{ category: "asc" }, { key: "asc" }],
+      });
+    }
 
     // Group by category
     const grouped: Record<string, any[]> = {};

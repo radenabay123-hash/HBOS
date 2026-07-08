@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Loader2, Lock, Mail, ShieldCheck, TrendingUp, Users } from "lucide-react";
-import { login } from "@/lib/api-client";
+import { login, api } from "@/lib/api-client";
 import { toast } from "sonner";
 
 export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [appSettings, setAppSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api<{ settings: any[] }>("/api/settings").then((d) => {
+      const map: Record<string, string> = {};
+      (d.settings || []).forEach((s: any) => { map[s.key] = s.value; });
+      setAppSettings(map);
+    }).catch(() => {});
+  }, []);
+
+  const appName = appSettings.app_name || "HBOS";
+  const appFullName = appSettings.app_full_name || "Hafara Business Operating System";
+  const companyLogo = appSettings.company_logo || "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,12 +60,12 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20">
-              <Building2 className="w-7 h-7" />
+            <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20 overflow-hidden">
+              {companyLogo ? <img src={companyLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-7 h-7" />}
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">HBOS</h1>
-              <p className="text-xs text-blue-100">Hafara Business Operating System</p>
+              <h1 className="text-2xl font-bold tracking-tight">{appName}</h1>
+              <p className="text-xs text-blue-100">{appFullName}</p>
             </div>
           </div>
         </div>
