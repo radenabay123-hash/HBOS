@@ -200,7 +200,7 @@ export function TasksModule({ user }: { user: SafeUser }) {
 
   async function handleSave() {
     if (!form.taskHariIni.trim()) {
-      toast.error("Task hari ini wajib diisi");
+      toast.error("Nama tugas wajib diisi");
       return;
     }
     setSaving(true);
@@ -454,9 +454,13 @@ export function TasksModule({ user }: { user: SafeUser }) {
                       )}
                     </div>
                     {/* Task name */}
-                    <p className={cn("text-sm font-medium text-slate-900", t.status === "SELESAI" && "text-slate-400 line-through")}>
+                    <p className="text-sm font-medium text-slate-900 line-clamp-2">
                       {t.taskHariIni}
                     </p>
+                    {/* Progress description */}
+                    {t.progress && (
+                      <p className="text-xs text-slate-500 line-clamp-2">{t.progress}</p>
+                    )}
                     {/* Progress */}
                     {t.persentaseSelesai != null && t.persentaseSelesai > 0 && (
                       <div className="space-y-1">
@@ -526,18 +530,18 @@ export function TasksModule({ user }: { user: SafeUser }) {
 
           <div className="space-y-4 py-2">
             <div>
-              <Label className="mb-1.5">Task Hari Ini <span className="text-rose-500">*</span></Label>
+              <Label className="mb-1.5">Nama Tugas <span className="text-rose-500">*</span></Label>
               <Textarea
                 value={form.taskHariIni}
                 onChange={(e) => setForm({ ...form, taskHariIni: e.target.value })}
-                placeholder="Deskripsikan tugas yang dikerjakan hari ini..."
-                rows={3}
+                placeholder="Masukkan nama atau deskripsi tugas..."
+                rows={2}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1.5">Progress</Label>
+                <Label className="mb-1.5">Deskripsi Progress</Label>
                 <Input
                   value={form.progress}
                   onChange={(e) => setForm({ ...form, progress: e.target.value })}
