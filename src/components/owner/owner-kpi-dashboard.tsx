@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/avatar";
 import {
   RefreshCw, Trophy, Award, Target, TrendingUp, AlertCircle, CheckCircle2,
-  Crown, Medal, FileText, Star, Zap, Clock, Calendar,
+  Crown, Medal, FileText, Star, Zap, Clock, Calendar, Pencil, Edit3,
 } from "lucide-react";
 import { StatCard, SectionHeader } from "@/components/shared/stat-card";
 import { BarChartCard } from "@/components/shared/charts";
@@ -20,6 +20,9 @@ import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import { exportToExcel, exportReportPDF } from "@/lib/export-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface KpiScore {
   userId: string;
@@ -51,6 +54,12 @@ export function OwnerKpiDashboard() {
   const [scores, setScores] = useState<KpiScore[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [targetDialog, setTargetDialog] = useState<{ open: boolean; role: string; period: string; item: any }>({ open: false, role: "", period: "", item: null });
+  const [newTarget, setNewTarget] = useState("");
+  const [savingTarget, setSavingTarget] = useState(false);
+  const [kpiInputDialog, setKpiInputDialog] = useState<{ open: boolean; userId: string; userName: string; items: any[]; period: string }>({ open: false, userId: "", userName: "", items: [], period: "daily" });
+  const [kpiValues, setKpiValues] = useState<Record<string, string>>({});
+  const [savingKpi, setSavingKpi] = useState(false);
 
   async function loadData() {
     setLoading(true);
@@ -65,6 +74,59 @@ export function OwnerKpiDashboard() {
   }
 
   useEffect(() => { loadData(); }, []);
+
+  async function handleSaveTarget() {
+    if (!targetDialog.item || !newTarget) return;
+    setSavingTarget(true);
+    try {
+      await api("/api/kpi/targets", {
+        method: "PUT",
+        body: JSON.stringify({
+          role: targetDialog.role,
+          period: targetDialog.period,
+          key: targetDialog.item.key,
+          newTarget: Number(newTarget),
+        }),
+      });
+      toast.success("Target KPI diperbarui");
+      setTargetDialog({ open: false, role: "", period: "", item: null });
+      setNewTarget("");
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Gagal menyimpan target");
+    } finally {
+      setSavingTarget(false);
+    }
+  }
+
+  function openKpiInput(userId: string, userName: string, items: any[], period: string) {
+    const vals: Record<string, string> = {};
+    items.forEach((it: any) => { vals[it.key] = String(it.actual || 0); });
+    setKpiValues(vals);
+    setKpiInputDialog({ open: true, userId, userName, items, period });
+  }
+
+  async function handleSaveKpi() {
+    setSavingKpi(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      await Promise.all(
+        Object.entries(kpiValues).map(([key, value]) =>
+          api("/api/kpi/logs", {
+            method: "POST",
+            body: JSON.stringify({ userId: kpiInputDialog.userId, metricKey: key, value: Number(value) || 0, date: today }),
+          })
+        )
+      );
+      toast.success(`KPI ${kpiInputDialog.userName} (${kpiInputDialog.period}) diperbarui`);
+      setKpiInputDialog({ open: false, userId: "", userName: "", items: [], period: "daily" });
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Gagal menyimpan KPI");
+    } finally {
+      setSavingKpi(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -256,9 +318,9 @@ export function OwnerKpiDashboard() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <PeriodDetail title="Target Harian" data={s.daily} />
-                    <PeriodDetail title="Target Mingguan" data={s.weekly} />
-                    <PeriodDetail title="Target Bulanan" data={s.monthly} />
+                    <PeriodDetail title="Target Harian" data={s.daily} role={s.role} period="daily" userId={s.userId} userName={s.userName} onEditTarget={(r, p, item) => { setTargetDialog({ open: true, role: r, period: p, item }); setNewTarget(String(item.target)); }} onInputKpi={openKpiInput} />
+                    <PeriodDetail title="Target Mingguan" data={s.weekly} role={s.role} period="weekly" userId={s.userId} userName={s.userName} onEditTarget={(r, p, item) => { setTargetDialog({ open: true, role: r, period: p, item }); setNewTarget(String(item.target)); }} onInputKpi={openKpiInput} />
+                    <PeriodDetail title="Target Bulanan" data={s.monthly} role={s.role} period="monthly" userId={s.userId} userName={s.userName} onEditTarget={(r, p, item) => { setTargetDialog({ open: true, role: r, period: p, item }); setNewTarget(String(item.target)); }} onInputKpi={openKpiInput} />
                   </div>
                 </div>
               );
@@ -266,6 +328,63 @@ export function OwnerKpiDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Target Dialog */}
+      <Dialog open={targetDialog.open} onOpenChange={(v) => setTargetDialog({ ...targetDialog, open: v })}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Target KPI</DialogTitle>
+          </DialogHeader>
+          {targetDialog.item && (
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-600">KPI Item</Label>
+                <p className="text-sm font-medium text-slate-900 mt-1">{targetDialog.item.label}</p>
+                <p className="text-xs text-slate-500">Target saat ini: {targetDialog.item.target} {targetDialog.item.unit}</p>
+              </div>
+              <div>
+                <Label className="text-xs font-semibold text-slate-600">Target Baru</Label>
+                <Input type="number" value={newTarget} onChange={(e) => setNewTarget(e.target.value)} className="mt-1" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTargetDialog({ ...targetDialog, open: false })}>Batal</Button>
+            <Button onClick={handleSaveTarget} disabled={savingTarget || !newTarget} className="bg-blue-600 hover:bg-blue-700">
+              {savingTarget ? "Menyimpan..." : "Simpan Target"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Input KPI Actual Dialog */}
+      <Dialog open={kpiInputDialog.open} onOpenChange={(v) => setKpiInputDialog({ ...kpiInputDialog, open: v })}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Input KPI {kpiInputDialog.userName} ({kpiInputDialog.period})</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {kpiInputDialog.items.map((item: any) => (
+              <div key={item.key} className="flex items-center gap-3">
+                <span className="text-xs text-slate-700 flex-1 truncate">{item.label}</span>
+                <span className="text-[10px] text-slate-400">target: {item.target}</span>
+                <Input
+                  type="number"
+                  value={kpiValues[item.key] || "0"}
+                  onChange={(e) => setKpiValues({ ...kpiValues, [item.key]: e.target.value })}
+                  className="w-20 h-8 text-sm text-right"
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setKpiInputDialog({ ...kpiInputDialog, open: false })}>Batal</Button>
+            <Button onClick={handleSaveKpi} disabled={savingKpi} className="bg-blue-600 hover:bg-blue-700">
+              {savingKpi ? "Menyimpan..." : "Simpan KPI"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -304,19 +423,42 @@ function PodiumCard({ score, rank }: { score: KpiScore; rank: number }) {
   );
 }
 
-function PeriodDetail({ title, data }: { title: string; data: { achievementRate: number; items: any[]; totalTarget: number; totalActual: number } }) {
+function PeriodDetail({ title, data, role, period, userId, userName, onEditTarget, onInputKpi }: {
+  title: string;
+  data: { achievementRate: number; items: any[]; totalTarget: number; totalActual: number };
+  role?: string;
+  period?: string;
+  userId?: string;
+  userName?: string;
+  onEditTarget?: (role: string, period: string, item: any) => void;
+  onInputKpi?: (userId: string, userName: string, items: any[], period: string) => void;
+}) {
   const cat = getCategoryStyle(data.achievementRate);
   return (
     <div className={cn("rounded-lg p-3 border", cat.light, cat.border)}>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-slate-700">{title}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-semibold text-slate-700">{title}</p>
+          {onInputKpi && userId && (
+            <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[9px]" onClick={() => onInputKpi(userId, userName || "", data.items, period || "daily")}>
+              <Edit3 className="w-2.5 h-2.5 mr-0.5" /> Input
+            </Button>
+          )}
+        </div>
         <span className={cn("text-sm font-bold", cat.text)}>{data.achievementRate}%</span>
       </div>
       <Progress value={data.achievementRate} className={cn("h-1.5 mb-2", `[&>div]:${cat.bg}`)} />
       <div className="space-y-1 max-h-32 overflow-y-auto">
         {data.items.slice(0, 5).map((item: any) => (
           <div key={item.key} className="flex items-center justify-between text-[10px]">
-            <span className="text-slate-600 truncate pr-1">{item.label}</span>
+            <span className="text-slate-600 truncate pr-1 flex items-center gap-1">
+              {item.label}
+              {onEditTarget && role && (
+                <button onClick={() => onEditTarget(role, period || "daily", item)} className="text-slate-300 hover:text-blue-600" title="Edit Target">
+                  <Pencil className="w-2.5 h-2.5" />
+                </button>
+              )}
+            </span>
             <span className="font-medium text-slate-700 shrink-0">{item.actual}/{item.target}</span>
           </div>
         ))}

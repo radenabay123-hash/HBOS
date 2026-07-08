@@ -5,6 +5,7 @@ import {
   KPI_TARGETS, KPI_SCORE_WEIGHTS, getKpiCategory,
   type KpiTarget,
 } from "./kpi-targets";
+import { getEffectiveKpiTargets } from "./kpi-targets-server";
 
 export interface KpiPeriodResult {
   period: "daily" | "weekly" | "monthly";
@@ -76,7 +77,7 @@ async function computePeriod(
   period: "daily" | "weekly" | "monthly",
   ref: Date
 ): Promise<KpiPeriodResult> {
-  const cfg = KPI_TARGETS[role];
+  const cfg = await getEffectiveKpiTargets(role);
   if (!cfg) {
     return { period, items: [], totalTarget: 0, totalActual: 0, achievementRate: 0 };
   }

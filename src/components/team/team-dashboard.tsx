@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -11,6 +12,7 @@ import {
   TrendingUp, Target, CalendarDays, Wallet, Users, BarChart3, Eye,
   Heart, Share2, Bookmark, MessageCircle, UserPlus, FileCheck, Trophy,
   FileStack, ExternalLink, Percent,
+  CalendarClock, UploadCloud, ChevronDown, ChevronRight, Save, Calendar,
 } from "lucide-react";
 import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard, chartColors } from "@/components/shared/charts";
@@ -24,10 +26,37 @@ import {
 } from "@/lib/constants";
 import { exportToExcel, exportToPDF } from "@/lib/export-utils";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { SafeUser } from "@/lib/auth";
+import {
+  KPI_TARGETS, findCurrentScheduleSlot,
+  type RoleKpiConfig, type ScheduleSlot,
+} from "@/lib/kpi-targets";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-export function TeamDashboard() {
+const PERIOD_LABELS = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
+const PERIOD_ICONS = { daily: Clock, weekly: Calendar, monthly: Target };
+
+interface KpiItem {
+  key: string;
+  label: string;
+  target: number;
+  unit: string;
+  actual: number;
+  achievement: number;
+}
+
+interface KpiLogsResponse {
+  period: string;
+  role: string;
+  targets: KpiItem[];
+  logs: any[];
+  achievementRate: number;
+  dateRange: { start: string; end: string };
+}
+
+export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -36,12 +65,24 @@ export function TeamDashboard() {
   const [myResponsibilities, setMyResponsibilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Owner-mode: user selector for viewing team members' KPI
+  const isOwner = userProp?.role === ROLES.OWNER;
+  const [teamMembers, setTeamMembers] = useState<SafeUser[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+
+  // Tick to re-evaluate current schedule slot every minute
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   async function loadData() {
     setLoading(true);
     try {
       const [d, kpi, resp] = await Promise.all([
         api(`/api/dashboard/team?year=${year}&month=${month}`),
-        api<{ score: any }>("/api/kpi/score").catch(() => ({ score: null })),
+        api<{ score: any }>(`/api/kpi/score${selectedUserId ? `?userId=${encodeURIComponent(selectedUserId)}` : ""}`).catch(() => ({ score: null })),
         api<{ grouped: Record<string, any[]> }>("/api/role-responsibilities").catch(() => ({ grouped: {} })),
       ]);
       setData(d);
@@ -58,7 +99,24 @@ export function TeamDashboard() {
     }
   }
 
-  useEffect(() => { loadData(); }, [year, month]);
+  // Load team members (owner mode only)
+  useEffect(() => {
+    if (!isOwner) return;
+    api<{ users: SafeUser[] }>("/api/users")
+      .then((d) => {
+        const teamRoles = [
+          ROLES.PROJECT_MANAGER, ROLES.ASSISTANT_TRAINER, ROLES.CONTENT_CREATIVE,
+          ROLES.DIGITAL_MARKETING_IT, ROLES.FINANCE,
+        ];
+        const filtered = d.users.filter((u) => teamRoles.includes(u.role as any) && u.isActive);
+        setTeamMembers(filtered);
+        if (!selectedUserId && filtered.length > 0) setSelectedUserId(filtered[0].id);
+      })
+      .catch(() => {});
+  }, [isOwner]);
+
+  useEffect(() => { loadData(); }, [year, month, selectedUserId]);
+
 
   if (loading || !data) {
     return (
@@ -72,6 +130,25 @@ export function TeamDashboard() {
   const u = d.user;
   const todayTaskDone = d.todayTasks.filter((t: any) => t.status === "SELESAI").length;
   const todayTaskProgress = d.todayTasks.length > 0 ? Math.round((todayTaskDone / d.todayTasks.length) * 100) : 0;
+
+  // Determine the active role + target user id for schedule + KPI sections.
+  // - Non-owner: always own role / own id
+  // - Owner: role / id of selected team member (falls back to current user if none selected)
+  const selectedMember = isOwner
+    ? teamMembers.find((m) => m.id === selectedUserId)
+    : null;
+  const activeRole: string = isOwner
+    ? (selectedMember?.role || u.role)
+    : u.role;
+  const activeUserId: string = isOwner
+    ? (selectedMember?.id || u.id)
+    : u.id;
+  const activeUserName: string = isOwner
+    ? (selectedMember?.name || u.name)
+    : u.name;
+  const kpiConfig: RoleKpiConfig | null = KPI_TARGETS[activeRole] || null;
+  // tick is read here so the schedule re-renders when minute changes
+  void tick;
 
   function handleExport() {
     const rows = d.myContents.map((c: any) => ({
@@ -115,7 +192,7 @@ export function TeamDashboard() {
       </div>
 
       {/* My Responsibilities */}
-      {myResponsibilities.length > 0 && (
+      {myResponsibilities.length > 0 && !isOwner && (
         <Card className="border-blue-200 bg-blue-50/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -131,6 +208,59 @@ export function TeamDashboard() {
                 </div>
               ))}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Owner-mode team member selector */}
+      {isOwner && (
+        <Card className="border-violet-200 bg-violet-50/40">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="w-4 h-4 text-violet-600" /> Lihat KPI Anggota Tim
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs text-slate-600">Pilih anggota:</span>
+              <select
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="h-9 px-3 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500"
+              >
+                {teamMembers.length === 0 && <option value="">Tidak ada anggota</option>}
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} · {ROLE_LABELS[m.role] || m.role}
+                  </option>
+                ))}
+              </select>
+              {selectedMember && (
+                <Badge variant="outline" className="text-xs bg-violet-100 text-violet-700 border-violet-200">
+                  {ROLE_LABELS[selectedMember.role] || selectedMember.role}
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Daily Schedule + KPI Sections */}
+      {kpiConfig ? (
+        <>
+          <DailyScheduleCard config={kpiConfig} userName={activeUserName} roleLabel={ROLE_LABELS[activeRole] || activeRole} />
+          <KpiSectionsCard
+            role={activeRole}
+            userId={activeUserId}
+            userName={activeUserName}
+            canEdit={!isOwner}
+          />
+        </>
+      ) : (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardContent className="p-4 text-sm text-amber-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span>Role <span className="font-semibold">{ROLE_LABELS[activeRole] || activeRole}</span> belum memiliki jadwal & KPI. Hubungi owner untuk konfigurasi.</span>
           </CardContent>
         </Card>
       )}
@@ -518,4 +648,288 @@ function RoleSpecificSection({ role, roleData, year, month }: { role: string; ro
   }
 
   return null;
+}
+
+// ============================================================
+// Daily Schedule Card — shows the user's daily activity timeline
+// (from KPI_TARGETS) with the current slot highlighted in blue.
+// ============================================================
+function DailyScheduleCard({
+  config, userName, roleLabel,
+}: { config: RoleKpiConfig; userName: string; roleLabel: string }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const currentIdx = findCurrentScheduleSlot(config.dailySchedule, now);
+  const isBreak = (s: ScheduleSlot) => /istirahat/i.test(s.activity);
+
+  return (
+    <Card className="border-blue-200">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <CalendarClock className="w-4 h-4 text-blue-600" />
+          Jadwal Harian — {roleLabel}
+          <span className="text-xs font-normal text-slate-400">· {userName}</span>
+        </CardTitle>
+        <p className="text-xs text-slate-500 mt-1">{config.scheduleNote}</p>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-1.5">
+          {config.dailySchedule.map((slot, idx) => {
+            const isCurrent = idx === currentIdx;
+            const isPast = currentIdx >= 0 && idx < currentIdx;
+            const rest = isBreak(slot);
+            return (
+              <div
+                key={`${slot.time}-${idx}`}
+                className={cn(
+                  "flex items-stretch gap-3 rounded-lg border p-2.5 transition",
+                  isCurrent && "bg-blue-50 border-blue-300 shadow-sm",
+                  !isCurrent && rest && "bg-slate-50 border-slate-200",
+                  !isCurrent && !rest && "bg-white border-slate-200",
+                  isPast && !isCurrent && "opacity-60",
+                )}
+              >
+                <div className={cn(
+                  "shrink-0 w-24 text-xs font-bold px-2 py-1 rounded-md flex items-center justify-center",
+                  isCurrent ? "bg-blue-600 text-white" : rest ? "bg-slate-200 text-slate-700" : "bg-slate-100 text-slate-700",
+                )}>
+                  {slot.time}
+                </div>
+                <div className="flex-1 flex items-center min-w-0">
+                  <p className={cn("text-sm truncate", isCurrent ? "font-semibold text-blue-900" : "text-slate-800")}>
+                    {slot.activity}
+                  </p>
+                </div>
+                {isCurrent && (
+                  <Badge variant="outline" className="text-[10px] bg-blue-100 text-blue-700 border-blue-300 shrink-0">
+                    <Clock className="w-3 h-3 mr-1" /> Sekarang
+                  </Badge>
+                )}
+                {isPast && !isCurrent && (
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {config.uploadSchedule && config.uploadSchedule.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-slate-200">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+              <UploadCloud className="w-3.5 h-3.5 text-violet-600" /> Jadwal Upload
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {config.uploadSchedule.map((u, i) => (
+                <div key={i} className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-lg px-3 py-1.5">
+                  <span className="text-xs font-bold text-violet-700">{u.time}</span>
+                  <span className="text-xs text-slate-700">·</span>
+                  <span className="text-xs text-slate-700">{u.content}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================
+// KPI Sections Card — Daily / Weekly / Monthly collapsible
+// Each target shows: label, target vs actual, progress bar,
+// inline input to update actual (POST /api/kpi/logs).
+// ============================================================
+function KpiSectionsCard({
+  role, userId, userName, canEdit,
+}: {
+  role: string;
+  userId: string;
+  userName: string;
+  canEdit: boolean;
+}) {
+  const [openPeriod, setOpenPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [data, setData] = useState<Record<"daily" | "weekly" | "monthly", KpiLogsResponse | null>>({
+    daily: null, weekly: null, monthly: null,
+  });
+  const [loading, setLoading] = useState<"daily" | "weekly" | "monthly" | null>(null);
+  const [editValue, setEditValue] = useState<Record<string, string>>({});
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+
+  async function loadPeriod(period: "daily" | "weekly" | "monthly") {
+    setLoading(period);
+    try {
+      const qs = `?period=${period}${userId ? `&userId=${encodeURIComponent(userId)}` : ""}`;
+      const r = await api<KpiLogsResponse>(`/api/kpi/logs${qs}`);
+      setData((prev) => ({ ...prev, [period]: r }));
+    } catch (e: any) {
+      toast.error(e.message || `Gagal memuat KPI ${PERIOD_LABELS[period]}`);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  // Load daily on mount; lazy-load weekly/monthly when opened
+  useEffect(() => {
+    loadPeriod("daily");
+  }, [role, userId]);
+  useEffect(() => {
+    if (openPeriod !== "daily" && !data[openPeriod]) loadPeriod(openPeriod);
+  }, [openPeriod, role, userId]);
+
+  async function handleSave(period: "daily" | "weekly" | "monthly", item: KpiItem) {
+    const raw = editValue[item.key];
+    if (raw == null) return;
+    const val = Number(raw);
+    if (isNaN(val) || val < 0) {
+      toast.error("Nilai harus angka positif");
+      return;
+    }
+    setSavingKey(item.key);
+    try {
+      let logDate = new Date();
+      if (period === "weekly") {
+        const day = logDate.getDay() || 7;
+        logDate.setDate(logDate.getDate() - day + 1);
+      } else if (period === "monthly") {
+        logDate = new Date(logDate.getFullYear(), logDate.getMonth(), 1);
+      }
+      await api("/api/kpi/logs", {
+        method: "POST",
+        body: JSON.stringify({ metricKey: item.key, value: val, date: logDate, userId }),
+      });
+      toast.success(`KPI "${item.label}" diupdate → ${val} ${item.unit}`);
+      setEditValue((prev) => ({ ...prev, [item.key]: "" }));
+      await loadPeriod(period);
+    } catch (e: any) {
+      toast.error(e.message || "Gagal menyimpan");
+    } finally {
+      setSavingKey(null);
+    }
+  }
+
+  function progressClass(p: number) {
+    if (p >= 80) return "[&>div]:bg-green-500";
+    if (p >= 50) return "[&>div]:bg-amber-500";
+    return "[&>div]:bg-rose-500";
+  }
+  function badgeClass(p: number) {
+    if (p >= 80) return "bg-green-100 text-green-700 border-green-200";
+    if (p >= 50) return "bg-amber-100 text-amber-700 border-amber-200";
+    return "bg-rose-100 text-rose-700 border-rose-200";
+  }
+
+  const periods: Array<"daily" | "weekly" | "monthly"> = ["daily", "weekly", "monthly"];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Target className="w-4 h-4 text-blue-600" />
+          KPI Aktual — {userName}
+          <span className="text-xs font-normal text-slate-400">· {ROLE_LABELS[role] || role}</span>
+        </CardTitle>
+        <p className="text-xs text-slate-500 mt-0.5">
+          {canEdit
+            ? "Update nilai aktual Anda langsung di kolom input. Data tersimpan otomatis."
+            : "Mode lihat (Owner). Buka menu Dashboard KPI untuk mengedit target."}
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {periods.map((p) => {
+          const isOpen = openPeriod === p;
+          const PeriodIcon = PERIOD_ICONS[p];
+          const d = data[p];
+          const isLoading = loading === p;
+          return (
+            <div key={p} className={cn("rounded-lg border", isOpen ? "border-blue-300" : "border-slate-200")}>
+              <button
+                type="button"
+                onClick={() => setOpenPeriod(isOpen ? "daily" : p)}
+                className={cn("w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left", isOpen ? "bg-blue-50/60" : "bg-slate-50")}
+              >
+                <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                  <PeriodIcon className="w-4 h-4 text-blue-600" />
+                  KPI {PERIOD_LABELS[p]}
+                  {d && d.targets.length > 0 && (
+                    <Badge variant="outline" className={cn("text-[10px]", badgeClass(d.achievementRate))}>
+                      {d.achievementRate}%
+                    </Badge>
+                  )}
+                  {d && d.targets.length > 0 && (
+                    <span className="text-[10px] font-normal text-slate-500">
+                      · {d.targets.filter((t) => t.achievement >= 100).length}/{d.targets.length} tercapai
+                    </span>
+                  )}
+                </span>
+                <span className="flex items-center gap-2">
+                  {isOpen ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="p-3 space-y-2.5">
+                  {isLoading && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500 py-3">
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Memuat...
+                    </div>
+                  )}
+                  {!isLoading && d && d.targets.length === 0 && (
+                    <p className="text-xs text-slate-400 text-center py-3">Tidak ada target KPI {PERIOD_LABELS[p]} untuk role ini.</p>
+                  )}
+                  {!isLoading && d && d.targets.map((t) => {
+                    const isSaving = savingKey === t.key;
+                    const ev = editValue[t.key] ?? "";
+                    const displayVal = ev !== "" ? ev : String(t.actual);
+                    return (
+                      <div key={t.key} className="rounded-md border border-slate-200 p-2.5 bg-white">
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-900 truncate">{t.label}</p>
+                            <p className="text-[11px] text-slate-500">
+                              <span className="font-semibold text-slate-700">{t.actual}</span> / {t.target} {t.unit}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className={cn("text-[10px]", badgeClass(t.achievement))}>
+                            {t.achievement}%
+                          </Badge>
+                        </div>
+                        <Progress value={t.achievement} className={cn("h-1.5 mb-2", progressClass(t.achievement))} />
+                        {canEdit && (
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              value={displayVal}
+                              onChange={(e) => setEditValue((prev) => ({ ...prev, [t.key]: e.target.value }))}
+                              className="h-7 text-xs"
+                              placeholder={String(t.actual)}
+                              disabled={isSaving}
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 text-xs shrink-0"
+                              disabled={isSaving || ev === ""}
+                              onClick={() => handleSave(p, t)}
+                            >
+                              {isSaving ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                              <span className="ml-1">Simpan</span>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
 }

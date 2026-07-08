@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   RefreshCw, Target, TrendingUp, Calendar, Clock, Award, AlertCircle,
-  CheckCircle2, Trophy, Zap, FileText, Plus, Edit3, ChevronRight, Star,
+  CheckCircle2, Trophy, Zap, FileText, Plus, Edit3, ChevronRight, Star, Save, RotateCcw,
 } from "lucide-react";
 import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
 import { api } from "@/lib/api-client";
@@ -56,6 +56,14 @@ interface KpiScoreData {
   categoryColor: string;
 }
 
+interface EffectiveConfigResponse {
+  config: any | null;
+  baseConfig: any | null;
+  overrides: { daily: Record<string, number>; weekly: Record<string, number>; monthly: Record<string, number> };
+  weights: any;
+  categories: any[];
+}
+
 const PERIOD_LABELS = { daily: "Harian", weekly: "Mingguan", monthly: "Bulanan" };
 const PERIOD_ICONS = { daily: Clock, weekly: Calendar, monthly: Target };
 const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -74,19 +82,17 @@ export function KpiModule({ user }: { user: SafeUser }) {
   const [month, setMonth] = useState<number>(0);
   const [data, setData] = useState<KpiData | null>(null);
   const [score, setScore] = useState<KpiScoreData | null>(null);
+  const [overrides, setOverrides] = useState<Record<string, Record<string, number>>>({ daily: {}, weekly: {}, monthly: {} });
   const [loading, setLoading] = useState(true);
   const [logDialog, setLogDialog] = useState<{ open: boolean; item: KpiItem | null }>({ open: false, item: null });
   const [logValue, setLogValue] = useState("");
+  const [targetDialog, setTargetDialog] = useState<{ open: boolean; item: KpiItem | null }>({ open: false, item: null });
+  const [targetValue, setTargetValue] = useState("");
+  const [savingTarget, setSavingTarget] = useState(false);
+
+  const isOwner = user.role === ROLES.OWNER;
 
   // Build a date reference for the KPI API from year + month.
-  // The KPI logs/score API uses `date` to compute the period range:
-  //   - daily → that specific day
-  //   - weekly → that ISO week (Mon-Sun)
-  //   - monthly → that calendar month
-  // Mapping rules:
-  //   - year=0                  → no date param (API uses today)
-  //   - year>0, month=0         → mid-year (June 15) of that year
-  //   - year>0, month>0         → first day of that month/year
   const dateRef = useMemo(() => {
     if (year === 0) return null;
     if (month === 0) return `${year}-06-15`;
@@ -97,18 +103,20 @@ export function KpiModule({ user }: { user: SafeUser }) {
     setLoading(true);
     try {
       const dateQs = dateRef ? `&date=${dateRef}` : "";
-      const [kpiData, scoreData] = await Promise.all([
+      const [kpiData, scoreData, cfgData] = await Promise.all([
         api<KpiData>(`/api/kpi/logs?period=${period}${dateQs}`),
         api<{ score: KpiScoreData }>(`/api/kpi/score${dateRef ? `?date=${dateRef}` : ""}`),
+        api<EffectiveConfigResponse>(`/api/kpi/targets?role=${encodeURIComponent(user.role)}`),
       ]);
       setData(kpiData);
       setScore(scoreData.score);
+      setOverrides(cfgData.overrides || { daily: {}, weekly: {}, monthly: {} });
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat KPI");
     } finally {
       setLoading(false);
     }
-  }, [period, dateRef]);
+  }, [period, dateRef, user.role]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -120,8 +128,6 @@ export function KpiModule({ user }: { user: SafeUser }) {
       return;
     }
     try {
-      // Determine the date for the log based on period + selected year/month
-      // If a dateRef is set (year > 0), use it; otherwise fall back to today.
       let logDate = dateRef ? new Date(dateRef) : new Date();
       if (period === "weekly") {
         const day = logDate.getDay() || 7;
@@ -139,6 +145,48 @@ export function KpiModule({ user }: { user: SafeUser }) {
       loadData();
     } catch (e: any) {
       toast.error(e.message || "Gagal menyimpan");
+    }
+  }
+
+  async function handleSaveTarget() {
+    if (!targetDialog.item) return;
+    const val = Number(targetValue);
+    if (isNaN(val) || val < 0) {
+      toast.error("Target harus angka positif");
+      return;
+    }
+    setSavingTarget(true);
+    try {
+      await api("/api/kpi/targets", {
+        method: "PUT",
+        body: JSON.stringify({
+          role: user.role,
+          period,
+          key: targetDialog.item.key,
+          target: val,
+        }),
+      });
+      toast.success(`Target "${targetDialog.item.label}" diubah menjadi ${val} ${targetDialog.item.unit}`);
+      setTargetDialog({ open: false, item: null });
+      setTargetValue("");
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Gagal menyimpan target");
+    } finally {
+      setSavingTarget(false);
+    }
+  }
+
+  async function handleResetTarget(item: KpiItem) {
+    try {
+      await api("/api/kpi/targets", {
+        method: "PUT",
+        body: JSON.stringify({ role: user.role, period, key: item.key, target: null }),
+      });
+      toast.success(`Target "${item.label}" dikembalikan ke nilai default`);
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Gagal mereset target");
     }
   }
 
@@ -174,6 +222,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
 
   const cat = getCategoryColor(score.weightedScore);
   const PeriodIcon = PERIOD_ICONS[period];
+  const isOverridden = (key: string) => overrides[period]?.[key] != null;
 
   return (
     <div className="space-y-6">
@@ -251,6 +300,14 @@ export function KpiModule({ user }: { user: SafeUser }) {
         </CardContent>
       </Card>
 
+      {/* Owner hint banner */}
+      {isOwner && (
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700">
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>Owner mode: Anda dapat mengubah target KPI dengan tombol <span className="font-semibold">"Edit Target"</span>. Perubahan tersimpan sebagai override.</span>
+        </div>
+      )}
+
       {/* Period Tabs */}
       <Tabs value={period} onValueChange={(v) => setPeriod(v as any)}>
         <TabsList className="grid w-full grid-cols-3 max-w-md">
@@ -283,11 +340,19 @@ export function KpiModule({ user }: { user: SafeUser }) {
               <div className="space-y-3">
                 {data.targets.map((t) => {
                   const c = getCategoryColor(t.achievement);
+                  const overridden = isOverridden(t.key);
                   return (
-                    <div key={t.key} className="border border-slate-200 rounded-lg p-3 hover:shadow-sm transition">
+                    <div key={t.key} className={cn("border rounded-lg p-3 hover:shadow-sm transition", overridden ? "border-violet-300 bg-violet-50/40" : "border-slate-200")}>
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{t.label}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-medium text-slate-900 truncate">{t.label}</p>
+                            {overridden && (
+                              <Badge variant="outline" className="text-[9px] py-0 px-1 bg-violet-100 text-violet-700 border-violet-200">
+                                Custom
+                              </Badge>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500">
                             <span className="font-semibold text-slate-700">{t.actual}</span> / {t.target} {t.unit}
                           </p>
@@ -295,14 +360,41 @@ export function KpiModule({ user }: { user: SafeUser }) {
                         <Badge variant="outline" className={cn("text-xs", c.light, c.text)}>
                           {t.achievement}%
                         </Badge>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2"
-                          onClick={() => { setLogDialog({ open: true, item: t }); setLogValue(String(t.actual)); }}
-                        >
-                          <Edit3 className="w-3 h-3 mr-1" /> Update
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {isOwner && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 border-violet-300 text-violet-700 hover:bg-violet-50"
+                                title="Edit Target"
+                                onClick={() => { setTargetDialog({ open: true, item: t }); setTargetValue(String(t.target)); }}
+                              >
+                                <Edit3 className="w-3 h-3 mr-1" /> Target
+                              </Button>
+                              {overridden && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-slate-500"
+                                  title="Reset ke default"
+                                  onClick={() => handleResetTarget(t)}
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2"
+                            title="Update Aktual"
+                            onClick={() => { setLogDialog({ open: true, item: t }); setLogValue(String(t.actual)); }}
+                          >
+                            <Plus className="w-3 h-3 mr-1" /> Update
+                          </Button>
+                        </div>
                       </div>
                       <Progress value={t.achievement} className={cn("h-2", t.achievement >= 100 && "[&>div]:bg-blue-500", t.achievement >= 80 && t.achievement < 100 && "[&>div]:bg-cyan-500", t.achievement >= 70 && t.achievement < 80 && "[&>div]:bg-amber-500", t.achievement < 70 && "[&>div]:bg-rose-500")} />
                     </div>
@@ -322,7 +414,7 @@ export function KpiModule({ user }: { user: SafeUser }) {
         <SocialKpiCard role={user.role} />
       ) : null}
 
-      {/* Log Dialog */}
+      {/* Log Dialog (Update Aktual) */}
       <Dialog open={logDialog.open} onOpenChange={(o) => setLogDialog({ open: o, item: logDialog.item })}>
         <DialogContent>
           <DialogHeader>
@@ -359,6 +451,48 @@ export function KpiModule({ user }: { user: SafeUser }) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setLogDialog({ open: false, item: null })}>Batal</Button>
             <Button onClick={handleSaveLog} className="bg-blue-600 hover:bg-blue-700">Simpan</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Target Dialog (Edit Target - Owner Only) */}
+      <Dialog open={targetDialog.open} onOpenChange={(o) => setTargetDialog({ open: o, item: targetDialog.item })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Target: {targetDialog.item?.label}</DialogTitle>
+            <DialogDescription>
+              Ubah nilai target {PERIOD_LABELS[period]} untuk role <span className="font-semibold">{ROLE_LABELS[user.role]}</span>.
+              Perubahan akan disimpan sebagai override.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="targetValue">Target Baru ({targetDialog.item?.unit})</Label>
+              <Input
+                id="targetValue"
+                type="number"
+                min="0"
+                step="0.1"
+                value={targetValue}
+                onChange={(e) => setTargetValue(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            {targetDialog.item && Number(targetValue) >= 0 && (
+              <div className="bg-violet-50 rounded-lg p-3 text-sm">
+                <p className="text-slate-600">Target sebelumnya: <span className="font-bold">{targetDialog.item.target} {targetDialog.item.unit}</span></p>
+                <p className="text-violet-700 text-xs mt-1 flex items-center gap-1">
+                  <Edit3 className="w-3 h-3" /> Perubahan akan langsung diterapkan ke dashboard tim.
+                </p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTargetDialog({ open: false, item: null })}>Batal</Button>
+            <Button onClick={handleSaveTarget} disabled={savingTarget} className="bg-violet-600 hover:bg-violet-700">
+              {savingTarget ? <RefreshCw className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              Simpan Target
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

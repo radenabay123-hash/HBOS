@@ -1,0 +1,522 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect } from "react";
+     4→import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     5→import { Button } from "@/components/ui/button";
+     6→import { Badge } from "@/components/ui/badge";
+     7→import { Progress } from "@/components/ui/progress";
+     8→import { ScrollArea } from "@/components/ui/scroll-area";
+     9→import {
+    10→  RefreshCw, ListTodo, Film, FileText, CheckCircle2, Clock, AlertCircle,
+    11→  TrendingUp, Target, CalendarDays, Wallet, Users, BarChart3, Eye,
+    12→  Heart, Share2, Bookmark, MessageCircle, UserPlus, FileCheck, Trophy,
+    13→  FileStack, ExternalLink, Percent,
+    14→} from "lucide-react";
+    15→import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
+    16→import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard, chartColors } from "@/components/shared/charts";
+    17→import { api } from "@/lib/api-client";
+    18→import {
+    19→  formatCurrency, formatNumber, formatDate,
+    20→  ROLES, ROLE_LABELS,
+    21→  TASK_STATUS_LABELS, TASK_STATUS_COLORS,
+    22→  ACC_STATUS_LABELS, ACC_STATUS_COLORS,
+    23→  CLIENT_STATUS_LABELS, CLIENT_STATUS_COLORS,
+    24→} from "@/lib/constants";
+    25→import { exportToExcel, exportToPDF } from "@/lib/export-utils";
+    26→import { toast } from "sonner";
+    27→
+    28→const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    29→
+    30→export function TeamDashboard() {
+    31→  const now = new Date();
+    32→  const [year, setYear] = useState(now.getFullYear());
+    33→  const [month, setMonth] = useState(now.getMonth() + 1);
+    34→  const [data, setData] = useState<any>(null);
+    35→  const [kpiScore, setKpiScore] = useState<any>(null);
+    36→  const [myResponsibilities, setMyResponsibilities] = useState<any[]>([]);
+    37→  const [loading, setLoading] = useState(true);
+    38→
+    39→  async function loadData() {
+    40→    setLoading(true);
+    41→    try {
+    42→      const [d, kpi, resp] = await Promise.all([
+    43→        api(`/api/dashboard/team?year=${year}&month=${month}`),
+    44→        api<{ score: any }>("/api/kpi/score").catch(() => ({ score: null })),
+    45→        api<{ grouped: Record<string, any[]> }>("/api/role-responsibilities").catch(() => ({ grouped: {} })),
+    46→      ]);
+    47→      setData(d);
+    48→      setKpiScore(kpi.score);
+    49→      // Set current user's role responsibilities
+    50→      const userRole = d.user?.role || data?.user?.role;
+    51→      if (userRole && resp.grouped) {
+    52→        setMyResponsibilities(resp.grouped[userRole] || []);
+    53→      }
+    54→    } catch (e: any) {
+    55→      toast.error(e.message || "Gagal memuat dashboard");
+    56→    } finally {
+    57→      setLoading(false);
+    58→    }
+    59→  }
+    60→
+    61→  useEffect(() => { loadData(); }, [year, month]);
+    62→
+    63→  if (loading || !data) {
+    64→    return (
+    65→      <div className="flex items-center justify-center py-20">
+    66→        <RefreshCw className="w-6 h-6 animate-spin text-slate-600" />
+    67→      </div>
+    68→    );
+    69→  }
+    70→
+    71→  const d = data;
+    72→  const u = d.user;
+    73→  const todayTaskDone = d.todayTasks.filter((t: any) => t.status === "SELESAI").length;
+    74→  const todayTaskProgress = d.todayTasks.length > 0 ? Math.round((todayTaskDone / d.todayTasks.length) * 100) : 0;
+    75→
+    76→  function handleExport() {
+    77→    const rows = d.myContents.map((c: any) => ({
+    78→      Judul: c.judul, Kategori: c.kategori, "Status ACC": ACC_STATUS_LABELS[c.statusACC] || c.statusACC,
+    79→      "Status Publish": c.statusPublish, Tanggal: formatDate(c.tanggal),
+    80→    }));
+    81→    exportToExcel(rows, `Konten-${u.name}-${month}-${year}`, "Konten");
+    82→    toast.success("Data diunduh");
+    83→  }
+    84→
+    85→  return (
+    86→    <div className="space-y-6">
+    87→      {/* Welcome header */}
+    88→      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6">
+    89→        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    90→          <div>
+    91→            <p className="text-blue-100 text-sm">Selamat datang kembali,</p>
+    92→            <h1 className="text-2xl font-bold">{u.name}</h1>
+    93→            <p className="text-blue-100 text-sm mt-1">{u.roleLabel} · {u.position || ""}</p>
+    94→            {kpiScore && (
+    95→              <div className="mt-3 flex items-center gap-2">
+    96→                <span className="text-xs text-blue-100">KPI Score Anda:</span>
+    97→                <span className={`text-2xl font-bold ${kpiScore.weightedScore >= 90 ? "text-blue-400" : kpiScore.weightedScore >= 80 ? "text-cyan-400" : kpiScore.weightedScore >= 70 ? "text-amber-400" : "text-rose-400"}`}>
+    98→                  {kpiScore.weightedScore}
+    99→                </span>
+   100→                <span className={`text-xs px-2 py-0.5 rounded-full ${kpiScore.weightedScore >= 90 ? "bg-blue-500/20 text-blue-300" : kpiScore.weightedScore >= 80 ? "bg-cyan-500/20 text-cyan-300" : kpiScore.weightedScore >= 70 ? "bg-amber-500/20 text-amber-300" : "bg-rose-500/20 text-rose-300"}`}>
+   101→                  {kpiScore.category}
+   102→                </span>
+   103→              </div>
+   104→            )}
+   105→          </div>
+   106→          <div className="flex gap-2">
+   107→            <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="bg-white/10 text-white text-sm rounded-lg px-3 py-2 border border-white/20">
+   108→              {monthNames.map((m, i) => <option key={i} value={i + 1} className="text-slate-900">{m}</option>)}
+   109→            </select>
+   110→            <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="bg-white/10 text-white text-sm rounded-lg px-3 py-2 border border-white/20">
+   111→              {[now.getFullYear(), now.getFullYear() - 1].map((y) => <option key={y} value={y} className="text-slate-900">{y}</option>)}
+   112→            </select>
+   113→          </div>
+   114→        </div>
+   115→      </div>
+   116→
+   117→      {/* My Responsibilities */}
+   118→      {myResponsibilities.length > 0 && (
+   119→        <Card className="border-blue-200 bg-blue-50/30">
+   120→          <CardHeader className="pb-2">
+   121→            <CardTitle className="text-sm flex items-center gap-2">
+   122→              <CheckCircle2 className="w-4 h-4 text-blue-600" /> Tanggung Jawab Saya ({u.roleLabel})
+   123→            </CardTitle>
+   124→          </CardHeader>
+   125→          <CardContent>
+   126→            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+   127→              {myResponsibilities.map((r: any, i: number) => (
+   128→                <div key={r.id} className="flex items-start gap-2 p-1.5 rounded-md bg-white border border-blue-100">
+   129→                  <CheckCircle2 className="w-3 h-3 text-green-500 shrink-0 mt-0.5" />
+   130→                  <span className="text-xs text-slate-700">{r.title}</span>
+   131→                </div>
+   132→              ))}
+   133→            </div>
+   134→          </CardContent>
+   135→        </Card>
+   136→      )}
+   137→
+   138→      {/* Today's overview */}
+   139→      <div>
+   140→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Ringkasan Hari Ini</h3>
+   141→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+   142→          <StatCard title="Tugas Hari Ini" value={d.todayTasks.length} icon={ListTodo} indicator={todayTaskProgress >= 80 ? "green" : todayTaskProgress >= 50 ? "yellow" : "red"} subtitle={`${todayTaskDone} selesai`} progress={todayTaskProgress} accent="bg-blue-50 text-blue-600" />
+   143→          <StatCard title="Konten Hari Ini" value={d.contentSummary.todayContents} icon={Film} indicator="neutral" accent="bg-pink-50 text-pink-600" />
+   144→          <StatCard title="Artikel Hari Ini" value={d.articleSummary.todayArticles} icon={FileText} indicator="neutral" accent="bg-amber-50 text-amber-600" />
+   145→          <StatCard title="Konten Pending ACC" value={d.contentSummary.pending} icon={Clock} indicator={d.contentSummary.pending > 0 ? "yellow" : "green"} accent="bg-amber-50 text-amber-600" />
+   146→        </div>
+   147→      </div>
+   148→
+   149→      {/* Role-specific KPIs */}
+   150→      <RoleSpecificSection role={u.role} roleData={d.roleData} year={year} month={month} />
+   151→
+   152→      {/* ACC Status summary */}
+   153→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   154→        <Card>
+   155→          <CardHeader className="pb-3">
+   156→            <CardTitle className="text-base flex items-center gap-2"><Film className="w-4 h-4 text-pink-600" /> Status Konten (ACC Owner)</CardTitle>
+   157→          </CardHeader>
+   158→          <CardContent>
+   159→            <div className="grid grid-cols-4 gap-3 text-center">
+   160→              <div className="bg-blue-50 rounded-lg p-3">
+   161→                <p className="text-2xl font-bold text-blue-700">{d.contentSummary.acc}</p>
+   162→                <p className="text-[10px] text-slate-500 mt-1">ACC</p>
+   163→              </div>
+   164→              <div className="bg-amber-50 rounded-lg p-3">
+   165→                <p className="text-2xl font-bold text-amber-700">{d.contentSummary.pending}</p>
+   166→                <p className="text-[10px] text-slate-500 mt-1">Pending</p>
+   167→              </div>
+   168→              <div className="bg-rose-50 rounded-lg p-3">
+   169→                <p className="text-2xl font-bold text-rose-700">{d.contentSummary.revisi}</p>
+   170→                <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
+   171→              </div>
+   172→              <div className="bg-sky-50 rounded-lg p-3">
+   173→                <p className="text-2xl font-bold text-sky-700">{d.contentSummary.published}</p>
+   174→                <p className="text-[10px] text-slate-500 mt-1">Published</p>
+   175→              </div>
+   176→            </div>
+   177→            {d.contentSummary.revisi > 0 && (
+   178→              <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
+   179→                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+   180→                <span>Ada {d.contentSummary.revisi} konten yang perlu direvisi. Buka menu Tugas Konten untuk melihat catatan revisi dari owner.</span>
+   181→              </div>
+   182→            )}
+   183→          </CardContent>
+   184→        </Card>
+   185→
+   186→        <Card>
+   187→          <CardHeader className="pb-3">
+   188→            <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-amber-600" /> Status Artikel (ACC Owner)</CardTitle>
+   189→          </CardHeader>
+   190→          <CardContent>
+   191→            <div className="grid grid-cols-4 gap-3 text-center">
+   192→              <div className="bg-blue-50 rounded-lg p-3">
+   193→                <p className="text-2xl font-bold text-blue-700">{d.articleSummary.acc}</p>
+   194→                <p className="text-[10px] text-slate-500 mt-1">ACC</p>
+   195→              </div>
+   196→              <div className="bg-amber-50 rounded-lg p-3">
+   197→                <p className="text-2xl font-bold text-amber-700">{d.articleSummary.pending}</p>
+   198→                <p className="text-[10px] text-slate-500 mt-1">Pending</p>
+   199→              </div>
+   200→              <div className="bg-rose-50 rounded-lg p-3">
+   201→                <p className="text-2xl font-bold text-rose-700">{d.articleSummary.revisi}</p>
+   202→                <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
+   203→              </div>
+   204→              <div className="bg-sky-50 rounded-lg p-3">
+   205→                <p className="text-2xl font-bold text-sky-700">{d.articleSummary.published}</p>
+   206→                <p className="text-[10px] text-slate-500 mt-1">Published</p>
+   207→              </div>
+   208→            </div>
+   209→            {d.articleSummary.revisi > 0 && (
+   210→              <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
+   211→                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+   212→                <span>Ada {d.articleSummary.revisi} artikel yang perlu direvisi. Buka menu Data Artikel.</span>
+   213→              </div>
+   214→            )}
+   215→          </CardContent>
+   216→        </Card>
+   217→      </div>
+   218→
+   219→      {/* Today's tasks list */}
+   220→      <Card>
+   221→        <CardHeader className="pb-3">
+   222→          <CardTitle className="text-base flex items-center gap-2"><ListTodo className="w-4 h-4 text-slate-600" /> Tugas Hari Ini</CardTitle>
+   223→        </CardHeader>
+   224→        <CardContent>
+   225→          {d.todayTasks.length === 0 ? (
+   226→            <p className="text-sm text-slate-400 text-center py-6">Belum ada tugas hari ini. Tambahkan di menu Tugas Harian.</p>
+   227→          ) : (
+   228→            <div className="space-y-2 max-h-64 overflow-y-auto">
+   229→              {d.todayTasks.map((t: any) => (
+   230→                <div key={t.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+   231→                  <div className="flex-1 min-w-0">
+   232→                    <p className="text-sm font-medium text-slate-900 truncate">{t.taskHariIni}</p>
+   233→                    <p className="text-xs text-slate-500">{t.hambatan ? `Hambatan: ${t.hambatan}` : t.progress || "Tidak ada catatan"}</p>
+   234→                  </div>
+   235→                  <div className="w-24 shrink-0">
+   236→                    <Progress value={t.persentaseSelesai} className="h-1.5" />
+   237→                  </div>
+   238→                  <Badge variant="outline" className={`text-[10px] ${TASK_STATUS_COLORS[t.status]}`}>{TASK_STATUS_LABELS[t.status]}</Badge>
+   239→                </div>
+   240→              ))}
+   241→            </div>
+   242→          )}
+   243→        </CardContent>
+   244→      </Card>
+   245→
+   246→      {/* Monthly chart */}
+   247→      <BarChartCard
+   248→        title={`Produktivitas Bulanan ${year}`}
+   249→        data={d.monthlyData}
+   250→        keys={[
+   251→          { key: "contents", label: "Konten", color: "#db2777" },
+   252→          { key: "articles", label: "Artikel", color: "#ca8a04" },
+   253→          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
+   254→        ]}
+   255→        height={280}
+   256→      />
+   257→
+   258→      {/* Yearly chart */}
+   259→      <LineChartCard
+   260→        title="Tren Tahunan (5 Tahun)"
+   261→        data={d.yearlyData}
+   262→        keys={[
+   263→          { key: "contents", label: "Konten", color: "#db2777" },
+   264→          { key: "articles", label: "Artikel", color: "#ca8a04" },
+   265→          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
+   266→        ]}
+   267→        height={260}
+   268→      />
+   269→
+   270→      {/* Recent content & articles */}
+   271→      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   272→        <Card>
+   273→          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+   274→            <CardTitle className="text-base">Konten Terbaru</CardTitle>
+   275→            <Button variant="ghost" size="sm" onClick={handleExport}><FileStack className="w-3 h-3 mr-1" /> Export</Button>
+   276→          </CardHeader>
+   277→          <CardContent>
+   278→            <ScrollArea className="max-h-72">
+   279→              <div className="space-y-2">
+   280→                {d.myContents.slice(0, 8).map((c: any) => (
+   281→                  <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+   282→                    <div className="flex-1 min-w-0">
+   283→                      <p className="text-sm font-medium text-slate-900 truncate">{c.judul}</p>
+   284→                      <p className="text-[10px] text-slate-500">{c.kategori}</p>
+   285→                    </div>
+   286→                    <Badge variant="outline" className={`text-[10px] ${ACC_STATUS_COLORS[c.statusACC]}`}>{ACC_STATUS_LABELS[c.statusACC]}</Badge>
+   287→                  </div>
+   288→                ))}
+   289→                {d.myContents.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada konten</p>}
+   290→              </div>
+   291→            </ScrollArea>
+   292→          </CardContent>
+   293→        </Card>
+   294→
+   295→        <Card>
+   296→          <CardHeader className="pb-3">
+   297→            <CardTitle className="text-base">Artikel Terbaru</CardTitle>
+   298→          </CardHeader>
+   299→          <CardContent>
+   300→            <ScrollArea className="max-h-72">
+   301→              <div className="space-y-2">
+   302→                {d.myArticles.slice(0, 8).map((a: any) => (
+   303→                  <div key={a.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+   304→                    <div className="flex-1 min-w-0">
+   305→                      <p className="text-sm font-medium text-slate-900 truncate">{a.judulArtikel}</p>
+   306→                      <p className="text-[10px] text-slate-500">{a.websiteTujuan}</p>
+   307→                    </div>
+   308→                    <Badge variant="outline" className={`text-[10px] ${a.statusACC === "ACC" ? "bg-blue-100 text-blue-700 border-blue-200" : a.statusACC === "REVISI_ADMIN" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+   309→                      {a.statusACC === "ACC" ? "ACC" : a.statusACC === "REVISI_ADMIN" ? "Revisi" : "Pending"}
+   310→                    </Badge>
+   311→                  </div>
+   312→                ))}
+   313→                {d.myArticles.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada artikel</p>}
+   314→              </div>
+   315→            </ScrollArea>
+   316→          </CardContent>
+   317→        </Card>
+   318→      </div>
+   319→    </div>
+   320→  );
+   321→}
+   322→
+   323→// ===== Role-specific section =====
+   324→function RoleSpecificSection({ role, roleData, year, month }: { role: string; roleData: any; year: number; month: number }) {
+   325→  if (role === ROLES.PROJECT_MANAGER) {
+   326→    return (
+   327→      <div>
+   328→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">CRM & Pipeline</h3>
+   329→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   330→          <StatCard title="Total Klien" value={roleData.totalClients} icon={Users} indicator="neutral" accent="bg-violet-50 text-violet-600" />
+   331→          <StatCard title="Total Deal" value={roleData.pipeline.DEAL} icon={CheckCircle2} indicator="green" subtitle={formatCurrency(roleData.dealRevenue)} accent="bg-blue-50 text-blue-600" />
+   332→          <StatCard title="Event Bulan Ini" value={roleData.eventsThisMonth} icon={CalendarDays} indicator="neutral" accent="bg-amber-50 text-amber-600" />
+   333→          <StatCard title="Total Dokumen" value={roleData.documents} icon={FileStack} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
+   334→        </div>
+   335→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   336→          <Card>
+   337→            <CardHeader className="pb-3"><CardTitle className="text-base">Pipeline CRM</CardTitle></CardHeader>
+   338→            <CardContent>
+   339→              <div className="space-y-2">
+   340→                {Object.entries(roleData.pipeline).map(([status, count]: any) => (
+   341→                  <div key={status} className="flex items-center gap-2">
+   342→                    <Badge variant="outline" className={`text-xs w-24 justify-center ${CLIENT_STATUS_COLORS[status] || ""}`}>{CLIENT_STATUS_LABELS[status] || status}</Badge>
+   343→                    <div className="flex-1"><Progress value={roleData.totalClients > 0 ? (count / roleData.totalClients) * 100 : 0} className="h-2" /></div>
+   344→                    <span className="text-sm font-semibold w-8 text-right">{count as number}</span>
+   345→                  </div>
+   346→                ))}
+   347→              </div>
+   348→            </CardContent>
+   349→          </Card>
+   350→          <Card>
+   351→            <CardHeader className="pb-3"><CardTitle className="text-base">Event Mendatang</CardTitle></CardHeader>
+   352→            <CardContent>
+   353→              <div className="space-y-2 max-h-48 overflow-y-auto">
+   354→                {roleData.upcomingEvents.length === 0 ? <p className="text-sm text-slate-400 text-center py-4">Tidak ada event mendatang</p> :
+   355→                  roleData.upcomingEvents.map((e: any) => (
+   356→                    <div key={e.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+   357→                      <CalendarDays className="w-4 h-4 text-violet-500 shrink-0" />
+   358→                      <div className="flex-1 min-w-0">
+   359→                        <p className="text-sm font-medium truncate">{e.namaEvent}</p>
+   360→                        <p className="text-[10px] text-slate-500">{formatDate(e.tanggal)} · {e.lokasi || "-"}</p>
+   361→                      </div>
+   362→                    </div>
+   363→                  ))
+   364→                }
+   365→              </div>
+   366→            </CardContent>
+   367→          </Card>
+   368→        </div>
+   369→      </div>
+   370→    );
+   371→  }
+   372→
+   373→  if (role === ROLES.ASSISTANT_TRAINER) {
+   374→    const k = roleData.kpis;
+   375→    return (
+   376→      <div>
+   377→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Assistant Trainer</h3>
+   378→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   379→          <StatCard title="Reels Diproduksi Hari Ini" value={`${k.reelsProducedToday}/${k.reelsTargetToday}`} icon={Film} indicator={k.reelsProducedToday >= k.reelsTargetToday ? "green" : "yellow"} accent="bg-pink-50 text-pink-600" />
+   380→          <StatCard title="Reels Dipublish Hari Ini" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-blue-50 text-blue-600" />
+   381→          <StatCard title="Artikel Mingguan" value={`${k.articlesWeekly}/${k.articlesWeeklyTarget}`} icon={FileText} indicator={k.articlesWeekly >= k.articlesWeeklyTarget ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
+   382→          <StatCard title="Backup Website" value="2 Minggu" icon={FileCheck} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
+   383→        </div>
+   384→        <Card>
+   385→          <CardHeader className="pb-3"><CardTitle className="text-base">Event Saya</CardTitle></CardHeader>
+   386→          <CardContent>
+   387→            <div className="space-y-2 max-h-48 overflow-y-auto">
+   388→              {roleData.upcomingMyEvents.length === 0 ? <p className="text-sm text-slate-400 text-center py-4">Tidak ada event</p> :
+   389→                roleData.upcomingMyEvents.map((e: any) => (
+   390→                  <div key={e.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+   391→                    <CalendarDays className="w-4 h-4 text-amber-500 shrink-0" />
+   392→                    <div className="flex-1 min-w-0">
+   393→                      <p className="text-sm font-medium truncate">{e.namaEvent}</p>
+   394→                      <p className="text-[10px] text-slate-500">{formatDate(e.tanggal)} · {e.lokasi || "-"}</p>
+   395→                    </div>
+   396→                    <Badge variant="outline" className="text-[10px]">{e.statusPersiapan}</Badge>
+   397→                  </div>
+   398→                ))
+   399→              }
+   400→            </div>
+   401→          </CardContent>
+   402→        </Card>
+   403→      </div>
+   404→    );
+   405→  }
+   406→
+   407→  if (role === ROLES.CONTENT_CREATIVE) {
+   408→    const k = roleData.kpis;
+   409→    const ev = roleData.evaluation;
+   410→    return (
+   411→      <div>
+   412→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Content Creative</h3>
+   413→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   414→          <StatCard title="Ide Konten Hari Ini" value={`${k.ideasToday}/${k.ideasTargetToday}`} icon={Target} indicator={k.ideasToday >= k.ideasTargetToday ? "green" : "yellow"} accent="bg-violet-50 text-violet-600" />
+   415→          <StatCard title="Reels Diproduksi" value={`${k.reelsProducedToday}/${k.reelsProducedTargetToday}`} icon={Film} indicator={k.reelsProducedToday >= k.reelsProducedTargetToday ? "green" : "yellow"} accent="bg-pink-50 text-pink-600" />
+   416→          <StatCard title="Reels Dipublish" value={`${k.reelsPublishedToday}/${k.reelsPublishTargetToday}`} icon={CheckCircle2} indicator={k.reelsPublishedToday >= k.reelsPublishTargetToday ? "green" : "yellow"} accent="bg-blue-50 text-blue-600" />
+   417→          <StatCard title="Artikel SEO Hari Ini" value={`${k.articlesToday}/${k.articlesTargetToday}`} icon={FileText} indicator={k.articlesToday >= k.articlesTargetToday ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
+   418→        </div>
+   419→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   420→          <Card>
+   421→            <CardHeader className="pb-3"><CardTitle className="text-base">Target Mingguan</CardTitle></CardHeader>
+   422→            <CardContent>
+   423→              <div className="space-y-3">
+   424→                <div className="flex items-center gap-2"><span className="text-sm w-32">Ide Konten</span><Progress value={(k.weeklyIdeas / k.weeklyIdeasTarget) * 100} className="h-2 flex-1" /><span className="text-sm font-semibold w-16 text-right">{k.weeklyIdeas}/{k.weeklyIdeasTarget}</span></div>
+   425→                <div className="flex items-center gap-2"><span className="text-sm w-32">Reels</span><Progress value={(k.weeklyReels / k.weeklyReelsTarget) * 100} className="h-2 flex-1" /><span className="text-sm font-semibold w-16 text-right">{k.weeklyReels}/{k.weeklyReelsTarget}</span></div>
+   426→              </div>
+   427→            </CardContent>
+   428→          </Card>
+   429→          <Card>
+   430→            <CardHeader className="pb-3"><CardTitle className="text-base">Evaluasi Konten</CardTitle></CardHeader>
+   431→            <CardContent>
+   432→              <div className="grid grid-cols-2 gap-3 text-center">
+   433→                <div className="bg-slate-50 rounded-lg p-2"><Eye className="w-4 h-4 mx-auto text-cyan-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.reach)}</p><p className="text-[10px] text-slate-500">Reach</p></div>
+   434→                <div className="bg-slate-50 rounded-lg p-2"><BarChart3 className="w-4 h-4 mx-auto text-violet-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.views)}</p><p className="text-[10px] text-slate-500">Views</p></div>
+   435→                <div className="bg-slate-50 rounded-lg p-2"><Share2 className="w-4 h-4 mx-auto text-blue-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.share)}</p><p className="text-[10px] text-slate-500">Share</p></div>
+   436→                <div className="bg-slate-50 rounded-lg p-2"><UserPlus className="w-4 h-4 mx-auto text-pink-600" /><p className="text-lg font-bold mt-1">{formatNumber(ev.followerGrowth)}</p><p className="text-[10px] text-slate-500">Follower+</p></div>
+   437→              </div>
+   438→            </CardContent>
+   439→          </Card>
+   440→        </div>
+   441→      </div>
+   442→    );
+   443→  }
+   444→
+   445→  if (role === ROLES.DIGITAL_MARKETING_IT) {
+   446→    const k = roleData.kpis;
+   447→    return (
+   448→      <div>
+   449→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Digital Marketing & IT</h3>
+   450→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   451→          <StatCard title="Artikel SEO Hari Ini" value={`${k.articlesToday}/${k.articlesTargetToday}`} icon={FileText} indicator={k.articlesToday >= k.articlesTargetToday ? "green" : "red"} accent="bg-amber-50 text-amber-600" />
+   452→          <StatCard title="Optimasi Website" value={`${k.websiteOptimizationToday}/${k.websiteOptimizationTarget}`} icon={CheckCircle2} indicator="green" accent="bg-cyan-50 text-cyan-600" />
+   453→          <StatCard title="Materi Promosi" value={`${k.promoMaterialToday}/${k.promoMaterialTarget}`} icon={Target} indicator="green" accent="bg-violet-50 text-violet-600" />
+   454→          <StatCard title="Analisis Kompetitor" value={`${k.competitorAnalysisToday}/${k.competitorAnalysisTarget}`} icon={BarChart3} indicator="green" accent="bg-sky-50 text-sky-600" />
+   455→        </div>
+   456→        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+   457→          <Card>
+   458→            <CardHeader className="pb-3"><CardTitle className="text-base">Artikel per Website</CardTitle></CardHeader>
+   459→            <CardContent>
+   460→              <div className="space-y-2">
+   461→                {roleData.articlesByWebsite.map((w: any) => (
+   462→                  <div key={w.name} className="flex items-center gap-2">
+   463→                    <span className="text-sm w-40 truncate">{w.name}</span>
+   464→                    <div className="flex-1"><Progress value={w.value > 0 ? 100 : 0} className="h-2" /></div>
+   465→                    <span className="text-sm font-semibold w-8 text-right">{w.value}</span>
+   466→                  </div>
+   467→                ))}
+   468→              </div>
+   469→            </CardContent>
+   470→          </Card>
+   471→          <Card>
+   472→            <CardHeader className="pb-3"><CardTitle className="text-base">Peningkatan Mingguan</CardTitle></CardHeader>
+   473→            <CardContent>
+   474→              <div className="grid grid-cols-2 gap-3 text-center">
+   475→                <div className="bg-blue-50 rounded-lg p-3"><TrendingUp className="w-4 h-4 mx-auto text-blue-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.traffic}</p><p className="text-[10px] text-slate-500">Traffic</p></div>
+   476→                <div className="bg-cyan-50 rounded-lg p-3"><BarChart3 className="w-4 h-4 mx-auto text-cyan-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.seoRanking}</p><p className="text-[10px] text-slate-500">SEO Rank</p></div>
+   477→                <div className="bg-violet-50 rounded-lg p-3"><UserPlus className="w-4 h-4 mx-auto text-violet-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.leads}</p><p className="text-[10px] text-slate-500">Leads</p></div>
+   478→                <div className="bg-pink-50 rounded-lg p-3"><Heart className="w-4 h-4 mx-auto text-pink-600" /><p className="text-lg font-bold mt-1">{roleData.weekly.engagement}</p><p className="text-[10px] text-slate-500">Engagement</p></div>
+   479→              </div>
+   480→            </CardContent>
+   481→          </Card>
+   482→        </div>
+   483→      </div>
+   484→    );
+   485→  }
+   486→
+   487→  if (role === ROLES.FINANCE) {
+   488→    const r = roleData;
+   489→    const marginIndicator = r.margin >= 30 ? "green" : r.margin >= 15 ? "yellow" : "red";
+   490→    return (
+   491→      <div>
+   492→        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">KPI Finance</h3>
+   493→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   494→          <StatCard title="Revenue Bulan Ini" value={formatCurrency(r.revenue)} icon={Wallet} indicator={r.revenue >= r.targetRevenue ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetRevenue)}`} progress={r.targetRevenue > 0 ? Math.round((r.revenue / r.targetRevenue) * 100) : 0} accent="bg-blue-50 text-blue-600" />
+   495→          <StatCard title="Expense Bulan Ini" value={formatCurrency(r.expense)} icon={TrendingUp} indicator="neutral" accent="bg-rose-50 text-rose-600" />
+   496→          <StatCard title="Profit Bulan Ini" value={formatCurrency(r.profit)} icon={BarChart3} indicator={r.profit >= r.targetProfit ? "green" : "yellow"} subtitle={`Target: ${formatCurrency(r.targetProfit)}`} accent="bg-sky-50 text-sky-600" />
+   497→          <StatCard title="Margin" value={`${r.margin}%`} icon={Percent} indicator={marginIndicator} accent="bg-cyan-50 text-cyan-600" />
+   498→        </div>
+   499→        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+   500→          <StatCard title="Cash Flow" value={formatCurrency(r.cashFlow)} icon={Wallet} indicator={r.cashFlow >= 0 ? "green" : "red"} accent="bg-blue-50 text-blue-600" />
+   501→          <StatCard title="Piutang" value={formatCurrency(r.piutang)} icon={FileText} indicator="neutral" accent="bg-amber-50 text-amber-600" />
+   502→          <StatCard title="Hutang" value={formatCurrency(r.hutang)} icon={FileStack} indicator="neutral" accent="bg-rose-50 text-rose-600" />
+   503→          <StatCard title="Forecast" value={formatCurrency(r.forecast)} icon={Target} indicator="neutral" accent="bg-violet-50 text-violet-600" />
+   504→        </div>
+   505→        <BarChartCard
+   506→          title={`Revenue vs Expense vs Profit ${year}`}
+   507→          data={r.financeMonthly}
+   508→          keys={[
+   509→            { key: "revenue", label: "Revenue", color: "#2563eb" },
+   510→            { key: "expense", label: "Expense", color: "#f43f5e" },
+   511→            { key: "profit", label: "Profit", color: "#0891b2" },
+   512→          ]}
+   513→          height={260}
+   514→          formatY={(v) => `${(v / 1000000).toFixed(0)}M`}
+   515→        />
+   516→      </div>
+   517→    );
+   518→  }
+   519→
+   520→  return null;
+   521→}
+   522→

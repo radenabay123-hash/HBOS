@@ -3215,3 +3215,34 @@ Stage Summary:
 - Cookie-based auth works through Caddy gateway
 - All 8 events verified: auth, join-room, leave-room, send-message, typing, mark-read, edit-message, delete-message
 - Start: cd /home/z/my-project/mini-services/chat-service && bun index.ts
+
+---
+Task ID: RESTORE-13
+Agent: Main (Z.ai Code) + subagent KPI-SCHEDULE
+Task: Add daily schedule to KPI + editable KPI targets/actuals + schedule in team dashboard
+
+Work Log:
+- Added dailySchedule field to KPI_TARGETS for all 5 roles (PM, Assistant Trainer, Content Creative, Digital Marketing, Finance) with 7 time slots each
+- Created src/lib/kpi-targets-server.ts with getEffectiveKpiTargets + saveKpiTargetOverride (DB-backed overrides)
+- Created /api/kpi/targets API (GET merged config + PUT override target)
+- Updated /api/kpi/team-scores to use effective targets + weighted score (daily 30%, weekly 25%, monthly 25%, deadline 10%, quality 10%) + productivityRanking + businessRanking
+- Updated team-dashboard.tsx: DailyScheduleCard (timeline with current slot highlight), KpiSectionsCard (collapsible Harian/Mingguan/Bulanan with progress bars + inline input), owner mode (user selector)
+- Updated OwnerKpiDashboard: Edit Target buttons (pencil icon, 60 total), Input KPI buttons (12 total), Edit Target dialog, Input KPI Actual dialog
+- Fixed duplicate Button import error
+
+Verified via agent-browser:
+- Owner KPI: 60 Edit Target buttons + 12 Input buttons ✓
+- Team Dashboard (PM): has Jadwal Harian + KPI ✓
+- API: KPI targets with role param returns 7 schedule slots + 6 daily targets ✓
+- API: team-scores returns weightedScore + category + targetVsRealisasi ✓
+- Lint: 0 errors
+
+Stage Summary:
+- Daily schedule (jadwal harian per jam) added for all 5 roles
+- Schedule shown in team dashboard with current slot highlight
+- Owner can edit KPI targets (pencil icon → dialog → save override)
+- Owner can input actual KPI values (Input button → dialog → save to KpiLog)
+- Users can edit own KPI actual values in team dashboard
+- KPI score: weighted (daily 30%, weekly 25%, monthly 25%, deadline 10%, quality 10%)
+- Categories: Excellent (90+), Good (80+), Need Coaching (70+), Warning (<70)
+- Ranking: productivity + business impact

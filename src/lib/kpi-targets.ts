@@ -1,5 +1,7 @@
 // KPI Targets per Role - Daily / Weekly / Monthly
 // HAFARA BUSINESS OPERATING SYSTEM (HBOS)
+// NOTE: This file is PURE (no DB imports) so it can be imported from client components.
+// Server-only functions live in kpi-targets-server.ts.
 
 export interface KpiTarget {
   key: string;
@@ -19,8 +21,14 @@ export interface KpiMonthlySocial {
   platform: string;
 }
 
+export interface ScheduleSlot {
+  time: string;     // "09.00–09.15"
+  activity: string; // "Daily Planning & Review CRM"
+}
+
 export interface RoleKpiConfig {
   scheduleNote: string;
+  dailySchedule: ScheduleSlot[];  // NEW: daily activity timeline
   uploadSchedule?: { time: string; content: string }[];
   daily: KpiTarget[];
   weekly: KpiTarget[];
@@ -34,6 +42,15 @@ export const KPI_TARGETS: Record<string, RoleKpiConfig> = {
   // ============================================================
   PROJECT_MANAGER: {
     scheduleNote: "Senin–Jumat, 09.00–16.00",
+    dailySchedule: [
+      { time: "09.00–09.15", activity: "Daily Planning & Review CRM" },
+      { time: "09.15–11.15", activity: "Publish 30 Artikel Kota (3 Judul x 10 Kota)" },
+      { time: "11.15–12.00", activity: "Cari 5 Database Prospek Baru" },
+      { time: "12.00–13.00", activity: "Istirahat" },
+      { time: "13.00–14.30", activity: "Follow Up Klien & Penawaran" },
+      { time: "14.30–15.30", activity: "Update CRM & Pipeline" },
+      { time: "15.30–16.00", activity: "Input KPI & Work Log" },
+    ],
     daily: [
       { key: "pm_artikel_kota", label: "Publish Artikel Kota", target: 30, unit: "artikel" },
       { key: "pm_judul_artikel", label: "Judul Artikel Baru", target: 3, unit: "judul" },
@@ -75,6 +92,15 @@ export const KPI_TARGETS: Record<string, RoleKpiConfig> = {
   // ============================================================
   ASSISTANT_TRAINER: {
     scheduleNote: "Senin–Jumat, 09.00–16.00",
+    dailySchedule: [
+      { time: "09.00–09.40", activity: "Riset 5 Ide Konten Viral" },
+      { time: "09.40–11.00", activity: "Produksi Konten" },
+      { time: "11.00–12.00", activity: "Thumbnail & Caption" },
+      { time: "12.00–13.00", activity: "Istirahat" },
+      { time: "13.00–14.30", activity: "Editing & Scheduling" },
+      { time: "14.30–15.30", activity: "Kolaborasi / Persiapan Shooting" },
+      { time: "15.30–16.00", activity: "Input KPI & Work Log" },
+    ],
     uploadSchedule: [
       { time: "09.00", content: "Carousel" },
       { time: "16.00", content: "Video Random" },
@@ -117,6 +143,15 @@ export const KPI_TARGETS: Record<string, RoleKpiConfig> = {
   // ============================================================
   CONTENT_CREATIVE: {
     scheduleNote: "Senin–Jumat, 09.00–16.00",
+    dailySchedule: [
+      { time: "09.00–09.40", activity: "Riset 5 Ide Viral" },
+      { time: "09.40–11.30", activity: "Produksi Konten" },
+      { time: "11.30–12.00", activity: "Thumbnail" },
+      { time: "12.00–13.00", activity: "Istirahat" },
+      { time: "13.00–14.30", activity: "Editing" },
+      { time: "14.30–15.30", activity: "Caption & Upload" },
+      { time: "15.30–16.00", activity: "Input KPI & Work Log" },
+    ],
     uploadSchedule: [
       { time: "09.00", content: "Carousel" },
       { time: "16.00", content: "Video Random" },
@@ -156,6 +191,15 @@ export const KPI_TARGETS: Record<string, RoleKpiConfig> = {
   // ============================================================
   DIGITAL_MARKETING_IT: {
     scheduleNote: "Senin–Jumat, 09.00–16.00",
+    dailySchedule: [
+      { time: "09.00–10.00", activity: "Riset Kebutuhan SDM Perusahaan" },
+      { time: "10.00–11.00", activity: "Analisa Kompetitor" },
+      { time: "11.00–12.00", activity: "Ide & Produksi Konten Hafara" },
+      { time: "12.00–13.00", activity: "Istirahat" },
+      { time: "13.00–14.00", activity: "Upload & Distribusi Konten" },
+      { time: "14.00–15.00", activity: "SEO & Website Optimization" },
+      { time: "15.00–16.00", activity: "KPI, Work Log & Monitoring" },
+    ],
     daily: [
       { key: "dm_riset_sdm", label: "Riset SDM Perusahaan", target: 1, unit: "riset" },
       { key: "dm_analisa_kompetitor", label: "Analisa Kompetitor", target: 1, unit: "analisa" },
@@ -193,6 +237,15 @@ export const KPI_TARGETS: Record<string, RoleKpiConfig> = {
   // ============================================================
   FINANCE: {
     scheduleNote: "Senin–Jumat, 09.00–16.00",
+    dailySchedule: [
+      { time: "09.00–10.00", activity: "Cek & Input Pemasukan" },
+      { time: "10.00–11.00", activity: "Cek & Input Pengeluaran" },
+      { time: "11.00–12.00", activity: "Rekap Invoice & Piutang" },
+      { time: "12.00–13.00", activity: "Istirahat" },
+      { time: "13.00–14.00", activity: "Monitor Arus Kas" },
+      { time: "14.00–15.00", activity: "Laporan Keuangan Harian" },
+      { time: "15.00–16.00", activity: "Input KPI & Work Log" },
+    ],
     daily: [
       { key: "fn_input_pemasukan", label: "Input Pemasukan", target: 1, unit: "input" },
       { key: "fn_input_pengeluaran", label: "Input Pengeluaran", target: 1, unit: "input" },
@@ -262,4 +315,40 @@ export function getKpiKeys(role: string, period: "daily" | "weekly" | "monthly")
   const cfg = KPI_TARGETS[role];
   if (!cfg) return [];
   return cfg[period].map((t) => t.key);
+}
+
+// ============================================================
+// KPI TARGET OVERRIDES (Owner can edit target values per role)
+// Stored in AppSetting with key "kpi_targets_override" as JSON
+// Shape: { [role]: { [period]: { [metricKey]: number } } }
+// ============================================================
+
+export const KPI_OVERRIDE_SETTING_KEY = "kpi_targets_override";
+
+export type KpiOverrideMap = Record<string, Record<"daily" | "weekly" | "monthly", Record<string, number>>>;
+
+// Parse "09.00–09.15" or "09.00-09.15" into start/end minutes from midnight
+export function parseTimeRange(time: string): { startMin: number; endMin: number } | null {
+  const parts = time.split(/[–—-]/).map((s) => s.trim());
+  if (parts.length !== 2) return null;
+  const toMin = (s: string): number | null => {
+    const m = s.match(/^(\d{1,2})\.(\d{2})$/);
+    if (!m) return null;
+    return Number(m[1]) * 60 + Number(m[2]);
+  };
+  const startMin = toMin(parts[0]);
+  const endMin = toMin(parts[1]);
+  if (startMin == null || endMin == null) return null;
+  return { startMin, endMin };
+}
+
+// Find current schedule slot index based on current time
+export function findCurrentScheduleSlot(schedule: ScheduleSlot[], now: Date = new Date()): number {
+  const curMin = now.getHours() * 60 + now.getMinutes();
+  for (let i = 0; i < schedule.length; i++) {
+    const r = parseTimeRange(schedule[i].time);
+    if (!r) continue;
+    if (curMin >= r.startMin && curMin < r.endMin) return i;
+  }
+  return -1;
 }
