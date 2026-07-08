@@ -5,7 +5,7 @@
     "": {
       "name": "hbos-chat-service",
       "dependencies": {
-        "@prisma/client": "^6.19.2",
+        "@prisma/client": "^6.11.1",
         "socket.io": "^4.8.3",
       },
       "devDependencies": {
