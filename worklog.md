@@ -3271,3 +3271,46 @@ Verified:
 - Pengaturan: "Logo Aplikasi" + "Logo Dokumen" + "Logo Perusahaan" labels ✓
 - Footer: company name from settings ✓
 - Lint: 0 errors
+
+---
+Task ID: RESTORE-15
+Agent: Main (Z.ai Code)
+Task: Mobile responsive redesign — bottom navigation bar + elegant mobile layout
+
+Work Log:
+- Rewrote app-shell.tsx with separate mobile and desktop layouts:
+  - Desktop (lg+): Fixed sidebar w-64 + top bar with notifications + footer
+  - Mobile (<lg): Compact top bar with logo + page title + notifications + avatar; Bottom navigation bar with 5 items
+
+Mobile Layout Features:
+- Bottom Navigation Bar (like WhatsApp/Instagram/Tokopedia):
+  - Dashboard (Home icon)
+  - Kanban (KanbanSquare icon)
+  - Chat (MessageCircle icon)
+  - Tugas (ClipboardList icon)
+  - Lainnya (MoreHorizontal icon) → opens slide-out sidebar with ALL menu items
+- Active tab highlighted: blue text + blue-50 bg + stroke-[2.5] icon
+- Safe area padding for iPhone (env(safe-area-inset-bottom))
+- Compact top bar: app logo (8x8) + app name + current page label
+- No footer on mobile (saves space)
+- Content padding: pb-20 for bottom nav clearance
+
+Desktop Layout Features:
+- Fixed sidebar w-64 with all menu items grouped ("Menu Utama" + "Menu Lainnya")
+- Top bar with page title + sound toggle + notifications + avatar
+- Footer with company name
+- Content padding: p-6
+
+Shared Features:
+- Settings fetched from API (app_name, app_logo, etc.)
+- Notification sound toggle
+- Notification dropdown
+- Slide-out sidebar for full menu access (mobile "Lainnya" + mobile hamburger)
+- User card with avatar + role + logout button
+
+Verified:
+- Desktop (1280px): sidebar visible (display:flex), bottom nav hidden ✓
+- Mobile (375px): sidebar hidden, bottom nav visible with 5 items ✓
+- Bottom nav labels: Dashboard, Kanban, Chat, Tugas, Lainnya ✓
+- "Lainnya" opens slide-out sidebar with all menu items ✓
+- Lint: 0 errors
