@@ -16,7 +16,7 @@ import {
 import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
 import { BarChartCard, LineChartCard, PieChartCard, AreaChartCard, ChartCard, chartColors } from "@/components/shared/charts";
 import { api } from "@/lib/api-client";
-import { formatCurrency, formatNumber, formatDate, getIndicatorColor } from "@/lib/constants";
+import { formatCurrency, formatNumber, formatDate, getIndicatorColor, ROLE_LABELS } from "@/lib/constants";
 import { exportToExcel, exportReportPDF } from "@/lib/export-utils";
 import { toast } from "sonner";
 
@@ -294,78 +294,126 @@ export function OwnerDashboard() {
       {/* ===== Recent data tables ===== */}
       <div className="space-y-4">
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Data Terbaru</h3>
-        {/* Deal Clients with Documents */}
+
+        {/* Deal Clients with Documents — limit to 8, show count */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-blue-600" />
-              Klien Deal - Status Dokumen (Invoice, SPK, Surat)
-            </CardTitle>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileCheck className="w-4 h-4 text-blue-600" />
+                Klien Deal - Status Dokumen
+              </CardTitle>
+              <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                {d.dealClientsWithDocs.length} total klien deal
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent>
             {d.dealClientsWithDocs.length === 0 ? (
               <p className="text-sm text-slate-400 text-center py-6">Belum ada klien deal</p>
             ) : (
-              <ScrollArea className="max-h-80">
-                <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-white">
-                    <tr className="border-b text-left text-xs text-slate-500">
-                      <th className="py-2 pr-2 font-medium">Klien</th>
-                      <th className="py-2 px-2 font-medium">Instansi</th>
-                      <th className="py-2 px-2 font-medium text-right">Budget</th>
-                      <th className="py-2 px-2 font-medium text-center">Invoice</th>
-                      <th className="py-2 px-2 font-medium text-center">SPK</th>
-                      <th className="py-2 px-2 font-medium text-center">Surat</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.dealClientsWithDocs.map((c: any) => (
-                      <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
-                        <td className="py-2 pr-2 font-medium text-slate-900">{c.namaKlien}</td>
-                        <td className="py-2 px-2 text-slate-600">{c.instansi || "-"}</td>
-                        <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(c.budget || 0)}</td>
-                        <td className="py-2 px-2 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                        <td className="py-2 px-2 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                        <td className="py-2 px-2 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-left text-[10px] text-slate-500 uppercase tracking-wide">
+                        <th className="py-2 pr-3 font-semibold">Klien</th>
+                        <th className="py-2 px-3 font-semibold">Instansi</th>
+                        <th className="py-2 px-3 font-semibold text-right">Budget</th>
+                        <th className="py-2 px-3 font-semibold text-center">Inv</th>
+                        <th className="py-2 px-3 font-semibold text-center">SPK</th>
+                        <th className="py-2 px-3 font-semibold text-center">Surat</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </ScrollArea>
+                    </thead>
+                    <tbody>
+                      {d.dealClientsWithDocs.slice(0, 8).map((c: any) => (
+                        <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                          <td className="py-2.5 pr-3 font-medium text-slate-900">{c.namaKlien}</td>
+                          <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate">{c.instansi || "-"}</td>
+                          <td className="py-2.5 px-3 text-right text-slate-700 font-medium">{formatCurrency(c.budget || 0)}</td>
+                          <td className="py-2.5 px-3 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <span className="text-slate-300 text-xs">-</span>}</td>
+                          <td className="py-2.5 px-3 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <span className="text-slate-300 text-xs">-</span>}</td>
+                          <td className="py-2.5 px-3 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-emerald-600 inline" /> : <span className="text-slate-300 text-xs">-</span>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {d.dealClientsWithDocs.length > 8 && (
+                  <p className="text-[10px] text-slate-400 text-center mt-2">
+                    Menampilkan 8 dari {d.dealClientsWithDocs.length} klien deal · Lihat semua di menu CRM Client
+                  </p>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
 
-        {/* Team Productivity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-blue-600" />
-              Produktivitas Tim - {monthNames[month - 1]} {year}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {d.teamProductivity.map((t: any) => (
-                <div key={t.id} className="flex items-center gap-3">
-                  <div className="w-32 shrink-0">
-                    <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
-                    <p className="text-[10px] text-slate-500">{t.position || t.role}</p>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Progress value={t.completionRate} className="h-2" />
-                      <span className="text-xs font-medium text-slate-600 w-10 text-right">{t.completionRate}%</span>
+        {/* Team Productivity — 2 column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-blue-600" />
+                Produktivitas Tim
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {d.teamProductivity.map((t: any) => (
+                  <div key={t.id} className="flex items-center gap-3">
+                    <div className="w-28 shrink-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
+                      <p className="text-[10px] text-slate-500">{ROLE_LABELS[t.role] || t.role}</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      {t.tasksDone}/{t.tasksTotal} tugas · {t.contents} konten · {t.articles} artikel
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Progress value={t.completionRate} className="h-2" />
+                        <span className="text-xs font-medium text-slate-600 w-10 text-right shrink-0">{t.completionRate}%</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        {t.tasksDone}/{t.tasksTotal} tugas · {t.contents} konten · {t.articles} artikel
+                      </p>
+                    </div>
                   </div>
+                ))}
+                {d.teamProductivity.length === 0 && (
+                  <p className="text-sm text-slate-400 text-center py-4">Belum ada data tim</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats Summary */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-600" />
+                Ringkasan Aktivitas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-blue-50 p-3">
+                  <p className="text-[10px] text-blue-600 font-medium uppercase">Total Klien</p>
+                  <p className="text-xl font-bold text-blue-900 mt-1">{d.crm.totalClients}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="rounded-lg bg-emerald-50 p-3">
+                  <p className="text-[10px] text-emerald-600 font-medium uppercase">Klien Deal</p>
+                  <p className="text-xl font-bold text-emerald-900 mt-1">{d.crm.totalDeal}</p>
+                </div>
+                <div className="rounded-lg bg-violet-50 p-3">
+                  <p className="text-[10px] text-violet-600 font-medium uppercase">Event Aktif</p>
+                  <p className="text-xl font-bold text-violet-900 mt-1">{d.events.eventThisMonth}</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 p-3">
+                  <p className="text-[10px] text-amber-600 font-medium uppercase">Artikel SEO</p>
+                  <p className="text-xl font-bold text-amber-900 mt-1">{d.articles.total}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
