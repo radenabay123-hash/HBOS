@@ -706,21 +706,17 @@ function KanbanCardItem({ card, onEdit, onDelete, isOverlay }: {
     <div
       ref={setNodeRef}
       style={style}
+      {...attributes}
+      {...listeners}
       className={cn(
-        "bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:shadow-md transition-shadow group",
+        "bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group",
         isDragging && "opacity-50",
         card.status === "DONE" && "border-l-4 border-l-green-500"
       )}
     >
-      {/* Drag handle + priority */}
+      {/* Priority badge */}
       <div className="flex items-start justify-between mb-1.5">
-        <button
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-500 mt-0.5"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
+        <GripVertical className="w-4 h-4 text-slate-300 group-hover:text-slate-400 mt-0.5" />
         <Badge variant="outline" className={cn("text-[9px]", PRIORITY_COLORS[card.priority])}>
           <Flag className="w-2.5 h-2.5 mr-0.5" /> {PRIORITY_LABELS[card.priority]}
         </Badge>
@@ -765,7 +761,7 @@ function KanbanCardItem({ card, onEdit, onDelete, isOverlay }: {
 
       {/* Actions (hover) */}
       {!isOverlay && onEdit && onDelete && (
-        <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity" onPointerDown={(e) => e.stopPropagation()}>
           <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={onEdit}><Edit3 className="w-3 h-3 mr-0.5" /> Edit</Button>
           <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-rose-500" onClick={onDelete}><Trash2 className="w-3 h-3" /></Button>
         </div>
