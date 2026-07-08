@@ -38,9 +38,9 @@ export function StatCard({
   accent = "bg-blue-50 text-blue-600",
 }: StatCardProps) {
   return (
-    <Card className={cn("border-l-4 shadow-sm hover:shadow-md transition-shadow rounded-xl overflow-hidden", indicatorStyles[indicator])}>
+    <Card className={cn("border-l-4 overflow-hidden hover:shadow-md transition-shadow", indicatorStyles[indicator])}>
       <CardContent className="p-3 flex items-center gap-3">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", accent)}>
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", accent)}>
           <Icon className="w-5 h-5" />
         </div>
         <div className="min-w-0 flex-1">
