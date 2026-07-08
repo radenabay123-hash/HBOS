@@ -17,11 +17,14 @@ export async function GET(req: Request) {
     const docType = searchParams.get("docType");
 
     // Fetch app settings (logo, signature, director info)
+    // Include both document_logo (preferred for PDFs) and legacy company_logo
     const appSettings = await db.appSetting.findMany({
-      where: { key: { in: ["company_logo", "company_signature", "director_name", "director_title", "company_name", "company_address", "company_phone", "company_email", "company_website"] } },
+      where: { key: { in: ["company_logo", "app_logo", "document_logo", "company_signature", "director_name", "director_title", "company_name", "company_address", "company_phone", "company_email", "company_website"] } },
     });
     const appMap: Record<string, string> = {};
     for (const s of appSettings) appMap[s.key] = s.value;
+    // For documents: prefer document_logo, then legacy company_logo
+    const documentLogo = appMap.document_logo || appMap.company_logo || "";
 
     if (docType) {
       const layout = await db.documentLayout.findUnique({ where: { docType } });
@@ -29,7 +32,8 @@ export async function GET(req: Request) {
       return ok({
         layout: settings,
         appSettings: {
-          companyLogo: appMap.company_logo || "",
+          companyLogo: documentLogo,
+          documentLogo,
           companySignature: appMap.company_signature || "",
           directorName: appMap.director_name || "M. Aqil Baihaqi",
           directorTitle: appMap.director_title || "Direktur Utama",
@@ -50,7 +54,8 @@ export async function GET(req: Request) {
     return ok({
       layouts: result,
       appSettings: {
-        companyLogo: appMap.company_logo || "",
+        companyLogo: documentLogo,
+        documentLogo,
         companySignature: appMap.company_signature || "",
         directorName: appMap.director_name || "M. Aqil Baihaqi",
         directorTitle: appMap.director_title || "Direktur Utama",

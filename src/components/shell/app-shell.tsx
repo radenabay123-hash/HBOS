@@ -102,7 +102,8 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
   const appName = appSettings.app_name || "HBOS";
   const appFullName = appSettings.app_full_name || "Hafara Business Operating System";
   const companyName = appSettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
-  const companyLogo = appSettings.company_logo || "";
+  // App logo (square icon for favicon/sidebar/login). Falls back to legacy company_logo.
+  const appLogo = appSettings.app_logo || appSettings.company_logo || "";
 
   // Request browser notification permission on mount
   useEffect(() => {
@@ -156,7 +157,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         try {
           const notif = new Notification(latest.title, {
             body: latest.message,
-            icon: "/uploads/company_logo_1783261812435.png",
+            icon: appLogo || "/uploads/company_logo_1783261812435.png",
             tag: latest.id,
           });
           notif.onclick = () => {
@@ -195,7 +196,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       {/* Logo */}
       <div className={cn("flex items-center gap-3 px-5 py-5 border-b", isOwner ? "border-blue-100" : "border-slate-100")}>
         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
-          {companyLogo ? <img src={companyLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6" />}
+          {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6" />}
         </div>
         <div className="min-w-0">
           <h1 className="font-bold text-slate-900 leading-tight">{appName}</h1>

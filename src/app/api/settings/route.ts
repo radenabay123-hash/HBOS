@@ -16,7 +16,7 @@ export async function GET() {
 
     // Public settings keys that anyone can see (for app header, login screen, etc.)
     const PUBLIC_KEYS = [
-      "app_name", "app_full_name", "company_name", "company_logo",
+      "app_name", "app_full_name", "company_name", "company_logo", "app_logo",
       "company_address", "company_phone", "company_email", "company_website",
       "primary_color", "theme",
     ];

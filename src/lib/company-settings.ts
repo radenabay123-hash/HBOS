@@ -28,6 +28,8 @@ export async function getCompanySettings() {
       company_website: "www.HafaraGroup.com",
       company_npwp: "01.234.567.8-091.000",
       company_logo: "",
+      app_logo: "",
+      document_logo: "",
       company_signature: "",
       director_name: "M. Aqil Baihaqi",
       director_title: "Direktur Utama",
@@ -42,6 +44,12 @@ export async function getCompanySettings() {
       }
     }
 
+    // Backward-compat fallbacks:
+    // - app_logo falls back to company_logo (for favicon/sidebar/login)
+    // - document_logo falls back to company_logo (for PDF headers)
+    if (!cache.app_logo && cache.company_logo) cache.app_logo = cache.company_logo;
+    if (!cache.document_logo && cache.company_logo) cache.document_logo = cache.company_logo;
+
     return cache;
   } catch {
     // Fallback to defaults
@@ -53,6 +61,8 @@ export async function getCompanySettings() {
       company_website: "www.HafaraGroup.com",
       company_npwp: "01.234.567.8-091.000",
       company_logo: "",
+      app_logo: "",
+      document_logo: "",
       company_signature: "",
       director_name: "M. Aqil Baihaqi",
       director_title: "Direktur Utama",

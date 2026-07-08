@@ -199,7 +199,8 @@ export function InvoiceModule({ user }: { user: SafeUser }) {
     try {
       const ld = await fetchLayoutSettings("INVOICE");
       layoutSettings = ld.layout;
-      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+      // ld.appSettings.companyLogo already prefers document_logo (with company_logo fallback)
+      logoUrl = ld.appSettings?.companyLogo || companySettings.document_logo || companySettings.company_logo || "";
     } catch {}
     const logoImageData = await loadImageAsDataURL(logoUrl);
 

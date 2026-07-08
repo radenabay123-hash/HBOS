@@ -272,7 +272,8 @@ export function SuratModule({ user }: { user: SafeUser }) {
     try {
       const ld = await fetchLayoutSettings("SURAT");
       lSettings = ld.layout;
-      logoUrl = ld.appSettings?.companyLogo || companySettings.company_logo || "";
+      // ld.appSettings.companyLogo already prefers document_logo (with company_logo fallback)
+      logoUrl = ld.appSettings?.companyLogo || companySettings.document_logo || companySettings.company_logo || "";
     } catch {}
     const logoImageData = await loadImageAsDataURL(logoUrl);
 
@@ -673,7 +674,7 @@ function SuratLayoutPreview({ form, layout, companySettings }: { form: any; layo
   const docTitleColor = s.docTitleColor || "#0f234b";
   const footerTextColor = s.footerTextColor || "#ffffff";
   const logoColor = s.logoColor || "#ff8000";
-  const logoUrl = companySettings.company_logo || "";
+  const logoUrl = companySettings.document_logo || companySettings.company_logo || "";
 
   const companyNameText = s.companyNameText || companySettings.company_name || "PT. HAFARA AQIBA NUSANTARA";
   const companyAddressText = s.companyAddressText || "";

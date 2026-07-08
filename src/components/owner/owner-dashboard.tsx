@@ -34,14 +34,17 @@ export function OwnerDashboard() {
   async function loadData() {
     setLoading(true);
     try {
-      const [d, kpi, insight] = await Promise.all([
+      // Load main data + KPI quickly (don't wait for AI insight)
+      const [d, kpi] = await Promise.all([
         api(`/api/dashboard/owner?year=${year}&month=${month}`),
         api<{ scores: any[] }>("/api/kpi/team-scores").catch(() => ({ scores: [] })),
-        api<{ insight: string }>(`/api/finance/ai-insight?year=${year}&month=${month}`).catch(() => ({ insight: "" })),
       ]);
       setData(d);
       setKpiScores(kpi.scores || []);
-      setAiInsight(insight.insight || "");
+      // Load AI insight separately (non-blocking, takes 10-30s)
+      api<{ insight: string }>(`/api/finance/ai-insight?year=${year}&month=${month}`)
+        .then((res) => setAiInsight(res.insight || ""))
+        .catch(() => {});
     } catch (e: any) {
       toast.error(e.message || "Gagal memuat dashboard");
     } finally {
@@ -100,7 +103,7 @@ export function OwnerDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header — title + month/year selector in one row */}
       <SectionHeader
         title="Dashboard Owner"
         description="Pantau seluruh aktivitas bisnis secara real-time"
@@ -183,42 +186,51 @@ export function OwnerDashboard() {
         </Card>
       )}
 
-      {/* CRM & Sales KPIs */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">CRM & Penjualan</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Total Lead Masuk" value={d.crm.totalLead} icon={UserPlus} indicator="yellow" accent="bg-amber-50 text-amber-600" />
-          <StatCard title="Proposal Terkirim" value={d.crm.totalProposal} icon={FileText} indicator="yellow" accent="bg-violet-50 text-violet-600" />
-          <StatCard title="Total Deal" value={d.crm.totalDeal} icon={Handshake} indicator="green" subtitle={formatCurrency(d.crm.dealRevenue)} accent="bg-blue-50 text-blue-600" />
-          <StatCard title="Conversion Rate" value={`${d.crm.conversionRate}%`} icon={Percent} indicator={convIndicator} subtitle={`${d.crm.totalClients} total klien`} accent="bg-sky-50 text-sky-600" />
+      {/* ===== Key Metrics: consolidated grid of all KPI StatCards ===== */}
+      <div className="space-y-4">
+        {/* CRM & Sales */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">CRM & Penjualan</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Total Lead Masuk" value={d.crm.totalLead} icon={UserPlus} indicator="yellow" accent="bg-amber-50 text-amber-600" />
+            <StatCard title="Proposal Terkirim" value={d.crm.totalProposal} icon={FileText} indicator="yellow" accent="bg-violet-50 text-violet-600" />
+            <StatCard title="Total Deal" value={d.crm.totalDeal} icon={Handshake} indicator="green" subtitle={formatCurrency(d.crm.dealRevenue)} accent="bg-blue-50 text-blue-600" />
+            <StatCard title="Conversion Rate" value={`${d.crm.conversionRate}%`} icon={Percent} indicator={convIndicator} subtitle={`${d.crm.totalClients} total klien`} accent="bg-sky-50 text-sky-600" />
+          </div>
         </div>
-      </div>
 
-      {/* Finance KPIs */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Keuangan</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="Revenue Bulan Ini" value={formatCurrency(d.finance.revenueThisMonth)} icon={Wallet} indicator={revIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetRevenue)}`} progress={d.finance.revenueAchievement} accent="bg-blue-50 text-blue-600" />
-          <StatCard title="Profit Bulan Ini" value={formatCurrency(d.finance.profitThisMonth)} icon={TrendingUp} indicator={profitIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetProfit)}`} progress={d.finance.profitAchievement} accent="bg-sky-50 text-sky-600" />
-          <StatCard title="Expense Bulan Ini" value={formatCurrency(d.finance.expenseThisMonth)} icon={DollarSign} indicator="neutral" accent="bg-rose-50 text-rose-600" />
-          <StatCard title="Profit Estimation" value={formatCurrency(d.finance.profitEstimation)} icon={BarChart3} indicator="neutral" subtitle="Rata-rata/bulan" accent="bg-cyan-50 text-cyan-600" />
+        {/* Finance */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Keuangan</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Revenue Bulan Ini" value={formatCurrency(d.finance.revenueThisMonth)} icon={Wallet} indicator={revIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetRevenue)}`} progress={d.finance.revenueAchievement} accent="bg-blue-50 text-blue-600" />
+            <StatCard title="Profit Bulan Ini" value={formatCurrency(d.finance.profitThisMonth)} icon={TrendingUp} indicator={profitIndicator} subtitle={`Target: ${formatCurrency(d.finance.targetProfit)}`} progress={d.finance.profitAchievement} accent="bg-sky-50 text-sky-600" />
+            <StatCard title="Expense Bulan Ini" value={formatCurrency(d.finance.expenseThisMonth)} icon={DollarSign} indicator="neutral" accent="bg-rose-50 text-rose-600" />
+            <StatCard title="Profit Estimation" value={formatCurrency(d.finance.profitEstimation)} icon={BarChart3} indicator="neutral" subtitle="Rata-rata/bulan" accent="bg-cyan-50 text-cyan-600" />
+          </div>
         </div>
-      </div>
 
-      {/* Events & Content KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Event Bulan Ini" value={d.events.eventsThisMonth} icon={CalendarDays} indicator="neutral" accent="bg-violet-50 text-violet-600" />
-        <StatCard title="Total Konten Diproduksi" value={d.content.totalContentProduced} icon={Film} indicator="neutral" subtitle={`${d.content.totalContentPublished} dipublikasi`} accent="bg-pink-50 text-pink-600" />
-        <StatCard title="Total Artikel SEO" value={d.articles.totalArticlesPublished} icon={FileEdit} indicator="neutral" subtitle={`${d.articles.totalArticles} total`} accent="bg-amber-50 text-amber-600" />
-        <StatCard title="Engagement Rate" value={`${d.content.engagementRate}%`} icon={Heart} indicator="neutral" subtitle={`${formatNumber(d.content.totalViews)} views`} accent="bg-rose-50 text-rose-600" />
-      </div>
+        {/* Events & Content */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Event & Konten</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Event Bulan Ini" value={d.events.eventsThisMonth} icon={CalendarDays} indicator="neutral" accent="bg-violet-50 text-violet-600" />
+            <StatCard title="Total Konten Diproduksi" value={d.content.totalContentProduced} icon={Film} indicator="neutral" subtitle={`${d.content.totalContentPublished} dipublikasi`} accent="bg-pink-50 text-pink-600" />
+            <StatCard title="Total Artikel SEO" value={d.articles.totalArticlesPublished} icon={FileEdit} indicator="neutral" subtitle={`${d.articles.totalArticles} total`} accent="bg-amber-50 text-amber-600" />
+            <StatCard title="Engagement Rate" value={`${d.content.engagementRate}%`} icon={Heart} indicator="neutral" subtitle={`${formatNumber(d.content.totalViews)} views`} accent="bg-rose-50 text-rose-600" />
+          </div>
+        </div>
 
-      {/* Social Growth */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Followers Growth" value={formatNumber(d.content.totalFollowerGrowth)} icon={UserPlus} indicator="green" accent="bg-blue-50 text-blue-600" />
-        <StatCard title="Total Reach" value={formatNumber(d.content.totalReach)} icon={TrendingUp} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
-        <StatCard title="Total Share" value={formatNumber(d.content.totalShare)} icon={Share2} indicator="neutral" accent="bg-violet-50 text-violet-600" />
-        <StatCard title="Total Save" value={formatNumber(d.content.totalSave)} icon={Bookmark} indicator="neutral" accent="bg-amber-50 text-amber-600" />
+        {/* Social Growth */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Pertumbuhan Sosial</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Total Followers Growth" value={formatNumber(d.content.totalFollowerGrowth)} icon={UserPlus} indicator="green" accent="bg-blue-50 text-blue-600" />
+            <StatCard title="Total Reach" value={formatNumber(d.content.totalReach)} icon={TrendingUp} indicator="neutral" accent="bg-cyan-50 text-cyan-600" />
+            <StatCard title="Total Share" value={formatNumber(d.content.totalShare)} icon={Share2} indicator="neutral" accent="bg-violet-50 text-violet-600" />
+            <StatCard title="Total Save" value={formatNumber(d.content.totalSave)} icon={Bookmark} indicator="neutral" accent="bg-amber-50 text-amber-600" />
+          </div>
+        </div>
       </div>
 
       {/* Pending ACC alerts */}
@@ -236,120 +248,125 @@ export function OwnerDashboard() {
         </Card>
       )}
 
-      {/* Charts row 1 - Monthly */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <BarChartCard
-          title={`Revenue vs Expense vs Profit - ${year}`}
-          data={d.monthlyData}
-          keys={[
-            { key: "revenue", label: "Revenue", color: "#2563eb" },
-            { key: "expense", label: "Expense", color: "#f43f5e" },
-            { key: "profit", label: "Profit", color: "#0891b2" },
-          ]}
-          height={280}
-          formatY={(v) => `${(v / 1000000).toFixed(0)}M`}
-        />
-        <LineChartCard
-          title="Aktivitas Bisnis Bulanan"
-          data={d.monthlyData}
-          keys={[
-            { key: "deals", label: "Deal", color: "#2563eb" },
-            { key: "leads", label: "Lead", color: "#0891b2" },
-            { key: "contents", label: "Konten", color: "#db2777" },
-            { key: "articles", label: "Artikel", color: "#ca8a04" },
-          ]}
-          height={280}
-        />
+      {/* ===== Charts section ===== */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Grafik & Visualisasi</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <BarChartCard
+            title={`Revenue vs Expense vs Profit - ${year}`}
+            data={d.monthlyData}
+            keys={[
+              { key: "revenue", label: "Revenue", color: "#2563eb" },
+              { key: "expense", label: "Expense", color: "#f43f5e" },
+              { key: "profit", label: "Profit", color: "#0891b2" },
+            ]}
+            height={280}
+            formatY={(v) => `${(v / 1000000).toFixed(0)}M`}
+          />
+          <LineChartCard
+            title="Aktivitas Bisnis Bulanan"
+            data={d.monthlyData}
+            keys={[
+              { key: "deals", label: "Deal", color: "#2563eb" },
+              { key: "leads", label: "Lead", color: "#0891b2" },
+              { key: "contents", label: "Konten", color: "#db2777" },
+              { key: "articles", label: "Artikel", color: "#ca8a04" },
+            ]}
+            height={280}
+          />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <PieChartCard title="CRM Pipeline" data={d.crm.crmPipeline} height={260} />
+          <PieChartCard title="Konten per Kategori" data={d.content.contentByCategory} height={260} />
+          <BarChartCard
+            title="Tahunan (5 Tahun)"
+            data={d.yearlyData}
+            keys={[
+              { key: "revenue", label: "Revenue", color: "#2563eb" },
+              { key: "profit", label: "Profit", color: "#0891b2" },
+            ]}
+            height={260}
+            formatY={(v) => `${(v / 1000000).toFixed(0)}M`}
+          />
+        </div>
       </div>
 
-      {/* Charts row 2 - Pie + Yearly */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <PieChartCard title="CRM Pipeline" data={d.crm.crmPipeline} height={260} />
-        <PieChartCard title="Konten per Kategori" data={d.content.contentByCategory} height={260} />
-        <BarChartCard
-          title="Tahunan (5 Tahun)"
-          data={d.yearlyData}
-          keys={[
-            { key: "revenue", label: "Revenue", color: "#2563eb" },
-            { key: "profit", label: "Profit", color: "#0891b2" },
-          ]}
-          height={260}
-          formatY={(v) => `${(v / 1000000).toFixed(0)}M`}
-        />
-      </div>
-
-      {/* Deal Clients with Documents */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-blue-600" />
-            Klien Deal - Status Dokumen (Invoice, SPK, Surat)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {d.dealClientsWithDocs.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">Belum ada klien deal</p>
-          ) : (
-            <ScrollArea className="max-h-80">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-white">
-                  <tr className="border-b text-left text-xs text-slate-500">
-                    <th className="py-2 pr-2 font-medium">Klien</th>
-                    <th className="py-2 px-2 font-medium">Instansi</th>
-                    <th className="py-2 px-2 font-medium text-right">Budget</th>
-                    <th className="py-2 px-2 font-medium text-center">Invoice</th>
-                    <th className="py-2 px-2 font-medium text-center">SPK</th>
-                    <th className="py-2 px-2 font-medium text-center">Surat</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.dealClientsWithDocs.map((c: any) => (
-                    <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
-                      <td className="py-2 pr-2 font-medium text-slate-900">{c.namaKlien}</td>
-                      <td className="py-2 px-2 text-slate-600">{c.instansi || "-"}</td>
-                      <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(c.budget || 0)}</td>
-                      <td className="py-2 px-2 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                      <td className="py-2 px-2 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
-                      <td className="py-2 px-2 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+      {/* ===== Recent data tables ===== */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Data Terbaru</h3>
+        {/* Deal Clients with Documents */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-blue-600" />
+              Klien Deal - Status Dokumen (Invoice, SPK, Surat)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {d.dealClientsWithDocs.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-6">Belum ada klien deal</p>
+            ) : (
+              <ScrollArea className="max-h-80">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-white">
+                    <tr className="border-b text-left text-xs text-slate-500">
+                      <th className="py-2 pr-2 font-medium">Klien</th>
+                      <th className="py-2 px-2 font-medium">Instansi</th>
+                      <th className="py-2 px-2 font-medium text-right">Budget</th>
+                      <th className="py-2 px-2 font-medium text-center">Invoice</th>
+                      <th className="py-2 px-2 font-medium text-center">SPK</th>
+                      <th className="py-2 px-2 font-medium text-center">Surat</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </ScrollArea>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {d.dealClientsWithDocs.map((c: any) => (
+                      <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
+                        <td className="py-2 pr-2 font-medium text-slate-900">{c.namaKlien}</td>
+                        <td className="py-2 px-2 text-slate-600">{c.instansi || "-"}</td>
+                        <td className="py-2 px-2 text-right text-slate-700">{formatCurrency(c.budget || 0)}</td>
+                        <td className="py-2 px-2 text-center">{c.hasInvoice ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                        <td className="py-2 px-2 text-center">{c.hasSpk ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                        <td className="py-2 px-2 text-center">{c.hasSurat ? <CheckCircle2 className="w-4 h-4 text-blue-600 inline" /> : <FileX className="w-4 h-4 text-rose-400 inline" />}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Team Productivity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-blue-600" />
-            Produktivitas Tim - {monthNames[month - 1]} {year}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {d.teamProductivity.map((t: any) => (
-              <div key={t.id} className="flex items-center gap-3">
-                <div className="w-32 shrink-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
-                  <p className="text-[10px] text-slate-500">{t.position || t.role}</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Progress value={t.completionRate} className="h-2" />
-                    <span className="text-xs font-medium text-slate-600 w-10 text-right">{t.completionRate}%</span>
+        {/* Team Productivity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-blue-600" />
+              Produktivitas Tim - {monthNames[month - 1]} {year}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {d.teamProductivity.map((t: any) => (
+                <div key={t.id} className="flex items-center gap-3">
+                  <div className="w-32 shrink-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{t.name}</p>
+                    <p className="text-[10px] text-slate-500">{t.position || t.role}</p>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-0.5">
-                    {t.tasksDone}/{t.tasksTotal} tugas · {t.contents} konten · {t.articles} artikel
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Progress value={t.completionRate} className="h-2" />
+                      <span className="text-xs font-medium text-slate-600 w-10 text-right">{t.completionRate}%</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      {t.tasksDone}/{t.tasksTotal} tugas · {t.contents} konten · {t.articles} artikel
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -25,7 +25,8 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
 
   const appName = appSettings.app_name || "HBOS";
   const appFullName = appSettings.app_full_name || "Hafara Business Operating System";
-  const companyLogo = appSettings.company_logo || "";
+  // App logo (square icon for favicon/sidebar/login). Falls back to legacy company_logo.
+  const appLogo = appSettings.app_logo || appSettings.company_logo || "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,7 +62,7 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center border border-white/20 overflow-hidden">
-              {companyLogo ? <img src={companyLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-7 h-7" />}
+              {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-7 h-7" />}
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">{appName}</h1>

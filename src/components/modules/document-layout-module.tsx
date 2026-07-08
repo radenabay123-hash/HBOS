@@ -179,7 +179,10 @@ export function DocumentLayoutModule() {
       const base64 = reader.result as string;
       try {
         const d = await api<{ url: string }>("/api/doc-layout", { method: "POST", body: JSON.stringify({ key, base64Data: base64, fileName: file.name }) });
-        setAppSettings({ ...appSettings, [key === "company_logo" ? "companyLogo" : "companySignature"]: d.url });
+        // Both "document_logo" and "company_logo" map to the "companyLogo" field in appSettings
+        // (doc-layout API now prefers document_logo for document rendering).
+        const settingField = key === "company_signature" ? "companySignature" : "companyLogo";
+        setAppSettings({ ...appSettings, [settingField]: d.url });
         toast.success("Gambar berhasil diupload");
       } catch (e: any) { toast.error(e.message); }
     };
@@ -204,12 +207,12 @@ export function DocumentLayoutModule() {
       {/* Logo & Signature */}
       <Card className="shadow-sm border-blue-200">
         <CardHeader className="pb-3 bg-blue-50/50">
-          <CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-blue-600" /> Logo Perusahaan & Tanda Tangan Digital</CardTitle>
-          <p className="text-xs text-slate-500">Otomatis digunakan di semua dokumen. Terhubung dengan Pengaturan Aplikasi.</p>
+          <CardTitle className="text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-blue-600" /> Logo Dokumen & Tanda Tangan Digital</CardTitle>
+          <p className="text-xs text-slate-500">Otomatis digunakan di semua dokumen PDF (invoice, surat, slip gaji). Terhubung dengan Pengaturan Aplikasi.</p>
         </CardHeader>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ImageUploadField label="Logo Perusahaan" value={appSettings.companyLogo} onChange={(file) => handleUploadImage("company_logo", file)} />
+            <ImageUploadField label="Logo Dokumen (Kop Surat)" value={appSettings.companyLogo} onChange={(file) => handleUploadImage("document_logo", file)} />
             <ImageUploadField label="Tanda Tangan Digital" value={appSettings.companySignature} onChange={(file) => handleUploadImage("company_signature", file)} />
           </div>
         </CardContent>

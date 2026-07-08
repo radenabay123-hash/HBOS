@@ -43,8 +43,11 @@ export async function GET(req: Request) {
     try {
       const layoutRecord = await db.documentLayout.findUnique({ where: { docType: "SLIP_GAJI" } });
       if (layoutRecord) layoutSettings = JSON.parse(layoutRecord.settings);
-      const logoSetting = await db.appSetting.findUnique({ where: { key: "company_logo" } });
-      if (logoSetting) logoUrl = logoSetting.value;
+      // For documents: prefer document_logo, fall back to legacy company_logo
+      const logoSettings = await db.appSetting.findMany({ where: { key: { in: ["document_logo", "company_logo"] } } });
+      const logoMap: Record<string, string> = {};
+      for (const s of logoSettings) logoMap[s.key] = s.value;
+      logoUrl = logoMap.document_logo || logoMap.company_logo || "";
     } catch {}
 
     // Load logo

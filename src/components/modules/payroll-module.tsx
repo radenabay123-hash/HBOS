@@ -204,6 +204,7 @@ export function PayrollModule({ user }: { user: SafeUser }) {
     try {
       const ld = await fetchLayoutSettings("SLIP_GAJI");
       layoutSettings = ld.layout;
+      // ld.appSettings.companyLogo already prefers document_logo (with company_logo fallback)
       logoUrl = ld.appSettings?.companyLogo || "";
     } catch {}
     const logoImageData = await loadImageAsDataURL(logoUrl);

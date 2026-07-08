@@ -33,6 +33,32 @@ const CATEGORY_ICONS: Record<string, any> = {
   GENERAL: Settings,
 };
 
+// Friendly labels + helper text for specific setting keys.
+// Falls back to the auto-generated Title Case label for unmapped keys.
+const FRIENDLY_LABELS: Record<string, { label: string; description: string }> = {
+  app_logo: {
+    label: "Logo Aplikasi (Favicon & Sidebar)",
+    description: "Logo kotak untuk ikon aplikasi, favicon, sidebar, dan login screen. Format persegi (1:1) direkomendasikan.",
+  },
+  document_logo: {
+    label: "Logo Dokumen (Kop Surat)",
+    description: "Logo untuk header dokumen PDF (invoice, surat, slip gaji, laporan). Biasanya logo kop surat perusahaan.",
+  },
+  company_logo: {
+    label: "Logo Perusahaan (Lama)",
+    description: "Pengaturan logo lama. Sebaiknya gunakan 'Logo Aplikasi' dan 'Logo Dokumen' di atas. Digunakan sebagai fallback jika kedua logo tersebut belum diisi.",
+  },
+};
+
+function getSettingMeta(key: string, fallbackDescription?: string) {
+  const friendly = FRIENDLY_LABELS[key];
+  if (friendly) return friendly;
+  return {
+    label: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    description: fallbackDescription || "",
+  };
+}
+
 export function PengaturanModule() {
   const [settings, setSettings] = useState<Record<string, any>>({});
   const [grouped, setGrouped] = useState<Record<string, any[]>>({});
@@ -198,6 +224,7 @@ export function PengaturanModule() {
                   {items.map((item) => {
                     const isImage = item.type === "IMAGE";
                     const hasChange = form[item.key] !== settings[item.key];
+                    const meta = getSettingMeta(item.key, item.description);
 
                     return (
                       <div key={item.key} className={cn(
@@ -206,8 +233,8 @@ export function PengaturanModule() {
                       )}>
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <Label className="text-sm font-semibold text-slate-700">{item.key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</Label>
-                            {item.description && <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>}
+                            <Label className="text-sm font-semibold text-slate-700">{meta.label}</Label>
+                            {meta.description && <p className="text-xs text-slate-400 mt-0.5">{meta.description}</p>}
                           </div>
                           {hasChange && <Badge variant="outline" className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">Belum disimpan</Badge>}
                           {isImage && form[item.key] && (
@@ -217,7 +244,7 @@ export function PengaturanModule() {
 
                         {isImage ? (
                           <ImageUploadField
-                            label={item.description || item.key}
+                            label={item.key}
                             value={form[item.key] || ""}
                             onChange={(file) => handleUploadImage(item.key, file)}
                             uploading={uploading === item.key}
@@ -235,7 +262,7 @@ export function PengaturanModule() {
                             value={form[item.key] || ""}
                             onChange={(e) => setForm({ ...form, [item.key]: e.target.value })}
                             className="bg-white"
-                            placeholder={`Masukkan ${item.description || item.key}`}
+                            placeholder={`Masukkan ${meta.description || item.key}`}
                           />
                         )}
 
@@ -260,8 +287,8 @@ export function PengaturanModule() {
         <CardContent>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-3 pb-3 border-b-2 border-blue-600">
-              {form.company_logo ? (
-                <img src={form.company_logo} alt="Logo" className="w-14 h-14 rounded-lg object-contain border border-slate-200" />
+              {(form.document_logo || form.company_logo) ? (
+                <img src={form.document_logo || form.company_logo} alt="Logo" className="w-14 h-14 rounded-lg object-contain border border-slate-200" />
               ) : (
                 <div className="w-14 h-14 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl">
                   {(form.company_name || "HF").split(" ").slice(0, 2).map((w: string) => w[0]).join("")}

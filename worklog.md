@@ -3246,3 +3246,28 @@ Stage Summary:
 - KPI score: weighted (daily 30%, weekly 25%, monthly 25%, deadline 10%, quality 10%)
 - Categories: Excellent (90+), Good (80+), Need Coaching (70+), Warning (<70)
 - Ranking: productivity + business impact
+
+---
+Task ID: RESTORE-14
+Agent: Main (Z.ai Code) + subagent LOGO-SEPARATE
+Task: Separate app logo vs document logo + fix dashboard layout
+
+Work Log:
+- Added 2 new settings: app_logo (favicon/sidebar/login) + document_logo (PDF headers)
+- Updated settings API to include app_logo in PUBLIC_KEYS
+- Updated app-shell to use appLogo (app_logo || company_logo fallback)
+- Updated login screen to use appLogo
+- Created /app/favicon.ico/route.ts — dynamic favicon from app_logo
+- Updated pengaturan module with friendly labels: "Logo Aplikasi (Favicon & Sidebar)" + "Logo Dokumen (Kop Surat)"
+- Updated all PDF generators to use document_logo (invoice, surat, payroll, tax docs, reports)
+- Updated company-settings.ts with app_logo + document_logo defaults + fallbacks
+- Fixed owner dashboard: AI insight now loads non-blocking (was causing 16s delay before dashboard rendered)
+- Dashboard layout cleanup: added section headers, grouped stat cards, organized charts + data tables
+
+Verified:
+- Login screen: shows "HABOS" + app logo ✓
+- Sidebar: shows app logo + app name ✓
+- Dashboard: renders immediately (no more 16s wait) ✓
+- Pengaturan: "Logo Aplikasi" + "Logo Dokumen" + "Logo Perusahaan" labels ✓
+- Footer: company name from settings ✓
+- Lint: 0 errors

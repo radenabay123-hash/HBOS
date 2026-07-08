@@ -161,7 +161,7 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
 
   return (
     <div className="space-y-6">
-      {/* Welcome header */}
+      {/* ===== Welcome header (greeting + month/year selector in one row) ===== */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
@@ -191,7 +191,7 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
         </div>
       </div>
 
-      {/* My Responsibilities */}
+      {/* ===== My Responsibilities (non-owner) ===== */}
       {myResponsibilities.length > 0 && !isOwner && (
         <Card className="border-blue-200 bg-blue-50/30">
           <CardHeader className="pb-2">
@@ -212,7 +212,7 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
         </Card>
       )}
 
-      {/* Owner-mode team member selector */}
+      {/* ===== Owner-mode team member selector ===== */}
       {isOwner && (
         <Card className="border-violet-200 bg-violet-50/40">
           <CardHeader className="pb-2">
@@ -245,27 +245,7 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
         </Card>
       )}
 
-      {/* Daily Schedule + KPI Sections */}
-      {kpiConfig ? (
-        <>
-          <DailyScheduleCard config={kpiConfig} userName={activeUserName} roleLabel={ROLE_LABELS[activeRole] || activeRole} />
-          <KpiSectionsCard
-            role={activeRole}
-            userId={activeUserId}
-            userName={activeUserName}
-            canEdit={!isOwner}
-          />
-        </>
-      ) : (
-        <Card className="border-amber-200 bg-amber-50/40">
-          <CardContent className="p-4 text-sm text-amber-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            <span>Role <span className="font-semibold">{ROLE_LABELS[activeRole] || activeRole}</span> belum memiliki jadwal & KPI. Hubungi owner untuk konfigurasi.</span>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Today's overview */}
+      {/* ===== Today's overview — StatCards in clean grid ===== */}
       <div>
         <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Ringkasan Hari Ini</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -276,77 +256,7 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
         </div>
       </div>
 
-      {/* Role-specific KPIs */}
-      <RoleSpecificSection role={u.role} roleData={d.roleData} year={year} month={month} />
-
-      {/* ACC Status summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2"><Film className="w-4 h-4 text-pink-600" /> Status Konten (ACC Owner)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="bg-blue-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-blue-700">{d.contentSummary.acc}</p>
-                <p className="text-[10px] text-slate-500 mt-1">ACC</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-amber-700">{d.contentSummary.pending}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Pending</p>
-              </div>
-              <div className="bg-rose-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-rose-700">{d.contentSummary.revisi}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
-              </div>
-              <div className="bg-sky-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-sky-700">{d.contentSummary.published}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Published</p>
-              </div>
-            </div>
-            {d.contentSummary.revisi > 0 && (
-              <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>Ada {d.contentSummary.revisi} konten yang perlu direvisi. Buka menu Tugas Konten untuk melihat catatan revisi dari owner.</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-amber-600" /> Status Artikel (ACC Owner)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-4 gap-3 text-center">
-              <div className="bg-blue-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-blue-700">{d.articleSummary.acc}</p>
-                <p className="text-[10px] text-slate-500 mt-1">ACC</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-amber-700">{d.articleSummary.pending}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Pending</p>
-              </div>
-              <div className="bg-rose-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-rose-700">{d.articleSummary.revisi}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
-              </div>
-              <div className="bg-sky-50 rounded-lg p-3">
-                <p className="text-2xl font-bold text-sky-700">{d.articleSummary.published}</p>
-                <p className="text-[10px] text-slate-500 mt-1">Published</p>
-              </div>
-            </div>
-            {d.articleSummary.revisi > 0 && (
-              <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>Ada {d.articleSummary.revisi} artikel yang perlu direvisi. Buka menu Data Artikel.</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Today's tasks list */}
+      {/* ===== Today's tasks list ===== */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2"><ListTodo className="w-4 h-4 text-slate-600" /> Tugas Hari Ini</CardTitle>
@@ -373,78 +283,177 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
         </CardContent>
       </Card>
 
-      {/* Monthly chart */}
-      <BarChartCard
-        title={`Produktivitas Bulanan ${year}`}
-        data={d.monthlyData}
-        keys={[
-          { key: "contents", label: "Konten", color: "#db2777" },
-          { key: "articles", label: "Artikel", color: "#ca8a04" },
-          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
-        ]}
-        height={280}
-      />
-
-      {/* Yearly chart */}
-      <LineChartCard
-        title="Tren Tahunan (5 Tahun)"
-        data={d.yearlyData}
-        keys={[
-          { key: "contents", label: "Konten", color: "#db2777" },
-          { key: "articles", label: "Artikel", color: "#ca8a04" },
-          { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
-        ]}
-        height={260}
-      />
-
-      {/* Recent content & articles */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Konten Terbaru</CardTitle>
-            <Button variant="ghost" size="sm" onClick={handleExport}><FileStack className="w-3 h-3 mr-1" /> Export</Button>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-72">
-              <div className="space-y-2">
-                {d.myContents.slice(0, 8).map((c: any) => (
-                  <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{c.judul}</p>
-                      <p className="text-[10px] text-slate-500">{c.kategori}</p>
-                    </div>
-                    <Badge variant="outline" className={`text-[10px] ${ACC_STATUS_COLORS[c.statusACC]}`}>{ACC_STATUS_LABELS[c.statusACC]}</Badge>
-                  </div>
-                ))}
-                {d.myContents.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada konten</p>}
+      {/* ===== ACC Status summary ===== */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Status ACC Owner</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><Film className="w-4 h-4 text-pink-600" /> Status Konten (ACC Owner)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-blue-700">{d.contentSummary.acc}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">ACC</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-amber-700">{d.contentSummary.pending}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Pending</p>
+                </div>
+                <div className="bg-rose-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-rose-700">{d.contentSummary.revisi}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
+                </div>
+                <div className="bg-sky-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-sky-700">{d.contentSummary.published}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Published</p>
+                </div>
               </div>
-            </ScrollArea>
+              {d.contentSummary.revisi > 0 && (
+                <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>Ada {d.contentSummary.revisi} konten yang perlu direvisi. Buka menu Tugas Konten untuk melihat catatan revisi dari owner.</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-amber-600" /> Status Artikel (ACC Owner)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-blue-700">{d.articleSummary.acc}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">ACC</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-amber-700">{d.articleSummary.pending}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Pending</p>
+                </div>
+                <div className="bg-rose-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-rose-700">{d.articleSummary.revisi}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Revisi</p>
+                </div>
+                <div className="bg-sky-50 rounded-lg p-3">
+                  <p className="text-2xl font-bold text-sky-700">{d.articleSummary.published}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Published</p>
+                </div>
+              </div>
+              {d.articleSummary.revisi > 0 && (
+                <div className="mt-3 flex items-start gap-2 bg-rose-50 rounded-lg p-3 text-xs text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>Ada {d.articleSummary.revisi} artikel yang perlu direvisi. Buka menu Data Artikel.</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ===== Daily Schedule + KPI Sections (existing, well-structured) ===== */}
+      {kpiConfig ? (
+        <>
+          <DailyScheduleCard config={kpiConfig} userName={activeUserName} roleLabel={ROLE_LABELS[activeRole] || activeRole} />
+          <KpiSectionsCard
+            role={activeRole}
+            userId={activeUserId}
+            userName={activeUserName}
+            canEdit={!isOwner}
+          />
+        </>
+      ) : (
+        <Card className="border-amber-200 bg-amber-50/40">
+          <CardContent className="p-4 text-sm text-amber-700 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span>Role <span className="font-semibold">{ROLE_LABELS[activeRole] || activeRole}</span> belum memiliki jadwal & KPI. Hubungi owner untuk konfigurasi.</span>
           </CardContent>
         </Card>
+      )}
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Artikel Terbaru</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="max-h-72">
-              <div className="space-y-2">
-                {d.myArticles.slice(0, 8).map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{a.judulArtikel}</p>
-                      <p className="text-[10px] text-slate-500">{a.websiteTujuan}</p>
+      {/* ===== Role-specific KPIs ===== */}
+      <RoleSpecificSection role={u.role} roleData={d.roleData} year={year} month={month} />
+
+      {/* ===== Recent content & articles ===== */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Konten & Artikel Terbaru</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Konten Terbaru</CardTitle>
+              <Button variant="ghost" size="sm" onClick={handleExport}><FileStack className="w-3 h-3 mr-1" /> Export</Button>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="max-h-72">
+                <div className="space-y-2">
+                  {d.myContents.slice(0, 8).map((c: any) => (
+                    <div key={c.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{c.judul}</p>
+                        <p className="text-[10px] text-slate-500">{c.kategori}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${ACC_STATUS_COLORS[c.statusACC]}`}>{ACC_STATUS_LABELS[c.statusACC]}</Badge>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] ${a.statusACC === "ACC" ? "bg-blue-100 text-blue-700 border-blue-200" : a.statusACC === "REVISI_ADMIN" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
-                      {a.statusACC === "ACC" ? "ACC" : a.statusACC === "REVISI_ADMIN" ? "Revisi" : "Pending"}
-                    </Badge>
-                  </div>
-                ))}
-                {d.myArticles.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada artikel</p>}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                  ))}
+                  {d.myContents.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada konten</p>}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Artikel Terbaru</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="max-h-72">
+                <div className="space-y-2">
+                  {d.myArticles.slice(0, 8).map((a: any) => (
+                    <div key={a.id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">{a.judulArtikel}</p>
+                        <p className="text-[10px] text-slate-500">{a.websiteTujuan}</p>
+                      </div>
+                      <Badge variant="outline" className={`text-[10px] ${a.statusACC === "ACC" ? "bg-blue-100 text-blue-700 border-blue-200" : a.statusACC === "REVISI_ADMIN" ? "bg-rose-100 text-rose-700 border-rose-200" : "bg-amber-100 text-amber-700 border-amber-200"}`}>
+                        {a.statusACC === "ACC" ? "ACC" : a.statusACC === "REVISI_ADMIN" ? "Revisi" : "Pending"}
+                      </Badge>
+                    </div>
+                  ))}
+                  {d.myArticles.length === 0 && <p className="text-sm text-slate-400 text-center py-4">Belum ada artikel</p>}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ===== Charts section (monthly + yearly combined) ===== */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Grafik & Visualisasi</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <BarChartCard
+            title={`Produktivitas Bulanan ${year}`}
+            data={d.monthlyData}
+            keys={[
+              { key: "contents", label: "Konten", color: "#db2777" },
+              { key: "articles", label: "Artikel", color: "#ca8a04" },
+              { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
+            ]}
+            height={280}
+          />
+          <LineChartCard
+            title="Tren Tahunan (5 Tahun)"
+            data={d.yearlyData}
+            keys={[
+              { key: "contents", label: "Konten", color: "#db2777" },
+              { key: "articles", label: "Artikel", color: "#ca8a04" },
+              { key: "tasksDone", label: "Tugas Selesai", color: "#2563eb" },
+            ]}
+            height={280}
+          />
+        </div>
       </div>
     </div>
   );
