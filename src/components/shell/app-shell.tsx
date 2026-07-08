@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, Wallet, Clock, LogOut, Menu, Building2,
   Target, Receipt, FileText, Trophy, UserCog, FileBarChart, Settings, KanbanSquare, Layout,
@@ -229,6 +231,9 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       {/* Mobile slide-out sidebar (for "More" menu) */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="w-72 p-0">
+          <VisuallyHidden>
+            <DialogTitle>Menu Navigasi</DialogTitle>
+          </VisuallyHidden>
           {SidebarContent}
         </SheetContent>
       </Sheet>
