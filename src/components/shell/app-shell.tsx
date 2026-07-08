@@ -157,20 +157,20 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
 
   const SidebarContent = (
     <div className="flex flex-col h-full">
-      <div className={cn("flex items-center gap-3 px-5 py-5 border-b", isOwner ? "border-blue-100" : "border-slate-100")}>
-        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0 overflow-hidden">
+      <div className={cn("flex items-center gap-3 px-5 py-5 border-b bg-gradient-to-r from-blue-600 to-blue-700", "border-blue-700")}>
+        <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0 overflow-hidden border border-white/20">
           {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-white" />}
         </div>
         <div className="min-w-0">
-          <h1 className="font-bold text-slate-900 leading-tight">{appName}</h1>
-          <p className="text-[10px] text-slate-500 truncate">{appFullName}</p>
+          <h1 className="font-bold text-white leading-tight">{appName}</h1>
+          <p className="text-[10px] text-blue-100 truncate">{appFullName}</p>
         </div>
       </div>
 
-      <div className="px-3 py-3 border-b border-slate-100">
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg", isOwner ? "bg-blue-50" : "bg-slate-50")}>
+      <div className="px-3 py-3 border-b border-blue-50">
+        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-xl", "bg-gradient-to-r from-amber-50 to-blue-50 border border-blue-100")}>
           <Avatar className="w-8 h-8">
-            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-blue-700 text-white")}>
+            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white" : "bg-gradient-to-br from-blue-600 to-blue-700 text-white")}>
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -184,25 +184,25 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1" style={{ maxHeight: "calc(100vh - 200px)" }}>
+      <nav className="flex-1 overflow-y-auto p-3 space-y-0.5" style={{ maxHeight: "calc(100vh - 200px)" }}>
         {/* Mobile tabs section */}
         {mobileTabs.length > 0 && (
           <>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-3 py-1.5">Menu Utama</p>
+            <p className="text-[10px] font-bold text-blue-300 uppercase tracking-wide px-3 py-1.5">Menu Utama</p>
             {mobileTabs.map((item) => {
               const Icon = item.icon;
               const active = activeView === item.key;
               return (
                 <button key={item.key} onClick={() => { onViewChange(item.key); setMobileOpen(false); }}
-                  className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    active ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100")}>
+                  className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                    active ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md shadow-blue-200" : "text-slate-600 hover:bg-blue-50 hover:text-blue-700")}>
                   <Icon className="w-4 h-4 shrink-0" />
                   <span className="truncate">{item.label}</span>
                 </button>
               );
             })}
-            <div className="h-px bg-slate-100 my-2" />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-3 py-1.5">Menu Lainnya</p>
+            <div className="h-px bg-blue-50 my-2" />
+            <p className="text-[10px] font-bold text-blue-300 uppercase tracking-wide px-3 py-1.5">Menu Lainnya</p>
           </>
         )}
         {otherMenuItems.map((item) => {
@@ -210,8 +210,8 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
           const active = activeView === item.key;
           return (
             <button key={item.key} onClick={() => { onViewChange(item.key); setMobileOpen(false); }}
-              className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100")}>
+              className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                active ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md shadow-blue-200" : "text-slate-600 hover:bg-blue-50 hover:text-blue-700")}>
               <Icon className="w-4 h-4 shrink-0" />
               <span className="truncate">{item.label}</span>
             </button>
@@ -222,9 +222,9 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
   );
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-gradient-to-br from-slate-50 via-blue-50/30 to-amber-50/20">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-white border-r border-slate-200 fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-white/95 backdrop-blur-xl border-r border-blue-100 fixed inset-y-0 left-0 z-30 shadow-sm">
         {SidebarContent}
       </aside>
 
@@ -241,7 +241,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       {/* Main content */}
       <div className="flex-1 lg:ml-64 flex flex-col min-w-0">
         {/* Top bar — desktop only */}
-        <header className="hidden lg:flex sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200 h-14 items-center justify-between px-6">
+        <header className="hidden lg:flex sticky top-0 z-20 bg-white/90 backdrop-blur-xl border-b border-blue-100 h-14 items-center justify-between px-6 shadow-sm">
           <h2 className="font-semibold text-slate-900 text-base">{activeMenu?.label}</h2>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-9 w-9" onClick={toggleSound}>
@@ -290,7 +290,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         </header>
 
         {/* Mobile top bar — compact, elegant */}
-        <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-slate-200">
+        <header className="lg:hidden sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-blue-100 shadow-sm">
           <div className="flex items-center justify-between px-4 h-14">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center overflow-hidden shrink-0">
@@ -352,7 +352,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
         <main className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">{children}</main>
 
         {/* Footer — desktop only */}
-        <footer className="hidden lg:block mt-auto border-t border-slate-200 bg-white px-6 py-3">
+        <footer className="hidden lg:block mt-auto border-t border-blue-100 bg-white/80 backdrop-blur px-6 py-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <p>© {new Date().getFullYear()} {companyName}</p>
             <p>Sistem Operasi Bisnis Terpadu</p>
@@ -361,7 +361,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       </div>
 
       {/* ===== Mobile Bottom Navigation Bar ===== */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-blue-100 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex items-center justify-around h-16 max-w-md mx-auto">
           {/* Bottom nav tabs (max 5) */}
           {mobileTabs.slice(0, 4).map((item) => {

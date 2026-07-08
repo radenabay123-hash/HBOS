@@ -54,10 +54,10 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left brand panel */}
-      <div className="lg:w-1/2 bg-gradient-to-br from-blue-700 via-blue-600 to-sky-700 text-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-sky-300 rounded-full blur-3xl" />
+      <div className="lg:w-1/2 bg-gradient-to-br from-blue-800 via-blue-600 to-amber-500 text-white p-8 lg:p-12 flex flex-col justify-between relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-amber-300 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-blue-300 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">

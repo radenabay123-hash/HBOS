@@ -38,35 +38,21 @@ export function StatCard({
   accent = "bg-blue-50 text-blue-600",
 }: StatCardProps) {
   return (
-    <Card className={cn("border-l-4 overflow-hidden hover:shadow-md transition-shadow", indicatorStyles[indicator])}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide truncate">{title}</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1 truncate">{value}</p>
-            {subtitle && <p className="text-xs text-slate-500 mt-0.5 truncate">{subtitle}</p>}
-          </div>
-          <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", accent)}>
-            <Icon className="w-5 h-5" />
-          </div>
+    <Card className={cn("border-l-4 shadow-sm hover:shadow-md transition-shadow rounded-xl overflow-hidden", indicatorStyles[indicator])}>
+      <CardContent className="p-3 flex items-center gap-3">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", accent)}>
+          <Icon className="w-5 h-5" />
         </div>
-        {progress != null && (
-          <div className="mt-3">
-            <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-              <span>Progress</span>
-              <span>{progress}%</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide truncate">{title}</p>
+          <p className="text-lg font-bold text-slate-900 leading-tight">{value}</p>
+          {subtitle && <p className="text-[10px] text-slate-400 mt-0.5 truncate">{subtitle}</p>}
+          {progress != null && (
+            <div className="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+              <div className={cn("h-full rounded-full", indicatorDot[indicator])} style={{ width: `${Math.min(progress, 100)}%` }} />
             </div>
-            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  progress >= 100 ? "bg-blue-500" : progress >= 60 ? "bg-amber-500" : "bg-rose-500"
-                )}
-                style={{ width: `${Math.min(progress, 100)}%` }}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
