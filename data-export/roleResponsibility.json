@@ -1,0 +1,490 @@
+[
+  {
+    "id": "cmr9ca0n50000ra85vuj4dq5a",
+    "role": "OWNER",
+    "title": "Menentukan visi, misi, dan strategi perusahaan",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.554Z",
+    "updatedAt": "2026-07-06T14:52:31.554Z"
+  },
+  {
+    "id": "cmr9ca0nb0001ra85cdfis4ee",
+    "role": "OWNER",
+    "title": "Mengawasi seluruh operasional bisnis (Hafara Group)",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.560Z",
+    "updatedAt": "2026-07-06T14:52:31.560Z"
+  },
+  {
+    "id": "cmr9ca0nd0002ra85y5r86mjx",
+    "role": "OWNER",
+    "title": "Mengambil keputusan strategis (ekspansi, investasi, partnership)",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.562Z",
+    "updatedAt": "2026-07-06T14:52:31.562Z"
+  },
+  {
+    "id": "cmr9ca0ne0003ra85igsxp4uj",
+    "role": "OWNER",
+    "title": "Approve anggaran dan pengeluaran besar",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.563Z",
+    "updatedAt": "2026-07-06T14:52:31.563Z"
+  },
+  {
+    "id": "cmr9ca0nh0004ra8589xhzsua",
+    "role": "OWNER",
+    "title": "Menjaga relasi dengan klien utama (key accounts)",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.565Z",
+    "updatedAt": "2026-07-06T14:52:31.565Z"
+  },
+  {
+    "id": "cmr9ca0ok0005ra85ruu657i8",
+    "role": "OWNER",
+    "title": "Review laporan keuangan & KPI tim bulanan",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.604Z",
+    "updatedAt": "2026-07-06T14:52:31.604Z"
+  },
+  {
+    "id": "cmr9ca0ol0006ra85hy1354s1",
+    "role": "OWNER",
+    "title": "Approve recruitment dan termination karyawan",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.606Z",
+    "updatedAt": "2026-07-06T14:52:31.606Z"
+  },
+  {
+    "id": "cmr9ca0on0007ra85qu0o4jz5",
+    "role": "OWNER",
+    "title": "Memimpin rapat strategis mingguan/bulanan",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.607Z",
+    "updatedAt": "2026-07-06T14:52:31.607Z"
+  },
+  {
+    "id": "cmr9ca0oo0008ra85f69ct5om",
+    "role": "OWNER",
+    "title": "Mengelola personal branding (M. Aqil Baihaqi) sebagai public figure",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.608Z",
+    "updatedAt": "2026-07-06T14:52:31.608Z"
+  },
+  {
+    "id": "cmr9ca0op0009ra852jvs5zcp",
+    "role": "OWNER",
+    "title": "Final approver untuk semua dokumen resmi perusahaan",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.609Z",
+    "updatedAt": "2026-07-06T14:52:31.609Z"
+  },
+  {
+    "id": "cmr9ca0oq000ara859l5nr0in",
+    "role": "PROJECT_MANAGER",
+    "title": "Mengelola pipeline CRM (Lead → Deal)",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.610Z",
+    "updatedAt": "2026-07-06T14:52:31.610Z"
+  },
+  {
+    "id": "cmr9ca0or000bra85urwdpabc",
+    "role": "PROJECT_MANAGER",
+    "title": "Membuat proposal & surat penawaran untuk klien",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.612Z",
+    "updatedAt": "2026-07-06T14:52:31.612Z"
+  },
+  {
+    "id": "cmr9ca0os000cra85mgz0pw9j",
+    "role": "PROJECT_MANAGER",
+    "title": "Menjadwalkan event training (koordinasi tanggal, lokasi, trainer)",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.612Z",
+    "updatedAt": "2026-07-06T14:52:31.612Z"
+  },
+  {
+    "id": "cmr9ca0ot000dra85xe3rvqri",
+    "role": "PROJECT_MANAGER",
+    "title": "Mengelola dokumen (SPK, Invoice, Surat Resmi)",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.613Z",
+    "updatedAt": "2026-07-06T14:52:31.613Z"
+  },
+  {
+    "id": "cmr9ca0ou000era85ml0votw8",
+    "role": "PROJECT_MANAGER",
+    "title": "Koordinasi dengan trainer untuk pelaksanaan training",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.614Z",
+    "updatedAt": "2026-07-06T14:52:31.614Z"
+  },
+  {
+    "id": "cmr9ca0ov000fra857spgrzmt",
+    "role": "PROJECT_MANAGER",
+    "title": "Follow up klien untuk pembayaran",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.616Z",
+    "updatedAt": "2026-07-06T14:52:31.616Z"
+  },
+  {
+    "id": "cmr9ca0ow000gra85grm2571i",
+    "role": "PROJECT_MANAGER",
+    "title": "Mengelola checklist persiapan event",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.617Z",
+    "updatedAt": "2026-07-06T14:52:31.617Z"
+  },
+  {
+    "id": "cmr9ca0ox000hra85ejrb9yrx",
+    "role": "PROJECT_MANAGER",
+    "title": "Membuat laporan progress proyek untuk owner",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.618Z",
+    "updatedAt": "2026-07-06T14:52:31.618Z"
+  },
+  {
+    "id": "cmr9ca0oy000ira85clbfapk6",
+    "role": "PROJECT_MANAGER",
+    "title": "Approve tugas harian tim",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.618Z",
+    "updatedAt": "2026-07-06T14:52:31.618Z"
+  },
+  {
+    "id": "cmr9ca0oz000jra851h3ylko3",
+    "role": "PROJECT_MANAGER",
+    "title": "Menjaga relasi klien post-training",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.619Z",
+    "updatedAt": "2026-07-06T14:52:31.619Z"
+  },
+  {
+    "id": "cmr9ca0oz000kra857jnwxael",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Mempersiapkan materi training (slide, handout, modul)",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.620Z",
+    "updatedAt": "2026-07-06T14:52:31.620Z"
+  },
+  {
+    "id": "cmr9ca0p1000lra8562omga1j",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Membantu trainer utama selama pelaksanaan training",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.621Z",
+    "updatedAt": "2026-07-06T14:52:31.621Z"
+  },
+  {
+    "id": "cmr9ca0p2000mra85lo3qwwmc",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Mengelola checklist persiapan event (logistik, konsumsi, ruangan)",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.622Z",
+    "updatedAt": "2026-07-06T14:52:31.622Z"
+  },
+  {
+    "id": "cmr9ca0p2000nra85n5ix66tw",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Menginput tugas harian di sistem HBOS",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.623Z",
+    "updatedAt": "2026-07-06T14:52:31.623Z"
+  },
+  {
+    "id": "cmr9ca0p3000ora859qb57svj",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Mengelola Kanban Board (update status pekerjaan)",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.624Z",
+    "updatedAt": "2026-07-06T14:52:31.624Z"
+  },
+  {
+    "id": "cmr9ca0p4000pra85stxlincn",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Melakukan riset konten untuk training",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.624Z",
+    "updatedAt": "2026-07-06T14:52:31.624Z"
+  },
+  {
+    "id": "cmr9ca0p5000qra85aciuxcbv",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Membuat materi promosi training (brosur, slide deck)",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.625Z",
+    "updatedAt": "2026-07-06T14:52:31.625Z"
+  },
+  {
+    "id": "cmr9ca0p5000rra85gz2c30d1",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Absensi tepat waktu setiap hari kerja",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.626Z",
+    "updatedAt": "2026-07-06T14:52:31.626Z"
+  },
+  {
+    "id": "cmr9ca0p6000sra8570pbjq3f",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Mengisi biodata karyawan secara lengkap",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.626Z",
+    "updatedAt": "2026-07-06T14:52:31.626Z"
+  },
+  {
+    "id": "cmr9ca0p7000tra8551trojwq",
+    "role": "ASSISTANT_TRAINER",
+    "title": "Melaporkan progress ke Project Manager",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.627Z",
+    "updatedAt": "2026-07-06T14:52:31.627Z"
+  },
+  {
+    "id": "cmr9ca0p7000ura850h66fni4",
+    "role": "CONTENT_CREATIVE",
+    "title": "Produksi konten reels/video untuk Instagram & TikTok",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.628Z",
+    "updatedAt": "2026-07-06T14:52:31.628Z"
+  },
+  {
+    "id": "cmr9ca0p8000vra85cfsqsuan",
+    "role": "CONTENT_CREATIVE",
+    "title": "Mendesain visual konten (Canva, CapCut)",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.629Z",
+    "updatedAt": "2026-07-06T14:52:31.629Z"
+  },
+  {
+    "id": "cmr9ca0pa000wra85r84oboc3",
+    "role": "CONTENT_CREATIVE",
+    "title": "Mengelola CMS (Content Management System) untuk website",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.630Z",
+    "updatedAt": "2026-07-06T14:52:31.630Z"
+  },
+  {
+    "id": "cmr9ca0pb000xra85bu24bay6",
+    "role": "CONTENT_CREATIVE",
+    "title": "Menjadwalkan upload konten di 13+ website",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.631Z",
+    "updatedAt": "2026-07-06T14:52:31.631Z"
+  },
+  {
+    "id": "cmr9ca0pc000yra85z9t7095w",
+    "role": "CONTENT_CREATIVE",
+    "title": "Menginput ide konten di sistem HBOS untuk ACC owner",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.632Z",
+    "updatedAt": "2026-07-06T14:52:31.632Z"
+  },
+  {
+    "id": "cmr9ca0pd000zra85x2vfwgtf",
+    "role": "CONTENT_CREATIVE",
+    "title": "Membuat artikel SEO untuk website Hafara Group",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.633Z",
+    "updatedAt": "2026-07-06T14:52:31.633Z"
+  },
+  {
+    "id": "cmr9ca0pd0010ra850sr7vc9g",
+    "role": "CONTENT_CREATIVE",
+    "title": "Editing video dan foto untuk konten promosi",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.634Z",
+    "updatedAt": "2026-07-06T14:52:31.634Z"
+  },
+  {
+    "id": "cmr9ca0pe0011ra8504mdsdue",
+    "role": "CONTENT_CREATIVE",
+    "title": "Mengelola tugas konten harian",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.634Z",
+    "updatedAt": "2026-07-06T14:52:31.634Z"
+  },
+  {
+    "id": "cmr9ca0pe0012ra859efry294",
+    "role": "CONTENT_CREATIVE",
+    "title": "Absensi tepat waktu setiap hari kerja",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.635Z",
+    "updatedAt": "2026-07-06T14:52:31.635Z"
+  },
+  {
+    "id": "cmr9ca0pf0013ra85561icv4t",
+    "role": "CONTENT_CREATIVE",
+    "title": "Melaporkan progress konten ke Project Manager",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.635Z",
+    "updatedAt": "2026-07-06T14:52:31.635Z"
+  },
+  {
+    "id": "cmr9ca0pf0014ra852y2bk2oh",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Mengelola iklan digital (Meta Ads, Google Ads)",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.636Z",
+    "updatedAt": "2026-07-06T14:52:31.636Z"
+  },
+  {
+    "id": "cmr9ca0pg0015ra85lefomhws",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Optimasi SEO untuk website Hafara Group",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.637Z",
+    "updatedAt": "2026-07-06T14:52:31.637Z"
+  },
+  {
+    "id": "cmr9ca0ph0016ra85rgsht682",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Maintenance dan update website (13+ website)",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.637Z",
+    "updatedAt": "2026-07-06T14:52:31.637Z"
+  },
+  {
+    "id": "cmr9ca0ph0017ra8539kqp4iz",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Mengelola media sosial (strategy, scheduling, analytics)",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.638Z",
+    "updatedAt": "2026-07-06T14:52:31.638Z"
+  },
+  {
+    "id": "cmr9ca0pi0018ra85icms5k1q",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Riset pasar dan analisis kompetitor",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.638Z",
+    "updatedAt": "2026-07-06T14:52:31.638Z"
+  },
+  {
+    "id": "cmr9ca0pi0019ra85weeqvzot",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Mengelola email marketing dan broadcast",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.639Z",
+    "updatedAt": "2026-07-06T14:52:31.639Z"
+  },
+  {
+    "id": "cmr9ca0pj001ara8566bycbm4",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Maintenance sistem HBOS (troubleshooting, backup)",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.639Z",
+    "updatedAt": "2026-07-06T14:52:31.639Z"
+  },
+  {
+    "id": "cmr9ca0pk001bra85d0yb4oul",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Mengelola domain dan hosting",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.640Z",
+    "updatedAt": "2026-07-06T14:52:31.640Z"
+  },
+  {
+    "id": "cmr9ca0pk001cra85g6yasj8w",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Absensi tepat waktu setiap hari kerja",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.641Z",
+    "updatedAt": "2026-07-06T14:52:31.641Z"
+  },
+  {
+    "id": "cmr9ca0pl001dra85kg5w85cj",
+    "role": "DIGITAL_MARKETING_IT",
+    "title": "Melaporkan metrics digital ke Project Manager & Owner",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.641Z",
+    "updatedAt": "2026-07-06T14:52:31.641Z"
+  },
+  {
+    "id": "cmr9ca0pl001era85upojkyp7",
+    "role": "FINANCE",
+    "title": "Input arus kas harian (pemasukan & pengeluaran)",
+    "order": 1,
+    "createdAt": "2026-07-06T14:52:31.642Z",
+    "updatedAt": "2026-07-06T14:52:31.642Z"
+  },
+  {
+    "id": "cmr9ca0pm001fra85jfxwxrt7",
+    "role": "FINANCE",
+    "title": "Mengelola payroll & slip gaji karyawan bulanan",
+    "order": 2,
+    "createdAt": "2026-07-06T14:52:31.643Z",
+    "updatedAt": "2026-07-06T14:52:31.643Z"
+  },
+  {
+    "id": "cmr9ca0pn001gra854uw2nvdb",
+    "role": "FINANCE",
+    "title": "Menghitung dan membayar pajak (PPh 21/23/Badan, PPN)",
+    "order": 3,
+    "createdAt": "2026-07-06T14:52:31.643Z",
+    "updatedAt": "2026-07-06T14:52:31.643Z"
+  },
+  {
+    "id": "cmr9ca0pn001hra85vqqcd79d",
+    "role": "FINANCE",
+    "title": "Membuat laporan laba rugi bulanan",
+    "order": 4,
+    "createdAt": "2026-07-06T14:52:31.644Z",
+    "updatedAt": "2026-07-06T14:52:31.644Z"
+  },
+  {
+    "id": "cmr9ca0po001ira85i3xyq6w6",
+    "role": "FINANCE",
+    "title": "Mengelola neraca keuangan",
+    "order": 5,
+    "createdAt": "2026-07-06T14:52:31.645Z",
+    "updatedAt": "2026-07-06T14:52:31.645Z"
+  },
+  {
+    "id": "cmr9ca0pp001jra85j81uarit",
+    "role": "FINANCE",
+    "title": "Mengelola piutang & hutang",
+    "order": 6,
+    "createdAt": "2026-07-06T14:52:31.646Z",
+    "updatedAt": "2026-07-06T14:52:31.646Z"
+  },
+  {
+    "id": "cmr9ca0pq001kra85fp3i0axj",
+    "role": "FINANCE",
+    "title": "Membuat dokumen SPT Badan (Neraca, Laba Rugi, Bukti Potong, SSP)",
+    "order": 7,
+    "createdAt": "2026-07-06T14:52:31.646Z",
+    "updatedAt": "2026-07-06T14:52:31.646Z"
+  },
+  {
+    "id": "cmr9ca0pq001lra85d40ypczi",
+    "role": "FINANCE",
+    "title": "Mengelola kategori keuangan",
+    "order": 8,
+    "createdAt": "2026-07-06T14:52:31.647Z",
+    "updatedAt": "2026-07-06T14:52:31.647Z"
+  },
+  {
+    "id": "cmr9ca0pr001mra859zhffyt5",
+    "role": "FINANCE",
+    "title": "Rekap absensi untuk perhitungan gaji",
+    "order": 9,
+    "createdAt": "2026-07-06T14:52:31.647Z",
+    "updatedAt": "2026-07-06T14:52:31.647Z"
+  },
+  {
+    "id": "cmr9ca0pr001nra85mnwkqbgi",
+    "role": "FINANCE",
+    "title": "Melaporkan kondisi keuangan ke Owner",
+    "order": 10,
+    "createdAt": "2026-07-06T14:52:31.648Z",
+    "updatedAt": "2026-07-06T14:52:31.648Z"
+  },
+  {
+    "id": "cmr9civa10000ramnzqbfesjx",
+    "role": "PROJECT_MANAGER",
+    "title": "Test: Mengelola kontrak klien baru",
+    "order": 11,
+    "createdAt": "2026-07-06T14:59:24.506Z",
+    "updatedAt": "2026-07-06T14:59:24.506Z"
+  }
+]

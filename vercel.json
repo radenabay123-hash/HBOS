@@ -1,8 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm run vercel-build",
-  "devCommand": "next dev",
-  "installCommand": "npm install",
   "functions": {
     "src/app/api/**/route.ts": {
       "maxDuration": 60

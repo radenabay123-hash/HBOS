@@ -1,0 +1,281 @@
+[
+  {
+    "id": "cmr79pmtb0000ra77tkbjffzf",
+    "name": "Honor Training",
+    "type": "PEMASUKAN",
+    "icon": "GraduationCap",
+    "color": "blue",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.927Z"
+  },
+  {
+    "id": "cmr79pmte0001ra77o0qdsek4",
+    "name": "Consulting",
+    "type": "PEMASUKAN",
+    "icon": "Lightbulb",
+    "color": "cyan",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.931Z"
+  },
+  {
+    "id": "cmr79pmtg0002ra77axuwk3pq",
+    "name": "Workshop",
+    "type": "PEMASUKAN",
+    "icon": "Users",
+    "color": "violet",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.933Z"
+  },
+  {
+    "id": "cmr79pmtn0003ra7708dfe4ks",
+    "name": "Seminar",
+    "type": "PEMASUKAN",
+    "icon": "Presentation",
+    "color": "amber",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.939Z"
+  },
+  {
+    "id": "cmr79pmtp0004ra77t8708lk6",
+    "name": "Coaching",
+    "type": "PEMASUKAN",
+    "icon": "Target",
+    "color": "green",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.941Z"
+  },
+  {
+    "id": "cmr79pmtq0005ra77ohxscraz",
+    "name": "Mentoring",
+    "type": "PEMASUKAN",
+    "icon": "Compass",
+    "color": "teal",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.942Z"
+  },
+  {
+    "id": "cmr79pmtr0006ra77kowkfm5a",
+    "name": "Penjualan Modul",
+    "type": "PEMASUKAN",
+    "icon": "BookOpen",
+    "color": "pink",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.944Z"
+  },
+  {
+    "id": "cmr79pmtt0007ra772g187dho",
+    "name": "Penjualan Buku",
+    "type": "PEMASUKAN",
+    "icon": "Book",
+    "color": "rose",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.946Z"
+  },
+  {
+    "id": "cmr79pmtv0008ra77gzwynusz",
+    "name": "Membership",
+    "type": "PEMASUKAN",
+    "icon": "Crown",
+    "color": "indigo",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.948Z"
+  },
+  {
+    "id": "cmr79pmtx0009ra77u76lnp59",
+    "name": "Affiliate",
+    "type": "PEMASUKAN",
+    "icon": "Share2",
+    "color": "sky",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.949Z"
+  },
+  {
+    "id": "cmr79pmty000ara77uxg6y20k",
+    "name": "Investasi",
+    "type": "PEMASUKAN",
+    "icon": "TrendingUp",
+    "color": "emerald",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.950Z"
+  },
+  {
+    "id": "cmr79pmtz000bra77pzt4l0b2",
+    "name": "Lainnya",
+    "type": "PEMASUKAN",
+    "icon": "MoreHorizontal",
+    "color": "slate",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.951Z"
+  },
+  {
+    "id": "cmr79pmu0000cra77w2ohjbug",
+    "name": "Transportasi",
+    "type": "PENGELUARAN",
+    "icon": "Car",
+    "color": "blue",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.953Z"
+  },
+  {
+    "id": "cmr79pmu1000dra77yhgrbm9t",
+    "name": "Hotel",
+    "type": "PENGELUARAN",
+    "icon": "Building",
+    "color": "cyan",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.954Z"
+  },
+  {
+    "id": "cmr79pmu2000era77row5n1yy",
+    "name": "Konsumsi",
+    "type": "PENGELUARAN",
+    "icon": "UtensilsCrossed",
+    "color": "amber",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.955Z"
+  },
+  {
+    "id": "cmr79pmu3000fra77qhixyjlz",
+    "name": "Marketing",
+    "type": "PENGELUARAN",
+    "icon": "Megaphone",
+    "color": "rose",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.956Z"
+  },
+  {
+    "id": "cmr79pmu5000gra779w95k3v3",
+    "name": "Iklan",
+    "type": "PENGELUARAN",
+    "icon": "MousePointerClick",
+    "color": "pink",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.957Z"
+  },
+  {
+    "id": "cmr79pmu6000hra77qefgscu5",
+    "name": "Gaji",
+    "type": "PENGELUARAN",
+    "icon": "Wallet",
+    "color": "green",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.959Z"
+  },
+  {
+    "id": "cmr79pmu7000ira77l4gfbcd9",
+    "name": "Internet",
+    "type": "PENGELUARAN",
+    "icon": "Wifi",
+    "color": "violet",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.960Z"
+  },
+  {
+    "id": "cmr79pmua000jra77dccn32yp",
+    "name": "Hosting",
+    "type": "PENGELUARAN",
+    "icon": "Server",
+    "color": "indigo",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.962Z"
+  },
+  {
+    "id": "cmr79pmub000kra77k8ukm7br",
+    "name": "Domain",
+    "type": "PENGELUARAN",
+    "icon": "Globe",
+    "color": "sky",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.964Z"
+  },
+  {
+    "id": "cmr79pmuc000lra77o6capmvg",
+    "name": "Operasional",
+    "type": "PENGELUARAN",
+    "icon": "Briefcase",
+    "color": "slate",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.965Z"
+  },
+  {
+    "id": "cmr79pmue000mra77hgmfarh3",
+    "name": "Pajak",
+    "type": "PENGELUARAN",
+    "icon": "Receipt",
+    "color": "red",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.966Z"
+  },
+  {
+    "id": "cmr79pmuf000nra77h39ppbjh",
+    "name": "Peralatan",
+    "type": "PENGELUARAN",
+    "icon": "Tool",
+    "color": "teal",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.967Z"
+  },
+  {
+    "id": "cmr79pmug000ora77cgm86don",
+    "name": "Laptop",
+    "type": "PENGELUARAN",
+    "icon": "Laptop",
+    "color": "blue",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.969Z"
+  },
+  {
+    "id": "cmr79pmui000pra77eynxe57h",
+    "name": "Software",
+    "type": "PENGELUARAN",
+    "icon": "Download",
+    "color": "cyan",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.971Z"
+  },
+  {
+    "id": "cmr79pmuj000qra77aqdw35nf",
+    "name": "AI Subscription",
+    "type": "PENGELUARAN",
+    "icon": "Bot",
+    "color": "violet",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.972Z"
+  },
+  {
+    "id": "cmr79pmuk000rra779leawzfa",
+    "name": "Listrik",
+    "type": "PENGELUARAN",
+    "icon": "Zap",
+    "color": "amber",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.973Z"
+  },
+  {
+    "id": "cmr79pmul000sra77wjlv5h8y",
+    "name": "Air",
+    "type": "PENGELUARAN",
+    "icon": "Droplets",
+    "color": "sky",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.974Z"
+  },
+  {
+    "id": "cmr79pmun000tra77hv84dw4d",
+    "name": "Sewa Kantor",
+    "type": "PENGELUARAN",
+    "icon": "Home",
+    "color": "emerald",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.975Z"
+  },
+  {
+    "id": "cmr79pmuo000ura77oshqqalh",
+    "name": "Lainnya",
+    "type": "PENGELUARAN",
+    "icon": "MoreHorizontal",
+    "color": "slate",
+    "isDefault": true,
+    "createdAt": "2026-07-05T04:05:08.977Z"
+  }
+]

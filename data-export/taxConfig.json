@@ -1,0 +1,54 @@
+[
+  {
+    "id": "cmr79qn3k0015rac5c860qvj7",
+    "taxType": "PPH21",
+    "name": "PPh 21 - Penghasilan Karyawan",
+    "rate": 0,
+    "description": "Pajak penghasilan karyawan dengan tarif progresif (UU HPP). Dipotong dari gaji bulanan karyawan.",
+    "effectiveFrom": "2026-07-05T04:05:55.952Z",
+    "isActive": true,
+    "brackets": "[{\"min\":0,\"max\":60000000,\"rate\":5},{\"min\":60000000,\"max\":250000000,\"rate\":15},{\"min\":250000000,\"max\":500000000,\"rate\":25},{\"min\":500000000,\"max\":5000000000,\"rate\":30},{\"min\":5000000000,\"max\":null,\"rate\":35}]",
+    "ptkp": "{\"TK0\":54000000,\"TK1\":58500000,\"TK2\":63000000,\"TK3\":67500000,\"K0\":58500000,\"K1\":63000000,\"K2\":67500000,\"K3\":72000000}",
+    "createdAt": "2026-07-05T04:05:55.952Z",
+    "updatedAt": "2026-07-06T02:01:56.465Z"
+  },
+  {
+    "id": "cmr79qn3l0016rac5idcv3f4i",
+    "taxType": "PPH23",
+    "name": "PPh 23 - Pajak atas Jasa",
+    "rate": 2,
+    "description": "PPh 23 atas jasa profesional/consulting (2% dari bruto). Dipotong oleh pemberi kerja.",
+    "effectiveFrom": "2026-07-05T04:05:55.954Z",
+    "isActive": true,
+    "brackets": "",
+    "ptkp": "",
+    "createdAt": "2026-07-05T04:05:55.954Z",
+    "updatedAt": "2026-07-06T02:01:56.473Z"
+  },
+  {
+    "id": "cmr79qn3m0018rac5t8cpzje8",
+    "taxType": "PPN",
+    "name": "PPN - Pajak Pertambahan Nilai",
+    "rate": 0,
+    "description": "PPN 11% (UU HPP 2022). Ditambahkan ke harga jual barang/jasa kena pajak.",
+    "effectiveFrom": "2026-07-05T04:05:55.955Z",
+    "isActive": false,
+    "brackets": "",
+    "ptkp": "",
+    "createdAt": "2026-07-05T04:05:55.955Z",
+    "updatedAt": "2026-07-06T07:48:39.759Z"
+  },
+  {
+    "id": "cmr8klkis0009ra13lymruks1",
+    "taxType": "PPH_BADAN",
+    "name": "PPh Badan",
+    "rate": 11,
+    "description": "Pajak penghasilan badan usaha (UU HPP 2022). Dihitung dari laba perusahaan sebelum pajak.",
+    "effectiveFrom": "2026-07-06T01:57:41.285Z",
+    "isActive": true,
+    "brackets": "",
+    "ptkp": "",
+    "createdAt": "2026-07-06T01:57:41.285Z",
+    "updatedAt": "2026-07-06T02:06:33.251Z"
+  }
+]

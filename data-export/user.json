@@ -1,0 +1,80 @@
+[
+  {
+    "id": "cmr755gse0000ra4z7bgnpk9h",
+    "email": "owner@hafara.com",
+    "password": "$2b$10$xXXoiqVjw5WVS54X7hKL1ujN5/NiyQ66oEDAs/XkL3RXZjXvjNIV.",
+    "name": "M. Aqil Baihaqi",
+    "role": "OWNER",
+    "phone": "081234567890",
+    "avatar": null,
+    "position": "Owner & Founder",
+    "isActive": true,
+    "createdAt": "2026-07-05T01:57:29.534Z",
+    "updatedAt": "2026-07-08T02:07:03.439Z"
+  },
+  {
+    "id": "cmr8ln90p000graa6a1f9vc20",
+    "email": "badar_asisten@hafara.com",
+    "password": "$2b$10$xXXoiqVjw5WVS54X7hKL1ujN5/NiyQ66oEDAs/XkL3RXZjXvjNIV.",
+    "name": "Muhammad Badar Haula Abdi",
+    "role": "ASSISTANT_TRAINER",
+    "phone": "",
+    "avatar": null,
+    "position": "Karyawan",
+    "isActive": true,
+    "createdAt": "2026-07-06T02:26:59.305Z",
+    "updatedAt": "2026-07-08T02:07:03.443Z"
+  },
+  {
+    "id": "cmr8ln92w000hraa6r764brcz",
+    "email": "cinta_marketing@hafara.com",
+    "password": "$2b$10$xXXoiqVjw5WVS54X7hKL1ujN5/NiyQ66oEDAs/XkL3RXZjXvjNIV.",
+    "name": "Cinta Azzaria ",
+    "role": "DIGITAL_MARKETING_IT",
+    "phone": "",
+    "avatar": null,
+    "position": "Karyawan",
+    "isActive": true,
+    "createdAt": "2026-07-06T02:26:59.384Z",
+    "updatedAt": "2026-07-09T08:25:09.866Z"
+  },
+  {
+    "id": "cmr8ln950000iraa65cnj75om",
+    "email": "istiana_creative@hafara.com",
+    "password": "$2b$10$xXXoiqVjw5WVS54X7hKL1ujN5/NiyQ66oEDAs/XkL3RXZjXvjNIV.",
+    "name": "Istiana Agu Saputri",
+    "role": "CONTENT_CREATIVE",
+    "phone": "",
+    "avatar": null,
+    "position": "Karyawan",
+    "isActive": true,
+    "createdAt": "2026-07-06T02:26:59.460Z",
+    "updatedAt": "2026-07-09T08:25:09.871Z"
+  },
+  {
+    "id": "cmr8ln975000jraa6qzikrebc",
+    "email": "ayu_project@hafara.com",
+    "password": "$2b$10$xXXoiqVjw5WVS54X7hKL1ujN5/NiyQ66oEDAs/XkL3RXZjXvjNIV.",
+    "name": "Ade Ayu Saputri",
+    "role": "PROJECT_MANAGER",
+    "phone": "",
+    "avatar": null,
+    "position": "Karyawan",
+    "isActive": true,
+    "createdAt": "2026-07-06T02:26:59.537Z",
+    "updatedAt": "2026-07-08T02:07:03.446Z"
+  },
+  {
+    "id": "cmrd8rfby0000shcssdlt0spn",
+    "email": "finance@hafara.com",
+    "password": "$2b$10$lfcTj5ooFnxbT2pMpIHqNu6civZ5GwrSE2WbMlLyn61wu0mZZ6wXu",
+    "name": "Finance Staff",
+    "role": "FINANCE",
+    "phone": null,
+    "avatar": null,
+    "position": "Finance Officer",
+    "isActive": true,
+    "createdAt": "2026-07-09T08:25:09.983Z",
+    "updatedAt": "2026-07-09T08:25:09.983Z"
+  }
+]

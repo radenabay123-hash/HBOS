@@ -1,12 +1,12 @@
 // HAFARA BUSINESS OPERATING SYSTEM (HBOS)
-// Prisma schema - SQLite
+// Prisma schema - PostgreSQL (for Vercel deployment)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

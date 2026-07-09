@@ -1,0 +1,3402 @@
+[
+  {
+    "id": "cmrdfq75d0001tvnnw0rce0a7",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.033Z",
+    "updatedAt": "2026-07-09T11:40:10.033Z"
+  },
+  {
+    "id": "cmrdfq75j0003tvnnawgrpd8q",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 2,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 2 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.040Z",
+    "updatedAt": "2026-07-09T11:40:10.040Z"
+  },
+  {
+    "id": "cmrdfq75k0005tvnn4ybujnt5",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 90 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.041Z",
+    "updatedAt": "2026-07-09T11:40:10.041Z"
+  },
+  {
+    "id": "cmrdfq75l0007tvnna4atrlpk",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.041Z",
+    "updatedAt": "2026-07-09T11:40:10.041Z"
+  },
+  {
+    "id": "cmrdfq75m0009tvnn50tss62a",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_m_artikel_kota",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Monthly: 600 Artikel Kota | Target: 600 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.042Z",
+    "updatedAt": "2026-07-09T11:40:10.042Z"
+  },
+  {
+    "id": "cmrdfq75m000btvnnvkjuwjtx",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 6,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 6 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.043Z",
+    "updatedAt": "2026-07-09T11:40:10.043Z"
+  },
+  {
+    "id": "cmrdfq75n000dtvnnns92vbbz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.043Z",
+    "updatedAt": "2026-07-09T11:40:10.043Z"
+  },
+  {
+    "id": "cmrdfq75o000ftvnn3prhzoaz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.044Z",
+    "updatedAt": "2026-07-09T11:40:10.044Z"
+  },
+  {
+    "id": "cmrdfq75o000htvnnt52wq42d",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 4,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 4 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.045Z",
+    "updatedAt": "2026-07-09T11:40:10.045Z"
+  },
+  {
+    "id": "cmrdfq75p000jtvnn239a9exl",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 3,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 3 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.046Z",
+    "updatedAt": "2026-07-09T11:40:10.046Z"
+  },
+  {
+    "id": "cmrdfq75q000ltvnnbrlkf68x",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 2,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 2 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.046Z",
+    "updatedAt": "2026-07-09T11:40:10.046Z"
+  },
+  {
+    "id": "cmrdfq75q000ntvnnr9tnmun0",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 1,
+    "date": "2024-11-20T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 1 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.047Z",
+    "updatedAt": "2026-07-09T11:40:10.047Z"
+  },
+  {
+    "id": "cmrdfq75r000ptvnnx6191wy5",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.047Z",
+    "updatedAt": "2026-07-09T11:40:10.047Z"
+  },
+  {
+    "id": "cmrdfq75s000rtvnn5d7k8hdd",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.048Z",
+    "updatedAt": "2026-07-09T11:40:10.048Z"
+  },
+  {
+    "id": "cmrdfq75t000ttvnn33rnkxna",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.049Z",
+    "updatedAt": "2026-07-09T11:40:10.049Z"
+  },
+  {
+    "id": "cmrdfq75t000vtvnnloxf4m7k",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-06-01T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.050Z",
+    "updatedAt": "2026-07-09T11:40:10.050Z"
+  },
+  {
+    "id": "cmrdfq75u000xtvnnr1oebnyv",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_m_artikel_kota",
+    "value": 0,
+    "date": "2026-06-01T00:00:00.000Z",
+    "note": "Monthly: 600 Artikel Kota | Target: 600 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.050Z",
+    "updatedAt": "2026-07-09T11:40:10.050Z"
+  },
+  {
+    "id": "cmrdfq75u000ztvnna1pwzmjh",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 5,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 5 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.051Z",
+    "updatedAt": "2026-07-09T11:40:10.051Z"
+  },
+  {
+    "id": "cmrdfq75v0011tvnny3671y6c",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 1,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 1 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.052Z",
+    "updatedAt": "2026-07-09T11:40:10.052Z"
+  },
+  {
+    "id": "cmrdfq75w0013tvnno2xyskun",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-06-01T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.052Z",
+    "updatedAt": "2026-07-09T11:40:10.052Z"
+  },
+  {
+    "id": "cmrdfq75x0015tvnnxcpqhi7k",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 5,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 5 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.053Z",
+    "updatedAt": "2026-07-09T11:40:10.053Z"
+  },
+  {
+    "id": "cmrdfq75x0017tvnn1zkmzq39",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 3,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 3 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.054Z",
+    "updatedAt": "2026-07-09T11:40:10.054Z"
+  },
+  {
+    "id": "cmrdfq75y0019tvnnm2wwubfl",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 1,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 1 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.054Z",
+    "updatedAt": "2026-07-09T11:40:10.054Z"
+  },
+  {
+    "id": "cmrdfq75y001btvnnqtxpyb8o",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 1,
+    "date": "2026-06-05T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 1 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.055Z",
+    "updatedAt": "2026-07-09T11:40:10.055Z"
+  },
+  {
+    "id": "cmrdfq75z001dtvnnuqxvvtih",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.055Z",
+    "updatedAt": "2026-07-09T11:40:10.055Z"
+  },
+  {
+    "id": "cmrdfq760001ftvnnbp6hk31g",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.056Z",
+    "updatedAt": "2026-07-09T11:40:10.056Z"
+  },
+  {
+    "id": "cmrdfq760001htvnnz83sw4no",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.057Z",
+    "updatedAt": "2026-07-09T11:40:10.057Z"
+  },
+  {
+    "id": "cmrdfq761001jtvnnoi1i186s",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.057Z",
+    "updatedAt": "2026-07-09T11:40:10.057Z"
+  },
+  {
+    "id": "cmrdfq761001ltvnn795r8uin",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.058Z",
+    "updatedAt": "2026-07-09T11:40:10.058Z"
+  },
+  {
+    "id": "cmrdfq762001ntvnnoeld1b0r",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.058Z",
+    "updatedAt": "2026-07-09T11:40:10.058Z"
+  },
+  {
+    "id": "cmrdfq763001ptvnnvbxikv6l",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.059Z",
+    "updatedAt": "2026-07-09T11:40:10.059Z"
+  },
+  {
+    "id": "cmrdfq763001rtvnn2wu3opai",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.060Z",
+    "updatedAt": "2026-07-09T11:40:10.060Z"
+  },
+  {
+    "id": "cmrdfq764001ttvnn7eib0ux0",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-06T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.061Z",
+    "updatedAt": "2026-07-09T11:40:10.061Z"
+  },
+  {
+    "id": "cmrdfq765001vtvnnhnr5ude0",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.062Z",
+    "updatedAt": "2026-07-09T11:40:10.062Z"
+  },
+  {
+    "id": "cmrdfq766001xtvnnyqwyb7or",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.062Z",
+    "updatedAt": "2026-07-09T11:40:10.062Z"
+  },
+  {
+    "id": "cmrdfq767001ztvnnsxz7ks5q",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.063Z",
+    "updatedAt": "2026-07-09T11:40:10.063Z"
+  },
+  {
+    "id": "cmrdfq7670021tvnn3oj2yaze",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.063Z",
+    "updatedAt": "2026-07-09T11:40:10.063Z"
+  },
+  {
+    "id": "cmrdfq7670023tvnns8o36ary",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.064Z",
+    "updatedAt": "2026-07-09T11:40:10.064Z"
+  },
+  {
+    "id": "cmrdfq7680025tvnn4dwc6281",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.064Z",
+    "updatedAt": "2026-07-09T11:40:10.064Z"
+  },
+  {
+    "id": "cmrdfq7680027tvnn9x5ckksw",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.065Z",
+    "updatedAt": "2026-07-09T11:40:10.065Z"
+  },
+  {
+    "id": "cmrdfq7690029tvnnr2c3dtig",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.065Z",
+    "updatedAt": "2026-07-09T11:40:10.065Z"
+  },
+  {
+    "id": "cmrdfq769002btvnn5h3d3cbk",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-07T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.066Z",
+    "updatedAt": "2026-07-09T11:40:10.066Z"
+  },
+  {
+    "id": "cmrdfq76a002dtvnnj19mbyvc",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.066Z",
+    "updatedAt": "2026-07-09T11:40:10.066Z"
+  },
+  {
+    "id": "cmrdfq76a002ftvnnekr8u0yw",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.066Z",
+    "updatedAt": "2026-07-09T11:40:10.066Z"
+  },
+  {
+    "id": "cmrdfq76a002htvnnmffcqhna",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.067Z",
+    "updatedAt": "2026-07-09T11:40:10.067Z"
+  },
+  {
+    "id": "cmrdfq76b002jtvnnwj6l7ub1",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.067Z",
+    "updatedAt": "2026-07-09T11:40:10.067Z"
+  },
+  {
+    "id": "cmrdfq76c002ltvnn60jdawql",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.068Z",
+    "updatedAt": "2026-07-09T11:40:10.068Z"
+  },
+  {
+    "id": "cmrdfq76c002ntvnn3ppgq0ux",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.068Z",
+    "updatedAt": "2026-07-09T11:40:10.068Z"
+  },
+  {
+    "id": "cmrdfq76d002ptvnnfgu48p4v",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.069Z",
+    "updatedAt": "2026-07-09T11:40:10.069Z"
+  },
+  {
+    "id": "cmrdfq76d002rtvnnsytar988",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 5,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 5 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.069Z",
+    "updatedAt": "2026-07-09T11:40:10.069Z"
+  },
+  {
+    "id": "cmrdfq76e002ttvnnyvk50tq4",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 2,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 2 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.070Z",
+    "updatedAt": "2026-07-09T11:40:10.070Z"
+  },
+  {
+    "id": "cmrdfq76e002vtvnnda9gt6nl",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 1,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 1 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.071Z",
+    "updatedAt": "2026-07-09T11:40:10.071Z"
+  },
+  {
+    "id": "cmrdfq76f002xtvnnuplddr9u",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 1,
+    "date": "2026-06-08T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 1 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.071Z",
+    "updatedAt": "2026-07-09T11:40:10.071Z"
+  },
+  {
+    "id": "cmrdfq76g002ztvnnbwbty37d",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.072Z",
+    "updatedAt": "2026-07-09T11:40:10.072Z"
+  },
+  {
+    "id": "cmrdfq76h0031tvnn24pbu01m",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.073Z",
+    "updatedAt": "2026-07-09T11:40:10.073Z"
+  },
+  {
+    "id": "cmrdfq76h0033tvnnb5q0yce6",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.074Z",
+    "updatedAt": "2026-07-09T11:40:10.074Z"
+  },
+  {
+    "id": "cmrdfq76i0035tvnnj2rnz3kh",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.074Z",
+    "updatedAt": "2026-07-09T11:40:10.074Z"
+  },
+  {
+    "id": "cmrdfq76i0037tvnnomrzvwdo",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.074Z",
+    "updatedAt": "2026-07-09T11:40:10.074Z"
+  },
+  {
+    "id": "cmrdfq76i0039tvnnadfby4pu",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.075Z",
+    "updatedAt": "2026-07-09T11:40:10.075Z"
+  },
+  {
+    "id": "cmrdfq76j003btvnngwyyrhtv",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.075Z",
+    "updatedAt": "2026-07-09T11:40:10.075Z"
+  },
+  {
+    "id": "cmrdfq76k003dtvnnt2rg4hnw",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 1,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 1 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.076Z",
+    "updatedAt": "2026-07-09T11:40:10.076Z"
+  },
+  {
+    "id": "cmrdfq76k003ftvnnfm8n9o5y",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 1,
+    "date": "2026-06-09T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 1 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.077Z",
+    "updatedAt": "2026-07-09T11:40:10.077Z"
+  },
+  {
+    "id": "cmrdfq76l003htvnndn8gtbna",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.077Z",
+    "updatedAt": "2026-07-09T11:40:10.077Z"
+  },
+  {
+    "id": "cmrdfq76l003jtvnni6v47hsl",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.077Z",
+    "updatedAt": "2026-07-09T11:40:10.077Z"
+  },
+  {
+    "id": "cmrdfq76l003ltvnn2xkr2o2d",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.078Z",
+    "updatedAt": "2026-07-09T11:40:10.078Z"
+  },
+  {
+    "id": "cmrdfq76m003ntvnnj35vbjek",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.078Z",
+    "updatedAt": "2026-07-09T11:40:10.078Z"
+  },
+  {
+    "id": "cmrdfq76m003ptvnn8gdwsrdw",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.078Z",
+    "updatedAt": "2026-07-09T11:40:10.078Z"
+  },
+  {
+    "id": "cmrdfq76n003rtvnnv79lhhn5",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.079Z",
+    "updatedAt": "2026-07-09T11:40:10.079Z"
+  },
+  {
+    "id": "cmrdfq76n003ttvnnfzrd9huk",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.079Z",
+    "updatedAt": "2026-07-09T11:40:10.079Z"
+  },
+  {
+    "id": "cmrdfq76n003vtvnnzzxolqe3",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 1,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 1 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.080Z",
+    "updatedAt": "2026-07-09T11:40:10.080Z"
+  },
+  {
+    "id": "cmrdfq76o003xtvnnurey1lhr",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-10T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.080Z",
+    "updatedAt": "2026-07-09T11:40:10.080Z"
+  },
+  {
+    "id": "cmrdfq76o003ztvnn2stqoavz",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.081Z",
+    "updatedAt": "2026-07-09T11:40:10.081Z"
+  },
+  {
+    "id": "cmrdfq76o0041tvnngeqgqok8",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.081Z",
+    "updatedAt": "2026-07-09T11:40:10.081Z"
+  },
+  {
+    "id": "cmrdfq76p0043tvnneihtwcoh",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.081Z",
+    "updatedAt": "2026-07-09T11:40:10.081Z"
+  },
+  {
+    "id": "cmrdfq76p0045tvnno89nqhbv",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.081Z",
+    "updatedAt": "2026-07-09T11:40:10.081Z"
+  },
+  {
+    "id": "cmrdfq76p0047tvnn4vymzkn9",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.082Z",
+    "updatedAt": "2026-07-09T11:40:10.082Z"
+  },
+  {
+    "id": "cmrdfq76q0049tvnniv29oxqj",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.082Z",
+    "updatedAt": "2026-07-09T11:40:10.082Z"
+  },
+  {
+    "id": "cmrdfq76q004btvnnejx9gop3",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.083Z",
+    "updatedAt": "2026-07-09T11:40:10.083Z"
+  },
+  {
+    "id": "cmrdfq76r004dtvnnb37z0k5o",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.083Z",
+    "updatedAt": "2026-07-09T11:40:10.083Z"
+  },
+  {
+    "id": "cmrdfq76r004ftvnnqnr6qmnf",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-11T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.083Z",
+    "updatedAt": "2026-07-09T11:40:10.083Z"
+  },
+  {
+    "id": "cmrdfq76r004htvnng9fu9b5h",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.084Z",
+    "updatedAt": "2026-07-09T11:40:10.084Z"
+  },
+  {
+    "id": "cmrdfq76s004jtvnn5oeoxhe9",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.084Z",
+    "updatedAt": "2026-07-09T11:40:10.084Z"
+  },
+  {
+    "id": "cmrdfq76s004ltvnnq1fbrwrf",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.084Z",
+    "updatedAt": "2026-07-09T11:40:10.084Z"
+  },
+  {
+    "id": "cmrdfq76s004ntvnn1lwk0rew",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.085Z",
+    "updatedAt": "2026-07-09T11:40:10.085Z"
+  },
+  {
+    "id": "cmrdfq76u004ptvnn53r2uyh6",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.087Z",
+    "updatedAt": "2026-07-09T11:40:10.087Z"
+  },
+  {
+    "id": "cmrdfq76v004rtvnnyixj7y10",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.088Z",
+    "updatedAt": "2026-07-09T11:40:10.088Z"
+  },
+  {
+    "id": "cmrdfq76w004ttvnn52c3cich",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.088Z",
+    "updatedAt": "2026-07-09T11:40:10.088Z"
+  },
+  {
+    "id": "cmrdfq76x004vtvnnikxpnf2i",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.089Z",
+    "updatedAt": "2026-07-09T11:40:10.089Z"
+  },
+  {
+    "id": "cmrdfq76x004xtvnn1b8rm7hw",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-12T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.090Z",
+    "updatedAt": "2026-07-09T11:40:10.090Z"
+  },
+  {
+    "id": "cmrdfq76y004ztvnn4jeapb5s",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.091Z",
+    "updatedAt": "2026-07-09T11:40:10.091Z"
+  },
+  {
+    "id": "cmrdfq76z0051tvnn8x3op9k2",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.091Z",
+    "updatedAt": "2026-07-09T11:40:10.091Z"
+  },
+  {
+    "id": "cmrdfq7700053tvnncubwwdmp",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.092Z",
+    "updatedAt": "2026-07-09T11:40:10.092Z"
+  },
+  {
+    "id": "cmrdfq7700055tvnnlporcrxh",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.092Z",
+    "updatedAt": "2026-07-09T11:40:10.092Z"
+  },
+  {
+    "id": "cmrdfq7710057tvnn6l1vz07p",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.093Z",
+    "updatedAt": "2026-07-09T11:40:10.093Z"
+  },
+  {
+    "id": "cmrdfq7710059tvnnd94q8qfz",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.094Z",
+    "updatedAt": "2026-07-09T11:40:10.094Z"
+  },
+  {
+    "id": "cmrdfq77c005btvnnwy1je4nx",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.105Z",
+    "updatedAt": "2026-07-09T11:40:10.105Z"
+  },
+  {
+    "id": "cmrdfq77d005dtvnnp9lnqfzu",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.106Z",
+    "updatedAt": "2026-07-09T11:40:10.106Z"
+  },
+  {
+    "id": "cmrdfq77e005ftvnnxhtzbt2y",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-13T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.106Z",
+    "updatedAt": "2026-07-09T11:40:10.106Z"
+  },
+  {
+    "id": "cmrdfq77e005htvnn73bht85s",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.107Z",
+    "updatedAt": "2026-07-09T11:40:10.107Z"
+  },
+  {
+    "id": "cmrdfq77f005jtvnnhz550lsw",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.108Z",
+    "updatedAt": "2026-07-09T11:40:10.108Z"
+  },
+  {
+    "id": "cmrdfq77g005ltvnn88tlu4lr",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.108Z",
+    "updatedAt": "2026-07-09T11:40:10.108Z"
+  },
+  {
+    "id": "cmrdfq77g005ntvnnqrn0oegj",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.109Z",
+    "updatedAt": "2026-07-09T11:40:10.109Z"
+  },
+  {
+    "id": "cmrdfq77h005ptvnnsfzbp13i",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.109Z",
+    "updatedAt": "2026-07-09T11:40:10.109Z"
+  },
+  {
+    "id": "cmrdfq77h005rtvnnyjjcjxgp",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.110Z",
+    "updatedAt": "2026-07-09T11:40:10.110Z"
+  },
+  {
+    "id": "cmrdfq77i005ttvnneyc0dv6k",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.110Z",
+    "updatedAt": "2026-07-09T11:40:10.110Z"
+  },
+  {
+    "id": "cmrdfq77j005vtvnn43bnkhdp",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.111Z",
+    "updatedAt": "2026-07-09T11:40:10.111Z"
+  },
+  {
+    "id": "cmrdfq77j005xtvnn7u11qtgh",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-14T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.112Z",
+    "updatedAt": "2026-07-09T11:40:10.112Z"
+  },
+  {
+    "id": "cmrdfq77k005ztvnnc9o7binj",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.112Z",
+    "updatedAt": "2026-07-09T11:40:10.112Z"
+  },
+  {
+    "id": "cmrdfq77k0061tvnnedfokro4",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.113Z",
+    "updatedAt": "2026-07-09T11:40:10.113Z"
+  },
+  {
+    "id": "cmrdfq77l0063tvnnimsdh4oh",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.113Z",
+    "updatedAt": "2026-07-09T11:40:10.113Z"
+  },
+  {
+    "id": "cmrdfq77l0065tvnnvjs2oo4i",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.114Z",
+    "updatedAt": "2026-07-09T11:40:10.114Z"
+  },
+  {
+    "id": "cmrdfq77m0067tvnn8uhpctgx",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.114Z",
+    "updatedAt": "2026-07-09T11:40:10.114Z"
+  },
+  {
+    "id": "cmrdfq77m0069tvnnmzk2fefj",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.115Z",
+    "updatedAt": "2026-07-09T11:40:10.115Z"
+  },
+  {
+    "id": "cmrdfq77n006btvnnast8jmrl",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.115Z",
+    "updatedAt": "2026-07-09T11:40:10.115Z"
+  },
+  {
+    "id": "cmrdfq77n006dtvnn3jm9wia8",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.116Z",
+    "updatedAt": "2026-07-09T11:40:10.116Z"
+  },
+  {
+    "id": "cmrdfq77o006ftvnn2zhrffe4",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.116Z",
+    "updatedAt": "2026-07-09T11:40:10.116Z"
+  },
+  {
+    "id": "cmrdfq77o006htvnn8n7jh62t",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.117Z",
+    "updatedAt": "2026-07-09T11:40:10.117Z"
+  },
+  {
+    "id": "cmrdfq77p006jtvnnrg7a7uzm",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-15T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.117Z",
+    "updatedAt": "2026-07-09T11:40:10.117Z"
+  },
+  {
+    "id": "cmrdfq77p006ltvnno2gx9xjn",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.118Z",
+    "updatedAt": "2026-07-09T11:40:10.118Z"
+  },
+  {
+    "id": "cmrdfq77q006ntvnndvy0qbsb",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.118Z",
+    "updatedAt": "2026-07-09T11:40:10.118Z"
+  },
+  {
+    "id": "cmrdfq77q006ptvnndnnu8sln",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.119Z",
+    "updatedAt": "2026-07-09T11:40:10.119Z"
+  },
+  {
+    "id": "cmrdfq77r006rtvnn1e8xwkfl",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.119Z",
+    "updatedAt": "2026-07-09T11:40:10.119Z"
+  },
+  {
+    "id": "cmrdfq77r006ttvnnm3rqf2xq",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.120Z",
+    "updatedAt": "2026-07-09T11:40:10.120Z"
+  },
+  {
+    "id": "cmrdfq77t006vtvnn3d14t6mj",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.121Z",
+    "updatedAt": "2026-07-09T11:40:10.121Z"
+  },
+  {
+    "id": "cmrdfq77t006xtvnn0gv360qn",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.121Z",
+    "updatedAt": "2026-07-09T11:40:10.121Z"
+  },
+  {
+    "id": "cmrdfq77u006ztvnnag2gdbqk",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.122Z",
+    "updatedAt": "2026-07-09T11:40:10.122Z"
+  },
+  {
+    "id": "cmrdfq77u0071tvnn5tqmsgjx",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-16T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.122Z",
+    "updatedAt": "2026-07-09T11:40:10.122Z"
+  },
+  {
+    "id": "cmrdfq77u0073tvnnlmyi279w",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.123Z",
+    "updatedAt": "2026-07-09T11:40:10.123Z"
+  },
+  {
+    "id": "cmrdfq77v0075tvnnapxh8q2u",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.123Z",
+    "updatedAt": "2026-07-09T11:40:10.123Z"
+  },
+  {
+    "id": "cmrdfq77v0077tvnnmge3cd0t",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.124Z",
+    "updatedAt": "2026-07-09T11:40:10.124Z"
+  },
+  {
+    "id": "cmrdfq77w0079tvnna07vpjwd",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.124Z",
+    "updatedAt": "2026-07-09T11:40:10.124Z"
+  },
+  {
+    "id": "cmrdfq77w007btvnnzwl1y0tb",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.125Z",
+    "updatedAt": "2026-07-09T11:40:10.125Z"
+  },
+  {
+    "id": "cmrdfq77x007dtvnnoprim55w",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.125Z",
+    "updatedAt": "2026-07-09T11:40:10.125Z"
+  },
+  {
+    "id": "cmrdfq77y007ftvnncpcawo2w",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.126Z",
+    "updatedAt": "2026-07-09T11:40:10.126Z"
+  },
+  {
+    "id": "cmrdfq77y007htvnna26tce9q",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.127Z",
+    "updatedAt": "2026-07-09T11:40:10.127Z"
+  },
+  {
+    "id": "cmrdfq77z007jtvnn2e4a2wkn",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-17T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.127Z",
+    "updatedAt": "2026-07-09T11:40:10.127Z"
+  },
+  {
+    "id": "cmrdfq77z007ltvnn7m4bhiyv",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.128Z",
+    "updatedAt": "2026-07-09T11:40:10.128Z"
+  },
+  {
+    "id": "cmrdfq780007ntvnnz288dpjv",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.129Z",
+    "updatedAt": "2026-07-09T11:40:10.129Z"
+  },
+  {
+    "id": "cmrdfq781007ptvnnkez8w2fs",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.129Z",
+    "updatedAt": "2026-07-09T11:40:10.129Z"
+  },
+  {
+    "id": "cmrdfq781007rtvnn17nnhgoy",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.130Z",
+    "updatedAt": "2026-07-09T11:40:10.130Z"
+  },
+  {
+    "id": "cmrdfq782007ttvnnva8gx5zi",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.131Z",
+    "updatedAt": "2026-07-09T11:40:10.131Z"
+  },
+  {
+    "id": "cmrdfq783007vtvnntivq6fi0",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.131Z",
+    "updatedAt": "2026-07-09T11:40:10.131Z"
+  },
+  {
+    "id": "cmrdfq783007xtvnn6to6uywk",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.132Z",
+    "updatedAt": "2026-07-09T11:40:10.132Z"
+  },
+  {
+    "id": "cmrdfq784007ztvnnfun1jlaf",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.132Z",
+    "updatedAt": "2026-07-09T11:40:10.132Z"
+  },
+  {
+    "id": "cmrdfq7850081tvnnk8o7m6jv",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-18T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.133Z",
+    "updatedAt": "2026-07-09T11:40:10.133Z"
+  },
+  {
+    "id": "cmrdfq7850083tvnnoimhcqdm",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.134Z",
+    "updatedAt": "2026-07-09T11:40:10.134Z"
+  },
+  {
+    "id": "cmrdfq7860085tvnnbrm6hdxd",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.134Z",
+    "updatedAt": "2026-07-09T11:40:10.134Z"
+  },
+  {
+    "id": "cmrdfq7860087tvnnfxteh8by",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.135Z",
+    "updatedAt": "2026-07-09T11:40:10.135Z"
+  },
+  {
+    "id": "cmrdfq7870089tvnnqqjml04t",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.135Z",
+    "updatedAt": "2026-07-09T11:40:10.135Z"
+  },
+  {
+    "id": "cmrdfq788008btvnnh6tuupie",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.136Z",
+    "updatedAt": "2026-07-09T11:40:10.136Z"
+  },
+  {
+    "id": "cmrdfq789008dtvnner9geqoc",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.137Z",
+    "updatedAt": "2026-07-09T11:40:10.137Z"
+  },
+  {
+    "id": "cmrdfq78a008ftvnnfxy7zlv7",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.138Z",
+    "updatedAt": "2026-07-09T11:40:10.138Z"
+  },
+  {
+    "id": "cmrdfq78b008htvnndnzvx3sx",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.139Z",
+    "updatedAt": "2026-07-09T11:40:10.139Z"
+  },
+  {
+    "id": "cmrdfq78b008jtvnn0w3vbpoq",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-19T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.140Z",
+    "updatedAt": "2026-07-09T11:40:10.140Z"
+  },
+  {
+    "id": "cmrdfq78c008ltvnnnqj5h283",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.140Z",
+    "updatedAt": "2026-07-09T11:40:10.140Z"
+  },
+  {
+    "id": "cmrdfq78d008ntvnnoma91v7a",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.141Z",
+    "updatedAt": "2026-07-09T11:40:10.141Z"
+  },
+  {
+    "id": "cmrdfq78d008ptvnn70d6ydqy",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.141Z",
+    "updatedAt": "2026-07-09T11:40:10.141Z"
+  },
+  {
+    "id": "cmrdfq78e008rtvnnzqbbqqn6",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.142Z",
+    "updatedAt": "2026-07-09T11:40:10.142Z"
+  },
+  {
+    "id": "cmrdfq78e008ttvnnmzpr0e0j",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.142Z",
+    "updatedAt": "2026-07-09T11:40:10.142Z"
+  },
+  {
+    "id": "cmrdfq78e008vtvnn09qvfd62",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.143Z",
+    "updatedAt": "2026-07-09T11:40:10.143Z"
+  },
+  {
+    "id": "cmrdfq78f008xtvnnd1ajizj0",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.143Z",
+    "updatedAt": "2026-07-09T11:40:10.143Z"
+  },
+  {
+    "id": "cmrdfq78f008ztvnn8pe5y6zm",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.144Z",
+    "updatedAt": "2026-07-09T11:40:10.144Z"
+  },
+  {
+    "id": "cmrdfq78g0091tvnnjn2rrpdi",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-20T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.144Z",
+    "updatedAt": "2026-07-09T11:40:10.144Z"
+  },
+  {
+    "id": "cmrdfq78g0093tvnnwyru8v8r",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.145Z",
+    "updatedAt": "2026-07-09T11:40:10.145Z"
+  },
+  {
+    "id": "cmrdfq78h0095tvnnibvsatwq",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.145Z",
+    "updatedAt": "2026-07-09T11:40:10.145Z"
+  },
+  {
+    "id": "cmrdfq78h0097tvnn4ptr8taf",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.146Z",
+    "updatedAt": "2026-07-09T11:40:10.146Z"
+  },
+  {
+    "id": "cmrdfq78k0099tvnntct6p1ah",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.148Z",
+    "updatedAt": "2026-07-09T11:40:10.148Z"
+  },
+  {
+    "id": "cmrdfq78k009btvnn81ctifqf",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.149Z",
+    "updatedAt": "2026-07-09T11:40:10.149Z"
+  },
+  {
+    "id": "cmrdfq78m009dtvnnx96av835",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.151Z",
+    "updatedAt": "2026-07-09T11:40:10.151Z"
+  },
+  {
+    "id": "cmrdfq78n009ftvnnol9j9jm0",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.151Z",
+    "updatedAt": "2026-07-09T11:40:10.151Z"
+  },
+  {
+    "id": "cmrdfq78n009htvnnboaxoqcq",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.152Z",
+    "updatedAt": "2026-07-09T11:40:10.152Z"
+  },
+  {
+    "id": "cmrdfq78o009jtvnnximghm9u",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-21T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.153Z",
+    "updatedAt": "2026-07-09T11:40:10.153Z"
+  },
+  {
+    "id": "cmrdfq78p009ltvnn9znqo5rx",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.154Z",
+    "updatedAt": "2026-07-09T11:40:10.154Z"
+  },
+  {
+    "id": "cmrdfq78q009ntvnnme3silqr",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.154Z",
+    "updatedAt": "2026-07-09T11:40:10.154Z"
+  },
+  {
+    "id": "cmrdfq78q009ptvnnuunb8aow",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.155Z",
+    "updatedAt": "2026-07-09T11:40:10.155Z"
+  },
+  {
+    "id": "cmrdfq78r009rtvnnlsqsunoj",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.155Z",
+    "updatedAt": "2026-07-09T11:40:10.155Z"
+  },
+  {
+    "id": "cmrdfq78r009ttvnnpkkgq6tc",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.156Z",
+    "updatedAt": "2026-07-09T11:40:10.156Z"
+  },
+  {
+    "id": "cmrdfq78s009vtvnn8r67dj80",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.156Z",
+    "updatedAt": "2026-07-09T11:40:10.156Z"
+  },
+  {
+    "id": "cmrdfq78s009xtvnnf2ipwfrx",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.156Z",
+    "updatedAt": "2026-07-09T11:40:10.156Z"
+  },
+  {
+    "id": "cmrdfq78s009ztvnn2m737kmg",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.157Z",
+    "updatedAt": "2026-07-09T11:40:10.157Z"
+  },
+  {
+    "id": "cmrdfq78t00a1tvnndtsff9c3",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.157Z",
+    "updatedAt": "2026-07-09T11:40:10.157Z"
+  },
+  {
+    "id": "cmrdfq78t00a3tvnnekx3iyux",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.158Z",
+    "updatedAt": "2026-07-09T11:40:10.158Z"
+  },
+  {
+    "id": "cmrdfq78u00a5tvnnv5s1esi9",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-22T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.158Z",
+    "updatedAt": "2026-07-09T11:40:10.158Z"
+  },
+  {
+    "id": "cmrdfq78u00a7tvnn7xaz0l33",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.159Z",
+    "updatedAt": "2026-07-09T11:40:10.159Z"
+  },
+  {
+    "id": "cmrdfq78v00a9tvnna86fma63",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.159Z",
+    "updatedAt": "2026-07-09T11:40:10.159Z"
+  },
+  {
+    "id": "cmrdfq78v00abtvnnx754svjp",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.160Z",
+    "updatedAt": "2026-07-09T11:40:10.160Z"
+  },
+  {
+    "id": "cmrdfq78w00adtvnniwgihgcx",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.160Z",
+    "updatedAt": "2026-07-09T11:40:10.160Z"
+  },
+  {
+    "id": "cmrdfq78w00aftvnnd0xnfk7h",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.161Z",
+    "updatedAt": "2026-07-09T11:40:10.161Z"
+  },
+  {
+    "id": "cmrdfq78x00ahtvnnjmxqa2bu",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.161Z",
+    "updatedAt": "2026-07-09T11:40:10.161Z"
+  },
+  {
+    "id": "cmrdfq78x00ajtvnnag79r3y7",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.162Z",
+    "updatedAt": "2026-07-09T11:40:10.162Z"
+  },
+  {
+    "id": "cmrdfq78y00altvnn3mmz8jne",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.162Z",
+    "updatedAt": "2026-07-09T11:40:10.162Z"
+  },
+  {
+    "id": "cmrdfq78z00antvnnyg6x6wy9",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-23T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.163Z",
+    "updatedAt": "2026-07-09T11:40:10.163Z"
+  },
+  {
+    "id": "cmrdfq78z00aptvnncw8cxnqj",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.164Z",
+    "updatedAt": "2026-07-09T11:40:10.164Z"
+  },
+  {
+    "id": "cmrdfq79000artvnn9fr56zev",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.164Z",
+    "updatedAt": "2026-07-09T11:40:10.164Z"
+  },
+  {
+    "id": "cmrdfq79000attvnn6qun1pd4",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.164Z",
+    "updatedAt": "2026-07-09T11:40:10.164Z"
+  },
+  {
+    "id": "cmrdfq79100avtvnnhgm4qhov",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.165Z",
+    "updatedAt": "2026-07-09T11:40:10.165Z"
+  },
+  {
+    "id": "cmrdfq79100axtvnnxmcfk3rz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.165Z",
+    "updatedAt": "2026-07-09T11:40:10.165Z"
+  },
+  {
+    "id": "cmrdfq79200aztvnn7v17sqob",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.166Z",
+    "updatedAt": "2026-07-09T11:40:10.166Z"
+  },
+  {
+    "id": "cmrdfq79200b1tvnnogbw52ee",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.167Z",
+    "updatedAt": "2026-07-09T11:40:10.167Z"
+  },
+  {
+    "id": "cmrdfq79300b3tvnnljdoz26o",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.167Z",
+    "updatedAt": "2026-07-09T11:40:10.167Z"
+  },
+  {
+    "id": "cmrdfq79300b5tvnn79gcyekb",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-24T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.168Z",
+    "updatedAt": "2026-07-09T11:40:10.168Z"
+  },
+  {
+    "id": "cmrdfq79400b7tvnnkbpmn9jh",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.168Z",
+    "updatedAt": "2026-07-09T11:40:10.168Z"
+  },
+  {
+    "id": "cmrdfq79500b9tvnnj3uhcdu3",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.170Z",
+    "updatedAt": "2026-07-09T11:40:10.170Z"
+  },
+  {
+    "id": "cmrdfq79600bbtvnnnw7nwp2q",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.170Z",
+    "updatedAt": "2026-07-09T11:40:10.170Z"
+  },
+  {
+    "id": "cmrdfq79600bdtvnn4aw7mmxp",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.171Z",
+    "updatedAt": "2026-07-09T11:40:10.171Z"
+  },
+  {
+    "id": "cmrdfq79700bftvnn77k527fq",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.171Z",
+    "updatedAt": "2026-07-09T11:40:10.171Z"
+  },
+  {
+    "id": "cmrdfq79700bhtvnnpvw9m3ty",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.172Z",
+    "updatedAt": "2026-07-09T11:40:10.172Z"
+  },
+  {
+    "id": "cmrdfq79800bjtvnncafxmvcy",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.172Z",
+    "updatedAt": "2026-07-09T11:40:10.172Z"
+  },
+  {
+    "id": "cmrdfq79800bltvnn1gtb9ie4",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.173Z",
+    "updatedAt": "2026-07-09T11:40:10.173Z"
+  },
+  {
+    "id": "cmrdfq79900bntvnnhlrnp508",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-25T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.173Z",
+    "updatedAt": "2026-07-09T11:40:10.173Z"
+  },
+  {
+    "id": "cmrdfq79900bptvnndwcbzi2o",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.174Z",
+    "updatedAt": "2026-07-09T11:40:10.174Z"
+  },
+  {
+    "id": "cmrdfq79a00brtvnnc4htduzk",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.174Z",
+    "updatedAt": "2026-07-09T11:40:10.174Z"
+  },
+  {
+    "id": "cmrdfq79a00bttvnnxzua3zxb",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.175Z",
+    "updatedAt": "2026-07-09T11:40:10.175Z"
+  },
+  {
+    "id": "cmrdfq79b00bvtvnne7oofnf6",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.175Z",
+    "updatedAt": "2026-07-09T11:40:10.175Z"
+  },
+  {
+    "id": "cmrdfq79b00bxtvnnd6ztmo1y",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.176Z",
+    "updatedAt": "2026-07-09T11:40:10.176Z"
+  },
+  {
+    "id": "cmrdfq79b00bztvnnkvsgddad",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.176Z",
+    "updatedAt": "2026-07-09T11:40:10.176Z"
+  },
+  {
+    "id": "cmrdfq79c00c1tvnni5wzsnfk",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.176Z",
+    "updatedAt": "2026-07-09T11:40:10.176Z"
+  },
+  {
+    "id": "cmrdfq79d00c3tvnn3s5mm9w2",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.177Z",
+    "updatedAt": "2026-07-09T11:40:10.177Z"
+  },
+  {
+    "id": "cmrdfq79d00c5tvnnkcd68nx5",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-26T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.178Z",
+    "updatedAt": "2026-07-09T11:40:10.178Z"
+  },
+  {
+    "id": "cmrdfq79e00c7tvnnpx62aj47",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.178Z",
+    "updatedAt": "2026-07-09T11:40:10.178Z"
+  },
+  {
+    "id": "cmrdfq79e00c9tvnnsuzbor5y",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.179Z",
+    "updatedAt": "2026-07-09T11:40:10.179Z"
+  },
+  {
+    "id": "cmrdfq79f00cbtvnnbo031ojj",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.179Z",
+    "updatedAt": "2026-07-09T11:40:10.179Z"
+  },
+  {
+    "id": "cmrdfq79f00cdtvnnvlvyhkxv",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.180Z",
+    "updatedAt": "2026-07-09T11:40:10.180Z"
+  },
+  {
+    "id": "cmrdfq79g00cftvnng78vne1f",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.180Z",
+    "updatedAt": "2026-07-09T11:40:10.180Z"
+  },
+  {
+    "id": "cmrdfq79g00chtvnnrs6wgi8r",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.180Z",
+    "updatedAt": "2026-07-09T11:40:10.180Z"
+  },
+  {
+    "id": "cmrdfq79h00cjtvnnmi1bki53",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.181Z",
+    "updatedAt": "2026-07-09T11:40:10.181Z"
+  },
+  {
+    "id": "cmrdfq79h00cltvnnrvw74xsy",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.182Z",
+    "updatedAt": "2026-07-09T11:40:10.182Z"
+  },
+  {
+    "id": "cmrdfq79i00cntvnn1ero2a4u",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-27T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.182Z",
+    "updatedAt": "2026-07-09T11:40:10.182Z"
+  },
+  {
+    "id": "cmrdfq79i00cptvnn0mhub53u",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.183Z",
+    "updatedAt": "2026-07-09T11:40:10.183Z"
+  },
+  {
+    "id": "cmrdfq79j00crtvnnieftn79w",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.183Z",
+    "updatedAt": "2026-07-09T11:40:10.183Z"
+  },
+  {
+    "id": "cmrdfq79j00cttvnnbd1uqkvc",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.183Z",
+    "updatedAt": "2026-07-09T11:40:10.183Z"
+  },
+  {
+    "id": "cmrdfq79j00cvtvnn733t0w96",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.184Z",
+    "updatedAt": "2026-07-09T11:40:10.184Z"
+  },
+  {
+    "id": "cmrdfq79k00cxtvnnqkzjak98",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.184Z",
+    "updatedAt": "2026-07-09T11:40:10.184Z"
+  },
+  {
+    "id": "cmrdfq79k00cztvnn9vkk6by9",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.185Z",
+    "updatedAt": "2026-07-09T11:40:10.185Z"
+  },
+  {
+    "id": "cmrdfq79l00d1tvnn3olaw0w9",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.185Z",
+    "updatedAt": "2026-07-09T11:40:10.185Z"
+  },
+  {
+    "id": "cmrdfq79l00d3tvnnhcbf1dbd",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.185Z",
+    "updatedAt": "2026-07-09T11:40:10.185Z"
+  },
+  {
+    "id": "cmrdfq79l00d5tvnn7f28hrpr",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-28T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.186Z",
+    "updatedAt": "2026-07-09T11:40:10.186Z"
+  },
+  {
+    "id": "cmrdfq79m00d7tvnnt8rfz9gd",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.186Z",
+    "updatedAt": "2026-07-09T11:40:10.186Z"
+  },
+  {
+    "id": "cmrdfq79m00d9tvnntezcc5pn",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.187Z",
+    "updatedAt": "2026-07-09T11:40:10.187Z"
+  },
+  {
+    "id": "cmrdfq79n00dbtvnnut0ym6ct",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.187Z",
+    "updatedAt": "2026-07-09T11:40:10.187Z"
+  },
+  {
+    "id": "cmrdfq7a500ddtvnnt8edyt3g",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.206Z",
+    "updatedAt": "2026-07-09T11:40:10.206Z"
+  },
+  {
+    "id": "cmrdfq7a600dftvnn3fahuqss",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.206Z",
+    "updatedAt": "2026-07-09T11:40:10.206Z"
+  },
+  {
+    "id": "cmrdfq7a700dhtvnn6543ar0f",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.207Z",
+    "updatedAt": "2026-07-09T11:40:10.207Z"
+  },
+  {
+    "id": "cmrdfq7a700djtvnnwwxh7gnx",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.208Z",
+    "updatedAt": "2026-07-09T11:40:10.208Z"
+  },
+  {
+    "id": "cmrdfq7a800dltvnnyesfvvwp",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.208Z",
+    "updatedAt": "2026-07-09T11:40:10.208Z"
+  },
+  {
+    "id": "cmrdfq7a800dntvnnjzqq3oq3",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.209Z",
+    "updatedAt": "2026-07-09T11:40:10.209Z"
+  },
+  {
+    "id": "cmrdfq7a900dptvnn4ntgrykf",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.209Z",
+    "updatedAt": "2026-07-09T11:40:10.209Z"
+  },
+  {
+    "id": "cmrdfq7a900drtvnnkoo41hos",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-29T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.210Z",
+    "updatedAt": "2026-07-09T11:40:10.210Z"
+  },
+  {
+    "id": "cmrdfq7aa00dttvnnl97swlpu",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.210Z",
+    "updatedAt": "2026-07-09T11:40:10.210Z"
+  },
+  {
+    "id": "cmrdfq7aa00dvtvnn2vaugc8g",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.211Z",
+    "updatedAt": "2026-07-09T11:40:10.211Z"
+  },
+  {
+    "id": "cmrdfq7ab00dxtvnnbtd0nox4",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.211Z",
+    "updatedAt": "2026-07-09T11:40:10.211Z"
+  },
+  {
+    "id": "cmrdfq7ab00dztvnn1ki07s6h",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.212Z",
+    "updatedAt": "2026-07-09T11:40:10.212Z"
+  },
+  {
+    "id": "cmrdfq7ac00e1tvnnfht45zc3",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.213Z",
+    "updatedAt": "2026-07-09T11:40:10.213Z"
+  },
+  {
+    "id": "cmrdfq7ad00e3tvnnhjd6e32t",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.213Z",
+    "updatedAt": "2026-07-09T11:40:10.213Z"
+  },
+  {
+    "id": "cmrdfq7ad00e5tvnnmb9ah3ps",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.214Z",
+    "updatedAt": "2026-07-09T11:40:10.214Z"
+  },
+  {
+    "id": "cmrdfq7ae00e7tvnnlxqq4ega",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.214Z",
+    "updatedAt": "2026-07-09T11:40:10.214Z"
+  },
+  {
+    "id": "cmrdfq7ae00e9tvnn26w59jly",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-06-30T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.215Z",
+    "updatedAt": "2026-07-09T11:40:10.215Z"
+  },
+  {
+    "id": "cmrdfq7af00ebtvnnhcmfec4e",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.216Z",
+    "updatedAt": "2026-07-09T11:40:10.216Z"
+  },
+  {
+    "id": "cmrdfq7ag00edtvnnbzixr3hh",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.217Z",
+    "updatedAt": "2026-07-09T11:40:10.217Z"
+  },
+  {
+    "id": "cmrdfq7ah00eftvnn274agcgv",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.217Z",
+    "updatedAt": "2026-07-09T11:40:10.217Z"
+  },
+  {
+    "id": "cmrdfq7ah00ehtvnn45a7qmo0",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.218Z",
+    "updatedAt": "2026-07-09T11:40:10.218Z"
+  },
+  {
+    "id": "cmrdfq7ai00ejtvnnyrfb0g5r",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.218Z",
+    "updatedAt": "2026-07-09T11:40:10.218Z"
+  },
+  {
+    "id": "cmrdfq7aj00eltvnnva8nd6gw",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.219Z",
+    "updatedAt": "2026-07-09T11:40:10.219Z"
+  },
+  {
+    "id": "cmrdfq7aj00entvnn4abxule0",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.219Z",
+    "updatedAt": "2026-07-09T11:40:10.219Z"
+  },
+  {
+    "id": "cmrdfq7ak00eptvnnct99d7vs",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.220Z",
+    "updatedAt": "2026-07-09T11:40:10.220Z"
+  },
+  {
+    "id": "cmrdfq7ak00ertvnnmcbyzs8v",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-01T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.221Z",
+    "updatedAt": "2026-07-09T11:40:10.221Z"
+  },
+  {
+    "id": "cmrdfq7al00ettvnnsbvcqfup",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.221Z",
+    "updatedAt": "2026-07-09T11:40:10.221Z"
+  },
+  {
+    "id": "cmrdfq7am00evtvnnkkawdsqh",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.222Z",
+    "updatedAt": "2026-07-09T11:40:10.222Z"
+  },
+  {
+    "id": "cmrdfq7am00extvnnvfitxkqa",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.223Z",
+    "updatedAt": "2026-07-09T11:40:10.223Z"
+  },
+  {
+    "id": "cmrdfq7an00eztvnnbvys7q3u",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.223Z",
+    "updatedAt": "2026-07-09T11:40:10.223Z"
+  },
+  {
+    "id": "cmrdfq7ao00f1tvnniv9o6qlz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.224Z",
+    "updatedAt": "2026-07-09T11:40:10.224Z"
+  },
+  {
+    "id": "cmrdfq7ao00f3tvnndu22yn3l",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.225Z",
+    "updatedAt": "2026-07-09T11:40:10.225Z"
+  },
+  {
+    "id": "cmrdfq7ap00f5tvnnnza97xim",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.225Z",
+    "updatedAt": "2026-07-09T11:40:10.225Z"
+  },
+  {
+    "id": "cmrdfq7ap00f7tvnn0ba62ptx",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.226Z",
+    "updatedAt": "2026-07-09T11:40:10.226Z"
+  },
+  {
+    "id": "cmrdfq7aq00f9tvnnllpdtgpi",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-02T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.227Z",
+    "updatedAt": "2026-07-09T11:40:10.227Z"
+  },
+  {
+    "id": "cmrdfq7ar00fbtvnndb9y7loe",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.227Z",
+    "updatedAt": "2026-07-09T11:40:10.227Z"
+  },
+  {
+    "id": "cmrdfq7ar00fdtvnntsn2m467",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.228Z",
+    "updatedAt": "2026-07-09T11:40:10.228Z"
+  },
+  {
+    "id": "cmrdfq7as00fftvnniff532gf",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.228Z",
+    "updatedAt": "2026-07-09T11:40:10.228Z"
+  },
+  {
+    "id": "cmrdfq7as00fhtvnnowepwkj8",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.229Z",
+    "updatedAt": "2026-07-09T11:40:10.229Z"
+  },
+  {
+    "id": "cmrdfq7au00fjtvnnjq8rid45",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.230Z",
+    "updatedAt": "2026-07-09T11:40:10.230Z"
+  },
+  {
+    "id": "cmrdfq7av00fltvnnnoo0bnff",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.231Z",
+    "updatedAt": "2026-07-09T11:40:10.231Z"
+  },
+  {
+    "id": "cmrdfq7av00fntvnnwns5h99e",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.232Z",
+    "updatedAt": "2026-07-09T11:40:10.232Z"
+  },
+  {
+    "id": "cmrdfq7aw00fptvnn1u0mrlp5",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.232Z",
+    "updatedAt": "2026-07-09T11:40:10.232Z"
+  },
+  {
+    "id": "cmrdfq7aw00frtvnnf39ehmxd",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-03T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.233Z",
+    "updatedAt": "2026-07-09T11:40:10.233Z"
+  },
+  {
+    "id": "cmrdfq7ax00fttvnnzg3s79of",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.233Z",
+    "updatedAt": "2026-07-09T11:40:10.233Z"
+  },
+  {
+    "id": "cmrdfq7ax00fvtvnniblugppv",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.234Z",
+    "updatedAt": "2026-07-09T11:40:10.234Z"
+  },
+  {
+    "id": "cmrdfq7ay00fxtvnnnj7vyxa4",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.234Z",
+    "updatedAt": "2026-07-09T11:40:10.234Z"
+  },
+  {
+    "id": "cmrdfq7ay00fztvnnaczj89yz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.235Z",
+    "updatedAt": "2026-07-09T11:40:10.235Z"
+  },
+  {
+    "id": "cmrdfq7az00g1tvnnzfhb8scz",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.235Z",
+    "updatedAt": "2026-07-09T11:40:10.235Z"
+  },
+  {
+    "id": "cmrdfq7b000g3tvnnmp47t205",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.236Z",
+    "updatedAt": "2026-07-09T11:40:10.236Z"
+  },
+  {
+    "id": "cmrdfq7b000g5tvnnlkhw38t7",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.236Z",
+    "updatedAt": "2026-07-09T11:40:10.236Z"
+  },
+  {
+    "id": "cmrdfq7b100g7tvnnk79b80rh",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.237Z",
+    "updatedAt": "2026-07-09T11:40:10.237Z"
+  },
+  {
+    "id": "cmrdfq7b100g9tvnnl4zu7oa4",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-04T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.238Z",
+    "updatedAt": "2026-07-09T11:40:10.238Z"
+  },
+  {
+    "id": "cmrdfq7b200gbtvnnmvgjbjjl",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.239Z",
+    "updatedAt": "2026-07-09T11:40:10.239Z"
+  },
+  {
+    "id": "cmrdfq7b300gdtvnns0s3qdiq",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.239Z",
+    "updatedAt": "2026-07-09T11:40:10.239Z"
+  },
+  {
+    "id": "cmrdfq7b400gftvnnqvxt7y03",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.240Z",
+    "updatedAt": "2026-07-09T11:40:10.240Z"
+  },
+  {
+    "id": "cmrdfq7b400ghtvnnrxeu90s4",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.240Z",
+    "updatedAt": "2026-07-09T11:40:10.240Z"
+  },
+  {
+    "id": "cmrdfq7b500gjtvnnikhwifsv",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.241Z",
+    "updatedAt": "2026-07-09T11:40:10.241Z"
+  },
+  {
+    "id": "cmrdfq7b500gltvnnmefy35a2",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.242Z",
+    "updatedAt": "2026-07-09T11:40:10.242Z"
+  },
+  {
+    "id": "cmrdfq7b600gntvnncfdr5lig",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.242Z",
+    "updatedAt": "2026-07-09T11:40:10.242Z"
+  },
+  {
+    "id": "cmrdfq7b600gptvnnindfrvfi",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.243Z",
+    "updatedAt": "2026-07-09T11:40:10.243Z"
+  },
+  {
+    "id": "cmrdfq7b700grtvnn0iy36gez",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-05T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.243Z",
+    "updatedAt": "2026-07-09T11:40:10.243Z"
+  },
+  {
+    "id": "cmrdfq7b700gttvnnn0025an0",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.244Z",
+    "updatedAt": "2026-07-09T11:40:10.244Z"
+  },
+  {
+    "id": "cmrdfq7b800gvtvnnljb62mzy",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.244Z",
+    "updatedAt": "2026-07-09T11:40:10.244Z"
+  },
+  {
+    "id": "cmrdfq7b800gxtvnnifdaqscu",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.245Z",
+    "updatedAt": "2026-07-09T11:40:10.245Z"
+  },
+  {
+    "id": "cmrdfq7b900gztvnnfl6weuy6",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_w_artikel_kota",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Weekly: 150 Artikel Kota | Target: 150 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.246Z",
+    "updatedAt": "2026-07-09T11:40:10.246Z"
+  },
+  {
+    "id": "cmrdfq7ba00h1tvnns2m4qgli",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.246Z",
+    "updatedAt": "2026-07-09T11:40:10.246Z"
+  },
+  {
+    "id": "cmrdfq7ba00h3tvnnp925ax1p",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.247Z",
+    "updatedAt": "2026-07-09T11:40:10.247Z"
+  },
+  {
+    "id": "cmrdfq7bb00h5tvnn9za0c1vp",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_w_ide_konten",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Weekly: 25 Ide Konten | Target: 25 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.247Z",
+    "updatedAt": "2026-07-09T11:40:10.247Z"
+  },
+  {
+    "id": "cmrdfq7bb00h7tvnng0w486ad",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.248Z",
+    "updatedAt": "2026-07-09T11:40:10.248Z"
+  },
+  {
+    "id": "cmrdfq7bc00h9tvnn8q66avgk",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.248Z",
+    "updatedAt": "2026-07-09T11:40:10.248Z"
+  },
+  {
+    "id": "cmrdfq7bc00hbtvnny11dffgp",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.248Z",
+    "updatedAt": "2026-07-09T11:40:10.248Z"
+  },
+  {
+    "id": "cmrdfq7bd00hdtvnnf1s8ko7j",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-06T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.249Z",
+    "updatedAt": "2026-07-09T11:40:10.249Z"
+  },
+  {
+    "id": "cmrdfq7bd00hftvnnkuxmfbs5",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.250Z",
+    "updatedAt": "2026-07-09T11:40:10.250Z"
+  },
+  {
+    "id": "cmrdfq7bd00hhtvnn74d7yeai",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.250Z",
+    "updatedAt": "2026-07-09T11:40:10.250Z"
+  },
+  {
+    "id": "cmrdfq7be00hjtvnnvksg55y3",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.251Z",
+    "updatedAt": "2026-07-09T11:40:10.251Z"
+  },
+  {
+    "id": "cmrdfq7be00hltvnnq22l4iil",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.251Z",
+    "updatedAt": "2026-07-09T11:40:10.251Z"
+  },
+  {
+    "id": "cmrdfq7bf00hntvnnjxbho8op",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.251Z",
+    "updatedAt": "2026-07-09T11:40:10.251Z"
+  },
+  {
+    "id": "cmrdfq7bf00hptvnn6wnfwsfx",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.252Z",
+    "updatedAt": "2026-07-09T11:40:10.252Z"
+  },
+  {
+    "id": "cmrdfq7bg00hrtvnnvowuxyr8",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.252Z",
+    "updatedAt": "2026-07-09T11:40:10.252Z"
+  },
+  {
+    "id": "cmrdfq7bg00httvnnwiasxvhf",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.253Z",
+    "updatedAt": "2026-07-09T11:40:10.253Z"
+  },
+  {
+    "id": "cmrdfq7bh00hvtvnnfmyzfy6x",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-07T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.254Z",
+    "updatedAt": "2026-07-09T11:40:10.254Z"
+  },
+  {
+    "id": "cmrdfq7bi00hxtvnnqdtwtd8v",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.254Z",
+    "updatedAt": "2026-07-09T11:40:10.254Z"
+  },
+  {
+    "id": "cmrdfq7bi00hztvnnyue04d8x",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.255Z",
+    "updatedAt": "2026-07-09T11:40:10.255Z"
+  },
+  {
+    "id": "cmrdfq7bj00i1tvnnhznhrnyx",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.255Z",
+    "updatedAt": "2026-07-09T11:40:10.255Z"
+  },
+  {
+    "id": "cmrdfq7bk00i3tvnner85b79j",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.256Z",
+    "updatedAt": "2026-07-09T11:40:10.256Z"
+  },
+  {
+    "id": "cmrdfq7bk00i5tvnn8efkf7uu",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.257Z",
+    "updatedAt": "2026-07-09T11:40:10.257Z"
+  },
+  {
+    "id": "cmrdfq7bl00i7tvnnjohqbtr2",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.257Z",
+    "updatedAt": "2026-07-09T11:40:10.257Z"
+  },
+  {
+    "id": "cmrdfq7bl00i9tvnnb8je5knm",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.257Z",
+    "updatedAt": "2026-07-09T11:40:10.257Z"
+  },
+  {
+    "id": "cmrdfq7bm00ibtvnn65p3tj0t",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.258Z",
+    "updatedAt": "2026-07-09T11:40:10.258Z"
+  },
+  {
+    "id": "cmrdfq7bm00idtvnn8kbidm95",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-08T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.258Z",
+    "updatedAt": "2026-07-09T11:40:10.258Z"
+  },
+  {
+    "id": "cmrdfq7bm00iftvnnk7h3dwqn",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_artikel_kota",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: Publish 30 Artikel Kota | Target: 30 Artikel | Actual: 0 Artikel | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.259Z",
+    "updatedAt": "2026-07-09T11:40:10.259Z"
+  },
+  {
+    "id": "cmrdfq7bn00ihtvnn6dawbli6",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_judul_artikel",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 3 Judul Artikel Baru | Target: 3 Judul | Actual: 0 Judul | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.260Z",
+    "updatedAt": "2026-07-09T11:40:10.260Z"
+  },
+  {
+    "id": "cmrdfq7bo00ijtvnnal2nj9mk",
+    "userId": "cmr8ln975000jraa6qzikrebc",
+    "metricKey": "pm_prospek_baru",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 5 Database Prospek Baru | Target: 5 Prospek | Actual: 0 Prospek | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.260Z",
+    "updatedAt": "2026-07-09T11:40:10.260Z"
+  },
+  {
+    "id": "cmrdfq7bp00iltvnno2e63m3t",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_ide_konten",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 5 Ide Konten | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.261Z",
+    "updatedAt": "2026-07-09T11:40:10.261Z"
+  },
+  {
+    "id": "cmrdfq7bp00intvnn2vmc0y0q",
+    "userId": "cmr8ln90p000graa6a1f9vc20",
+    "metricKey": "at_konten_produksi",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 5 Konten Diproduksi | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.262Z",
+    "updatedAt": "2026-07-09T11:40:10.262Z"
+  },
+  {
+    "id": "cmrdfq7bq00iptvnny8py8nc2",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_ide_viral",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 5 Ide Viral | Target: 5 Ide | Actual: 0 Ide | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.262Z",
+    "updatedAt": "2026-07-09T11:40:10.262Z"
+  },
+  {
+    "id": "cmrdfq7bq00irtvnnwppzvhpg",
+    "userId": "cmr8ln950000iraa65cnj75om",
+    "metricKey": "cc_konten",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 5 Konten | Target: 5 Konten | Actual: 0 Konten | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.263Z",
+    "updatedAt": "2026-07-09T11:40:10.263Z"
+  },
+  {
+    "id": "cmrdfq7br00ittvnnoxr5r68a",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_riset_sdm",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 1 Riset SDM Perusahaan | Target: 1 Riset | Actual: 0 Riset | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.263Z",
+    "updatedAt": "2026-07-09T11:40:10.263Z"
+  },
+  {
+    "id": "cmrdfq7br00ivtvnnuuaub2eg",
+    "userId": "cmr8ln92w000hraa6r764brcz",
+    "metricKey": "dm_analisa_kompetitor",
+    "value": 0,
+    "date": "2026-07-09T00:00:00.000Z",
+    "note": "Daily: 1 Analisa Kompetitor | Target: 1 Analisa | Actual: 0 Analisa | Quality: 100 | Deadline: 100 | Approval: Approved",
+    "createdAt": "2026-07-09T11:40:10.264Z",
+    "updatedAt": "2026-07-09T11:40:10.264Z"
+  }
+]

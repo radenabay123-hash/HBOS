@@ -1,0 +1,232 @@
+[
+  {
+    "id": "cmr7gs8oc0000raghflljfnsf",
+    "key": "company_name",
+    "value": "PT. HAFARA AQIBA NUSANTARA",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Nama perusahaan",
+    "updatedAt": "2026-07-09T05:50:08.965Z",
+    "createdAt": "2026-07-05T07:23:07.885Z"
+  },
+  {
+    "id": "cmr7gs8og0001raghlw7n9qpr",
+    "key": "company_address",
+    "value": "Jl. Tanjung Sariloyo Sambongdukuh, Kab. Jombang, Jawa Timur",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Alamat perusahaan",
+    "updatedAt": "2026-07-09T05:50:08.964Z",
+    "createdAt": "2026-07-05T07:23:07.888Z"
+  },
+  {
+    "id": "cmr7gs8oh0002raghvnc60pro",
+    "key": "company_phone",
+    "value": "081324511570",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Nomor telepon",
+    "updatedAt": "2026-07-09T05:50:08.966Z",
+    "createdAt": "2026-07-05T07:23:07.890Z"
+  },
+  {
+    "id": "cmr7gs8ok0003ragh23lr53ef",
+    "key": "company_email",
+    "value": "info@hafaragroup.com",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Email perusahaan",
+    "updatedAt": "2026-07-09T05:50:08.996Z",
+    "createdAt": "2026-07-05T07:23:07.892Z"
+  },
+  {
+    "id": "cmr7gs8om0004ragh7w8q6b39",
+    "key": "company_website",
+    "value": "www.HafaraGroup.com",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Website perusahaan",
+    "updatedAt": "2026-07-09T05:50:09.069Z",
+    "createdAt": "2026-07-05T07:23:07.894Z"
+  },
+  {
+    "id": "cmr7gs8on0005raghqe5ki4ij",
+    "key": "company_npwp",
+    "value": "01.234.567.8-091.000",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "NPWP perusahaan",
+    "updatedAt": "2026-07-09T05:50:09.031Z",
+    "createdAt": "2026-07-05T07:23:07.895Z"
+  },
+  {
+    "id": "cmr7gs8op0006raghmnmeqnxt",
+    "key": "company_logo",
+    "value": "/uploads/company_logo_1783318416374.png",
+    "category": "COMPANY",
+    "type": "IMAGE",
+    "description": "Logo perusahaan (URL)",
+    "updatedAt": "2026-07-09T05:50:08.979Z",
+    "createdAt": "2026-07-05T07:23:07.897Z"
+  },
+  {
+    "id": "cmr7gs8oq0007raghj83cgn4i",
+    "key": "company_signature",
+    "value": "",
+    "category": "COMPANY",
+    "type": "IMAGE",
+    "description": "Tanda tangan digital direktur",
+    "updatedAt": "2026-07-09T05:50:09.070Z",
+    "createdAt": "2026-07-05T07:23:07.899Z"
+  },
+  {
+    "id": "cmr7gs8os0008raghv2gkfipz",
+    "key": "director_name",
+    "value": "M. Aqil Baihaqi",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Nama direktur untuk tanda tangan",
+    "updatedAt": "2026-07-09T05:50:09.071Z",
+    "createdAt": "2026-07-05T07:23:07.900Z"
+  },
+  {
+    "id": "cmr7gs8ot0009ragha347n9y2",
+    "key": "director_title",
+    "value": "Direktur Utama",
+    "category": "COMPANY",
+    "type": "TEXT",
+    "description": "Jabatan direktur",
+    "updatedAt": "2026-07-09T05:50:09.092Z",
+    "createdAt": "2026-07-05T07:23:07.902Z"
+  },
+  {
+    "id": "cmr7gs8ov000aragh8k8mpqig",
+    "key": "bank_name",
+    "value": "Bank Mandiri",
+    "category": "FINANCE",
+    "type": "TEXT",
+    "description": "Nama bank utama",
+    "updatedAt": "2026-07-05T07:23:07.903Z",
+    "createdAt": "2026-07-05T07:23:07.903Z"
+  },
+  {
+    "id": "cmr7gs8ox000braghxoep1zgu",
+    "key": "bank_account",
+    "value": "1234567890",
+    "category": "FINANCE",
+    "type": "TEXT",
+    "description": "Nomor rekening",
+    "updatedAt": "2026-07-05T07:23:07.905Z",
+    "createdAt": "2026-07-05T07:23:07.905Z"
+  },
+  {
+    "id": "cmr7gs8oz000cragh8lptxd4i",
+    "key": "bank_account_name",
+    "value": "PT Hafara Aqiba Nusantara",
+    "category": "FINANCE",
+    "type": "TEXT",
+    "description": "Atas nama rekening",
+    "updatedAt": "2026-07-05T07:23:07.907Z",
+    "createdAt": "2026-07-05T07:23:07.907Z"
+  },
+  {
+    "id": "cmr7gs8p1000draghoc7meyv0",
+    "key": "app_name",
+    "value": "HBOS",
+    "category": "APPEARANCE",
+    "type": "TEXT",
+    "description": "Nama aplikasi singkat (tampil di header)",
+    "updatedAt": "2026-07-09T06:00:12.050Z",
+    "createdAt": "2026-07-05T07:23:07.909Z"
+  },
+  {
+    "id": "cmr7gs8p2000eraghsrjtxd3q",
+    "key": "app_full_name",
+    "value": "Hafara Business Operating System",
+    "category": "APPEARANCE",
+    "type": "TEXT",
+    "description": "Nama lengkap aplikasi",
+    "updatedAt": "2026-07-09T06:00:15.093Z",
+    "createdAt": "2026-07-05T07:23:07.911Z"
+  },
+  {
+    "id": "cmr7gs8p4000fragh8pv1aap0",
+    "key": "primary_color",
+    "value": "#2563eb",
+    "category": "APPEARANCE",
+    "type": "TEXT",
+    "description": "Warna utama aplikasi (hex)",
+    "updatedAt": "2026-07-09T06:00:12.058Z",
+    "createdAt": "2026-07-05T07:23:07.912Z"
+  },
+  {
+    "id": "cmr7gs8p5000graghvhqcg4nn",
+    "key": "theme",
+    "value": "blue",
+    "category": "APPEARANCE",
+    "type": "TEXT",
+    "description": "Tema aplikasi",
+    "updatedAt": "2026-07-09T06:00:12.063Z",
+    "createdAt": "2026-07-05T07:23:07.914Z"
+  },
+  {
+    "id": "cmr7gs8p8000hraghmca0c5wg",
+    "key": "tax_default_pph_badan",
+    "value": "22",
+    "category": "TAX",
+    "type": "NUMBER",
+    "description": "Tarif PPh Badan default (%)",
+    "updatedAt": "2026-07-05T07:23:07.916Z",
+    "createdAt": "2026-07-05T07:23:07.916Z"
+  },
+  {
+    "id": "cmr7gs8p9000iraghqcm7bn7c",
+    "key": "tax_default_ppn",
+    "value": "11",
+    "category": "TAX",
+    "type": "NUMBER",
+    "description": "Tarif PPN default (%)",
+    "updatedAt": "2026-07-05T07:23:07.918Z",
+    "createdAt": "2026-07-05T07:23:07.918Z"
+  },
+  {
+    "id": "cmr7gs8pb000jragh4f1f5vae",
+    "key": "tax_default_pph23",
+    "value": "2",
+    "category": "TAX",
+    "type": "NUMBER",
+    "description": "Tarif PPh 23 default (%)",
+    "updatedAt": "2026-07-05T07:23:07.919Z",
+    "createdAt": "2026-07-05T07:23:07.919Z"
+  },
+  {
+    "id": "cmrbj31sj0000t62hj80i8xc3",
+    "key": "app_logo",
+    "value": "",
+    "category": "APPEARANCE",
+    "type": "IMAGE",
+    "description": "Logo aplikasi (favicon, sidebar, login)",
+    "updatedAt": "2026-07-09T06:00:12.033Z",
+    "createdAt": "2026-07-08T03:38:36.115Z"
+  },
+  {
+    "id": "cmrbj31sm0001t62h83bmq6aq",
+    "key": "document_logo",
+    "value": "",
+    "category": "COMPANY",
+    "type": "IMAGE",
+    "description": "Logo untuk dokumen PDF",
+    "updatedAt": "2026-07-09T05:50:09.090Z",
+    "createdAt": "2026-07-08T03:38:36.119Z"
+  },
+  {
+    "id": "cmrcyk8w20009saw2cjwem3pl",
+    "key": "assessment_bonus_per_point",
+    "value": "0",
+    "category": "ASSESSMENT",
+    "type": "NUMBER",
+    "description": "Bonus multiplier (Rp) per point penilaian tim",
+    "updatedAt": "2026-07-09T04:42:03.093Z",
+    "createdAt": "2026-07-09T03:39:38.883Z"
+  }
+]
