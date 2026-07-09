@@ -50,6 +50,8 @@ model User {
   chatMessages      ChatMessage[]
   chatRoomsCreated  ChatRoom[]      @relation("ChatRoomCreator")
   assessments       TeamAssessment[]
+  agendas           DailyAgenda[]      @relation("AgendaOwner")
+  trainerAgendas    DailyAgenda[]      @relation("AgendaTrainer")
 }
 
 // ===================== SUBSCRIPTION MANAGER (Owner only) =====================
@@ -138,6 +140,7 @@ model Client {
   events          Event[]
   documents       Document[]
   financeTxns     FinanceTransaction[]
+  agendas         DailyAgenda[]
 
   @@index([status])
   @@index([assignedToId])
@@ -160,7 +163,57 @@ model Event {
 
   client          Client?  @relation(fields: [clientId], references: [id])
   assistantTrainer User?   @relation(fields: [assistantTrainerId], references: [id])
+  agendas         DailyAgenda[]
 
+  @@index([tanggal])
+}
+
+// ===================== DAILY AGENDA (Asisten Trainer) =====================
+
+model DailyAgenda {
+  id          String   @id @default(cuid())
+  userId      String   // pemilik agenda (Asisten Trainer)
+
+  // === IDENTITAS AGENDA ===
+  tipe        String   // BRIEFING, MEETING, EVENT, KUNJUNGAN, LAINNYA
+  judul       String   // judul agenda
+  tanggal     DateTime // tanggal agenda
+  jamMulai    String   // "08:00"
+  jamSelesai  String   // "11:30"
+
+  // === LOKASI & MEETING ===
+  lokasi      String?  // alamat lokasi / nama tempat
+  linkMeeting String?  // URL Zoom/Meet untuk meeting online
+  isOnline    Boolean  @default(false) // true = online meeting
+
+  // === KETERANGAN PESERTA ===
+  clientId    String?  // link ke CRM Client (opsional)
+  picNama     String?  // nama PIC klien
+  picTelepon  String?  // nomor WA/telepon PIC
+  trainerId   String?  // link ke User (trainer yang didampingi)
+
+  // === EVENTTERKAIT ===
+  eventId     String?  // link ke Event (opsional)
+
+  // === DETAIL ===
+  catatan     String?  // catatan bebas
+  checklist   String?  // JSON array: [{item, done}]
+
+  // === STATUS & REMINDER ===
+  status      String   @default("UPCOMING") // UPCOMING, IN_PROGRESS, DONE, CANCELLED
+  reminder    String?  // "1HARI", "1JAM", "30MENIT", "15MENIT", null
+
+  // === TIMESTAMP ===
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // === RELATIONS ===
+  user        User     @relation("AgendaOwner", fields: [userId], references: [id])
+  client      Client?  @relation(fields: [clientId], references: [id])
+  event       Event?   @relation(fields: [eventId], references: [id])
+  trainer     User?    @relation("AgendaTrainer", fields: [trainerId], references: [id])
+
+  @@index([userId, tanggal])
   @@index([tanggal])
 }
 

@@ -12,7 +12,7 @@ import {
   Target, Receipt, FileText, Trophy, UserCog, FileBarChart, Settings, KanbanSquare, Layout,
   UserCircle, Sparkles, Database, CreditCard, Megaphone, MessageCircle, Bell, BellOff,
   Home, Briefcase, ClipboardList, BarChart3, MoreHorizontal, X, TrendingUp, Film, Calculator,
-  Award,
+  Award, CalendarClock,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -26,6 +26,7 @@ export type ViewKey =
   | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban"
   | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions"
   | "teamstructure" | "broadcast" | "mynotifs" | "chat" | "assessment"
+  | "agenda"
   | "kalkulator-pajak" | "laba-rugi"
   | "finance-arus-kas" | "finance-pajak" | "finance-dokumen-pajak"
   | "finance-neraca" | "finance-laporan" | "pengaturan-pajak";
@@ -51,6 +52,7 @@ const MENU: MenuItem[] = [
   // === MENU UTAMA ===
   { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ALL_ROLES, category: "UTAMA" },
   { key: "absensi", label: "Absensi", icon: Clock, roles: ALL_ROLES, category: "UTAMA" },
+  { key: "agenda", label: "Agenda Harian", icon: CalendarClock, roles: ["ASSISTANT_TRAINER", "PROJECT_MANAGER", "OWNER"], category: "UTAMA" },
   { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ALL_ROLES, category: "UTAMA" },
   { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ALL_ROLES, category: "UTAMA" },
   { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ALL_ROLES, category: "UTAMA" },
