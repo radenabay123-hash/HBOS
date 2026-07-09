@@ -95,12 +95,12 @@ export async function GET(req: Request) {
     async function computeDeadlineScore(userId: string): Promise<number> {
       const start = new Date(ref.getFullYear(), ref.getMonth(), 1);
       const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 1);
-      const total = await db.dailyTask.count({
-        where: { userId, tanggal: { gte: start, lt: end } },
+      const total = await db.kanbanCard.count({
+        where: { assigneeId: userId, tanggal: { gte: start, lt: end } },
       });
       if (total === 0) return 0;
-      const done = await db.dailyTask.count({
-        where: { userId, status: "SELESAI", tanggal: { gte: start, lt: end } },
+      const done = await db.kanbanCard.count({
+        where: { assigneeId: userId, status: "DONE", tanggal: { gte: start, lt: end } },
       });
       return Math.round((done / total) * 100);
     }

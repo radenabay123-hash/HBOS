@@ -42,20 +42,20 @@ export async function GET(req: Request) {
     });
     const scoreMap = new Map(scores.map((s) => [s.targetUserId, s._sum.points || 0]));
 
-    // Task completion stats
-    const tasks = await db.dailyTask.groupBy({
-      by: ["userId"],
-      where: taskWhere,
+    // Task completion stats (from KanbanCard, merged from DailyTask)
+    const tasks = await db.kanbanCard.groupBy({
+      by: ["assigneeId"],
+      where: taskWhere as any,
       _count: { _all: true },
     });
-    const taskMap = new Map(tasks.map((t) => [t.userId, t._count._all]));
+    const taskMap = new Map(tasks.map((t) => [t.assigneeId, t._count._all]));
 
-    const completedTasks = await db.dailyTask.groupBy({
-      by: ["userId"],
-      where: { ...taskWhere, status: "SELESAI" },
+    const completedTasks = await db.kanbanCard.groupBy({
+      by: ["assigneeId"],
+      where: { ...taskWhere, status: "DONE" } as any,
       _count: { _all: true },
     });
-    const completedMap = new Map(completedTasks.map((t) => [t.userId, t._count._all]));
+    const completedMap = new Map(completedTasks.map((t) => [t.assigneeId, t._count._all]));
 
     // Content production count
     const contents = await db.contentIdea.groupBy({

@@ -211,8 +211,8 @@ export async function GET(req: Request) {
     });
     const teamProductivity = await Promise.all(
       teamMembers.map(async (t) => {
-        const tasksDone = await db.dailyTask.count({ where: { userId: t.id, status: "SELESAI", tanggal: { gte: periodStart, lte: periodEnd } } });
-        const tasksTotal = await db.dailyTask.count({ where: { userId: t.id, tanggal: { gte: periodStart, lte: periodEnd } } });
+        const tasksDone = await db.kanbanCard.count({ where: { assigneeId: t.id, status: "DONE", tanggal: { gte: periodStart, lte: periodEnd } } });
+        const tasksTotal = await db.kanbanCard.count({ where: { assigneeId: t.id, tanggal: { gte: periodStart, lte: periodEnd } } });
         const contents = await db.contentIdea.count({ where: { userId: t.id, statusPublish: "PUBLISHED", tanggal: { gte: periodStart, lte: periodEnd } } });
         const articles = await db.article.count({ where: { userId: t.id, status: "PUBLISHED", createdAt: { gte: periodStart, lte: periodEnd } } });
         return {

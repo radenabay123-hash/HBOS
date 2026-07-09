@@ -22,12 +22,12 @@ export async function GET(req: Request) {
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
     // ===== Common: today's tasks, monthly tasks, content, articles =====
-    const todayTasks = await db.dailyTask.findMany({
-      where: { userId: user.id, tanggal: { gte: todayStart, lt: todayEnd } },
+    const todayTasks = await db.kanbanCard.findMany({
+      where: { assigneeId: user.id, tanggal: { gte: todayStart, lt: todayEnd } },
       orderBy: { createdAt: "desc" },
     });
-    const monthTasks = await db.dailyTask.count({ where: { userId: user.id, tanggal: { gte: monthRange.start, lte: monthRange.end } } });
-    const monthTasksDone = await db.dailyTask.count({ where: { userId: user.id, status: "SELESAI", tanggal: { gte: monthRange.start, lte: monthRange.end } } });
+    const monthTasks = await db.kanbanCard.count({ where: { assigneeId: user.id, tanggal: { gte: monthRange.start, lte: monthRange.end } } });
+    const monthTasksDone = await db.kanbanCard.count({ where: { assigneeId: user.id, status: "DONE", tanggal: { gte: monthRange.start, lte: monthRange.end } } });
 
     // Content ideas (Tugas Konten) - this user
     const myContents = await db.contentIdea.findMany({
@@ -70,8 +70,8 @@ export async function GET(req: Request) {
       const [contents, articles, tasksDone, tasksTotal] = await Promise.all([
         db.contentIdea.count({ where: { userId: user.id, statusPublish: "PUBLISHED", tanggal: { gte: mStart, lte: mEnd } } }),
         db.article.count({ where: { userId: user.id, status: "PUBLISHED", createdAt: { gte: mStart, lte: mEnd } } }),
-        db.dailyTask.count({ where: { userId: user.id, status: "SELESAI", tanggal: { gte: mStart, lte: mEnd } } }),
-        db.dailyTask.count({ where: { userId: user.id, tanggal: { gte: mStart, lte: mEnd } } }),
+        db.kanbanCard.count({ where: { assigneeId: user.id, status: "DONE", tanggal: { gte: mStart, lte: mEnd } } }),
+        db.kanbanCard.count({ where: { assigneeId: user.id, tanggal: { gte: mStart, lte: mEnd } } }),
       ]);
       monthlyData.push({ month: monthNames[m], contents, articles, tasksDone, tasksTotal });
     }
@@ -84,7 +84,7 @@ export async function GET(req: Request) {
       const [contents, articles, tasksDone] = await Promise.all([
         db.contentIdea.count({ where: { userId: user.id, statusPublish: "PUBLISHED", tanggal: { gte: yStart, lte: yEnd } } }),
         db.article.count({ where: { userId: user.id, status: "PUBLISHED", createdAt: { gte: yStart, lte: yEnd } } }),
-        db.dailyTask.count({ where: { userId: user.id, status: "SELESAI", tanggal: { gte: yStart, lte: yEnd } } }),
+        db.kanbanCard.count({ where: { assigneeId: user.id, status: "DONE", tanggal: { gte: yStart, lte: yEnd } } }),
       ]);
       yearlyData.push({ year: String(y), contents, articles, tasksDone });
     }
