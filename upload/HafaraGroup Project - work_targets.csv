@@ -1,0 +1,681 @@
+id,employee,targetType,targetName,targetValue,actualValue,unit,qualityScore,ownerApproval,date,deadlinePunctuality
+wt-pm-1,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2024-11-20,100
+wt-pm-2,Project Manager,Daily,3 Judul Artikel Baru,3,2,Judul,100,Approved,2024-11-20,100
+wt-pm-3,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,90,Approved,2024-11-20,100
+wt-pm-4,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,2024-11-20,100
+wt-pm-5,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,2024-11-20,100
+wt-at-1,Assistant Trainer,Daily,5 Ide Konten,5,6,Ide,100,Approved,2024-11-20,100
+wt-at-2,Assistant Trainer,Daily,5 Konten Diproduksi,5,,Konten,100,Approved,2024-11-20,100
+wt-at-3,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,2024-11-20,100
+wt-cc-1,Content Creative,Daily,5 Ide Viral,5,4,Ide,100,Approved,2024-11-20,100
+wt-cc-2,Content Creative,Daily,5 Konten,5,3,Konten,100,Approved,2024-11-20,100
+wt-dm-1,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,2,Riset,100,Approved,2024-11-20,100
+wt-dm-2,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,1,Analisa,100,Approved,2024-11-20,100
+2e4e31ca-7d78-4cd8-96a3-5d9af5f6435c,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-05,100
+d0e51fd0-c5ea-41b8-8c51-57bc32b897cd,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-05,100
+07917351-781f-46ff-ac04-13fbc66b25a6,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-05,100
+8cbb16d5-3d23-4d0b-ab4f-69b3ddd04650,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,2026-06-01,100
+dba4f125-fa32-40f3-8cc8-b53f441b9452,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,2026-06-01,100
+2bd06f09-e4c6-44ab-833b-1416ae5b6efe,Assistant Trainer,Daily,5 Ide Konten,5,5,Ide,100,Approved,2026-06-05,100
+4bf440d3-bffa-4bd2-9b2f-8729f33152d8,Assistant Trainer,Daily,5 Konten Diproduksi,5,1,Konten,100,Approved,2026-06-05,100
+4d514bb8-45c5-49a9-8476-e23c0e162e63,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,2026-06-01,100
+2a53f2be-5b3a-4637-bd97-94fc4d34fcb4,Content Creative,Daily,5 Ide Viral,5,5,Ide,100,Approved,2026-06-05,100
+f210d5ea-0e45-4d23-87df-dd8600cbc069,Content Creative,Daily,5 Konten,5,3,Konten,100,Approved,2026-06-05,100
+970f5e05-9d4e-4676-8cf5-65cc7d5c8ac1,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,1,Riset,100,Approved,2026-06-05,100
+0c03ec85-43b8-49d4-8a45-d53b9af769a0,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,1,Analisa,100,Approved,2026-06-05,100
+c8944508-a287-4ec3-a239-9bafa381d5e8,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-06,100
+ad610301-2df1-4c5b-9275-95968632b5ce,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-06,100
+9009e1f4-8753-42ab-a82a-fc466618f140,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-06,100
+26962be7-0b76-4ff2-8ee8-9ce77ee8b34f,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-06,100
+8f4c7dd1-898c-49a1-9e25-cafdfb9ef6ee,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-06,100
+0f9b3a24-8ff6-43ee-9517-33d038f109b7,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-06,100
+5e3d7dd0-d8d9-41ae-ab40-a4f439ca1a4e,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-06,100
+0a94c467-7c91-4b45-940e-657975ed87c0,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,2026-06-06,100
+9128c038-14f1-4c4e-9093-39141143348d,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,2026-06-06,100
+6861a8b7-404a-49a5-8dfc-d2ff0746fdbb,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-07,100
+51abed24-0029-40b8-8d61-ed0c1ce1b0e8,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-07,100
+0c1757a3-04a3-4390-a555-e3e6aef6f899,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-07,100
+06f5f086-7701-4436-9891-23fe3ff87898,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-07,100
+367c1fdb-1c54-47d5-8dff-c6903052273e,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-07,100
+eeb9dc1f-6b4c-4c8d-9ca4-a917f281c0ef,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-07,100
+20329ef0-789c-4684-973a-a5a90b1a6fba,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-07,100
+dbf844fd-54f8-4df6-a31a-359d5e304dd3,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,2026-06-07,100
+4d3c012a-0ca6-45ab-ba21-451e6b3af8fe,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,2026-06-07,100
+447ec171-e47f-4523-9cfd-8c79b6c497ab,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-08,100
+5ee93b1f-19d2-4da0-a459-edbce30ef0e3,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-08,100
+1ac6d512-b8eb-4d78-ba4b-7da9f167862a,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-08,100
+e1b7b4f5-9fa1-4dc8-8431-f03db1ad7631,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,2026-06-08,100
+090560d2-066c-4725-9dad-b3bef104d5d1,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-08,100
+c01e78e9-5f44-4767-a0a3-60f82a592c99,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-08,100
+c1ed6c43-c953-4765-8717-5c77db0adae7,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,2026-06-08,100
+f2ac37a9-454a-4c54-b21f-f516cfe85d49,Content Creative,Daily,5 Ide Viral,5,5,Ide,100,Approved,2026-06-08,100
+b23e8c47-6f69-430b-8416-b106963562b6,Content Creative,Daily,5 Konten,5,2,Konten,100,Approved,2026-06-08,100
+1686b3cb-65f3-40a4-8789-ff62b3e8fafe,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,1,Riset,100,Approved,2026-06-08,100
+45d92833-5101-485f-9ba4-906174538ac5,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,1,Analisa,100,Approved,2026-06-08,100
+283dd000-dc19-4ef8-9275-30d573b85b4c,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-09,100
+cdb29100-3323-43e6-a280-1a870428f603,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-09,100
+d4f083f6-b2ce-4e94-89c2-f67fdb996480,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-09,100
+476dc923-8cdd-489a-9007-274d20726e90,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-09,100
+b2c1f31f-5517-42bf-9eff-fd6ba3b369d2,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-09,100
+d0dccd64-62d9-401d-bd3b-01dba780a0af,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-09,100
+a05fc328-1476-46ca-a09c-c61398047736,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-09,100
+c3e76010-d322-4451-a04a-ade00913a611,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,1,Riset,100,Approved,2026-06-09,100
+d5120411-be41-4a28-b129-530fde217e2e,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,1,Analisa,100,Approved,2026-06-09,100
+6725be97-635d-4c07-bc17-b92c185b760f,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-10,100
+8037bac8-e4cc-4911-8ac8-a30dfad6b2fb,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-10,100
+7bdb6a12-4030-456c-b1f1-c4fee08141f0,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-10,100
+14bc024a-34a7-4db8-b9db-25f6e4ef27ca,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-10,100
+892d041d-a682-4d3b-ac46-321ba34af07f,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-10,100
+4ce62bed-3d79-45b1-a4e8-189ae0b4afdf,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-10,100
+25f967e4-0930-4c01-9bcd-e03d12adb614,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-10,100
+47be41f5-7ad3-441e-8bec-dc1da419627f,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,1,Riset,100,Approved,2026-06-10,100
+54ffa4f5-2fbd-4137-866f-681139dc3983,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,2026-06-10,100
+e1f4a0cb-895b-48a4-89e7-62bc2c58112d,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-11,100
+6dc00a3b-507e-4da7-84a2-3602bdb3a300,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-11,100
+3a39e2e3-58a9-42c1-925a-0d740da70498,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-11,100
+b1505b72-e651-4f2e-95da-31d8d99c2aad,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-11,100
+b31f1ea9-c176-4fef-88fc-61664cf75ce6,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-11,100
+da47a4c7-b913-4492-b4ba-4d47247708cd,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-11,100
+137e3b9f-27a6-4c6b-9739-0a21f63f78da,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-11,100
+5815535c-a96c-49ae-8d31-11ca5908983a,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,2026-06-11,100
+ec80ceb9-b0fe-476f-835e-4e33a68cbf7c,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,2026-06-11,100
+0897f793-a274-4080-8eea-4b2d8b824dd3,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,2026-06-12,100
+54e77513-0d37-4b19-b751-6136ac9566fd,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,2026-06-12,100
+6ba35d16-274e-427d-bfc7-57778e9f8ca1,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,2026-06-12,100
+21bb2bff-ce53-42f5-9df5-e3b72f57a928,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,2026-06-12,100
+c4953c65-4e7e-445f-8c39-60081858d507,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,2026-06-12,100
+8fad24a1-b788-4435-a47f-667914cce791,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,2026-06-12,100
+c7d0acb6-470b-42cd-8212-1fd2205fa8b0,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,2026-06-12,100
+a7983da8-7d1f-48b3-8d58-b3fcf15c157f,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,2026-06-12,100
+a3bf7549-5994-40d8-8983-e01ab4bf258c,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,2026-06-12,100
+62a9fd24-0e44-4b7f-b9bd-907930407d44,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,08-06-2026,100
+96b1a0d4-8f16-4d41-abb5-9c05271aace4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,2026-06-01,100
+fbcc8451-a73f-478c-ac5e-a4f7b724c5ab,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,08-06-2026,100
+9229a396-7426-47a6-b4da-0d1185c501f3,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,2026-06-01,100
+84198c5c-e02a-48dc-8823-c21c56eebf73,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,2026-06-01,100
+6287df75-61f1-4135-886f-f08e3487660b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2241491b-a8e8-4b8e-83a4-444b86656f0b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+24d44330-17e7-4dcd-92e8-fd9e0005bca7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+03fef568-ba56-459f-ae85-76539054b1da,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5bbc825e-2c0e-4145-9213-fa6ef3851721,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+446cda60-8b4b-4802-a9b6-94f5b9c89128,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+79d9922d-b6f1-4aa1-97dd-a549dcd267b1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4affc2a3-b721-495c-ab7a-6124b3314c51,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+230cd10e-e77c-4bd9-bfaa-c1d8ca8ca72a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f7b4c007-80ca-4c83-a788-3dce34ff3c45,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ba207a81-ec3d-4bb7-948c-58f7612b5095,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+878d9806-86fa-48db-b07a-25fc9df2aafc,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+8193241e-1ffd-4fd7-b5f6-70898d6c3102,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+747a36f4-a17f-4f4d-a5c6-177f657e1c66,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f3a4c8ea-451b-432b-adb5-60f0837e2dcf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+672cd69f-1a0a-4e88-bd4f-81a4acbe5756,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4c6cd139-a5e0-4061-9e05-115cbc54b519,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c3787dbf-c934-440d-af91-c46e44848598,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d2bb2686-5fc4-428f-9deb-876de6f4b1ff,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7b77250f-2fb3-437e-ac21-84b36287dd10,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4feec4bc-e3d3-4d54-8ca2-9802d04c6e88,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+8bc357a8-ce47-4519-a9ec-226dca114a72,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5198f8f9-dfe5-4f5f-9f9e-3983b2275a20,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5f5a0b46-b767-4fa3-9693-5e94f401970e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7a451ee1-fd42-4a93-9818-6e1820a24d00,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b663991b-2942-4eb9-885c-7c275641f815,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c9a53d9a-f280-4fc7-abfb-fae5acf00a07,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+24bfff26-a69b-49c9-bfa7-81c2e320e5ef,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+31163f28-ac6c-49cb-b57c-f35e6039a152,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+86df6225-3ea9-4235-b80c-6c35cd1b4097,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3b33207b-d34b-4011-a435-9376680518df,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+55587879-bbe8-4746-9900-1f79af6138fe,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c559dc6b-f03d-4956-b6ad-84d79dccabd9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d32ccedc-d1f5-4542-86d9-72681c6da40d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a938db36-08a4-4d6a-a133-b971979e8240,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3fa47ac0-cb16-4eee-9db0-be3281cb2222,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b965dc96-2f4d-4706-aafb-495c7a6e7f03,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+28bc90fd-5ea2-4a6f-92c5-b44d2cd29e54,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c0767a92-46a5-4476-b3b0-8a7bbe762d8f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+451edde7-bfb9-4c16-b2ee-08630eb08211,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4522049a-48c0-4073-91ff-7934d2f623f7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+705e7936-967b-432a-9664-e64f56bf3fc2,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9a081790-f63f-454e-b17d-acbc18f3fed6,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4deae131-e678-484a-95c0-fa1af511dfbc,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3fdd13df-f476-4c54-b1ac-11a3f0ea4f88,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e2e611b3-d027-47ce-bbca-a143428808fc,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dec0ba8b-4ebc-49f1-900b-a602e99acd11,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d84922df-5a5a-4390-ab7e-6981dfec7127,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+bdec39be-e1b2-40b1-ba15-71069d1adaab,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6e7772d8-f5e3-4d03-933e-3f1f46304bb4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1c22de26-3708-43c2-a642-87f62784fe60,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+45085830-44a6-411d-80f1-90754a1dffee,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+89d053fb-0f72-4641-b4b1-417a2fa3eb1d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2caf7d45-ea87-4b78-8b7f-143736228db1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e98b52eb-f63a-4cad-9b28-69c26970c538,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+815a146e-2244-4c02-ae70-17e443ee1995,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a29696f3-291f-4bd0-8a04-52c90123418b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c6db314a-697a-457d-8255-b7efc6e13d18,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+fc459734-a1e2-4156-97eb-37135ee11406,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a6bf527b-e309-4c35-83e1-936d5ab0df2c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7bd83778-0cf7-4728-90d5-2df6dcb58420,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ce913b5a-6e6d-4747-9158-7715032f059e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3813906b-5010-411d-b193-b5c9221cd0ed,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ed174f75-dada-4fe6-bdf6-b16bb37aee80,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+33c63960-caf4-438c-82d1-81894207bfd7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c6542d51-e7ea-4324-92c0-0655e2739f38,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a7a41e9f-d17d-4a39-8075-63e2e97c3729,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+49caaa47-b2ec-4024-b551-51a1f22c7af0,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e428887e-de00-41d5-bc65-0ba37b025033,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b0ba2775-407d-4212-833b-b8567f952f9a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a8571ad6-6e00-41a6-a47e-f437d0f5de47,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+06517237-bce3-49bb-9c97-b34cd0813d0b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+88a1bd87-4281-461e-8d40-17a5d0c10393,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+11d28b86-7de2-4884-ac5d-7090ee08ae61,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2fb69266-ee5d-4690-b698-bfbc21454c5f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+edb4284a-8bac-467d-b9d7-a43d671fc01d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+cdab2f26-26d4-4aee-a5b8-cc8e86d35ba4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ca752428-4d22-42c2-a789-8db1f78c6367,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+827c3dd8-bf9b-4abc-8782-34ee7ab0c3ff,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c6902e9f-7d63-4079-803b-dbde136fa5ae,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+df828ce3-7d23-4af2-ab27-b97f56ba16c3,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3d0ff7dd-9d39-4c24-bd82-20478ee85173,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d13533c1-4233-450f-84f3-2e3ecc07126c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+849c23ae-0e81-461a-beb7-748bd9d2fd8e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c8eead25-c70b-4d67-a9d7-1583637d3cf7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b25d5568-a775-4ea9-ab7a-44637db8e5c3,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a9f75037-1755-4384-a473-294fd8be254f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+050b9f36-cef9-44c2-affd-afdc7d03cf55,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f8f80823-4ca1-42fd-a7a3-e3a85df21a37,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1f43ed09-dd24-46fd-8193-529c6c2639ed,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+512f1594-3b35-424b-bd7d-e400a206d5c1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7b6643f7-4258-4339-aa48-c6f325069b7d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e2216936-b41a-42b4-a589-6d4ac519f024,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e870c331-ecf4-4ea4-af64-36ca71533a83,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d1d9d4e8-eceb-44e8-b534-d0102f29de38,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+62f51176-e245-4512-a1d3-963b9387d1de,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4e159898-01d8-4632-a6f3-6c2040b50ae8,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+93f22687-71a2-42b1-82f7-8afe1dc39694,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+68786c39-e571-4632-8e80-359ed66a8371,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d3925b6c-f9cb-4133-944f-112925cfd984,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+02f478b2-3e44-40d2-bcc6-2ca7a09e04f7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d4285024-c019-4421-a5d5-ec82f1ede439,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+451e8e63-5a96-4190-81dd-12a55b7118a9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+339279c1-7d8e-47fb-8757-f9031dfc3b31,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+64fe33f0-fe1e-4583-a6a7-52a2bc27b7e1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5962cc99-6411-45e7-908b-fe28401b3694,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5761db9b-c65d-421a-ac88-969550cc20d4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+831dc7f8-c188-4ad0-bbfd-fda71daa7577,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+67e6241e-a18a-400c-8418-2efcabb1e658,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+fe8d9fdd-1554-46ca-b5c5-c9f45ba9c581,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f2ec5fcc-5be6-41d4-88f4-a25dc01b5ef4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b98fa156-5f01-4e29-908c-ddb837bb1159,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+eaf7783e-2a20-4fb2-97ae-a150e6f9e9ed,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+52e7ed8e-cc77-4108-b15a-4a6e9e04c55d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+fcc4e3bb-a36b-46b8-aea8-3b8244f619f2,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f8dc3445-6a2c-4709-9db2-307584b20289,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d9e77f09-78ce-4a1c-8aee-9d81953ab213,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+86bdc810-448c-4462-8ef4-4ce9246d8ff1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1b47e0c3-9c56-4405-b0e4-88595bf6fb46,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+007d4b79-9a70-4fef-8d33-b131fad032ef,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b3c65908-52e5-4991-841f-6fdaaf627c11,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9b0717ec-b38e-42f9-b9b6-80853ff76e11,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4db84ad0-7611-4d1f-b405-13f852081e85,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+021bcdfc-da1a-40a4-ae61-68ece1ee70ea,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9041a053-9576-4734-82ab-720083d80b1a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+84ba95ea-97e0-41ac-b028-a4d7b7de7a21,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+43cd48df-89ef-498b-8045-01003beb45ea,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ae5af94a-f999-4538-a6ee-6b1f654eea91,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6509a736-d108-40a2-9692-08f82f79e7c5,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+46ba80fe-ad57-49cd-a7fe-9791b304fe93,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5917cab5-d10f-4162-86ee-8b7ed87827c0,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1f830342-7d68-4625-bdcd-1674e3afdb01,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f335f01c-c7cb-4f26-9c31-7e809d1ba347,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+216c6abc-7ae4-4efc-b32a-4700ba13e2a2,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+94b40915-052d-4d23-9348-c414eb45686b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e57591b8-e0be-4f01-962c-1651809c6e48,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+abe544f1-16b5-4f5f-be10-c23c312d2c17,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+24e99d6d-9b18-4738-b8d3-a4662d0eb63d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d6206ab7-81b2-4c14-a1d9-955e555d619d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+aad6d8d2-4f3b-4135-a7c6-9fb7f4440a6a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+913f5624-711e-4712-9287-df785d710944,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+57a30908-56e5-4e8d-aea3-fb1e7b91c308,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+36dbaa60-a958-47f4-bb1b-e41ab1ef1929,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f4424f97-3464-4d29-bd8c-ee03bc3d5f0f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e4eb859a-6070-4ac8-aa7c-65cab8affcf8,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+0552d443-96ed-4c47-908c-dfacbcb4ac2c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4baea363-4d71-4ee3-8db9-97ce8bf19fae,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b0069258-0bb3-4c42-b544-fdbe6d3b58a9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+76d990b8-ecd3-4da0-862b-4a657b2a7b57,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+66011202-cab5-436f-ae6a-0cfde0d56f8f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+cfb3e5d5-5980-4845-ad1a-324b2d7a16d5,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+bb947233-5699-4df1-bb7f-ac125f95ce61,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dbb84094-7c84-4a04-bb55-b74911bf24d9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+72eed9c6-f707-4019-a7f1-473d9e3f82ca,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+8abddeef-6c75-490e-9202-fb9cdc147ce1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+cff65501-0932-46ae-ba98-354b2316173b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4ce1428b-d5ab-40f1-b1e7-26f40493e4b8,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+da1fba49-5b04-4ab1-aea4-39868c0c2127,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+00a06233-ece8-4eb2-9c1c-c228dcba78d4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d45acc7b-e7cb-4720-9af9-9030c26fc849,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ae772a5b-2203-40c6-afe6-2c7fc341818a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4d98e07c-7d1d-4645-94f1-438bc7d17cf4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+486c4983-e8c8-4fc9-83c9-bb67f9bdebf9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2b4f4f1b-b864-4667-bb7b-69f8476e102f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+8f613903-d6a6-43e3-92bf-cbae14dc4bdc,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b89b0770-9614-4990-9791-c2497f9d7e63,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+387e5329-29db-4018-86ac-428223c464c3,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+459c4a2f-2894-4055-830e-ade03109c21e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b649ecbb-c217-4638-ba00-dc12bc503478,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9308c855-934d-4a39-aa6f-d40c6b05a574,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+cf57ceae-3bc3-47cc-9a74-fcc2ef93baf9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b39bf48e-8e08-4f6d-851c-9ea0b8f69cd6,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+338e290a-706b-4656-a5ad-2e87876176ae,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+897dc208-04e2-4619-b5ff-5086c9b07e7f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a4bb8aea-d960-4cd8-9e72-90b9d65d5361,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4d2d0d43-aafe-492c-b47c-cc810d3b3e56,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+968e0cb7-90b9-4349-9844-2f84485ceebd,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d1411382-1b88-4ae9-ae65-b60399ee8dfe,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+96c48e72-d383-43a6-a0be-3edac8178aa5,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5c69282f-a6a0-4f3c-a6cd-90b41709504e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+59ea0258-1356-4cce-bce1-680c2711378f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+be7ae012-e9ba-4669-b097-dc83304a46cf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7a7632ad-7097-4a47-a17b-143facd7a92b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6d924174-cebf-4431-bae8-9c0127f99adf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+5bc62f18-13c1-4c24-ae55-4eccd3a61346,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2982af6e-a0a0-4402-a326-acb8879b0b1b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dc740f6d-73e0-4e91-a0a3-a23ee344ce45,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+90ecf4b6-f006-4db2-8bbb-91a15df40f0d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dcddd559-d300-4c04-af85-33da7d1e14c8,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+93ae810d-133c-40bd-936a-76297fedab2c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1c37966a-e9cc-44ef-91c3-2334e3b4ba76,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e67b2962-edcc-4f6b-8f53-3bef0d30820e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+467c9168-e0a7-47ca-b2f7-ae09015ea2e0,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b4562129-25fb-4018-8f5b-44cf9555b031,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+91471e4a-682c-4f96-b133-353f76198dd2,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d14d8445-ce92-40e5-a153-b91b5e88eaea,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+938658cf-cfa2-40b9-bd43-5e707158f378,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+06757bd4-0c76-40e5-bce3-22217a2da042,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+aaa37248-3dda-44a9-92a8-ff32735ff7c4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e4a6ba28-2a45-405b-b277-8c438c769b0e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dd40f777-f283-4da6-b1ad-273c804bc5e5,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+cfaac7a1-3bd9-40d9-95d4-da169d5db76d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+05535f97-a62e-4b47-be2a-8425c5c3a922,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ddb59cf0-aa39-4da2-8270-2f3967f6b688,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+0355d72c-a3ad-413b-9b23-2d516f118a3e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+71e52a3e-0d3b-4d90-8501-976f3f6d3359,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+53f39d81-b128-43ca-9c6a-fb2542ca9a96,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+476e1d8f-f43f-49af-857e-9d12cc7f3957,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+1b8b8805-2859-43ff-a942-be637ce5711a,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7dd97c17-195e-4c19-b787-d2478ecb74aa,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a3060690-fe91-4c77-9b30-4c757c3217cf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7c6cc9b7-4454-4d47-b5f7-a3ef4056658c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b96b03ad-2b80-4a2a-917a-ac146f0a58b6,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4413374b-5b8b-4d3a-8719-9644a2794cdb,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+27ce85c5-9621-44bc-899f-b4c71a7511f1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a1d62d94-82be-4870-899b-2b3e485a4a14,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+076a14e6-9bd8-41d9-9466-1d5bf3c71ea4,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b24cbe6a-0cf9-4183-993d-0e02e20c4de1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b3c0bd86-0819-4289-9bba-6c157da8c8c9,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6711b5ad-e0f5-4bc8-ad43-10708798189b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+0ddecc32-0a15-4b92-9376-e0f1d1f29c25,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2021ba17-3284-4e8c-b7f7-88e91ec8dc1f,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+eec5fc76-d7d3-4088-9285-abab05ea0adf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+62975c3c-0ab3-413e-a5f3-654d9b879054,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dc2dae0d-5840-4875-93fb-6a2dfccd47e0,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+78d89cc9-ee28-426f-8b92-eaf653b12a09,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f2dbe52f-6647-4834-85f0-58936c86dd83,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+584d6231-287b-4998-898c-2fb78817aaa2,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+64693dad-11cb-4276-920b-b3f14ea330b3,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+899a1287-56f1-4ab8-87aa-ff947526fd55,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+7140daf6-2aec-4771-beeb-4ed07f651ff0,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f71e254e-861c-4faf-bd2b-db7e15ce2662,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+36bc794a-6c59-4ee0-abd1-82d4c010c1fe,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6abe4088-025c-4736-88e4-342f7609b9c1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4e25e354-e26e-4a6f-9f2e-158e0f413f49,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2b8ce43f-e856-4a9c-91b8-d18263c3941b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+4df481c4-6ada-4a34-b051-fd439d0f3326,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+0644c649-f3fe-43ff-81a9-16520bdae9ad,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+2c154bf0-d1c9-4f21-bf9b-4e1ae48e65ed,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f5eb14bf-3764-4338-bfc2-f95329e721c1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+6b22672c-183c-43e8-96d8-2df27db09b9b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+06fa9725-a852-4eb8-8fe7-62731301bc77,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+0efaab7d-22d6-4982-acfc-52a7a8ee7f75,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a3d55f7c-3618-4cf6-ae5e-c01d94c9e385,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9f7617b2-e267-4ada-ac2e-d351420bb6fe,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+39bc6967-4c99-46e1-aacf-9a64c632cce1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+da55ea82-f7ca-4b79-a91e-5657fd2cc610,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+f79e1479-5509-432c-81dc-ec645be70e0d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c50f9e3a-2bdd-4271-8157-ff4d8bd89813,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9c3e1531-de60-4842-b1c5-b3bc9f01af6b,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ec6482e4-e058-4c3c-8784-954fe4af5f0e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+ee18892b-3c9a-4d01-8aa5-1bd2b6189d19,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,13-06-2026,100
+36b64444-c8af-47dc-973e-5c2007e703ae,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,13-06-2026,100
+b67c52ed-1539-40e4-a56e-d9e9033b022b,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,13-06-2026,100
+7e729ab9-12b2-4b58-8cfc-240c5085744e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+907a6c28-db3b-4eef-a2cd-e38161cd90eb,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,13-06-2026,100
+6c6c413e-ef66-48c4-8d96-40336556cba1,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,13-06-2026,100
+e7883f3c-49a0-4256-84dd-217903ea0619,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,13-06-2026,100
+d4ea8e46-0473-4f38-a81f-75234090f887,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,13-06-2026,100
+eb576e4a-2f19-40ac-9ad3-af18a565f764,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,13-06-2026,100
+a9ff5b22-ed0d-4255-a6cf-1c21b5b00fb7,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,13-06-2026,100
+a56f7543-487d-4e23-80b6-0a2b72aba611,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,14-06-2026,100
+604722fe-453f-4669-aee6-3e7a6a826184,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,14-06-2026,100
+e4cfcecb-b27c-4987-abb3-d8c6c857f06e,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,14-06-2026,100
+31c7dbb6-9c67-4a2b-a6d1-52a9f3981b2d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+c2b1dec2-bd36-437a-8ed4-f3964d574e4b,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,14-06-2026,100
+8d6642e5-b35f-4327-a8e9-2ba04e4a1b1a,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,14-06-2026,100
+0e79e094-c736-4f49-88cd-1607426ec2cb,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,14-06-2026,100
+c53932c5-46b9-487b-90f1-49656d755952,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,14-06-2026,100
+d9094c57-48d0-4b52-bdd6-7bf1722ab41b,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,14-06-2026,100
+ce776ac8-b66f-42a9-b60c-40a0bf775db5,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,14-06-2026,100
+998becbe-ef93-482b-bb5b-7d5902ef41a0,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,15-06-2026,100
+a70c2695-3367-4f4d-b095-66df4501724e,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,15-06-2026,100
+6ef9d4e9-953b-4e5e-ba75-8bb9063dce9e,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,15-06-2026,100
+e57fdaeb-179d-44f6-baf4-051ba3238e56,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+126a9192-f6b0-4e09-b13d-4374a75020eb,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+3b63207c-3347-4a33-9b34-db47645b2595,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,15-06-2026,100
+ea323b16-bf3a-4348-918c-548096528c8e,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,15-06-2026,100
+317f8b0d-ef7f-4349-b43a-dfea22c729f7,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+1612af4d-2cd8-4f23-af32-7fde4a026d5b,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,15-06-2026,100
+48773b06-9f88-4662-8f24-dc5d0f345990,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,15-06-2026,100
+27bccbbe-d9fb-425d-83b0-1714e435928a,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,15-06-2026,100
+ba248875-4523-471e-a13d-25907b114de6,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,15-06-2026,100
+e1e7afc5-30bf-494a-8ebe-e1da0847784c,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,16-06-2026,100
+e2137f02-e07a-409d-8f25-2a28f86b8e3b,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,16-06-2026,100
+9ac66834-5864-4433-9a3c-53780310c974,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,16-06-2026,100
+6adafd0e-0d30-40be-8742-203d8280a6bd,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+faaec592-858b-4562-9647-c746d6686c48,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b47e0743-b36f-4e54-923b-92189effa2fc,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,16-06-2026,100
+b5f70288-34fc-4f8a-a39a-a7b9002d52c3,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,16-06-2026,100
+5bf67fa6-f045-4858-b865-479bf45b5da6,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+27a06875-0746-4f12-984c-1c2ccc47c995,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,16-06-2026,100
+d6b94f4b-09a9-4c5f-93b0-c69ac1168b2f,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,16-06-2026,100
+d813aeb2-7ddc-4d8d-bcbb-07ff0e92e949,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,16-06-2026,100
+4f51e320-b372-4f0a-8ac9-70dc5e42efcb,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,16-06-2026,100
+2092ff87-406b-4ba8-afdc-94e7d556d1c7,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,17-06-2026,100
+dda132ee-b819-4106-bbfa-0b6192d81257,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,17-06-2026,100
+3c73f556-44a0-4775-92ff-725509d6047f,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,17-06-2026,100
+04782a63-038c-41d2-92fd-67bad1dbd8cb,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+2be93442-0faa-41ca-a3b0-0a124668ca9c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b702dbe4-e026-428b-99c3-79af560474bc,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,17-06-2026,100
+0ef95f90-7a6e-4fb0-92b2-7abd0adbbde4,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,17-06-2026,100
+2b8fc924-9a39-434a-829a-145ab29d948d,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+7307fba1-fb95-4d4a-951b-de380ee80485,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,17-06-2026,100
+26089846-bd61-4be2-987e-e340243960d1,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,17-06-2026,100
+a5ef71f0-5897-444a-a9c5-d507b62e8c39,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,17-06-2026,100
+e6cb5b13-98d5-4190-9233-34fb34fba868,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,17-06-2026,100
+debf845f-b4e1-45b4-a457-2d9875d3a9a9,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,18-06-2026,100
+cc5a1128-5d5a-4e19-8185-88070befc890,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,18-06-2026,100
+23a5e8a8-b796-45bd-a624-3c5068ac846e,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,18-06-2026,100
+c891e641-d09a-4bee-b630-44dc987f1e53,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+0958f22b-f57a-4267-977b-f1e3bcaec949,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+02b0a2e6-0fb6-4e28-9ef2-d4a7a4d73d08,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,18-06-2026,100
+2bfb3a50-1674-433a-bb65-a725ee7337ff,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,18-06-2026,100
+388020f4-03a5-46cb-a97b-bc98f6d1981d,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+c22d1d50-504b-4f41-aa74-c79b6126d800,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,18-06-2026,100
+2f8351a2-5066-4b6c-a8a6-3259426f0d97,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,18-06-2026,100
+c587b204-c413-4cae-91cb-25000849a533,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,18-06-2026,100
+2f7e5e5f-3ec8-44b8-bf82-11e15f8a920b,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,18-06-2026,100
+b602bb66-6cee-4dcb-b27a-ef6fdaf31064,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,19-06-2026,100
+0f665a94-982a-4ea3-b2b4-23c137aaee71,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,19-06-2026,100
+3c7dc19d-ab52-49a8-abb6-cedd5b58b005,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,19-06-2026,100
+7387d300-b907-4f82-8cae-debb42f358d2,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+cf89edb2-ba5b-418a-873d-6130eb39d0d7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+db50adad-bc09-403c-aa35-dcd4da7e3f76,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,19-06-2026,100
+08c5a062-bdbf-42fa-89a1-356611946350,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,19-06-2026,100
+c9d88c19-89e5-4352-8fcf-ab2c08ae1c1b,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+05d0fa4b-78d1-4b33-aef5-3496872f125c,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,19-06-2026,100
+bc48c57b-f550-486a-8fd5-fe25926382bb,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,19-06-2026,100
+e2970789-4b09-41ac-892f-472ac53a043d,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,19-06-2026,100
+5d5b8372-df03-4386-b0c9-ee739a965e1a,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,19-06-2026,100
+242aba9a-a64a-46f5-bce4-c00c4a475f7e,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,2026-06-19,100
+04cb6f2f-4f68-446f-86e1-ce25730723b3,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,20-06-2026,100
+cd4abd8d-30df-45db-b990-cd735e9ce6cb,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,20-06-2026,100
+0a983f31-f55d-49a0-b7cc-0ec9fdee9de6,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,20-06-2026,100
+8300c2f0-d2f2-4268-b4e5-a294cb32d1bb,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+a0671ae9-6a37-437d-86e1-80fe750b970d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a7b34c79-bf69-4afd-8fb5-c3cf1be4b111,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,20-06-2026,100
+2cc96618-1612-4490-9f37-e6ea34c2e9e0,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,20-06-2026,100
+83a9979d-344a-430f-8bde-ea9826e33e9c,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+26064126-90c0-4bfb-911c-7a525d06933f,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,20-06-2026,100
+7f0651f5-7e6d-4f53-92a4-21cee66e15a3,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,20-06-2026,100
+6c4c66ae-a85d-4450-ab18-b403b8d5ba30,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,20-06-2026,100
+08529350-d4c0-4ef3-b3a0-384ce72a6912,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,20-06-2026,100
+cacb0368-ebc5-41ed-afe5-d06af5038579,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,20-06-2026,100
+9960822b-4b02-4049-94f6-d159c69dddf9,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,21-06-2026,100
+d38c59ab-e3b7-412c-bbe9-08151d8d1c67,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,21-06-2026,100
+3c36ecfc-f1ca-4f28-8498-1a46d51aea6d,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,21-06-2026,100
+9f67ff72-ba13-449d-842a-aea95148d0ba,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,15-06-2026,100
+e50d35f5-bc20-4179-a6ca-7b2172f67ef1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+336509be-1979-478f-a7ab-1573c1646866,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,21-06-2026,100
+28455c0a-0c6d-41f3-9234-2540199ec806,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,21-06-2026,100
+16b2a1fa-383d-40ef-b331-b12f7cd2623a,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,15-06-2026,100
+9f5df675-3f6f-4280-bd57-ae81963dfc33,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,21-06-2026,100
+9cbf7973-4984-42f4-8532-6cb64e807db5,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,21-06-2026,100
+5290e66e-cd05-4f8c-8170-a8700e0280db,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,21-06-2026,100
+a7d38903-7cab-4789-b594-e1495dde3857,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,21-06-2026,100
+38b7167a-9ffe-46c2-9107-c86949d06ec9,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,21-06-2026,100
+810d4c5f-d7fe-4a98-9b71-1d8bb7f175bb,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,22-06-2026,100
+3ec31fe7-d250-4f17-8a92-e9b7ba308d31,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,22-06-2026,100
+217d2eb6-31d5-43ae-b46d-ca123b37fad3,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,22-06-2026,100
+015adeed-6bdd-41c9-ae1a-d0136909ab6c,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+97861c15-0198-44cb-8a30-c154169ae97d,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+a510b607-55bd-4d30-b79d-7b66ca98dd4c,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,22-06-2026,100
+790bacf6-c695-491d-bcb7-b411d638e1e3,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,22-06-2026,100
+6d0c23cb-ccbc-415c-bc41-d24211eeba5f,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+dd38cb78-9e59-4b20-adaa-ee72db49dcc9,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,22-06-2026,100
+0b4e1b7d-ba12-4f89-b5b0-ceaf61e03651,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,22-06-2026,100
+af65233c-6740-483a-85ff-067de65286a3,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,22-06-2026,100
+21974851-086c-47f9-a238-1ceecc599e69,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,22-06-2026,100
+a1a03dc5-d508-4d2a-92da-47b4280df782,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,22-06-2026,100
+e902d545-8d97-48a8-9cc5-d57f3ef8fa30,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,23-06-2026,100
+1e634c58-17f8-41ee-94a2-6fdc249d853b,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,23-06-2026,100
+d0c67b35-764d-4424-8142-732b15fe894a,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,23-06-2026,100
+11c4c694-439a-4769-8c22-1763bc302868,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+befd4cf6-ea35-4d3b-b2ab-1477ffa4cba8,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+d1617a93-32d0-463d-a91e-66e766b3cf64,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,23-06-2026,100
+5fa7cc1c-c484-4084-b6dd-0c7f9b9570b8,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,23-06-2026,100
+c724ac4a-d735-4be0-b967-b5af64a8da33,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+1bb5f904-fd13-4436-87c6-ed0d86b135b8,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,23-06-2026,100
+b16eff19-a20f-4459-934c-c501850fd866,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,23-06-2026,100
+3a1bc6be-8e8c-49d6-91da-a40a7a3d76fc,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,23-06-2026,100
+7c9cddca-2349-4aeb-85c3-72c478c3c79d,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,23-06-2026,100
+09314d11-568b-4859-8b62-aaa41c2aa5be,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,23-06-2026,100
+dfc8a2f6-6a10-442d-bb5a-89dcd876802a,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,24-06-2026,100
+899865b0-fe89-4d00-80e8-72524445ec11,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,24-06-2026,100
+c1e81e7f-7ec2-479e-a06d-ad840a1e8336,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,24-06-2026,100
+f647e5d1-0392-43d0-8141-f7e103916331,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+256de767-0e60-4484-bae2-0498f8bf36b7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b3cf1f3d-73cd-44ef-9497-113f2e65876f,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,24-06-2026,100
+b5a7da2c-29aa-42bf-9e89-b574ff9740e7,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,24-06-2026,100
+be43e54f-391c-4755-8d0f-f562ffeda7fe,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+c5132c85-b810-4520-95a3-bc940ad975e1,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,24-06-2026,100
+797b079d-75e6-473a-8b78-1c3023d3b7e5,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,24-06-2026,100
+f36f228f-7e9d-4239-bd0e-1d49004ac95d,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,24-06-2026,100
+fb85ce73-2e44-4956-8b4d-688efb29b9df,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,24-06-2026,100
+2edfb4d7-b6c2-42c5-a35a-8e2eae3e53f9,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,24-06-2026,100
+ad0f661d-489f-4f68-931c-67ec6ed60761,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,25-06-2026,100
+6883bb48-0ac2-44bc-9180-3d71d7291ab3,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,25-06-2026,100
+61461199-585b-4a05-8ef0-fbcf26f9ad43,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,25-06-2026,100
+54dacfb2-f46a-42de-98ee-5ffe15258bcd,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+fbfee8fa-0434-4ba1-bb71-d53d5a0b9377,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+68deda3d-60e9-40ef-943d-952cd5e09335,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,25-06-2026,100
+7b36c451-a678-43fb-b3d3-9ce8adc9f9cc,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,25-06-2026,100
+9d43dd71-be02-4879-be95-b36e827de81e,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+9317ad6c-ead4-40a9-8e60-9466f9804bad,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,25-06-2026,100
+e5d59a6d-6fd5-4a3a-aa90-69de7b2a1eaa,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,25-06-2026,100
+d5cf7471-acda-4d8a-a5d1-b3ac11eba691,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,25-06-2026,100
+0a1e4985-e552-4d55-a946-1163052de3b0,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,25-06-2026,100
+5c202e45-4ed3-4bc7-8143-daa965df7076,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,25-06-2026,100
+726cfc55-0b9c-4b0b-ac9c-c99751f57e7f,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,26-06-2026,100
+3f5df034-74ab-4040-ad2c-9af1a509224a,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,26-06-2026,100
+595709e8-1e25-440f-8430-ac5965d779a9,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,26-06-2026,100
+5edaa70b-0164-444e-b454-1fae4553c972,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+df65605c-219f-4589-a382-925ca9a08161,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+9a071475-decf-4542-9e0e-364f30c032d0,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,26-06-2026,100
+bbf2ab48-2cb1-41f2-90ae-60c8a459cac0,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,26-06-2026,100
+6cca8420-1f43-4b14-86a1-bffab6f267de,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+ca103f74-6e18-4a31-b488-03ccbb689e48,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,26-06-2026,100
+b7a7054e-8ae8-4621-b55b-17ac4370b551,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,26-06-2026,100
+0b718475-ee93-44b4-9d56-a832ac64bb02,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,26-06-2026,100
+c4fa79c2-a621-4c69-9bcc-19ad68038f2f,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,26-06-2026,100
+f88af2de-c4ce-4a6f-999e-34106059aeca,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,26-06-2026,100
+5dfa20de-34e2-4efc-817e-db24c5ed42d3,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,27-06-2026,100
+42f355cf-7b6d-4647-a093-f8e81c2f1bfc,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,27-06-2026,100
+c75dc09f-88a7-4b3a-8400-26914ebce645,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,27-06-2026,100
+b3f5fbfe-2dbb-4653-b6e4-08fa51dfcbc0,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+877d51a2-5a92-4273-bd78-5cf38984ff8e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+e088dac6-8140-4228-bb5e-7053d13c5381,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,27-06-2026,100
+843780c0-da58-4ced-8626-f774c99998b2,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,27-06-2026,100
+89fc4f99-16c1-4a45-b3f6-836fdb68fe65,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+1e9de0dd-507e-4af1-913f-976eafa1d5de,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,27-06-2026,100
+a4123369-09c6-4b3c-aac1-94e9496fb246,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,27-06-2026,100
+f4b31870-461b-46a9-93b5-07e530485130,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,27-06-2026,100
+7e942e63-b492-4325-aa57-697fcce5153f,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,27-06-2026,100
+7b5cccc8-646c-4bb6-af24-bf638587bc69,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,27-06-2026,100
+a118f7dd-f3e0-4d29-9145-2c2a810b1066,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,28-06-2026,100
+8a55b41b-1086-4b62-971b-84fe35adcc2b,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,28-06-2026,100
+7b5895e8-b8e2-4cbd-8820-fb184707fef5,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,28-06-2026,100
+fb007738-3706-48f9-852e-1d830a810006,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,22-06-2026,100
+cef0d1a8-8460-4b22-981f-ea2ef43ffb97,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+69d9617b-55db-44f9-9d10-12c74475b4c1,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,28-06-2026,100
+1f22abc8-951e-4fdc-a291-c5508c27e363,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,28-06-2026,100
+398c73cc-96dd-4bb3-ba94-075b0f7e52e8,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,22-06-2026,100
+bd529ba4-81a5-48c0-a392-d094d6ee8a1a,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,28-06-2026,100
+6954c418-2b77-49e5-a682-d2acf8905333,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,28-06-2026,100
+8a42556f-91d5-42da-b10d-30120a55d291,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,28-06-2026,100
+5a8e07b3-b7ce-4142-8591-7d17ce694a8b,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,28-06-2026,100
+24bd6c9d-dd4a-472a-951d-661b3c47828a,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,28-06-2026,100
+727dc590-1c51-43e0-ac39-320dc1e6b54d,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,29-06-2026,100
+35cd1688-c400-476d-9fa7-df3455a42e52,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,29-06-2026,100
+63f84cfc-eea5-4e76-9f23-08fed9c5efcf,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,29-06-2026,100
+d340df8d-ddb7-4d0a-b22b-7f7caa8dfc0f,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+dd9bbf2d-380f-40f5-8861-3084a1c4a739,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+dd9cb263-3764-46eb-937e-87c9321bfc62,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,29-06-2026,100
+b9d6fc94-8fa7-4d70-b048-fd65a148f91f,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,29-06-2026,100
+a4fca1b1-29be-4b5a-9ae5-a060f48b8b78,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+2be4e1fb-9e67-4da8-921e-54d9abfb0103,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,29-06-2026,100
+f31692da-3e85-49ce-9fa5-ba5cb32ebafa,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,29-06-2026,100
+de7bd536-123a-4ad8-a5f4-a48836045634,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,29-06-2026,100
+e84e7c34-eac5-4539-b298-3d449bb5a864,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,29-06-2026,100
+16f87777-889f-4183-8d95-28fdd2e6894c,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,29-06-2026,100
+ab0eacec-803f-4a73-a176-9c243bc12e92,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,30-06-2026,100
+e414e5db-692c-4bc7-bae1-31f757ca7272,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,30-06-2026,100
+d9a099d9-1831-4dd1-9f6f-d3a34cc6c33f,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,30-06-2026,100
+4006d775-e513-4829-9531-60e3333d53bc,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+1a52d224-6fa6-4d00-8432-dc1b6f2f05cc,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,06-2026-01,100
+b64a7fff-a546-4b4e-a21d-376670346b81,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,30-06-2026,100
+05a50e92-e788-4d94-8085-4d8f66566fc3,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,30-06-2026,100
+38d25398-f205-4c14-b817-5106943f119c,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+2cfcff86-4cdf-46f8-a3af-90d4bcc4b365,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,30-06-2026,100
+561184a7-2659-4f83-bc7d-57333a6c9595,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,30-06-2026,100
+c1d21d6f-b71b-4487-ac17-2d4d32388dd9,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,30-06-2026,100
+1ded9229-0787-49c9-83cb-9052edce2c82,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,30-06-2026,100
+1cb22ab7-2a17-4dc8-8a33-7ebfc8de5e8b,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,30-06-2026,100
+be05e251-8daa-4906-81fd-ae391a49461b,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,01-07-2026,100
+86538c25-f7c0-4560-9941-d35afb074e4e,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,01-07-2026,100
+79a43484-8469-4cef-b39d-c45329172fe3,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,01-07-2026,100
+135903e6-4f00-46e9-b8a7-bfe76d2d6802,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+557a253b-812c-480e-9844-c97253ae867c,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+0f40b8c4-47b1-422e-a274-3aad44937e64,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,01-07-2026,100
+02e2ac29-0e17-4ec4-8dde-62ebb4fc4a83,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,01-07-2026,100
+ee9c7ff0-ec6a-4c5a-88ca-66b6fb224b43,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+257c5865-fbc9-4c8c-950f-0784faa5918b,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,01-07-2026,100
+ae264e1e-a26c-4cef-b12a-573261ebb9d6,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,01-07-2026,100
+aa839c7e-a20f-4325-9aae-af1e60eb92f8,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,01-07-2026,100
+71cd151e-38c4-4531-a737-7d28f3c9f869,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,01-07-2026,100
+fa3b31da-3d48-41e7-bafb-6c619ac7915a,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,01-07-2026,100
+5cc0066b-f35b-47c8-a9c2-72291eeb00b2,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,02-07-2026,100
+b30a5b39-5524-4067-9b68-0196a4e06c04,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,02-07-2026,100
+28e0144e-23a8-46c3-91d4-977bc958789e,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,02-07-2026,100
+d455dee5-b182-4a06-945d-1ab0f976e3f1,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+626933d7-9302-421b-b91f-cbf5720b4be6,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+82131504-9e9d-4ce2-a075-009baeec8455,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,02-07-2026,100
+1d382f9b-05da-45d7-b98e-5202304208ec,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,02-07-2026,100
+48c81cd4-c81a-40ca-bb84-c28077bc54d0,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+84d38963-6892-4cdc-b463-e0556d5e434f,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,02-07-2026,100
+e5b7615b-9efc-4f6d-8856-773ebb9b0ea3,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,02-07-2026,100
+83679c8a-0ccc-4ebe-adc2-f81180f94a59,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,02-07-2026,100
+b9babd77-97ce-4feb-a577-414a41665b5e,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,02-07-2026,100
+dfb1b55e-8268-4856-bf0f-23b78a1229f4,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,02-07-2026,100
+c38ca43e-281d-4774-8f21-e4400df1d2cd,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,03-07-2026,100
+4f43b1a7-31fd-4beb-b4ec-f1ff35e29ddd,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,03-07-2026,100
+5de90478-73fb-49d1-a125-bbd0717ad382,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,03-07-2026,100
+f533edd1-8afb-49f9-aba6-45cbe8a0deae,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+8332d6ee-3802-4566-8349-c6b4d9be0ea7,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+dc272245-2059-4503-aa2c-6374f140cbec,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,03-07-2026,100
+868f7aac-6034-478e-ae97-54a96c9ca0f0,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,03-07-2026,100
+837eb2fd-ba9c-4450-9d67-ccd559ddfa9c,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+8a5ed900-ee76-4f63-8608-17fd20506309,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,03-07-2026,100
+a3a4b6a0-acfd-4f32-b894-168fee677146,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,03-07-2026,100
+91297d6f-20c3-424b-8ca3-b1d1055ee57d,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,03-07-2026,100
+b70772d1-36f5-4e44-8d59-8657f462f633,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,03-07-2026,100
+c1a0366a-10a1-4b5c-90a7-46093f4a0dc0,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,03-07-2026,100
+c01055c9-5d08-496c-a407-5533f11e245b,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,04-07-2026,100
+bfbc0742-97c4-4875-8826-e67c6eb03226,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,04-07-2026,100
+dcfee8b0-7914-4d72-8209-d1a34470cbea,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,04-07-2026,100
+b70f928c-83dd-4ef7-8a58-7838ed026ac3,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+68076493-6a49-4992-888b-4d7b8c76f12e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+de8f412e-e720-4a41-b1c5-c7c5c99704fd,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,04-07-2026,100
+9d8e1aa0-991a-46d8-959b-df328318b8d3,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,04-07-2026,100
+63098e90-313f-4d55-bf56-4c459fd305ee,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+ac1bb0ff-c869-40d1-9a72-fc0f70b50a73,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,04-07-2026,100
+f0dbf2ac-18d3-4229-b614-99d00436d3b6,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,04-07-2026,100
+504f6258-209e-4777-9d72-dd1b9f6e600d,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,04-07-2026,100
+ed2bd5aa-9a59-44ed-8bce-edfd1321a1f0,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,04-07-2026,100
+9eabbe26-2f41-41b4-b1fa-0cdef99315c2,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,04-07-2026,100
+d48e8180-fca9-428a-beef-38236df19f49,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,05-07-2026,100
+565ea788-c228-440e-bb8e-7d34e9b5fccd,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,05-07-2026,100
+6b74725f-560e-4ada-9d56-a5d26f0660d5,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,05-07-2026,100
+e4505a80-d92a-4c06-976b-978ba16ca06c,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,29-06-2026,100
+6dda87e7-7b1f-4c99-8e66-4284a4faaa9e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+d1fd952a-166a-440e-873e-d8780de8ccf8,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,05-07-2026,100
+8a6ab719-a05d-4875-b016-c1f52357c218,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,05-07-2026,100
+285a7d50-f880-44ed-8d3d-6c3c77b09dfc,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,29-06-2026,100
+f0b81ba8-ca8c-49d2-b132-c2960ac7e2c9,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,05-07-2026,100
+c90b6a52-95d5-428d-90b0-271bf8260b8f,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,05-07-2026,100
+e2134a03-67d7-403f-876b-9d783e7c81e2,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,05-07-2026,100
+13354677-658e-488a-b746-7dbaac44f4d5,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,05-07-2026,100
+0bc0f449-e57f-4ac0-96cf-51b7a3d71542,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,05-07-2026,100
+288334e3-986d-4da0-a69d-44b7b154b5fb,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,06-07-2026,100
+869cb585-ceab-4554-bbd2-3d0027f7bce9,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,06-07-2026,100
+45b7f00e-d7e8-4bc0-9f2c-9fc76fa7f2e9,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,06-07-2026,100
+fd0a0a25-e2ef-49c5-8d99-6aedb06f3fe2,Project Manager,Weekly,150 Artikel Kota,150,0,Artikel,100,Approved,06-07-2026,100
+e24d57a0-dc81-48ab-ab5c-a1bfb788340e,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+46dfe342-740a-4c8f-8e9e-290f51922611,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,06-07-2026,100
+e8c187bf-7e24-44bd-aaf2-f2c85a6d6c04,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,06-07-2026,100
+6d55349c-ded5-4423-a654-d1379e0067b2,Assistant Trainer,Weekly,25 Ide Konten,25,0,Ide,100,Approved,06-07-2026,100
+cde22d35-be95-45dd-ac60-e5b467e7bd6a,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,06-07-2026,100
+4039cba7-5c55-4719-a8dc-0964326734f7,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,06-07-2026,100
+81cec080-75d2-43ae-9bfe-f45e858ac7c6,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,06-07-2026,100
+eac373a0-d86f-4b49-ad9f-d6b692bb408d,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,06-07-2026,100
+e2ff076d-927c-4fab-bd8a-c02d261a82ed,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,06-07-2026,100
+ed8344e0-7ef0-481d-8957-2098304abbd1,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,07-07-2026,100
+3bbc581f-3278-4427-9a9c-cd3c1beb901a,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,07-07-2026,100
+63f6b7ad-229a-4e19-b684-cf7e330368b4,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,07-07-2026,100
+4ad4312a-8e6a-4bb3-a6e2-36a4f6a00bdf,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+d5f0b853-4ff4-4c5f-aa0b-0e59270c6070,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,07-07-2026,100
+dfa47faf-ca4c-4ad4-86c5-4390d3ac0543,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,07-07-2026,100
+838b659c-f463-4de1-b5e5-693245236e13,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,07-07-2026,100
+925a22a4-1e91-41ee-b451-d7ebdeea3a56,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,07-07-2026,100
+629bf6af-ff42-4f0c-b764-f884af2901cc,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,07-07-2026,100
+23b995e8-d99a-423f-bf11-d4378c04af2d,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,07-07-2026,100
+4e4fbb72-73dc-4a7c-960a-cb6fa7415193,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,07-07-2026,100
+153e73df-ded8-403d-bf43-e196504137b9,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,08-07-2026,100
+a19afc3a-46cb-4406-85bf-3d522c5f4fa0,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,08-07-2026,100
+77a6d5c6-f3d0-453d-ab59-384feb041213,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,08-07-2026,100
+779c3f1b-b338-4e77-acff-ed86e1749d92,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+1a5cc379-c7a5-438e-807b-90ba01bf730a,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,08-07-2026,100
+571f79fd-da82-450a-b39f-5c043146bb49,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,08-07-2026,100
+3b3b8d2f-3c70-4101-9bda-739a28b8c23d,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,08-07-2026,100
+007d6fd9-3fc2-4e81-98f0-97d74a8c6b66,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,08-07-2026,100
+5f239989-36e7-49b2-8f91-0c30cc4266a3,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,08-07-2026,100
+a0f8e20a-4faf-42b0-8ecf-276e533fcf5e,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,08-07-2026,100
+6ebeb940-400f-403d-94fb-01ca1b5e9255,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,08-07-2026,100
+c6b7e59f-8cc3-4995-aa59-7b69c1aacee4,Project Manager,Daily,Publish 30 Artikel Kota,30,0,Artikel,100,Approved,09-07-2026,100
+e060e1ad-f0f6-4736-99bc-5afe394afb5a,Project Manager,Daily,3 Judul Artikel Baru,3,0,Judul,100,Approved,09-07-2026,100
+2d9f02ec-0f3f-4c48-9219-9e79608069e6,Project Manager,Daily,5 Database Prospek Baru,5,0,Prospek,100,Approved,09-07-2026,100
+71053fae-225d-4eed-a3a5-d199a7ef6fc1,Project Manager,Monthly,600 Artikel Kota,600,0,Artikel,100,Approved,07-2026-01,100
+4b9f20ba-cf12-4212-97d2-1812c403e817,Assistant Trainer,Daily,5 Ide Konten,5,0,Ide,100,Approved,09-07-2026,100
+8437928f-0291-49e0-a7ca-508648f64b37,Assistant Trainer,Daily,5 Konten Diproduksi,5,0,Konten,100,Approved,09-07-2026,100
+c140ee2a-4cb7-4e22-969a-6bc850a3851e,Content Creative,Daily,5 Ide Viral,5,0,Ide,100,Approved,09-07-2026,100
+48a8cf71-dba8-4d1f-b415-5c278caf05a2,Content Creative,Daily,5 Konten,5,0,Konten,100,Approved,09-07-2026,100
+f406e853-acaf-4707-a397-c1f467bc450f,Digital Marketing & IT,Daily,1 Riset SDM Perusahaan,1,0,Riset,100,Approved,09-07-2026,100
+dd0cbed7-74d5-484d-8168-f8328b681dc6,Digital Marketing & IT,Daily,1 Analisa Kompetitor,1,0,Analisa,100,Approved,09-07-2026,100
+2989ca06-de99-4028-9f17-364db13751e2,Project Manager,Daily,3 Artikel Berkualitas,10,0,Artikel,100,Approved,09-07-2026,100
