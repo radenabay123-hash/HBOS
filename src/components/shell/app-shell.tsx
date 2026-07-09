@@ -47,12 +47,11 @@ const MENU: MenuItem[] = [
   { key: "dashboard", label: "Dashboard", icon: Home, roles: ALL_ROLES, mobileTab: true },
   { key: "kanban", label: "Tugas", icon: KanbanSquare, roles: ALL_ROLES, mobileTab: true },
   { key: "scoreboard", label: "Score", icon: Trophy, roles: ALL_ROLES, mobileTab: true },
-  { key: "agenda", label: "Agenda", icon: CalendarClock, roles: ["ASSISTANT_TRAINER", "PROJECT_MANAGER", "OWNER"], mobileTab: true },
+  { key: "agenda", label: "Agenda Pak Aqil", icon: CalendarClock, roles: ["ASSISTANT_TRAINER", "PROJECT_MANAGER", "OWNER"], mobileTab: true },
 
   // === MENU UTAMA ===
   { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ALL_ROLES, category: "UTAMA" },
   { key: "absensi", label: "Absensi", icon: Clock, roles: ALL_ROLES, category: "UTAMA" },
-  { key: "agenda", label: "Agenda Harian", icon: CalendarClock, roles: ["ASSISTANT_TRAINER", "PROJECT_MANAGER", "OWNER"], category: "UTAMA" },
   { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ALL_ROLES, category: "UTAMA" },
   { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ALL_ROLES, category: "UTAMA" },
   { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ALL_ROLES, category: "UTAMA" },

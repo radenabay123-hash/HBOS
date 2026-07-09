@@ -175,7 +175,7 @@ export function AgendaModule({ user }: AgendaModuleProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <CalendarClock className="w-6 h-6 text-blue-600" /> Agenda Harian
+            <CalendarClock className="w-6 h-6 text-blue-600" /> Agenda Pak Aqil
           </h1>
           <p className="text-sm text-slate-500 mt-0.5">Kelola jadwal meeting, event, dan kunjungan harian Anda</p>
         </div>

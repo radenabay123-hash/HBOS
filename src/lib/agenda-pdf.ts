@@ -37,7 +37,7 @@ export async function generateAgendaPDF(data: {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("LAPORAN AGENDA HARIAN", pageWidth / 2, y + 5, { align: "center" });
+  doc.text("LAPORAN AGENDA PAK AQIL", pageWidth / 2, y + 5, { align: "center" });
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text(`Periode: ${data.periodeLabel}`, pageWidth / 2, y + 9, { align: "center" });
@@ -209,7 +209,7 @@ export async function generateAgendaPDF(data: {
   doc.text(`Upcoming: ${upcomingCount}`, margin + 90, y);
   doc.text(`Batal: ${cancelledCount}`, margin + 130, y);
 
-  drawFooter(doc, "Laporan Agenda Harian");
+  drawFooter(doc, "Laporan Agenda Pak Aqil");
 
   return doc.output("arraybuffer");
 }
