@@ -158,10 +158,10 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
                     { label: "Owner", email: "owner@hafara.com" },
-                    { label: "Project Mgr", email: "pm@hafara.com" },
-                    { label: "Asst Trainer", email: "trainer@hafara.com" },
-                    { label: "Content", email: "creative@hafara.com" },
-                    { label: "Digital/IT", email: "digital@hafara.com" },
+                    { label: "Project Mgr", email: "ayu_project@hafara.com" },
+                    { label: "Asst Trainer", email: "badar_asisten@hafara.com" },
+                    { label: "Content", email: "istiana_creative@hafara.com" },
+                    { label: "Digital/IT", email: "cinta_marketing@hafara.com" },
                     { label: "Finance", email: "finance@hafara.com" },
                   ].map((a) => (
                     <button

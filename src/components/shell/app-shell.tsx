@@ -11,7 +11,8 @@ import {
   LayoutDashboard, Users, CalendarDays, ListTodo, Wallet, Clock, LogOut, Menu, Building2,
   Target, Receipt, FileText, Trophy, UserCog, FileBarChart, Settings, KanbanSquare, Layout,
   UserCircle, Sparkles, Database, CreditCard, Megaphone, MessageCircle, Bell, BellOff,
-  Home, Briefcase, ClipboardList, BarChart3, MoreHorizontal, X, TrendingUp,
+  Home, Briefcase, ClipboardList, BarChart3, MoreHorizontal, X, TrendingUp, Film, Calculator,
+  Award,
 } from "lucide-react";
 import { ROLES, ROLE_LABELS, ROLE_COLORS } from "@/lib/constants";
 import type { SafeUser } from "@/lib/auth";
@@ -24,7 +25,7 @@ export type ViewKey =
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
   | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban"
   | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions"
-  | "teamstructure" | "broadcast" | "mynotifs" | "chat"
+  | "teamstructure" | "broadcast" | "mynotifs" | "chat" | "assessment"
   | "kalkulator-pajak" | "laba-rugi"
   | "finance-arus-kas" | "finance-pajak" | "finance-dokumen-pajak"
   | "finance-neraca" | "finance-laporan" | "pengaturan-pajak";
@@ -35,42 +36,52 @@ interface MenuItem {
   icon: any;
   roles: string[];
   mobileTab?: boolean; // show in bottom nav on mobile
+  category?: string; // sidebar grouping
 }
 
 const ALL_ROLES = ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT", "FINANCE"];
 
 const MENU: MenuItem[] = [
-  // Mobile bottom nav items (5 max)
+  // Mobile bottom nav items
   { key: "dashboard", label: "Dashboard", icon: Home, roles: ALL_ROLES, mobileTab: true },
-  { key: "kanban", label: "Kanban", icon: KanbanSquare, roles: ALL_ROLES, mobileTab: true },
+  { key: "kanban", label: "Tugas", icon: KanbanSquare, roles: ALL_ROLES, mobileTab: true },
   { key: "chat", label: "Chat", icon: MessageCircle, roles: ALL_ROLES, mobileTab: true },
-  { key: "tasks", label: "Tugas", icon: ClipboardList, roles: ALL_ROLES, mobileTab: true },
   { key: "scoreboard", label: "Score", icon: Trophy, roles: ALL_ROLES, mobileTab: true },
-  // Full menu items
-  { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ALL_ROLES },
-  { key: "absensi", label: "Absensi", icon: Clock, roles: ALL_ROLES },
-  { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ALL_ROLES },
-  { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ALL_ROLES },
-  { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ALL_ROLES },
-  { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"] },
-  { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"] },
-  { key: "invoice", label: "Invoice", icon: Receipt, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
-  { key: "surat", label: "Surat Resmi", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
-  { key: "content", label: "Tugas Konten", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },
-  { key: "articles", label: "Data Artikel", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"] },
-  { key: "finance", label: "Keuangan", icon: Wallet, roles: ["OWNER", "FINANCE"] },
-  { key: "kalkulator-pajak", label: "Kalkulator Pajak", icon: Target, roles: ["OWNER", "FINANCE"] },
-  { key: "laba-rugi", label: "Laba Rugi", icon: TrendingUp, roles: ["OWNER", "FINANCE"] },
-  { key: "payroll", label: "Payroll & Gaji", icon: Receipt, roles: ALL_ROLES },
-  { key: "documents", label: "Dokumen", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"] },
-  { key: "team", label: "Manajemen Tim", icon: UserCog, roles: ["OWNER"] },
-  { key: "reports", label: "Laporan", icon: FileBarChart, roles: ["OWNER"] },
-  { key: "pengaturan", label: "Pengaturan", icon: Settings, roles: ["OWNER"] },
-  { key: "doclayout", label: "Layout Dokumen", icon: Layout, roles: ["OWNER"] },
-  { key: "importdata", label: "Import Data", icon: Database, roles: ["OWNER"] },
-  { key: "broadcast", label: "Broadcast & Evaluasi", icon: Megaphone, roles: ["OWNER"] },
-  { key: "subscriptions", label: "Manajemen Langganan", icon: CreditCard, roles: ["OWNER"] },
-  { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: ALL_ROLES },
+
+  // === MENU UTAMA ===
+  { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ALL_ROLES, category: "UTAMA" },
+  { key: "absensi", label: "Absensi", icon: Clock, roles: ALL_ROLES, category: "UTAMA" },
+  { key: "biodata", label: "Biodata Karyawan", icon: UserCircle, roles: ALL_ROLES, category: "UTAMA" },
+  { key: "mynotifs", label: "Notifikasi Saya", icon: Bell, roles: ALL_ROLES, category: "UTAMA" },
+  { key: "teamstructure", label: "Struktur Tim", icon: Users, roles: ALL_ROLES, category: "UTAMA" },
+
+  // === LEADS & EVENT ===
+  { key: "crm", label: "CRM Client", icon: Users, roles: ["OWNER", "PROJECT_MANAGER"], category: "LEADS" },
+  { key: "events", label: "Event Management", icon: CalendarDays, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER"], category: "LEADS" },
+  { key: "invoice", label: "Invoice", icon: Receipt, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"], category: "LEADS" },
+  { key: "surat", label: "Surat Resmi", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"], category: "LEADS" },
+  { key: "documents", label: "Dokumen", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "FINANCE"], category: "LEADS" },
+
+  // === KONTEN & ARTIKEL ===
+  { key: "content", label: "Tugas Konten", icon: Film, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"], category: "KONTEN" },
+  { key: "articles", label: "Data Artikel", icon: FileText, roles: ["OWNER", "PROJECT_MANAGER", "ASSISTANT_TRAINER", "CONTENT_CREATIVE", "DIGITAL_MARKETING_IT"], category: "KONTEN" },
+  { key: "aimaster", label: "AI Master Content", icon: Sparkles, roles: ALL_ROLES, category: "KONTEN" },
+
+  // === KEUANGAN & PAJAK ===
+  { key: "finance", label: "Keuangan", icon: Wallet, roles: ["OWNER", "FINANCE"], category: "KEUANGAN" },
+  { key: "laba-rugi", label: "Laba Rugi", icon: TrendingUp, roles: ["OWNER", "FINANCE"], category: "KEUANGAN" },
+  { key: "kalkulator-pajak", label: "Kalkulator Pajak", icon: Calculator, roles: ["OWNER", "FINANCE"], category: "KEUANGAN" },
+  { key: "payroll", label: "Payroll & Gaji", icon: Receipt, roles: ALL_ROLES, category: "KEUANGAN" },
+
+  // === ADMINISTRASI ===
+  { key: "team", label: "Manajemen Tim", icon: UserCog, roles: ["OWNER"], category: "ADMIN" },
+  { key: "assessment", label: "Penilaian & Bonus", icon: Award, roles: ["OWNER"], category: "ADMIN" },
+  { key: "reports", label: "Laporan", icon: FileBarChart, roles: ["OWNER"], category: "ADMIN" },
+  { key: "broadcast", label: "Broadcast & Evaluasi", icon: Megaphone, roles: ["OWNER"], category: "ADMIN" },
+  { key: "subscriptions", label: "Manajemen Langganan", icon: CreditCard, roles: ["OWNER"], category: "ADMIN" },
+  { key: "pengaturan", label: "Pengaturan", icon: Settings, roles: ["OWNER"], category: "ADMIN" },
+  { key: "doclayout", label: "Layout Dokumen", icon: Layout, roles: ["OWNER"], category: "ADMIN" },
+  { key: "importdata", label: "Import Data", icon: Database, roles: ["OWNER"], category: "ADMIN" },
 ];
 
 function getMenuForRole(role: string) {
@@ -157,7 +168,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
 
   const SidebarContent = (
     <div className="flex flex-col h-full">
-      <div className={cn("flex items-center gap-3 px-5 py-5 border-b border-slate-100", isOwner ? "border-blue-100" : "border-slate-100")}>
+      <div className={cn("flex items-center gap-3 px-5 py-5 border-b border-slate-100")}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
           {appLogo ? <img src={appLogo} alt="Logo" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-white" />}
         </div>
@@ -168,9 +179,9 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       </div>
 
       <div className="px-3 py-3 border-b border-slate-100">
-        <div className={cn("flex items-center gap-2 px-3 py-2 rounded-lg", isOwner ? "bg-blue-50" : "bg-slate-50")}>
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50">
           <Avatar className="w-8 h-8">
-            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-blue-700 text-white")}>
+            <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
@@ -185,7 +196,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3 space-y-0.5" style={{ maxHeight: "calc(100vh - 200px)" }}>
-        {/* Mobile tabs section */}
+        {/* Mobile tabs — Menu Utama */}
         {mobileTabs.length > 0 && (
           <>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-3 py-1.5">Menu Utama</p>
@@ -201,22 +212,42 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
                 </button>
               );
             })}
-            <div className="h-px bg-slate-100 my-2" />
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-3 py-1.5">Menu Lainnya</p>
           </>
         )}
-        {otherMenuItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeView === item.key;
-          return (
-            <button key={item.key} onClick={() => { onViewChange(item.key); setMobileOpen(false); }}
-              className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100")}>
-              <Icon className="w-4 h-4 shrink-0" />
-              <span className="truncate">{item.label}</span>
-            </button>
-          );
-        })}
+
+        {/* Categorized menu items */}
+        {(() => {
+          const CATEGORY_LABELS: Record<string, string> = {
+            UTAMA: "Pekerjaan Saya",
+            LEADS: "Leads & Event",
+            KONTEN: "Konten & Artikel",
+            KEUANGAN: "Keuangan & Pajak",
+            ADMIN: "Administrasi",
+          };
+          const categories = ["UTAMA", "LEADS", "KONTEN", "KEUANGAN", "ADMIN"];
+          return categories.map((cat) => {
+            const items = otherMenuItems.filter((m) => m.category === cat);
+            if (items.length === 0) return null;
+            return (
+              <div key={cat}>
+                <div className="h-px bg-slate-100 my-2" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide px-3 py-1.5">{CATEGORY_LABELS[cat]}</p>
+                {items.map((item) => {
+                  const Icon = item.icon;
+                  const active = activeView === item.key;
+                  return (
+                    <button key={item.key} onClick={() => { onViewChange(item.key); setMobileOpen(false); }}
+                      className={cn("w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        active ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100")}>
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          });
+        })()}
       </nav>
     </div>
   );
@@ -282,7 +313,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
               )}
             </div>
             <Avatar className="w-8 h-8">
-              <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-blue-700 text-white")}>
+              <AvatarFallback className={cn("text-xs font-semibold", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
                 {initials(user.name)}
               </AvatarFallback>
             </Avatar>
@@ -340,7 +371,7 @@ export function AppShell({ user, activeView, onViewChange, onLogout, children, n
                 )}
               </div>
               <Avatar className="w-8 h-8" onClick={() => setMobileOpen(true)}>
-                <AvatarFallback className={cn("text-[10px] font-semibold cursor-pointer", isOwner ? "bg-blue-600 text-white" : "bg-blue-700 text-white")}>
+                <AvatarFallback className={cn("text-[10px] font-semibold cursor-pointer", isOwner ? "bg-blue-600 text-white" : "bg-blue-600 text-white")}>
                   {initials(user.name)}
                 </AvatarFallback>
               </Avatar>

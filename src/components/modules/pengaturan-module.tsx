@@ -64,7 +64,7 @@ export function PengaturanModule() {
   const [grouped, setGrouped] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("COMPANY");
+  const [activeTab, setActiveTab] = useState("APPEARANCE");
   const [uploading, setUploading] = useState<string | null>(null);
 
   // Local form state
@@ -160,10 +160,10 @@ export function PengaturanModule() {
     }
   }
 
-  if (loading) {
+  if (loading || Object.keys(form).length === 0) {
     return (
       <div className="flex items-center justify-center py-20">
-        <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
+        <RefreshCw className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -259,6 +259,7 @@ export function PengaturanModule() {
                           />
                         ) : (
                           <Input
+                            type="text"
                             value={form[item.key] || ""}
                             onChange={(e) => setForm({ ...form, [item.key]: e.target.value })}
                             className="bg-white"

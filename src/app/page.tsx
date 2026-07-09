@@ -9,7 +9,6 @@ import { OwnerKpiDashboard } from "@/components/owner/owner-kpi-dashboard";
 import { TeamDashboard } from "@/components/team/team-dashboard";
 import { CrmModule } from "@/components/modules/crm-module";
 import { EventsModule } from "@/components/modules/events-module";
-import { TasksModule } from "@/components/modules/tasks-module";
 import { KpiModule } from "@/components/modules/kpi-module";
 import { AbsensiModule } from "@/components/modules/absensi-module";
 import { PayrollModule } from "@/components/modules/payroll-module";
@@ -19,6 +18,7 @@ import { ArticlesModule } from "@/components/modules/articles-module";
 import { FinanceModule } from "@/components/modules/finance-module";
 import { DocumentsModule } from "@/components/modules/documents-module";
 import { ScoreboardModule } from "@/components/modules/scoreboard-module";
+import { AssessmentModule } from "@/components/modules/assessment-module";
 import { TeamManagementModule } from "@/components/modules/team-management-module";
 import { ReportsModule } from "@/components/modules/reports-module";
 import { PengaturanModule } from "@/components/modules/pengaturan-module";
@@ -41,6 +41,7 @@ export default function Home() {
   const [user, setUser] = useState<SafeUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ViewKey>("dashboard");
+  const [navCount, setNavCount] = useState(0); // increments on every sidebar click to force remount
   const [notifications, setNotifications] = useState<{ count: number; items: any[] }>({ count: 0, items: [] });
 
   const loadNotifications = useCallback(async () => {
@@ -85,6 +86,7 @@ export default function Home() {
 
   function handleViewChange(v: ViewKey) {
     setView(v);
+    setNavCount((c) => c + 1); // force remount of finance sub-modules so initialView is re-applied
     loadNotifications();
   }
 
@@ -124,18 +126,34 @@ export default function Home() {
         return <CrmModule user={user} />;
       case "events":
         return <EventsModule user={user} />;
-      case "tasks":
-        return <TasksModule user={user} />;
       case "content":
         return <ContentModule user={user} />;
       case "articles":
         return <ArticlesModule user={user} />;
       case "finance":
-        return <FinanceModule user={user} />;
+        return <FinanceModule key={`finance-${navCount}`} user={user} />;
+      case "laba-rugi":
+        return <FinanceModule key={`laba-rugi-${navCount}`} user={user} initialView="laporan" />;
+      case "kalkulator-pajak":
+        return <FinanceModule key={`kalkulator-pajak-${navCount}`} user={user} initialView="kalkulator" />;
+      case "finance-arus-kas":
+        return <FinanceModule key={`aruskas-${navCount}`} user={user} initialView="aruskas" />;
+      case "finance-pajak":
+        return <FinanceModule key={`pajak-${navCount}`} user={user} initialView="pajak" />;
+      case "finance-dokumen-pajak":
+        return <FinanceModule key={`spt-${navCount}`} user={user} initialView="spt" />;
+      case "finance-neraca":
+        return <FinanceModule key={`neraca-${navCount}`} user={user} initialView="neraca" />;
+      case "finance-laporan":
+        return <FinanceModule key={`laporan-${navCount}`} user={user} initialView="laporan" />;
+      case "pengaturan-pajak":
+        return <FinanceModule key={`taxconfig-${navCount}`} user={user} initialView="taxconfig" />;
       case "documents":
         return <DocumentsModule user={user} />;
       case "scoreboard":
         return <ScoreboardModule />;
+      case "assessment":
+        return <AssessmentModule />;
       case "team":
         return <TeamManagementModule />;
       case "reports":

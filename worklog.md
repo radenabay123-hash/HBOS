@@ -3314,3 +3314,91 @@ Verified:
 - Bottom nav labels: Dashboard, Kanban, Chat, Tugas, Lainnya ✓
 - "Lainnya" opens slide-out sidebar with all menu items ✓
 - Lint: 0 errors
+
+---
+Task ID: FIX-FINANCE-VIEWS
+Agent: Main (Z.ai Code)
+Task: Fix missing Laba Rugi & Kalkulator Pajak pages (and other finance sub-views) that showed blank page when clicked from sidebar
+
+Work Log:
+- Investigated root cause: `page.tsx` switch statement was missing cases for 8 finance sub-views defined in ViewKey type (`laba-rugi`, `kalkulator-pajak`, `finance-arus-kas`, `finance-pajak`, `finance-dokumen-pajak`, `finance-neraca`, `finance-laporan`, `pengaturan-pajak`). Clicking these sidebar items fell through to `default: return null` → blank page.
+- Confirmed `finance-advanced-module.tsx` already contains all sub-modules internally (LaporanModule contains Laba Rugi report, KalkulatorPajakModule, ArusKas, PajakModule, SptBadanModule, NeracaModule, TaxConfigModule) with an internal `view` state switch.
+- Added `initialView?: string` prop to `FinanceModule` so it can jump directly to a sub-view on mount (e.g., `initialView="laporan"` shows Laba Rugi report immediately).
+- Added 8 missing cases in `page.tsx` switch statement, each rendering `<FinanceModule initialView="..." />` with appropriate sub-view.
+- Added `navCount` counter in `page.tsx` that increments on every `handleViewChange`, included in `key` prop of every `<FinanceModule>` instance. This forces remount on every sidebar click, ensuring clicking the same sidebar item (e.g., Laba Rugi → Menu → Laba Rugi again) correctly re-shows the sub-view instead of staying on the finance menu.
+- Fixed pre-existing bug in `getLabaRugi` (finance-engine.ts): when `month=0` (Semua Bulan) + `periodType=BULANAN`, periodeLabel was "undefined 2026" because `monthNames[month-1]` = `monthNames[-1]` = undefined. Now when month=0 + BULANAN, automatically treats as TAHUNAN → shows "Tahun 2026".
+- Fixed pre-existing bug in `getNeraca` (finance-engine.ts): when `month=0`, `asOf` date was `new Date(year, 0, 0, ...)` = Dec 31 of previous year. Now correctly uses Dec 31 of selected year.
+- Ran `bun run lint` → 0 errors.
+
+Verified via Agent Browser (logged in as Owner):
+- Click "Laba Rugi" sidebar → renders full LAPORAN LABA RUGI report: PENDAPATAN USAHA (4 akun), BIAYA OPERASIONAL (14 akun), LABA SEBELUM PAJAK, Pajak PPh Badan (11%), LABA BERSIH, with PDF/Excel/Print buttons. Periode label correctly shows "Tahun 2026" (was "undefined 2026" before fix).
+- Click "Kalkulator Pajak" sidebar → renders calculator form: Jenis Pajak dropdown (PPh 21/23/Badan/PPN), Gaji Bruto input, Status PTKP dropdown, Hitung Pajak button.
+- Tax calculation verified: 10jt/bulan TK0 → PTKP 54jt/thn, PKP 66jt/thn, progresif 5%+15% = 3.9jt/thn = Rp 325.000/bulan. ✓
+- Click "Keuangan" sidebar → main finance menu with 11 sub-module cards (Dashboard, Arus Kas, Kategori, Neraca, Inventaris, Pajak, Kalkulator, Laporan, SPT, TaxConfig, AI).
+- Internal navigation works: click "Neraca" card → shows Neraca report (ASET, KEWAJIBAN, MODAL, balanced check).
+- Edge case fixed: Laba Rugi → click "Menu" button (goes to finance dashboard) → click "Laba Rugi" sidebar again → correctly shows LAPORAN LABA RUGI report (previously stayed on finance menu).
+- Other modules verified rendering: Dashboard KPI, Absensi, Manajemen Tim, Laporan, Pengaturan, Penilaian & Bonus, Broadcast & Evaluasi — all show their main headings.
+- All API calls return 200 in dev log: /api/finance/laporan, /api/finance/tax-calculator (GET+POST), /api/finance/tax-config, /api/finance/neraca. No errors.
+
+Stage Summary:
+- Root cause: missing switch cases in page.tsx for 8 finance sub-views → blank page when clicking "Laba Rugi" or "Kalkulator Pajak" in sidebar.
+- Fix: Added `initialView` prop to FinanceModule + 8 new switch cases in page.tsx + navCount-based key for forced remount on every sidebar click.
+- Bonus fixes: getLabaRugi periodeLabel "undefined" bug (month=0 → TAHUNAN auto), getNeraca asOf date bug (month=0 → Dec 31 of selected year).
+- Files modified:
+  * `src/components/modules/finance-advanced-module.tsx` — added `initialView` prop to FinanceModule, used as initial state for internal `view`.
+  * `src/app/page.tsx` — added `navCount` state + 8 new switch cases for finance sub-views with `key={`...-${navCount}`}` pattern.
+  * `src/lib/finance-engine.ts` — fixed `getLabaRugi` (month=0 → TAHUNAN) and `getNeraca` (month=0 → Dec 31 of year).
+- All 35 user-accessible ViewKeys now have corresponding cases in page.tsx switch (only `tasks` is in type but not in menu — not user-accessible).
+- Lint: 0 errors. Dev server: all 200 responses, no errors.
+
+---
+Task ID: FIX-DATA-SYNC-V2
+Agent: Main (Z.ai Code)
+Task: Re-apply all data sync fixes after environment restart (previous fixes were lost)
+
+Work Log:
+- Environment restarted, all previous code fixes were lost (confirmed by checking finance-engine.ts)
+- DB transactions use categories like "Training Fee", "Transport Akomodasi", "Cicilan" but hardcoded mapping only matched "Honor Training", "Transportasi" etc → most transactions silently dropped from Laba Rugi
+- Re-applied Laba Rugi sync fix in finance-engine.ts:
+  * Expanded PENDAPATAN_AKUN categories to include: Training Fee, Training, Konsultasi, Sertifikasi, Other, Lain-lain
+  * Expanded BIAYA_AKUN categories to include: Gaji karyawan, Kebutuhan Kantor, Over Kredit Kantor, Investasi Pembangunan Kantor, Website, Wifi, Subcription, Subscription, AI Subscription, Sampah dan Air, Belanja Bulanan, Transport Akomodasi, Hotel, Cicilan, BPJS Kesehatan, Associate Trainer, Pendidikan, Laptop
+  * Added catch-all logic: unmapped categories get own line items ("Pendapatan {cat}" or "Biaya {cat}")
+  * Guarantees 100% of transactions counted in Laba Rugi
+- Re-applied login-screen.tsx fix: demo emails updated to match actual DB users (ayu_project@, badar_asisten@, istiana_creative@, cinta_marketing@, finance@hafara.com)
+- Re-created /api/team-structure endpoint (public team info for all roles, not just OWNER)
+- Re-applied team-structure-module.tsx fix: uses /api/team-structure instead of /api/users
+- Fixed user roles in DB:
+  * cinta_marketing@hafara.com: ASSISTANT_TRAINER → DIGITAL_MARKETING_IT
+  * istiana_creative@hafara.com: DIGITAL_MARKETING_IT → CONTENT_CREATIVE
+  * Created finance@hafara.com (FINANCE) — was missing
+  * Now all 6 roles have exactly 1 user each
+- Ran lint: 0 errors
+
+Verified via Agent Browser (as Owner):
+- Laba Rugi page: renders full report with ALL transactions
+  * Pendapatan: Rp 333.000.000 (was Rp 0 before fix)
+  * 10 biaya items including all categories + Biaya Penyusutan
+  * Total Biaya: Rp 503.864.478
+  * Laba Bersih: -Rp 170.864.478
+- Arus Kas sync confirmed via API: Pemasukan Rp 333M = Laba Rugi Pendapatan Rp 333M ✓
+- Kalkulator Pajak: PPh 21 for 10jt/bulan TK0 = Rp 325.000/bulan ✓
+
+Verified via Agent Browser (as Finance role):
+- Quick-login button works (finance@hafara.com)
+- All Finance menus visible: Keuangan, Laba Rugi, Kalkulator Pajak, Invoice, Payroll
+- Struktur Tim shows "1 orang" per role (was "0 orang" before fix)
+- Laba Rugi loads with synced data (Rp 333.000.000 visible)
+
+Stage Summary:
+- Laba Rugi ↔ Arus Kas sync: FIXED (100% of transactions now counted)
+- Quick-login buttons: FIXED (all 6 roles work)
+- Struktur Tim for non-owner roles: FIXED (shows actual team member counts)
+- User roles: FIXED (all 6 roles covered, 1 user each)
+- Files modified:
+  * src/lib/finance-engine.ts — catch-all category mapping
+  * src/components/auth/login-screen.tsx — demo account emails
+  * src/app/api/team-structure/route.ts — new public endpoint
+  * src/components/modules/team-structure-module.tsx — use new endpoint
+- DB changes: cinta_marketing role fixed, istiana_creative role fixed, finance@hafara.com created
+- All APIs returning 200 in dev log, no errors
+- Lint: 0 errors

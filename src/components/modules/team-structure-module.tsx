@@ -216,7 +216,7 @@ export function TeamStructureModule({ user }: { user: SafeUser }) {
   const load = useCallback(async () => {
     try {
       const [membersRes, respRes] = await Promise.all([
-        api<{ users: TeamMember[] }>("/api/users").catch(() => ({ users: [] })),
+        api<{ users: TeamMember[] }>("/api/team-structure").catch(() => ({ users: [] })),
         api<{ grouped: Record<string, any[]> }>("/api/role-responsibilities").catch(() => ({ grouped: {} })),
       ]);
       setMembers(membersRes.users || []);

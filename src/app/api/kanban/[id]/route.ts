@@ -12,7 +12,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (!user) return err("Unauthorized", 401);
     const { id } = await params;
     const body = await req.json();
-    const { title, description, status, priority, category, dueDate, assigneeId, position } = body;
+    const {
+      title, description, status, priority, category, dueDate, assigneeId, position,
+      // Daily work log fields (merged from Tugas Harian)
+      tanggal, persentaseSelesai, hambatan, strategi, evaluasi, jamMulai, jamSelesai,
+    } = body;
 
     // Get existing card to check status change
     const existing = await db.kanbanCard.findUnique({ where: { id } });
@@ -27,6 +31,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (dueDate != null) data.dueDate = dueDate ? new Date(dueDate) : null;
     if (assigneeId != null) data.assigneeId = assigneeId || null;
     if (position != null) data.position = Number(position);
+
+    // Daily work log fields
+    if (tanggal != null) data.tanggal = tanggal ? new Date(tanggal) : null;
+    if (persentaseSelesai != null) {
+      const pct = Number(persentaseSelesai);
+      if (!Number.isNaN(pct)) data.persentaseSelesai = Math.max(0, Math.min(100, pct));
+    }
+    if (hambatan != null) data.hambatan = hambatan || null;
+    if (strategi != null) data.strategi = strategi || null;
+    if (evaluasi != null) data.evaluasi = evaluasi || null;
+    if (jamMulai != null) data.jamMulai = jamMulai || null;
+    if (jamSelesai != null) data.jamSelesai = jamSelesai || null;
 
     const now = new Date();
     const wasCompleted = existing.status === "DONE";

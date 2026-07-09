@@ -38,8 +38,8 @@ import { BulkActionBar } from "@/components/shared/bulk-action-bar";
 
 const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-export function FinanceModule({ user }: { user: SafeUser }) {
-  const [view, setView] = useState("menu");
+export function FinanceModule({ user, initialView }: { user: SafeUser; initialView?: string }) {
+  const [view, setView] = useState(initialView && initialView !== "menu" ? initialView : "menu");
   const [year, setYear] = useState(2026); // default to current year
   const [month, setMonth] = useState(0); // 0 = Semua Bulan (show all months by default)
 

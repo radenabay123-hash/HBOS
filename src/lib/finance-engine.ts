@@ -120,7 +120,10 @@ export async function getFinanceDashboard(year: number, month: number) {
 
 // ===== NERACA (auto-generated from transactions) =====
 export async function getNeraca(year: number, month: number) {
-  const asOf = new Date(year, month, 0, 23, 59, 59, 999);
+  // If month=0 (Semua Bulan), use end of year as "as of" date
+  const asOf = month === 0
+    ? new Date(year, 11, 31, 23, 59, 59, 999)
+    : new Date(year, month, 0, 23, 59, 59, 999);
   const allTxns = await db.financeTransaction.findMany({ where: { date: { lte: asOf } } });
   const inventory = await db.inventory.findMany({});
 
@@ -177,49 +180,50 @@ export async function getNeraca(year: number, month: number) {
 
 // ===== LABA RUGI (sesuai format spesifikasi) =====
 
-// Mapping kategori transaksi → akun laba rugi
+// Mapping kategori transaksi → akun laba rugi (expanded to match actual DB categories)
+// Categories not in this map will be added as their own line items (catch-all)
+// to ensure 100% sync with Arus Kas data.
 export const PENDAPATAN_AKUN = [
-  { akun: "Pendapatan Training & Motivation", categories: ["Honor Training", "Workshop", "Seminar", "Coaching", "Mentoring", "Pendapatan Training"] },
-  { akun: "Pendapatan Jasa Konsultasi", categories: ["Consulting", "Pendapatan Konsultasi"] },
-  { akun: "Pendapatan Sertifikasi", categories: ["Membership", "Penjualan Modul", "Penjualan Buku"] },
-  { akun: "Pendapatan Lain-lain", categories: ["Affiliate", "Investasi", "Lainnya"] },
+  { akun: "Pendapatan Training & Motivation", categories: ["Honor Training", "Workshop", "Seminar", "Coaching", "Mentoring", "Pendapatan Training", "Training Fee", "Training"] },
+  { akun: "Pendapatan Jasa Konsultasi", categories: ["Consulting", "Pendapatan Konsultasi", "Konsultasi"] },
+  { akun: "Pendapatan Sertifikasi", categories: ["Membership", "Penjualan Modul", "Penjualan Buku", "Sertifikasi"] },
+  { akun: "Pendapatan Lain-lain", categories: ["Affiliate", "Investasi", "Lainnya", "Other", "Lain-lain"] },
 ];
 
 export const BIAYA_AKUN = [
-  { akun: "Beban Gaji & Bonus", categories: ["Gaji"] },
-  { akun: "Biaya Operasional Kantor", categories: ["Operasional", "Sewa Kantor", "Event"] },
-  { akun: "Biaya Internet", categories: ["Internet", "Hosting", "Domain", "IT"] },
-  { akun: "Biaya Listrik, Air & Kebersihan", categories: ["Listrik", "Air"] },
-  { akun: "Biaya Sosial", categories: ["Konsumsi"] },
-  { akun: "Biaya Transportasi", categories: ["Transportasi"] },
-  { akun: "Biaya Kredit Bank", categories: ["Pajak"] },
+  { akun: "Beban Gaji & Bonus", categories: ["Gaji", "Gaji karyawan", "Gaji Karyawan", "Bonus", "Salary", "Associate Trainer"] },
+  { akun: "Biaya Operasional Kantor", categories: ["Operasional", "Sewa Kantor", "Event", "Kebutuhan Kantor", "Over Kredit Kantor", "Investasi Pembangunan Kantor"] },
+  { akun: "Biaya Internet & Komunikasi", categories: ["Internet", "Hosting", "Domain", "IT", "Website", "Wifi", "Subcription", "Subscription", "AI Subscription"] },
+  { akun: "Biaya Listrik, Air & Kebersihan", categories: ["Listrik", "Air", "Sampah dan Air"] },
+  { akun: "Biaya Konsumsi", categories: ["Konsumsi", "Belanja Bulanan"] },
+  { akun: "Biaya Transportasi & Perjalanan", categories: ["Transportasi", "Transport Akomodasi", "Hotel"] },
+  { akun: "Biaya Cicilan & Kredit", categories: ["Cicilan", "Pajak", "BPJS Kesehatan"] },
   { akun: "Biaya Marketing & Promosi", categories: ["Marketing", "Iklan"] },
-  { akun: "Biaya Penyusutan", categories: [] }, // auto from inventory
-  { akun: "Biaya Sewa", categories: ["Sewa Kantor"] },
-  { akun: "Biaya ATK", categories: ["Peralatan", "Software"] },
-  { akun: "Biaya Perjalanan Dinas", categories: ["Hotel", "Transportasi"] },
-  { akun: "Biaya Konsumsi", categories: ["Konsumsi"] },
-  { akun: "Biaya Lain-lain", categories: ["Lainnya", "AI Subscription", "Laptop"] },
+  { akun: "Biaya ATK & Peralatan", categories: ["Peralatan", "Software", "Laptop"] },
+  { akun: "Biaya Pendidikan & Pengembangan", categories: ["Pendidikan"] },
+  { akun: "Biaya Lain-lain", categories: ["Lainnya", "Lain-lain"] },
 ];
 
 export async function getLabaRugi(year: number, month: number, periodType: string = "BULANAN", customStart?: Date, customEnd?: Date) {
   // Determine date range based on period type
   let start: Date, end: Date, periodeLabel: string;
-  if (periodType === "CUSTOM" && customStart && customEnd) {
+  // If month=0 (Semua Bulan), treat as TAHUNAN regardless of periodType
+  const pt = (month === 0 && periodType === "BULANAN") ? "TAHUNAN" : periodType;
+  if (pt === "CUSTOM" && customStart && customEnd) {
     start = new Date(customStart);
     start.setHours(0, 0, 0, 0);
     end = new Date(customEnd);
     end.setHours(23, 59, 59, 999);
     periodeLabel = `${start.toLocaleDateString("id-ID")} - ${end.toLocaleDateString("id-ID")}`;
-  } else if (periodType === "TAHUNAN") {
+  } else if (pt === "TAHUNAN") {
     start = new Date(year, 0, 1);
     end = new Date(year, 11, 31, 23, 59, 59, 999);
     periodeLabel = `Tahun ${year}`;
-  } else if (periodType === "SEMESTER") {
+  } else if (pt === "SEMESTER") {
     // Semester 1: Jan-Jun, Semester 2: Jul-Dec
     if (month <= 6) { start = new Date(year, 0, 1); end = new Date(year, 5, 30, 23, 59, 59, 999); periodeLabel = `Semester 1 ${year}`; }
     else { start = new Date(year, 6, 1); end = new Date(year, 11, 31, 23, 59, 59, 999); periodeLabel = `Semester 2 ${year}`; }
-  } else if (periodType === "TRIWULAN") {
+  } else if (pt === "TRIWULAN") {
     const q = Math.ceil(month / 3);
     start = new Date(year, (q - 1) * 3, 1);
     end = new Date(year, q * 3, 0, 23, 59, 59, 999);
@@ -236,16 +240,34 @@ export async function getLabaRugi(year: number, month: number, periodType: strin
   const pemasukan = txns.filter((t) => t.type === "PEMASUKAN" && t.isPaid);
   const pengeluaran = txns.filter((t) => t.type === "PENGELUARAN" && t.isPaid);
 
-  // ===== PENDAPATAN per akun =====
-  const pendapatanItems = PENDAPATAN_AKUN.map((p) => {
-    const total = pemasukan
-      .filter((t) => p.categories.includes(t.category || ""))
-      .reduce((s, t) => s + t.amount, 0);
-    return { akun: p.akun, jumlah: total };
-  });
+  // ===== PENDAPATAN per akun (with catch-all for unmapped categories) =====
+  // Build a reverse map: category → akun name
+  const pemCatToAkun: Record<string, string> = {};
+  for (const p of PENDAPATAN_AKUN) {
+    for (const cat of p.categories) pemCatToAkun[cat] = p.akun;
+  }
+  // Aggregate pemasukan by akun
+  const pemByAkun: Record<string, number> = {};
+  for (const t of pemasukan) {
+    const cat = t.category || "Lainnya";
+    const akun = pemCatToAkun[cat] || `Pendapatan ${cat}`; // unmapped → own line item
+    pemByAkun[akun] = (pemByAkun[akun] || 0) + t.amount;
+  }
+  // Build pendapatanItems in the order of PENDAPATAN_AKUN, then append any extra akuns
+  const pendapatanItems: { akun: string; jumlah: number }[] = [];
+  for (const p of PENDAPATAN_AKUN) {
+    if (pemByAkun[p.akun] !== undefined) {
+      pendapatanItems.push({ akun: p.akun, jumlah: pemByAkun[p.akun] });
+      delete pemByAkun[p.akun];
+    }
+  }
+  // Append any remaining unmapped akuns (ensures ALL transactions are counted)
+  for (const [akun, jumlah] of Object.entries(pemByAkun).sort()) {
+    pendapatanItems.push({ akun, jumlah });
+  }
   const totalPendapatan = pendapatanItems.reduce((s, p) => s + p.jumlah, 0);
 
-  // ===== BIAYA per akun =====
+  // ===== BIAYA per akun (with catch-all for unmapped categories) =====
   // Get depreciation from inventory
   const inventory = await db.inventory.findMany({});
   const totalDepreciation = inventory.reduce((s, i) => {
@@ -255,14 +277,34 @@ export async function getLabaRugi(year: number, month: number, periodType: strin
     return s + (annualDep / 12) * monthsInPeriod;
   }, 0);
 
-  const biayaItems = BIAYA_AKUN.map((b) => {
-    let total = pengeluaran
-      .filter((t) => b.categories.includes(t.category || ""))
-      .reduce((s, t) => s + t.amount, 0);
-    // Add depreciation to "Biaya Penyusutan"
-    if (b.akun === "Biaya Penyusutan") total = Math.round(totalDepreciation);
-    return { akun: b.akun, jumlah: total };
-  });
+  // Build reverse map: category → akun name
+  const pengCatToAkun: Record<string, string> = {};
+  for (const b of BIAYA_AKUN) {
+    for (const cat of b.categories) pengCatToAkun[cat] = b.akun;
+  }
+  // Aggregate pengeluaran by akun
+  const pengByAkun: Record<string, number> = {};
+  for (const t of pengeluaran) {
+    const cat = t.category || "Lainnya";
+    const akun = pengCatToAkun[cat] || `Biaya ${cat}`; // unmapped → own line item
+    pengByAkun[akun] = (pengByAkun[akun] || 0) + t.amount;
+  }
+  // Build biayaItems in the order of BIAYA_AKUN, then append any extra akuns
+  const biayaItems: { akun: string; jumlah: number }[] = [];
+  for (const b of BIAYA_AKUN) {
+    if (b.akun === "Biaya Penyusutan") continue; // handled separately below
+    if (pengByAkun[b.akun] !== undefined) {
+      biayaItems.push({ akun: b.akun, jumlah: pengByAkun[b.akun] });
+      delete pengByAkun[b.akun];
+    }
+  }
+  // Append any remaining unmapped akuns (ensures ALL transactions are counted)
+  for (const [akun, jumlah] of Object.entries(pengByAkun).sort()) {
+    biayaItems.push({ akun, jumlah });
+  }
+  // Add depreciation as last biaya item
+  biayaItems.push({ akun: "Biaya Penyusutan", jumlah: Math.round(totalDepreciation) });
+
   const totalBiaya = biayaItems.reduce((s, b) => s + b.jumlah, 0);
 
   // ===== LABA SEBELUM PAJAK =====
@@ -284,7 +326,7 @@ export async function getLabaRugi(year: number, month: number, periodType: strin
 
   return {
     periodeLabel,
-    periodType,
+    periodType: pt,
     start, end,
     pendapatanItems,
     totalPendapatan,

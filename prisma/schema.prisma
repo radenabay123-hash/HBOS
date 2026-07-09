@@ -49,6 +49,7 @@ model User {
   chatMembers       ChatMember[]
   chatMessages      ChatMessage[]
   chatRoomsCreated  ChatRoom[]      @relation("ChatRoomCreator")
+  assessments       TeamAssessment[]
 }
 
 // ===================== SUBSCRIPTION MANAGER (Owner only) =====================
@@ -771,6 +772,14 @@ model KanbanCard {
   // Auto-save tracking
   completedAt DateTime? // when card moved to DONE
   completedById String?
+  // Merged from DailyTask — daily work log fields
+  tanggal       DateTime  @default(now()) // tanggal tugas dikerjakan
+  persentaseSelesai Int   @default(0) // 0-100
+  hambatan      String?   // kendala yang dihadapi
+  strategi      String?   // strategi yang digunakan
+  evaluasi      String?   // evaluasi & rencana selanjutnya
+  jamMulai      String?   // jam mulai kerja
+  jamSelesai    String?   // jam selesai kerja
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -780,6 +789,7 @@ model KanbanCard {
   @@index([status])
   @@index([assigneeId])
   @@index([completedAt])
+  @@index([tanggal])
 }
 
 // ===================== DAILY WORK SUMMARY (Auto-generated from Kanban DONE cards) =====================
@@ -888,4 +898,41 @@ model EmployeeProfile {
   
   @@index([npwp])
   @@index([ptkpStatus])
+}
+
+// ===================== TEAM ASSESSMENT & BONUS =====================
+
+model AssessmentCriteria {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  weight      Float    @default(10) // percentage 0-100
+  dataSource  String   @default("MANUAL") // MANUAL, ATTENDANCE, KPI, SOCIAL_MEDIA, VIRAL
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scores      TeamAssessment[]
+
+  @@index([isActive])
+}
+
+model TeamAssessment {
+  id          String   @id @default(cuid())
+  userId      String
+  criteriaId  String
+  period      String   // YYYY-MM
+  score       Float    @default(0) // 0-100
+  note        String?
+  isAuto      Boolean  @default(false) // true if auto-calculated from data
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  criteria    AssessmentCriteria @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, criteriaId, period])
+  @@index([userId])
+  @@index([period])
 }

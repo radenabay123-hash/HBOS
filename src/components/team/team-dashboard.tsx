@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,7 @@ import {
   RefreshCw, ListTodo, Film, FileText, CheckCircle2, Clock, AlertCircle,
   TrendingUp, Target, CalendarDays, Wallet, Users, BarChart3, Eye,
   Heart, Share2, Bookmark, MessageCircle, UserPlus, FileCheck, Trophy,
-  FileStack, ExternalLink, Percent,
+  FileStack, ExternalLink, Percent, Award,
   CalendarClock, UploadCloud, ChevronDown, ChevronRight, Save, Calendar,
 } from "lucide-react";
 import { StatCard, SectionHeader, IndicatorBadge } from "@/components/shared/stat-card";
@@ -372,6 +372,9 @@ export function TeamDashboard({ user: userProp }: { user?: SafeUser }) {
           </CardContent>
         </Card>
       )}
+
+      {/* ===== My Assessment Score (Penilaian & Bonus Tim) ===== */}
+      <MyAssessmentCard userId={activeUserId} year={year} month={month} />
 
       {/* ===== Role-specific KPIs ===== */}
       <RoleSpecificSection role={u.role} roleData={d.roleData} year={year} month={month} />
@@ -938,6 +941,143 @@ function KpiSectionsCard({
             </div>
           );
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ===== My Assessment Card (Penilaian & Bonus Tim — read-only for team member) =====
+interface AssessmentScoreRow {
+  userId: string;
+  userName: string;
+  role: string;
+  position?: string | null;
+  avatar?: string | null;
+  criteria: Array<{
+    criteriaId: string;
+    name: string;
+    weight: number;
+    dataSource: string;
+    score: number;
+    isAuto: boolean;
+    note: string | null;
+  }>;
+  totalScore: number;
+  bonusAmount: number;
+}
+
+function getAssessmentCategory(score: number): { label: string; color: string; bg: string; bar: string } {
+  if (score >= 90) return { label: "Excellent", color: "text-emerald-700", bg: "bg-emerald-100 text-emerald-700 border-emerald-200", bar: "bg-emerald-500" };
+  if (score >= 80) return { label: "Good", color: "text-blue-700", bg: "bg-blue-100 text-blue-700 border-blue-200", bar: "bg-blue-500" };
+  if (score >= 70) return { label: "Need Coaching", color: "text-amber-700", bg: "bg-amber-100 text-amber-700 border-amber-200", bar: "bg-amber-500" };
+  return { label: "Warning", color: "text-rose-700", bg: "bg-rose-100 text-rose-700 border-rose-200", bar: "bg-rose-500" };
+}
+
+function MyAssessmentCard({ userId, year, month }: { userId: string; year: number; month: number }) {
+  const [data, setData] = useState<AssessmentScoreRow | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const period = `${year}-${String(month).padStart(2, "0")}`;
+    try {
+      const res = await api<{ scores: AssessmentScoreRow[]; bonusMultiplier: number }>(`/api/assessment/scores?period=${period}`);
+      const mine = (res.scores || []).find((s) => s.userId === userId) || null;
+      setData(mine);
+    } catch {
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, year, month]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-4 flex items-center gap-2 text-xs text-slate-500">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Memuat skor penilaian...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Card className="border-slate-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Award className="w-4 h-4 text-amber-500" /> Skor Penilaian Saya
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-slate-400">
+            Belum ada penilaian untuk periode ini. Penilaian diisi oleh owner di menu &quot;Penilaian &amp; Bonus Tim&quot;.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const cat = getAssessmentCategory(data.totalScore);
+  const hasCriteria = data.criteria.length > 0;
+
+  return (
+    <Card className={cn("border-l-4", data.totalScore >= 90 ? "border-l-emerald-500" : data.totalScore >= 80 ? "border-l-blue-500" : data.totalScore >= 70 ? "border-l-amber-500" : "border-l-rose-500")}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Award className="w-4 h-4 text-amber-500" /> Skor Penilaian Saya
+          </CardTitle>
+          <div className="flex items-baseline gap-2">
+            <span className={cn("text-2xl font-bold", cat.color)}>{data.totalScore.toFixed(1)}</span>
+            <Badge variant="outline" className={cn("text-[10px]", cat.bg)}>{cat.label}</Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-slate-50 p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wide">Total Skor</p>
+            <p className={cn("text-xl font-bold", cat.color)}>{data.totalScore.toFixed(1)} <span className="text-xs text-slate-400">/ 100</span></p>
+          </div>
+          <div className="rounded-lg bg-emerald-50 p-3">
+            <p className="text-[10px] text-emerald-600 uppercase tracking-wide">Bonus Diharapkan</p>
+            <p className="text-xl font-bold text-emerald-700">{formatCurrency(data.bonusAmount)}</p>
+          </div>
+        </div>
+
+        {hasCriteria && (
+          <div>
+            <p className="text-xs font-semibold text-slate-600 mb-2">Rincian per Kriteria</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {data.criteria.map((c) => {
+                const cCat = getAssessmentCategory(c.score);
+                return (
+                  <div key={c.criteriaId} className="rounded-md border border-slate-100 p-2">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-slate-800 truncate">{c.name}</p>
+                        <p className="text-[10px] text-slate-400">Bobot {c.weight}%{c.isAuto ? " · Auto" : ""}</p>
+                      </div>
+                      <span className={cn("text-sm font-bold shrink-0", cCat.color)}>{c.score.toFixed(0)}</span>
+                    </div>
+                    <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={cn("h-full rounded-full", cCat.bar)} style={{ width: `${Math.min(100, c.score)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-[10px] text-slate-400 italic">
+          Skor dihitung oleh owner. Kriteria ATTENDANCE, KPI, SOCIAL_MEDIA, VIRAL dihitung otomatis dari sistem.
+        </p>
       </CardContent>
     </Card>
   );
