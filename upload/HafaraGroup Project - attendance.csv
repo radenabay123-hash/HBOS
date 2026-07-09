@@ -1,0 +1,92 @@
+id,username,employeeName,date,checkIn,checkOut,status,notes,location
+att-1,pm,2024-11-20,8:00,17:00,Hadir,Masuk pagi tepat waktu,,
+att-2,assistant,2024-11-20,8:15,17:05,Hadir,Toleransi keterlambatan,,
+att-3,creative,2024-11-20,8:05,17:00,Hadir,Aman,,
+786529a2-0d4a-483a-896f-74989c0eb568,manager,2026-06-15,9:25:51,,Terlambat,,,
+8087e9bb-f4d2-4962-9c37-9ed802bfacd0,Badar_asisten,Muhammad Badar Haula Abdi,15-06-2026,10:53,,Hadir,,Kantor
+38e46ffb-a375-4fca-8780-357adfebe483,cinta_marketing,Cinta Azzaria ,15-06-2026,11:00,16:00,Hadir,,Kantor
+fbad235a-fd2d-4ae6-97b7-44e2c003f75f,owner,M. Aqil Baihaqi,15-06-2026,12:27,16:01,Hadir,,Kantor
+58aebed4-0317-495d-85d1-537a9d3c3330,Istiana_creative,Istiana Agu Saputri,17-06-2026,8:56,16:01,Hadir,,Kantor
+7c78681b-0cd1-48ab-88ba-2ac137527a14,cinta_marketing,Cinta Azzaria ,17-06-2026,9:01,16:00,Hadir,,Kantor
+28e31388-bca5-44c1-92a3-4dcb8bb11a69,Badar_asisten,Muhammad Badar Haula Abdi,17-06-2026,9:11,16:07,Hadir,,Kantor
+66e9126f-2406-45b0-acb2-6c49a0e67447,ayu_project,Ade Ayu Saputri,17-06-2026,9:12,16:05,Hadir,,Kantor
+8c2def8e-801c-428a-a7e1-6048914cd7bc,Badar_asisten,Muhammad Badar Haula Abdi,18-06-2026,8:57,,Hadir,,Kantor
+0ec954be-135a-495d-8214-145e06cfdb73,cinta_marketing,Cinta Azzaria ,18-06-2026,8:58,21:59,Hadir,,Kantor
+ddfea25c-3858-4cc1-a73c-2243d1fd0eb6,ayu_project,Ade Ayu Saputri,18-06-2026,9:01,16:08,Hadir,,Kantor
+76306eb5-5f48-4f74-9554-99771abd92c4,Istiana_creative,Istiana Agu Saputri,18-06-2026,9:05,16:04,Hadir,,Kantor
+e6e1d9c2-9f97-41ba-8678-8aed247c4fd5,cinta_marketing,Cinta Azzaria ,19-06-2026,8:58,16:10,Hadir,,Kantor
+003a6a97-786f-4ca1-8974-7840b1b890af,ayu_project,Ade Ayu Saputri,19-06-2026,8:59,,Hadir,,Kantor
+b0ce2b28-754a-4492-b827-5ff7b9f02882,Badar_asisten,Muhammad Badar Haula Abdi,19-06-2026,9:03,16:01,Hadir,,Kantor
+0c83f84e-f9b6-4a75-8254-cee5924578ce,Istiana_creative,Istiana Agu Saputri,19-06-2026,9:13,16:10,Hadir,,Kantor
+09cfd693-2459-450f-aff2-8c4a6b74bad0,Istiana_creative,Istiana Agu Saputri,22-06-2026,8:57,16:02,Hadir,,Kantor
+0d9b3589-c2c0-4264-8538-ca68e54a3d9f,cinta_marketing,Cinta Azzaria ,22-06-2026,8:59,16:00,Hadir,,Kantor
+bf00e3b4-8aab-4b72-8d33-db23b2212f8d,Badar_asisten,Muhammad Badar Haula Abdi,22-06-2026,9:02,,Hadir,,Kantor
+8e156494-25f2-47f5-b93f-59f4f570bead,ayu_project,Ade Ayu Saputri,22-06-2026,9:03,16:04,Hadir,,Kantor
+3a09d8b4-2e46-46d3-a4a9-01a92b381f4c,owner,M. Aqil Baihaqi,22-06-2026,9:12,,Hadir,,Kantor
+402d6bef-8e8c-4b8e-b6fa-340325c42194,ayu_project,Ade Ayu Saputri,23-06-2026,8:48,8:48,Hadir,,Kantor
+4118e443-4e1d-4fbd-aa46-66eaecd84049,Badar_asisten,Muhammad Badar Haula Abdi,23-06-2026,8:54,16:03,Hadir,,Kantor
+122bf949-51d9-4959-994e-6af2066a2499,cinta_marketing,Cinta Azzaria ,23-06-2026,8:54,16:03,Hadir,,Kantor
+e2be19df-cf15-41e4-a102-215778e0dd26,Istiana_creative,Istiana Agu Saputri,23-06-2026,9:08,16:04,Hadir,,Kantor
+6f9aa6b9-f365-43bd-a038-502c77bff865,owner,M. Aqil Baihaqi,23-06-2026,9:40,,Hadir,,Kantor
+b45c39c3-9cd0-4a47-a085-c0f3501cfcbf,Badar_asisten,Muhammad Badar Haula Abdi,24-06-2026,8:49,,Hadir,,Kantor
+2c67e9dd-0225-4b8a-80a2-a4bb73915b89,ayu_project,Ade Ayu Saputri,24-06-2026,8:51,16:01,Hadir,,Kantor
+9398f19f-27cd-4558-9dec-33a590f3edda,Istiana_creative,Istiana Agu Saputri,24-06-2026,9:00,16:00,Hadir,,Kantor
+0e118e9e-d602-45ba-ac39-a59d167a0fde,cinta_marketing,Cinta Azzaria ,24-06-2026,9:08,16:03,Hadir,,Kantor
+c5ff7d7c-8e7d-48b3-a690-7e261aa4d19c,ayu_project,Ade Ayu Saputri,25-06-2026,8:53,16:58,Hadir,,Kantor
+9c90e069-0c1f-430a-b71f-1e15e9ee009f,owner,M. Aqil Baihaqi,25-06-2026,8:56,,Hadir,,Kantor
+ed242dc3-fef8-48b2-af91-2942ce9f1a72,cinta_marketing,Cinta Azzaria ,25-06-2026,8:58,16:02,Hadir,,Kantor
+b37570bd-7b72-4141-9a6f-2f4e0b6ac03d,Badar_asisten,Muhammad Badar Haula Abdi,25-06-2026,9:01,17:00,Hadir,,Kantor
+0f14c27f-8383-47ac-96c0-c2145c5eefbb,Istiana_creative,Istiana Agu Saputri,25-06-2026,9:06,16:02,Hadir,,Kantor
+99b2095b-2293-4f8f-b9ed-43c3eba22859,Badar_asisten,Muhammad Badar Haula Abdi,26-06-2026,8:59,16:08,Hadir,,Kantor
+5d9c2357-e934-4b75-8ee7-e2138e5009de,ayu_project,Ade Ayu Saputri,26-06-2026,8:59,16:03,Hadir,,Kantor
+f328fdbb-6cb1-4025-a578-4ec587f75755,cinta_marketing,Cinta Azzaria ,26-06-2026,9:00,16:01,Hadir,,Kantor
+999c5161-32dc-4199-9fa0-8e72e058eb8c,owner,M. Aqil Baihaqi,26-06-2026,12:20,,Hadir,,Kantor
+41eef056-634c-474d-a3a2-ebe076ae2b16,Badar_asisten,Muhammad Badar Haula Abdi,29-06-2026,8:51,,Hadir,,Kantor
+25d77837-aa92-4d16-9c23-e80d927188bb,ayu_project,Ade Ayu Saputri,29-06-2026,8:51,16:00,Hadir,,Kantor
+87f9d4fc-3770-411e-a6e5-6f4c2d14bdbd,Istiana_creative,Istiana Agu Saputri,29-06-2026,8:52,,Hadir,,Kantor
+ff7b6c63-6fd7-4446-963a-ad50509397dc,cinta_marketing,Cinta Azzaria ,29-06-2026,9:04,15:59,Hadir,,Kantor
+041a6854-f4ff-4912-bbb3-8cfe3c53f81c,Badar_asisten,Muhammad Badar Haula Abdi,30-06-2026,8:52,16:13,Hadir,,Kantor
+4519fa43-4a13-474c-9f7a-28fab1074e47,ayu_project,Ade Ayu Saputri,30-06-2026,8:55,16:04,Hadir,,Kantor
+cb880fa1-8c0c-4872-95d5-bdd9f7d02a93,cinta_marketing,Cinta Azzaria ,30-06-2026,8:58,16:01,Hadir,,Kantor
+01f0317f-b480-42d9-b765-172e8129db1f,Istiana_creative,Istiana Agu Saputri,30-06-2026,9:06,16:02,Hadir,,Kantor
+f7fa9ba3-365c-4054-ac78-f1043ef7c049,ayu_project,Ade Ayu Saputri,01-07-2026,8:49,,Hadir,,Kantor
+a8e90d16-ddf5-4deb-a74a-4e2e34ca7c2d,Istiana_creative,Istiana Agu Saputri,01-07-2026,8:53,,Hadir,,Kantor
+3b7d8553-0e4f-4f17-9c70-4e71ac89c12e,cinta_marketing,Cinta Azzaria ,01-07-2026,8:56,,Hadir,,Kantor
+92747b8f-53c6-4c4f-bb21-e983cf9879dc,Badar_asisten,Muhammad Badar Haula Abdi,01-07-2026,8:59,,Hadir,,Kantor
+dd24bf00-89a3-450f-ae04-952a4d1f6f60,owner,M. Aqil Baihaqi,01-07-2026,10:13,,Hadir,,Kantor
+5a755336-2cc8-4b5f-a6c1-3ec13708d735,owner,M. Aqil Baihaqi,01-07-2026,10:19,,Hadir,,Kantor
+a35d5a0d-ad81-4aa6-85b4-9502122c065c,owner,M. Aqil Baihaqi,01-07-2026,10:23,,Hadir,,Kantor
+20b34291-d1f6-40bc-a1e3-811fc4370a17,Badar_asisten,Muhammad Badar Haula Abdi,01-07-2026,16:10,,Hadir,,Kantor
+696296a6-1e56-4cf4-8dd0-a72348a4d3bf,ayu_project,Ade Ayu Saputri,02-07-2026,8:58,,Hadir,,Kantor
+10f499ff-be30-42b4-bcfc-adc6d8bc77c8,ayu_project,Ade Ayu Saputri,02-07-2026,8:58,,Hadir,,Kantor
+ffba444f-fbcd-4e69-b332-e50d43b6509a,cinta_marketing,Cinta Azzaria ,02-07-2026,8:59,,Hadir,,Kantor
+faf41f36-cfa7-4afc-b980-7cb013b20518,cinta_marketing,Cinta Azzaria ,02-07-2026,8:59,,Hadir,,Kantor
+48ff97d8-d5e8-42a4-8976-13811d2a57d4,Badar_asisten,Muhammad Badar Haula Abdi,02-07-2026,8:59,,Hadir,,Kantor
+0a3bcf31-76ca-4f9e-9a69-e471684bf6f2,Badar_asisten,Muhammad Badar Haula Abdi,02-07-2026,16:19,,Hadir,,Kantor
+367412ea-e14d-43a4-a26d-58ec8313d626,cinta_marketing,Cinta Azzaria ,03-07-2026,9:09,,Hadir,,Kantor
+cb3300d4-52ec-4d1e-bc0d-3d3d89fc2602,cinta_marketing,Cinta Azzaria ,03-07-2026,9:11,,Hadir,,Kantor
+a33cd0f8-3fd1-468a-b682-ca8121869297,cinta_marketing,Cinta Azzaria ,03-07-2026,9:11,,Hadir,,Kantor
+9710db49-242b-4cdd-9740-260c408c1b80,ayu_project,Ade Ayu Saputri,06-07-2026,8:58,,Hadir,,Kantor
+c6119257-c5bc-423e-869f-4a224b102baa,cinta_marketing,Cinta Azzaria ,06-07-2026,8:58,,Hadir,,Kantor
+5cf94259-955f-4b56-b281-14f468a84ac7,cinta_marketing,Cinta Azzaria ,06-07-2026,8:58,,Hadir,,Kantor
+6fc6da6d-2377-44c5-9b77-72aee2e0b973,Badar_asisten,Muhammad Badar Haula Abdi,06-07-2026,9:00,,Hadir,,Kantor
+81a7e66c-9e1c-40d7-a244-265381c66507,owner,M. Aqil Baihaqi,06-07-2026,9:02,,Hadir,,Kantor
+12d0c286-0877-4141-b17a-b6c604cf098a,ayu_project,Ade Ayu Saputri,06-07-2026,9:04,,Hadir,,Kantor
+4a25fbbf-60e5-484f-85ce-4ca22bd3783d,Badar_asisten,Muhammad Badar Haula Abdi,06-07-2026,9:10,,Hadir,,Kantor
+f0eda2f8-e3a9-40c3-badd-83ea762bb414,Istiana_creative,Istiana Agu Saputri,06-07-2026,9:37,,Hadir,,Kantor
+fcf17c78-51d1-416c-b18d-a5ea7ca47f3e,Badar_asisten,Muhammad Badar Haula Abdi,07-07-2026,8:58,16:00,Hadir,,Kantor
+773fd433-3c26-42b9-b59d-b2652e43f31b,cinta_marketing,Cinta Azzaria ,07-07-2026,9:09,16:02,Hadir,,Kantor
+fe147273-66aa-4d87-8258-a4075d149fab,Istiana_creative,Istiana Agu Saputri,07-07-2026,9:10,16:01,Hadir,,Kantor
+55b0651f-ce48-48bf-b1e5-f2b506af7c96,Badar_asisten,Muhammad Badar Haula Abdi,08-07-2026,8:57,,Hadir,,Kantor
+395b8f59-4931-46fb-9ce0-efb98531109e,ayu_project,Ade Ayu Saputri,08-07-2026,8:59,,Hadir,,Kantor
+0c196605-30f9-4676-9834-29927b479c70,Istiana_creative,Istiana Agu Saputri,08-07-2026,9:05,,Hadir,,Kantor
+0f133273-7eca-40d9-934f-622659d7b105,cinta_marketing,Cinta Azzaria ,08-07-2026,9:10,,Hadir,,Kantor
+1d07efcd-cfe8-4424-af45-2ce7bd2b791b,Badar_asisten,Muhammad Badar Haula Abdi,08-07-2026,9:14,,Hadir,,Kantor
+d16e753c-da01-413b-bba6-79e906144afb,Badar_asisten,Muhammad Badar Haula Abdi,09-07-2026,8:52,,Hadir,,Kantor
+15028618-993b-4e6b-8632-a45f7adcb582,Badar_asisten,Muhammad Badar Haula Abdi,09-07-2026,8:52,,Hadir,,Kantor
+4b0ad1b5-8222-4361-a481-9aa03dc9b1e5,Badar_asisten,Muhammad Badar Haula Abdi,09-07-2026,8:52,,Hadir,,Kantor
+9f257b5c-edf2-4dac-b9c6-78c94fab4899,Badar_asisten,Muhammad Badar Haula Abdi,09-07-2026,8:53,,Hadir,,Kantor
+f1d3a9e3-7e05-4c5e-a8ef-3bcc7d96add8,Istiana_creative,Istiana Agu Saputri,09-07-2026,9:01,,Hadir,,Kantor
+42587757-2b6b-4e81-835b-054588970757,Istiana_creative,Istiana Agu Saputri,09-07-2026,9:01,,Hadir,,Kantor
+497fa667-c3b5-478c-94c3-fe586f680b6e,ayu_project,Ade Ayu Saputri,09-07-2026,9:03,,Hadir,,Kantor
+8a892fbb-4639-4fbe-b96c-0ffcd3e30d8e,cinta_marketing,Cinta Azzaria ,09-07-2026,9:05,,Hadir,,Kantor
