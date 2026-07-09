@@ -10,7 +10,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   LayoutDashboard, Users, CalendarDays, ListTodo, Wallet, Clock, LogOut, Menu, Building2,
   Target, Receipt, FileText, Trophy, UserCog, FileBarChart, Settings, KanbanSquare, Layout,
-  UserCircle, Sparkles, Database, CreditCard, Megaphone, MessageCircle, Bell, BellOff,
+  UserCircle, Sparkles, Database, CreditCard, Megaphone, Bell, BellOff,
   Home, Briefcase, ClipboardList, BarChart3, MoreHorizontal, X, TrendingUp, Film, Calculator,
   Award, CalendarClock,
 } from "lucide-react";
@@ -25,7 +25,7 @@ export type ViewKey =
   | "finance" | "documents" | "scoreboard" | "team" | "reports"
   | "absensi" | "payroll" | "invoice" | "pengaturan" | "surat" | "kanban"
   | "doclayout" | "biodata" | "aimaster" | "importdata" | "subscriptions"
-  | "teamstructure" | "broadcast" | "mynotifs" | "chat" | "assessment"
+  | "teamstructure" | "broadcast" | "mynotifs" | "assessment"
   | "agenda"
   | "kalkulator-pajak" | "laba-rugi"
   | "finance-arus-kas" | "finance-pajak" | "finance-dokumen-pajak"
@@ -46,8 +46,8 @@ const MENU: MenuItem[] = [
   // Mobile bottom nav items
   { key: "dashboard", label: "Dashboard", icon: Home, roles: ALL_ROLES, mobileTab: true },
   { key: "kanban", label: "Tugas", icon: KanbanSquare, roles: ALL_ROLES, mobileTab: true },
-  { key: "chat", label: "Chat", icon: MessageCircle, roles: ALL_ROLES, mobileTab: true },
   { key: "scoreboard", label: "Score", icon: Trophy, roles: ALL_ROLES, mobileTab: true },
+  { key: "agenda", label: "Agenda", icon: CalendarClock, roles: ["ASSISTANT_TRAINER", "PROJECT_MANAGER", "OWNER"], mobileTab: true },
 
   // === MENU UTAMA ===
   { key: "kpi", label: "Dashboard KPI", icon: Target, roles: ALL_ROLES, category: "UTAMA" },
