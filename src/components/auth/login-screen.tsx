@@ -174,7 +174,6 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                     </button>
                   ))}
                 </div>
-                <p className="text-[10px] text-slate-400 mt-2">Password semua akun: password123</p>
               </div>
             </CardContent>
           </Card>
