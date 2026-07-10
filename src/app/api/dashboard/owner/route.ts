@@ -115,66 +115,85 @@ export async function GET(req: Request) {
     }
     const engagementRate = totalViews > 0 ? Math.round(((totalShare + totalSave + totalComment) / totalViews) * 100) : 0;
 
-    // ===== Monthly Charts (12 months of selected year, or 12 months aggregated across all years if year=0) =====
-    const monthlyData = [];
+    // ===== Monthly Charts (12 months) — OPTIMIZED: all queries parallel =====
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    // When year=0 (Semua Tahun), aggregate each month across all years in DB.
-    // We use a wide year range (2022-2030) — adjust if older data exists.
     const monthYearStart = year > 0 ? year : 2022;
     const monthYearEnd = year > 0 ? year : 2030;
+
+    // Build all month queries upfront, then execute in parallel
+    const monthQueries = [];
     for (let m = 0; m < 12; m++) {
-      // For specific year: mStart = first day of that month, mEnd = last day of that month.
-      // For "all years" (year=0): mStart = first day of that month in 2022,
-      // mEnd = last day of that month in 2030 (so it captures all January 2022-2030, etc.)
       const mStart = new Date(monthYearStart, m, 1);
       const mEnd = new Date(monthYearEnd, m + 1, 0, 23, 59, 59, 999);
-      const [pemasukan, pengeluaran, deals, contents, articles, events, leads] = await Promise.all([
-        db.financeTransaction.aggregate({ where: { type: "PEMASUKAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
-        db.financeTransaction.aggregate({ where: { type: "PENGELUARAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
-        db.client.count({ where: { status: "DEAL", updatedAt: { gte: mStart, lte: mEnd } } }),
-        db.contentIdea.count({ where: { statusPublish: "PUBLISHED", tanggal: { gte: mStart, lte: mEnd } } }),
-        db.article.count({ where: { status: "PUBLISHED", createdAt: { gte: mStart, lte: mEnd } } }),
-        db.event.count({ where: { tanggal: { gte: mStart, lte: mEnd } } }),
-        db.client.count({ where: { createdAt: { gte: mStart, lte: mEnd } } }),
-      ]);
-      monthlyData.push({
-        month: monthNames[m],
-        revenue: pemasukan._sum.amount || 0,
-        expense: pengeluaran._sum.amount || 0,
-        profit: (pemasukan._sum.amount || 0) - (pengeluaran._sum.amount || 0),
-        deals, contents, articles, events, leads,
+      monthQueries.push({
+        m,
+        mStart,
+        mEnd,
+        pemasukan: db.financeTransaction.aggregate({ where: { type: "PEMASUKAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
+        pengeluaran: db.financeTransaction.aggregate({ where: { type: "PENGELUARAN", date: { gte: mStart, lte: mEnd } }, _sum: { amount: true } }),
+        deals: db.client.count({ where: { status: "DEAL", updatedAt: { gte: mStart, lte: mEnd } } }),
+        contents: db.contentIdea.count({ where: { statusPublish: "PUBLISHED", tanggal: { gte: mStart, lte: mEnd } } }),
+        articles: db.article.count({ where: { status: "PUBLISHED", createdAt: { gte: mStart, lte: mEnd } } }),
+        events: db.event.count({ where: { tanggal: { gte: mStart, lte: mEnd } } }),
+        leads: db.client.count({ where: { createdAt: { gte: mStart, lte: mEnd } } }),
       });
     }
+    // Execute all 84 queries in parallel (not sequential!)
+    const monthResults = await Promise.all(
+      monthQueries.map(async (q) => {
+        const [pemasukan, pengeluaran, deals, contents, articles, events, leads] = await Promise.all([
+          q.pemasukan, q.pengeluaran, q.deals, q.contents, q.articles, q.events, q.leads,
+        ]);
+        return {
+          month: monthNames[q.m],
+          revenue: pemasukan._sum.amount || 0,
+          expense: pengeluaran._sum.amount || 0,
+          profit: (pemasukan._sum.amount || 0) - (pengeluaran._sum.amount || 0),
+          deals, contents, articles, events, leads,
+        };
+      })
+    );
+    const monthlyData = monthResults;
 
-    // ===== Yearly Charts (last 5 years from current year — independent of selected year) =====
-    const yearlyData = [];
+    // ===== Yearly Charts (5 years) — OPTIMIZED: parallel =====
     const yearlyAnchor = now.getFullYear();
+    const yearQueries = [];
     for (let y = yearlyAnchor - 4; y <= yearlyAnchor; y++) {
       const yStart = new Date(y, 0, 1);
       const yEnd = new Date(y, 11, 31, 23, 59, 59, 999);
-      const [pemasukan, pengeluaran, deals, contents, articles] = await Promise.all([
-        db.financeTransaction.aggregate({ where: { type: "PEMASUKAN", date: { gte: yStart, lte: yEnd } }, _sum: { amount: true } }),
-        db.financeTransaction.aggregate({ where: { type: "PENGELUARAN", date: { gte: yStart, lte: yEnd } }, _sum: { amount: true } }),
-        db.client.count({ where: { status: "DEAL", updatedAt: { gte: yStart, lte: yEnd } } }),
-        db.contentIdea.count({ where: { statusPublish: "PUBLISHED", tanggal: { gte: yStart, lte: yEnd } } }),
-        db.article.count({ where: { status: "PUBLISHED", createdAt: { gte: yStart, lte: yEnd } } }),
-      ]);
-      yearlyData.push({
-        year: String(y),
-        revenue: pemasukan._sum.amount || 0,
-        expense: pengeluaran._sum.amount || 0,
-        profit: (pemasukan._sum.amount || 0) - (pengeluaran._sum.amount || 0),
-        deals, contents, articles,
+      yearQueries.push({
+        y,
+        pemasukan: db.financeTransaction.aggregate({ where: { type: "PEMASUKAN", date: { gte: yStart, lte: yEnd } }, _sum: { amount: true } }),
+        pengeluaran: db.financeTransaction.aggregate({ where: { type: "PENGELUARAN", date: { gte: yStart, lte: yEnd } }, _sum: { amount: true } }),
+        deals: db.client.count({ where: { status: "DEAL", updatedAt: { gte: yStart, lte: yEnd } } }),
+        contents: db.contentIdea.count({ where: { statusPublish: "PUBLISHED", tanggal: { gte: yStart, lte: yEnd } } }),
+        articles: db.article.count({ where: { status: "PUBLISHED", createdAt: { gte: yStart, lte: yEnd } } }),
       });
     }
+    const yearResults = await Promise.all(
+      yearQueries.map(async (q) => {
+        const [pemasukan, pengeluaran, deals, contents, articles] = await Promise.all([
+          q.pemasukan, q.pengeluaran, q.deals, q.contents, q.articles,
+        ]);
+        return {
+          year: String(q.y),
+          revenue: pemasukan._sum.amount || 0,
+          expense: pengeluaran._sum.amount || 0,
+          profit: (pemasukan._sum.amount || 0) - (pengeluaran._sum.amount || 0),
+          deals, contents, articles,
+        };
+      })
+    );
+    const yearlyData = yearResults;
 
-    // ===== Content category breakdown =====
-    const contentByCategory = [];
+    // ===== Content category breakdown — OPTIMIZED: parallel =====
     const categories = ["Instagram M. Aqil Baihaqi", "TikTok Aqil Baihaqi", "Hafara Group", "MentorSkill"];
-    for (const cat of categories) {
-      const count = await db.contentIdea.count({ where: { kategori: cat, statusPublish: "PUBLISHED" } });
-      contentByCategory.push({ name: cat, value: count });
-    }
+    const contentByCategory = await Promise.all(
+      categories.map(async (cat) => ({
+        name: cat,
+        value: await db.contentIdea.count({ where: { kategori: cat, statusPublish: "PUBLISHED" } }),
+      }))
+    );
 
     // ===== CRM pipeline distribution =====
     const crmPipeline = [
