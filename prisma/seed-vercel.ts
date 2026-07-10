@@ -52,17 +52,19 @@ async function main() {
 
   // ============ TAX CONFIG ============
   const taxConfigs = [
-    { taxType: "PPH21", name: "PPh 21 - Penghasilan Karyawan", rate: 0, isActive: true, description: "Pajak penghasilan karyawan dengan tarif progresif (UU HPP). Dipotong dari gaji bulanan karyawan.", config: JSON.stringify({ ptkp: { TK0: 54000000, TK1: 58500000, TK2: 63000000, TK3: 67500000, K0: 58500000, K1: 63000000, K2: 67500000, K3: 72000000 }, brackets: [{ min: 0, max: 60000000, rate: 0.05 }, { min: 60000000, max: 250000000, rate: 0.15 }, { min: 250000000, max: 500000000, rate: 0.25 }, { min: 500000000, max: 5000000000, rate: 0.30 }, { min: 5000000000, max: null, rate: 0.35 }] }) },
-    { taxType: "PPH23", name: "PPh 23 - Pajak Penghasilan 23", rate: 2, isActive: true, description: "Pajak penghasilan atas penghasilan dari jasa, sewa, dll. Tarif 2% dari bruto.", config: null },
-    { taxType: "PPH_BADAN", name: "PPh Badan", rate: 11, isActive: true, description: "Pajak penghasilan badan usaha. Tarif 11% (UU HPP 2022-2023), 12% mulai 2024.", config: null },
-    { taxType: "PPN", name: "PPN - Pajak Pertambahan Nilai", rate: 11, isActive: true, description: "Pajak Pertambahan Nilai atas penjualan barang/jasa kena pajak. Tarif 11% (UU HPP).", config: null },
+    { taxType: "PPH21", name: "PPh 21 - Penghasilan Karyawan", rate: 0, isActive: true, description: "Pajak penghasilan karyawan dengan tarif progresif (UU HPP). Dipotong dari gaji bulanan karyawan.", brackets: JSON.stringify([{ min: 0, max: 60000000, rate: 0.05 }, { min: 60000000, max: 250000000, rate: 0.15 }, { min: 250000000, max: 500000000, rate: 0.25 }, { min: 500000000, max: 5000000000, rate: 0.30 }, { min: 5000000000, max: null, rate: 0.35 }]), ptkp: JSON.stringify({ TK0: 54000000, TK1: 58500000, TK2: 63000000, TK3: 67500000, K0: 58500000, K1: 63000000, K2: 67500000, K3: 72000000 }) },
+    { taxType: "PPH23", name: "PPh 23 - Pajak Penghasilan 23", rate: 2, isActive: true, description: "Pajak penghasilan atas penghasilan dari jasa, sewa, dll. Tarif 2% dari bruto.", brackets: null, ptkp: null },
+    { taxType: "PPH_BADAN", name: "PPh Badan", rate: 11, isActive: true, description: "Pajak penghasilan badan usaha. Tarif 11% (UU HPP 2022-2023), 12% mulai 2024.", brackets: null, ptkp: null },
+    { taxType: "PPN", name: "PPN - Pajak Pertambahan Nilai", rate: 11, isActive: true, description: "Pajak Pertambahan Nilai atas penjualan barang/jasa kena pajak. Tarif 11% (UU HPP).", brackets: null, ptkp: null },
   ];
   for (const t of taxConfigs) {
-    await db.taxConfig.upsert({
-      where: { taxType: t.taxType },
-      update: {},
-      create: t,
-    });
+    // Check if exists first, then create or update
+    const existing = await db.taxConfig.findFirst({ where: { taxType: t.taxType } });
+    if (existing) {
+      await db.taxConfig.update({ where: { id: existing.id }, data: t });
+    } else {
+      await db.taxConfig.create({ data: t });
+    }
   }
   console.log(`  ✓ ${taxConfigs.length} tax configs`);
 
@@ -103,11 +105,13 @@ async function main() {
     { name: "Lainnya", type: "PENGELUARAN", icon: "MoreHorizontal", color: "slate" },
   ];
   for (const c of categories) {
-    await db.financeCategory.upsert({
-      where: { name_type: { name: c.name, type: c.type } },
-      update: {},
-      create: c,
-    });
+    // Check if exists first
+    const existing = await db.financeCategory.findFirst({ where: { name: c.name, type: c.type } });
+    if (existing) {
+      await db.financeCategory.update({ where: { id: existing.id }, data: c });
+    } else {
+      await db.financeCategory.create({ data: c });
+    }
   }
   console.log(`  ✓ ${categories.length} finance categories`);
 
@@ -118,11 +122,13 @@ async function main() {
     { docType: "SLIP_GAJI", settings: JSON.stringify({ headerStyle: "simple", fontSize: 10, fontFamily: "Arial" }) },
   ];
   for (const l of layouts) {
-    await db.documentLayout.upsert({
-      where: { docType: l.docType },
-      update: {},
-      create: l,
-    });
+    // Check if exists first
+    const existing = await db.documentLayout.findFirst({ where: { docType: l.docType } });
+    if (existing) {
+      await db.documentLayout.update({ where: { id: existing.id }, data: l });
+    } else {
+      await db.documentLayout.create({ data: l });
+    }
   }
   console.log(`  ✓ ${layouts.length} document layouts`);
 
