@@ -46,11 +46,6 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
     }
   }
 
-  function quickFill(em: string) {
-    setEmail(em);
-    setPassword("password123");
-  }
-
   return (
     <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left brand panel */}
@@ -152,29 +147,6 @@ export function LoginScreen({ onLogin }: { onLogin: () => void }) {
                   )}
                 </Button>
               </form>
-
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500 mb-2 font-medium">Akun Demo (klik untuk isi otomatis):</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {[
-                    { label: "Owner", email: "owner@hafara.com" },
-                    { label: "Project Mgr", email: "ayu_project@hafara.com" },
-                    { label: "Asst Trainer", email: "badar_asisten@hafara.com" },
-                    { label: "Content", email: "istiana_creative@hafara.com" },
-                    { label: "Digital/IT", email: "cinta_marketing@hafara.com" },
-                    { label: "Finance", email: "finance@hafara.com" },
-                  ].map((a) => (
-                    <button
-                      key={a.email}
-                      type="button"
-                      onClick={() => quickFill(a.email)}
-                      className="text-left text-xs px-2 py-1.5 rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition border border-slate-200"
-                    >
-                      {a.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>
